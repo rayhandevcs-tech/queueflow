@@ -1,0 +1,46 @@
+"use client";
+
+import { useState } from "react";
+import { MapIcon, List } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ShopList } from "./ShopList";
+import { ShopMap } from "./ShopMap";
+
+export function ExploreView() {
+  const [view, setView] = useState<"map" | "list">("map");
+
+  return (
+    <div className="space-y-4">
+      <div className="inline-flex gap-1 rounded-xl border border-line bg-card p-1 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setView("map")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-semibold transition-all",
+            view === "map"
+              ? "bg-accent text-accent-ink shadow-sm"
+              : "text-muted hover:text-ink",
+          )}
+        >
+          <MapIcon className="h-4 w-4" />
+          Map
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("list")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-semibold transition-all",
+            view === "list"
+              ? "bg-accent text-accent-ink shadow-sm"
+              : "text-muted hover:text-ink",
+          )}
+        >
+          <List className="h-4 w-4" />
+          List
+        </button>
+      </div>
+
+      {view === "map" ? <ShopMap /> : <ShopList />}
+    </div>
+  );
+}

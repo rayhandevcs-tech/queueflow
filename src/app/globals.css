@@ -1,26 +1,64 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-paper: #f1ede4;
+  --color-card: #fffdf8;
+  --color-soft: #f7f3ea;
+  --color-ink: #1b1812;
+  --color-muted: #857e70;
+  --color-line: #e7e0d2;
+  --color-accent: #1c5d44;
+  --color-accent-ink: #f4f1ea;
+  --color-brass: #b5852f;
+  --color-brass-soft: #f3e7cc;
+  --color-live: #cf4e25;
+  --color-live-soft: #fbe4d8;
+  --color-good: #2e7d5b;
+  --color-good-soft: #dcefe4;
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Warm-tinted elevation — replaces the default neutral-gray shadow scale
+     so depth reads as part of the paper/ink palette, not a bolt-on. */
+  --shadow-xs: 0 1px 2px rgba(27, 24, 18, 0.05);
+  --shadow-sm: 0 1px 3px rgba(27, 24, 18, 0.07), 0 1px 2px rgba(27, 24, 18, 0.05);
+  --shadow-md: 0 6px 16px rgba(27, 24, 18, 0.09), 0 2px 6px rgba(27, 24, 18, 0.05);
+  --shadow-lg: 0 16px 40px rgba(27, 24, 18, 0.14), 0 4px 10px rgba(27, 24, 18, 0.06);
+  --shadow-glow: 0 8px 28px rgba(28, 93, 68, 0.28);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse 900px 500px at 8% -8%, rgba(181, 133, 47, 0.10), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 100% 0%, rgba(28, 93, 68, 0.08), transparent 55%),
+    var(--color-paper);
+  background-attachment: fixed;
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Leaflet popups/controls inherit the app's card + type styling instead of
+   the library's default white-box look. */
+.leaflet-popup-content-wrapper {
+  background: var(--color-card);
+  color: var(--color-ink);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-md);
+}
+.leaflet-popup-tip {
+  background: var(--color-card);
+}
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--color-soft);
 }

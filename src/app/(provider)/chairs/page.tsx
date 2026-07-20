@@ -1,0 +1,45 @@
+"use client";
+
+import Link from "next/link";
+import { Settings } from "lucide-react";
+import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
+import { ChairsManager } from "@/features/provider-catalog/components/ChairsManager";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Spinner } from "@/components/ui/Spinner";
+
+export default function ChairsPage() {
+  const { data: shop, isPending } = useMyShop();
+
+  if (isPending) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center">
+        <Spinner className="h-6 w-6 text-muted" />
+      </div>
+    );
+  }
+
+  if (!shop) {
+    return (
+      <EmptyState
+        icon={<Settings className="h-6 w-6" />}
+        title="Set up your shop first"
+        action={
+          <Link href="/settings" className="text-sm font-semibold text-accent hover:underline">
+            Go to settings →
+          </Link>
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Chairs & Staff"
+        description="Each chair is one lane on the dashboard — pause a chair to stop new serials."
+      />
+      <ChairsManager shopId={shop.id} />
+    </div>
+  );
+}
