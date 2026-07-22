@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Anek+Bangla:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Hind Siliguri',system-ui,sans-serif; color:#1B1812; }
+  doc-page:not(:defined){visibility:hidden}
+  a { color:#1C5D44; } a:hover { color:#B5852F; }
+  h1,h2,h3 { font-family:'Anek Bangla','Hind Siliguri',sans-serif; }
+  h2 { font-size:19px; margin:34px 0 6px; padding-bottom:6px; border-bottom:2px solid #1C5D44; color:#1C5D44; }
+  h3 { font-size:15px; margin:20px 0 6px; color:#1B1812; }
+  p, li { font-size:13.5px; line-height:1.65; orphans:3; widows:3; }
+  ul { margin:4px 0 10px; padding-left:20px; }
+  li { margin:3px 0; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; margin:8px 0 14px; }
+  th { text-align:left; background:#F7F3EA; font-weight:700; padding:7px 10px; border:1px solid #E7E0D2; font-size:12px; }
+  td { padding:7px 10px; border:1px solid #E7E0D2; line-height:1.5; vertical-align:top; }
+  .tag { display:inline-block; font-size:10.5px; font-weight:700; padding:1px 8px; border-radius:20px; background:#DCEFE4; color:#1C5D44; }
+  .callout { break-inside:avoid; background:#F7F3EA; border:1px solid #E7E0D2; border-left:4px solid #1C5D44; border-radius:8px; padding:12px 16px; margin:12px 0; font-size:13px; line-height:1.6; }
+  .num { font-family:'Space Grotesk',monospace; }
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" orientation="portrait" margin="0.8in" hint-size="100%,1200px">
+
+<div style="border-bottom:3px solid #1B1812; padding-bottom:16px; margin-bottom:8px;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="width:44px; height:44px; border-radius:12px; background:#1C5D44; color:#F4F1EA; display:flex; align-items:center; justify-content:center; font-family:'Anek Bangla',sans-serif; font-weight:800; font-size:24px;">প</div>
+    <div>
+      <h1 style="font-size:27px; margin:0; line-height:1.1;">পালা (Palaa) — সিস্টেম ডকুমেন্টেশন</h1>
+      <div style="font-size:12.5px; color:#857E70; margin-top:2px;">Salon Serial Management System · Feature &amp; Functionality Spec · v1.0 · ১৬ জুলাই ২০২৬</div>
+    </div>
+  </div>
+</div>
+
+<h2>১. প্রজেক্ট ওভারভিউ</h2>
+<p><b>সমস্যা:</b> সেলুনে কাস্টমারকে সিরিয়ালের জন্য ঘণ্টার পর ঘণ্টা বসে থাকতে হয়; কার পালা কখন — তা ম্যানুয়ালি মেইনটেইন করা কঠিন।</p>
+<p><b>সমাধান:</b> লাইভ সিরিয়াল ট্র্যাকিং সিস্টেম — কাস্টমার দূর থেকেই সিরিয়াল দেখে, অনলাইনে বুক করে, কাউন্টডাউন দেখে ঠিক সময়ে দোকানে পৌঁছায়। দোকানদার কিউ, ইনকাম ও কাস্টমার ম্যানেজ করে এক ড্যাশবোর্ডে।</p>
+<table>
+  <thead><tr><th style="width:32%;">আইটেম</th><th>বিবরণ</th></tr></thead>
+  <tbody>
+    <tr><td>ইউজার টাইপ</td><td>২টি — <b>দোকানদার (Barber/Owner)</b> ও <b>কাস্টমার</b></td></tr>
+    <tr><td>প্ল্যাটফর্ম</td><td>দোকানদার: ওয়েব ড্যাশবোর্ড · কাস্টমার: মোবাইল অ্যাপ</td></tr>
+    <tr><td>ভাষা</td><td>বাংলা + ইংরেজি মিক্স UI</td></tr>
+    <tr><td>পেমেন্ট</td><td>মোবাইল ব্যাংকিং (bKash / Nagad) — অ্যাডভান্স ও রেগুলার</td></tr>
+    <tr><td>কোর কনসেপ্ট</td><td>এক লাইভ কিউ, দুই ভিউ — দোকানদারের অ্যাকশনে কাস্টমারের সময় রিয়েল-টাইম আপডেট</td></tr>
+  </tbody>
+</table>
+
+<h2>২. রোল ও অ্যাক্সেস</h2>
+<table>
+  <thead><tr><th style="width:22%;">রোল</th><th>কী করতে পারে</th></tr></thead>
+  <tbody>
+    <tr><td><b>কাস্টমার</b></td><td>দোকান খোঁজা, সিরিয়াল বুক করা, লাইভ ট্র্যাক, পেমেন্ট, রিভিউ দেওয়া, নিজের প্রোফাইল ও হিস্টরি দেখা</td></tr>
+    <tr><td><b>দোকানদার</b></td><td>লাইভ কিউ ম্যানেজ, প্রতি কাজের টাইম সেট, কাজ সম্পন্ন মার্ক, ইনকাম ও অ্যানালিটিক্স দেখা, সার্ভিস-রেট ম্যানেজ, নিয়মিত কাস্টমার ট্র্যাক ও রিমাইন্ডার পাঠানো</td></tr>
+  </tbody>
+</table>
+
+<h2>৩. কাস্টমার অ্যাপ — ফিচার লিস্ট</h2>
+
+<h3>৩.১ হোম / নিয়ারবাই দোকান <span class="tag">Core</span></h3>
+<ul>
+  <li>লোকেশন-ভিত্তিক আশেপাশের সেলুন লিস্ট (দূরত্ব, এরিয়া, রেটিং সহ)</li>
+  <li>প্রতিটি দোকানে লাইভ দেখায়: <b>চলমান সিরিয়াল সংখ্যা</b> + <b>আনুমানিক ওয়েট টাইম</b></li>
+  <li>ওয়েট টাইম কালার-কোডেড: কম ওয়েট = সবুজ, বেশি = লাল</li>
+  <li>নিয়মিত দোকানে "নিয়মিত" ব্যাজ — ফিক্সড কাস্টমাররা দ্রুত নিজের দোকান পায়</li>
+  <li>সামারি কার্ড: মোট খোলা দোকান, সবচেয়ে কম ওয়েট</li>
+  <li>অ্যাকটিভ বুকিং থাকলে হোমে লাইভ স্ট্যাটাস কার্ড (সিরিয়াল নম্বর + ETA)</li>
+</ul>
+
+<h3>৩.২ দোকান ডিটেইল ও সিরিয়াল বুকিং <span class="tag">Core</span></h3>
+<ul>
+  <li>দোকানের প্রোফাইল: রেটিং, রিভিউ সংখ্যা, বর্তমান সিরিয়াল, আনুমানিক ওয়েট</li>
+  <li>সার্ভিস মাল্টি-সিলেক্ট — প্রতিটির <b>রেট (৳)</b> ও <b>আনুমানিক সময় (মিনিট)</b> দেখানো</li>
+  <li>সিলেকশন অনুযায়ী মোট টাকা ও মোট সময় অটো-ক্যালকুলেট</li>
+  <li>বুক করলে কিউয়ের শেষে সিরিয়াল নম্বর অ্যাসাইন হয়</li>
+</ul>
+
+<h3>৩.৩ পেমেন্ট <span class="tag">Core</span></h3>
+<ul>
+  <li>মোবাইল ব্যাংকিং পেমেন্ট (bKash / Nagad)</li>
+  <li><b>অ্যাডভান্স পেমেন্ট টগল:</b> অ্যাডভান্স দিলে সিরিয়াল <b>কনফার্মড ও লকড</b> — দোকানদার বাতিল করতে পারে না, নো-শো রিস্ক কমে</li>
+  <li>অ্যাডভান্স ছাড়া বুকিং = সাধারণ কনফার্মেশন</li>
+</ul>
+
+<h3>৩.৪ লাইভ সিরিয়াল ট্র্যাকিং <span class="tag">Core</span></h3>
+<ul>
+  <li>নিজের সিরিয়াল নম্বর + বাকি সময়ের <b>লাইভ কাউন্টডাউন</b> (রিং বা প্রগ্রেস-বার ভিউ)</li>
+  <li>আগের কাস্টমারদের লিস্ট: কে চলছে (লাইভ টাইমার), কার পরে কে, কে কখন শুরু হবে</li>
+  <li>দোকানদার একটি কাজ "সম্পন্ন" করলেই সবার ETA স্বয়ংক্রিয়ভাবে কমে</li>
+  <li>LIVE ইন্ডিকেটর — রিয়েল-টাইম সিঙ্ক বোঝায়</li>
+</ul>
+
+<h3>৩.৫ রিভিউ <span class="tag">Trust</span></h3>
+<ul>
+  <li>সার্ভিস শেষে ৫-স্টার রেটিং + লিখিত রিভিউ (ঐচ্ছিক)</li>
+  <li>রিভিউ দোকানের প্রোফাইলে পাবলিকলি দেখায় — অথেন্টিসিটি বাড়ে</li>
+</ul>
+
+<h3>৩.৬ কাস্টমার প্রোফাইল ও ট্রাস্ট স্কোর <span class="tag">Trust</span></h3>
+<ul>
+  <li><b>ট্রাস্ট স্কোর:</b> কাস্টমারের অ্যাক্টিভিটির ভিত্তিতে রেটিং — সিরিয়াল দিয়ে সার্ভিস নিলে বাড়ে, ফেক/নো-শো সিরিয়ালে কমে</li>
+  <li>স্ট্যাটস: মোট ভিজিট, নো-শো সংখ্যা, নিয়মিত দোকান সংখ্যা</li>
+  <li>সিরিয়াল হিস্টরি: কোন দোকানে, কী সার্ভিস, কত টাকা, কী রেটিং দিয়েছিল</li>
+</ul>
+
+<div class="callout"><b>কর্নার কেস — মাল্টিপল বুকিং ব্লক:</b> একজন কাস্টমারের একসাথে একটিই অ্যাকটিভ সিরিয়াল থাকতে পারবে। এক দোকানে সিরিয়াল দেওয়া অবস্থায় অন্য দোকানে বুক করতে গেলে সিস্টেম ব্লক করবে। এতে ফেক সিরিয়াল কমে, কিউ ক্লিন থাকে, দোকানদারের ট্রাস্ট বাড়ে।</div>
+
+<h2>৪. দোকানদার ড্যাশবোর্ড — ফিচার লিস্ট</h2>
+
+<h3>৪.১ লাইভ সিরিয়াল কিউ <span class="tag">Core</span></h3>
+<ul>
+  <li>বর্তমান কাস্টমার: নাম, সার্ভিস, টাকা + <b>লাইভ কাউন্টডাউন টাইমার</b></li>
+  <li>প্রতি সিরিয়ালে কাস্টমারের নেওয়া সার্ভিস অনুযায়ী <b>টাইম সেট</b> (দোকানদার নিজের কাজের গতি অনুযায়ী অ্যাডজাস্ট করতে পারবে)</li>
+  <li>অপেক্ষমাণ লিস্ট: প্রতি কাস্টমারের সিরিয়াল নম্বর, সার্ভিস, টাকা, "কখন শুরু হবে" (কিউমুলেটিভ টাইম)</li>
+  <li>ব্যাজ: <b>নিয়মিত</b> কাস্টমার, <b>✓ অ্যাডভান্স পেইড</b></li>
+  <li><b>"কাজ সম্পন্ন" বাটন:</b> সিরিয়াল লিস্ট থেকে সরে যায় → পরের কাস্টমারের টাইমার শুরু → সবার ETA আপডেট → কাজের টাকা ডেইলি ইনকামে অটো যোগ</li>
+  <li>আজকের সারাংশ: সম্পন্ন, অপেক্ষায়, আজকের আয়</li>
+</ul>
+
+<h3>৪.২ ইনকাম ট্র্যাকিং <span class="tag">Money</span></h3>
+<ul>
+  <li>প্রতিটি সম্পন্ন কাজের টাকা অটো যোগ — <b>দৈনিক / মাসিক / বার্ষিক</b> ভিউ</li>
+  <li>মাস-ভিত্তিক ১২ মাসের আয়ের বার চার্ট + গ্রোথ ইন্ডিকেটর</li>
+  <li>সার্ভিস অনুযায়ী আয়ের ব্রেকডাউন (কোন সার্ভিস থেকে কত)</li>
+</ul>
+
+<h3>৪.৩ কাস্টমার অ্যানালিটিক্স <span class="tag">Insight</span></h3>
+<ul>
+  <li>সময় অনুযায়ী কাস্টমার চাপ (ঘণ্টাভিত্তিক) — <b>পিক টাইম</b> হাইলাইট</li>
+  <li>সাপ্তাহিক চাপ (কোন দিন বেশি ভিড়)</li>
+  <li>KPI: দৈনিক গড় কাস্টমার, পিক আওয়ার, গড় সার্ভিস টাইম</li>
+  <li>অটো ইনসাইট সাজেশন (যেমন: পিক টাইমে কর্মী বাড়াও, ফাঁকা সময়ে ডিসকাউন্ট দাও)</li>
+</ul>
+
+<h3>৪.৪ সার্ভিস ও রেট ম্যানেজমেন্ট <span class="tag">Core</span></h3>
+<ul>
+  <li>সার্ভিস লিস্ট: নাম, রেট (৳), আনুমানিক সময় — যোগ / এডিট / চালু-বন্ধ</li>
+  <li>রেট পাবলিক — কাস্টমারের হিসাব স্বচ্ছ থাকে</li>
+</ul>
+
+<h3>৪.৫ নিয়মিত (ফিক্সড) কাস্টমার ট্র্যাকিং <span class="tag">Retention</span></h3>
+<ul>
+  <li>ফিক্সড কাস্টমার লিস্ট: শেষ ভিজিট, মোট ভিজিট, এই মাসে এসেছে কি না</li>
+  <li>এই মাসে না এলে <b>রিমাইন্ডার পাঠানো</b> (নোটিফিকেশন/SMS)</li>
+</ul>
+
+<h3>৪.৬ রিভিউ ম্যানেজমেন্ট <span class="tag">Trust</span></h3>
+<ul>
+  <li>গড় রেটিং + স্টার ডিস্ট্রিবিউশন (৫★–২★ শতাংশ)</li>
+  <li>কাস্টমারদের রিভিউ লিস্ট (নাম, তারিখ, রেটিং, মন্তব্য)</li>
+</ul>
+
+<h2>৫. কোর সিস্টেম লজিক</h2>
+<h3>৫.১ কাউন্টডাউন ও ETA ক্যালকুলেশন</h3>
+<ul>
+  <li>বর্তমান কাজের টাইমার প্রতি সেকেন্ডে কমে</li>
+  <li>সিরিয়াল <span class="num">N</span>-এর ওয়েট = বর্তমান কাজের বাকি সময় + (২ থেকে <span class="num">N−1</span> পর্যন্ত সবার সার্ভিস টাইমের যোগফল)</li>
+  <li>কাজ সম্পন্ন / বাতিল হলে সব কাস্টমারের ETA সাথে সাথে রি-ক্যালকুলেট</li>
+</ul>
+<h3>৫.২ সিরিয়াল লাইফসাইকেল</h3>
+<ul>
+  <li><b>বুকড</b> → (অ্যাডভান্স দিলে) <b>লকড</b> → <b>চলছে</b> → <b>সম্পন্ন</b> (ইনকামে যোগ) বা <b>নো-শো</b> (ট্রাস্ট স্কোর কমে)</li>
+  <li>একজন কাস্টমার = একসাথে সর্বোচ্চ ১টি অ্যাকটিভ সিরিয়াল (সিস্টেম-এনফোর্সড)</li>
+</ul>
+<h3>৫.৩ ট্রাস্ট স্কোর নিয়ম</h3>
+<ul>
+  <li>সিরিয়াল দিয়ে সার্ভিস নিলে: স্কোর বাড়ে</li>
+  <li>নো-শো / ফাজলামি সিরিয়াল: স্কোর কমে</li>
+  <li>দোকানদার কাস্টমারের ট্রাস্ট স্কোর দেখে সিরিয়ালের নির্ভরযোগ্যতা বুঝতে পারে</li>
+</ul>
+
+<h2>৬. ফিউচার ফিচার (ব্যাকলগ)</h2>
+<p style="color:#857E70; font-size:12.5px;">নতুন আইডিয়া এলে এই টেবিলে যোগ করো — স্ট্যাটাস: 💡 আইডিয়া · 🔧 প্ল্যানড · ✅ ডান</p>
+<table>
+  <thead><tr><th style="width:8%;">#</th><th style="width:32%;">ফিচার</th><th style="width:48%;">বিবরণ</th><th style="width:12%;">স্ট্যাটাস</th></tr></thead>
+  <tbody>
+    <tr><td class="num">F-01</td><td>—</td><td>—</td><td>💡</td></tr>
+    <tr><td class="num">F-02</td><td>—</td><td>—</td><td>💡</td></tr>
+    <tr><td class="num">F-03</td><td>—</td><td>—</td><td>💡</td></tr>
+  </tbody>
+</table>
+
+<h2>৭. চেঞ্জলগ</h2>
+<table>
+  <thead><tr><th style="width:14%;">ভার্সন</th><th style="width:22%;">তারিখ</th><th>পরিবর্তন</th></tr></thead>
+  <tbody>
+    <tr><td class="num">v1.0</td><td>১৬ জুলাই ২০২৬</td><td>প্রাথমিক ডকুমেন্টেশন — কোর ফিচার সেট (প্রোটোটাইপ অনুযায়ী)</td></tr>
+  </tbody>
+</table>
+
+<div slot="footer" style="display:flex; justify-content:space-between; font-size:10px; color:#857E70; border-top:1px solid #E7E0D2; padding-top:6px;">
+  <span>পালা (Palaa) — System Documentation v1.0</span>
+  <span>Confidential · Internal</span>
+</div>
+
+</x-import>
+</x-dc>
+</body>
+</html>

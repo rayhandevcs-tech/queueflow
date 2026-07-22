@@ -8,6 +8,7 @@ export function useShopDetail(shopId: string) {
   return useQuery({
     queryKey: keys.shops.detail(shopId),
     queryFn: () => getShopDetail(shopId),
+    enabled: !!shopId,
   });
 }
 

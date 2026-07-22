@@ -2,26 +2,33 @@
 
 import dynamic from "next/dynamic";
 import { MapPinOff } from "lucide-react";
+import type { Shop } from "@/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { useOpenShops, useQueueCounts } from "../hooks/use-open-shops";
 
 const ShopMapInner = dynamic(() => import("./ShopMapInner"), {
   ssr: false,
   loading: () => (
-    <div className="grid h-[440px] w-full place-items-center rounded-2xl border border-line bg-card shadow-sm">
+    <div className="grid h-110 w-full place-items-center rounded-2xl border border-line bg-card shadow-sm">
       <Spinner className="h-6 w-6 text-muted" />
     </div>
   ),
 });
 
-export function ShopMap() {
-  const { data: shops, isPending } = useOpenShops();
-  const { data: queueCounts } = useQueueCounts();
-
+export function ShopMap({
+  shops,
+  counts,
+  waitMin,
+  isPending,
+}: {
+  shops: Shop[] | undefined;
+  counts: Record<string, number>;
+  waitMin: Record<string, number>;
+  isPending: boolean;
+}) {
   if (isPending) {
     return (
-      <div className="grid h-[440px] w-full place-items-center rounded-2xl border border-line bg-card shadow-sm">
+      <div className="grid h-110 w-full place-items-center rounded-2xl border border-line bg-card shadow-sm">
         <Spinner className="h-6 w-6 text-muted" />
       </div>
     );
@@ -36,15 +43,15 @@ export function ShopMap() {
     return (
       <EmptyState
         icon={<MapPinOff className="h-6 w-6" />}
-        title="No shop locations are set yet"
-        description="Switch to the list view to see open shops instead."
+        title="এখনো কোনো দোকানের লোকেশন সেট করা নেই"
+        description="লিস্ট ভিউতে গিয়ে খোলা দোকানগুলো দেখো।"
       />
     );
   }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-line shadow-sm">
-      <ShopMapInner shops={located} queueCounts={queueCounts ?? {}} />
+      <ShopMapInner shops={located} counts={counts} waitMin={waitMin} />
     </div>
   );
 }

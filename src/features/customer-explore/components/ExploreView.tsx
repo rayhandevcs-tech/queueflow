@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { MapIcon, List } from "lucide-react";
+import type { Shop } from "@/types";
 import { cn } from "@/lib/utils";
 import { ShopList } from "./ShopList";
 import { ShopMap } from "./ShopMap";
 
-export function ExploreView() {
+export function ExploreView({
+  shops,
+  counts,
+  waitMin,
+  isPending,
+}: {
+  shops: Shop[] | undefined;
+  counts: Record<string, number>;
+  waitMin: Record<string, number>;
+  isPending: boolean;
+}) {
   const [view, setView] = useState<"map" | "list">("map");
 
   return (
@@ -23,7 +34,7 @@ export function ExploreView() {
           )}
         >
           <MapIcon className="h-4 w-4" />
-          Map
+          ম্যাপ
         </button>
         <button
           type="button"
@@ -36,11 +47,15 @@ export function ExploreView() {
           )}
         >
           <List className="h-4 w-4" />
-          List
+          লিস্ট
         </button>
       </div>
 
-      {view === "map" ? <ShopMap /> : <ShopList />}
+      {view === "map" ? (
+        <ShopMap shops={shops} counts={counts} waitMin={waitMin} isPending={isPending} />
+      ) : (
+        <ShopList shops={shops} counts={counts} waitMin={waitMin} isPending={isPending} />
+      )}
     </div>
   );
 }

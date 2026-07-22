@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QueueFlow (পালা) — লাইভ সিরিয়াল ম্যানেজমেন্ট
+
+সেলুন/পার্লারের জন্য লাইভ কিউ সিস্টেম — কাস্টমার আশেপাশের দোকান দেখে সিরিয়াল বুক করে, লাইভ ETA ট্র্যাক করে; দোকানদার একটা লাইভ কিউ বোর্ডে সিরিয়াল ম্যানেজ করে।
+
+- প্রোডাক্ট স্পেক (ফিচার, ডেটা মডেল, ফ্লো): [`PROJECT-SPEC.md`](./PROJECT-SPEC.md)
+- ভিজ্যুয়াল ডিজাইন স্পেক (Palaa প্রোটোটাইপ, ডিজাইন টোকেন): [`design/design_handoff_palaa/README.md`](./design/design_handoff_palaa/README.md)
+- স্ট্যাক: Next.js (App Router) + React + Tailwind, Supabase (Auth/Postgres/Realtime)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ডিজাইন রোডম্যাপ — স্প্রিন্ট বাই স্প্রিন্ট
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**লক্ষ্য:** এই প্রজেক্টের ফাংশনাল বেস (Next.js + Supabase, auth, booking, চেয়ার-ভিত্তিক লাইভ কিউ) ইতিমধ্যে কাজ করছে ([`PROJECT-SPEC.md`](./PROJECT-SPEC.md) §৬)। এখন লক্ষ্য হলো `design/design_handoff_palaa` প্রোটোটাইপের ভিজ্যুয়াল ডিজাইন (Warm থিম, টোকেন, কম্পোনেন্ট, ইন্টারঅ্যাকশন) এই existing অ্যাপের উপর pixel-faithful ভাবে বসানো — নতুন স্ট্যাকে migrate না করে। প্রতিটা স্প্রিন্ট আলাদাভাবে শেষ করে পরেরটায় যাওয়া হবে; নিচের অর্ডার প্রস্তাবিত, দরকার হলে পরিবর্তনযোগ্য।
 
-## Learn More
+সব স্প্রিন্টেই **মোবাইল-ফার্স্ট রেসপনসিভ** বাধ্যতামূলক — কাস্টমার স্ক্রিন ছোট ফোনেও স্বাভাবিক লাগতে হবে (প্রোটোটাইপের 392px ফ্রেম শুধু রেফারেন্স, hard-coded width না), প্রোভাইডার ড্যাশবোর্ড ট্যাবলেট সাইজেও ভাঙবে না।
 
-To learn more about Next.js, take a look at the following resources:
+### Sprint 0 — ডিজাইন সিস্টেম ফাউন্ডেশন
+- Google Fonts যোগ: Hind Siliguri, Anek Bangla, Space Grotesk
+- Tailwind/CSS ভ্যারিয়েবলে Warm + Cool থিম টোকেন (`--paper`, `--card`, `--ink`, `--accent`, `--brass`, `--live`, `--good` ইত্যাদি) — Warm ডিফল্ট
+- বেস প্রিমিটিভ কম্পোনেন্ট রিফ্যাক্টর/এক্সটেন্ড: Card, Button, Badge/Pill, Toast (bottom-center, pop, auto-dismiss), CountdownRing (SVG), CountdownBar
+- অ্যানিমেশন ইউটিলিটি: `pulse` (লাইভ ডট), `fadeUp` (স্ক্রিন ট্রানজিশন), `pop` (toast/card)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Sprint 1 — কাস্টমার: হোম / এক্সপ্লোর রিস্টাইল
+- "কাছের সেলুন" লেআউট, লোকেশন রো, active-booking ডার্ক ব্যানার কার্ড
+- স্ট্যাট চিপ (খোলা দোকান সংখ্যা, মিনিমাম ওয়েট), শপ কার্ড (অ্যাভাটার, "নিয়মিত" ব্যাজ, রেটিং, queue/wait পিল রং-কোডেড)
+- বিদ্যমান list/map টগল ও Leaflet ম্যাপকে এই ডিজাইনের ভেতরে ফিট করা
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Sprint 2 — কাস্টমার: শপ ডিটেইল + বুকিং রিস্টাইল
+- অ্যাক্সেন্ট-গ্রেডিয়েন্ট হেডার, ওভারল্যাপিং অ্যাভাটার, স্ট্যাট টাইল ৩টা
+- সার্ভিস মাল্টি-সিলেক্ট লিস্ট (চেকবক্স, সিলেক্টেড টিন্ট/বর্ডার)
+- স্টিকি বটম বার (অটো-সাম টোটাল সময়/৳, CTA)
+- অ্যাডভান্স পেমেন্ট টগল কার্ড (UI only — গেটওয়ে Sprint 9-এ)
 
-## Deploy on Vercel
+### Sprint 3 — কাস্টমার: লাইভ ট্র্যাকিং রিস্টাইল
+- ডার্ক কাউন্টডাউন কার্ড, Ring/Bar দুই ভ্যারিয়েন্ট
+- "তোমার আগে যারা" লিস্ট, currently-serving হাইলাইট, cumulative ETA রো
+- বিদ্যমান চেয়ার-ভিত্তিক ETA লজিকের সাথে ম্যাপ করা (নিচে "Open Decision" দ্রষ্টব্য)
+- রিভিউ CTA বাটন → Sprint 8
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Sprint 4 — প্রোভাইডার: সাইডবার + লাইভ কিউ ড্যাশবোর্ড রিস্টাইল
+- ডার্ক সাইডবার (শপ আইডেন্টিটি, নেভ + লাইভ কাউন্ট ব্যাজ, পিন করা today-income কার্ড)
+- Now-serving ডার্ক কার্ড (কাউন্টডাউন + "✓ কাজ সম্পন্ন" বাটন), waiting list রো, খালি স্টেট
+- মাল্টি-চেয়ার লেআউটকে Palaa-স্টাইলে অ্যাডাপ্ট করা (নিচে "Open Decision" দ্রষ্টব্য)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Sprint 5 — প্রোভাইডার: ইনকাম (নতুন ফিচার)
+- Day/Month/Year স্ট্যাট কার্ড, ১২-মাসের বার চার্ট, পার-সার্ভিস ইনকাম প্রগ্রেস বার
+- job "Done" হলে অটো ইনকাম যোগ হওয়ার লজিক (ব্যাকএন্ড)
+
+### Sprint 6 — প্রোভাইডার: অ্যানালিটিক্স (নতুন ফিচার)
+- KPI (daily avg, peak time, avg service time), hourly/weekly লোড চার্ট, ইনসাইট লিস্ট
+
+### Sprint 7 — প্রোভাইডার: সার্ভিস ও রেট রিস্টাইল
+- বিদ্যমান সার্ভিস ম্যানেজমেন্টকে ২-কলাম কার্ড গ্রিডে রিস্টাইল (ইমোজি টাইল, মিনিট, ৳, চালু/বন্ধ)
+
+### Sprint 8 — নিয়মিত কাস্টমার + রিমাইন্ডার, রিভিউ + Trust Score (নতুন ফিচার)
+- ভিজিট হিস্ট্রি থেকে "নিয়মিত কাস্টমার" ডেটা মডেল, রিমাইন্ডার বাটন স্টেট
+- রিভিউ ফ্লো (কাস্টমার সাইড স্টার + টেক্সট) + প্রোভাইডার রিভিউ সামারি স্ক্রিন
+- Trust Score ক্যালকুলেশন (completed vs no-show) + কাস্টমার প্রোফাইল স্ক্রিন (হিস্ট্রি সহ)
+
+### Sprint 9 — অ্যাডভান্স পেমেন্ট (মকড gateway)
+- bKash/Nagad মকড ফ্লো, ইন্টারফেস এমনভাবে যেন পরে রিয়েল গেটওয়ে সোয়াপ করা যায়
+- সার্ভার-সাইডে one-active-serial-per-customer এনফোর্সমেন্ট ভেরিফাই/হার্ডেন
+
+### Sprint 10 — থিম টগল + পলিশ + রেসপনসিভ QA পাস
+- Warm/Cool থিম টগল (prototype-only চ্রোম বাদে, প্রোডাক্ট সেটিংসে)
+- ফুল মোবাইল/ট্যাবলেট/ডেস্কটপ রেসপনসিভ পাস, সব স্ক্রিনে অ্যানিমেশন/ইন্টারঅ্যাকশন পলিশ
+
+### Sprint 11 — ভাষা টগল (বাংলা/ইংরেজি)
+- Bangla-primary স্ট্রিং একটা কেন্দ্রীয় ডিকশনারিতে সরানো (এখন পর্যন্ত হার্ডকোড করা সব স্ক্রিনে — রিফ্যাক্টর প্রয়োজন)
+- ইংরেজি অনুবাদ + প্রোফাইল/সেটিংসে ভাষা সিলেক্টর, প্রেফারেন্স persist করা
+- ডিফল্ট থাকবে বাংলা (নিচে "কনফার্মড সিদ্ধান্ত" দ্রষ্টব্য)
+
+### Sprint 12 — টেস্টিং
+- ETA ক্যালকুলেশন ইউনিট টেস্ট (serial N wait = current remaining + Σ service minutes of 2…N−1)
+- কী ফ্লো QA: বুকিং → লাইভ ট্র্যাকিং → mark done → ইনকাম আপডেট
+
+---
+
+**কনফার্মড সিদ্ধান্ত:**
+1. **Multi-chair রাখা হচ্ছে, Palaa-স্টাইলে।** এই প্রজেক্টের ডেটা মডেল multi-chair/staff-ভিত্তিক প্যারালাল কিউ সাপোর্ট করে (Trello-স্টাইল কলাম) — এটা বাদ দেওয়া হচ্ছে না। Sprint 4-এ প্রতি চেয়ারের জন্য একটা Palaa-স্টাইল now-serving কার্ড পাশাপাশি বসানো হবে (multi-chair ফিচার অক্ষত থাকবে, শুধু ভিজ্যুয়াল ভাষা Palaa থেকে নেওয়া হবে)। কাস্টমার-সাইড ভিউ প্রভাবিত হয় না যেহেতু কাস্টমার শুধু নিজের সিরিয়াল দেখে।
+2. **স্ট্যাক migrate করা হচ্ছে না** — ডিজাইন হ্যান্ডঅফের সাজেস্টেড স্ট্যাক (Vite+Express+Socket.IO+Prisma) বাদ দিয়ে বিদ্যমান Next.js + Supabase Realtime স্ট্যাকের উপর ডিজাইন বসানো হবে।
+3. **ভাষা: এখন বাংলা-only, ইংরেজি টগল পরে (Sprint 11)।** বাংলাদেশের ইউজারদের জন্য বাংলা primary — এটা design handoff-এর মূল intent-ও। এখনই দুই ভাষা একসাথে বানালে প্রতিটা বাকি স্প্রিন্টের কাজ কার্যত দ্বিগুণ হয়ে যায় (প্রতিটা স্ক্রিনে দুইটা করে স্ট্রিং সেট + সুইচার UI + persistence)। তার বদলে প্ল্যান: কোর ফিচার সেটগুলো (Sprint 2–9) বাংলায় শেষ করে, শেষে একটা আলাদা Sprint 11-এ ইংরেজি টগল যোগ করা — ততক্ষণে স্ক্রিন সংখ্যা স্থির থাকবে বলে রিফ্যাক্টর/অনুবাদের কাজ একবারেই গোছানো যাবে।

@@ -31,10 +31,12 @@ interface LocatedShop extends Shop {
 
 export default function ShopMapInner({
   shops,
-  queueCounts,
+  counts,
+  waitMin,
 }: {
   shops: LocatedShop[];
-  queueCounts: Record<string, number>;
+  counts: Record<string, number>;
+  waitMin: Record<string, number>;
 }) {
   const avgLat = shops.reduce((a, s) => a + s.latitude, 0) / shops.length;
   const avgLng = shops.reduce((a, s) => a + s.longitude, 0) / shops.length;
@@ -52,7 +54,8 @@ export default function ShopMapInner({
         attribution="&copy; OpenStreetMap contributors"
       />
       {shops.map((shop) => {
-        const count = queueCounts[shop.id] ?? 0;
+        const count = counts[shop.id] ?? 0;
+        const wait = waitMin[shop.id] ?? 0;
         return (
           <Marker
             key={shop.id}
@@ -67,13 +70,13 @@ export default function ShopMapInner({
                   {shop.address ? ` · ${shop.address}` : ""}
                 </p>
                 <p className="text-xs font-medium text-ink">
-                  {count === 0 ? "No wait" : `${count} waiting`}
+                  {count === 0 ? "কোনো সিরিয়াল নেই" : `চলছে ${count} সিরিয়াল · ~${wait} মিন ওয়েট`}
                 </p>
                 <Link
                   href={`/explore/${shop.id}`}
                   className="mt-1 inline-block text-xs font-semibold text-accent underline"
                 >
-                  View shop
+                  দোকান দেখো
                 </Link>
               </div>
             </Popup>

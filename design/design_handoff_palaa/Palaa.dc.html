@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Anek+Bangla:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  :root {
+    --paper:#F1EDE4; --card:#FFFDF8; --soft:#F7F3EA; --ink:#1B1812; --muted:#857E70;
+    --line:#E7E0D2; --accent:#1C5D44; --accent-ink:#F4F1EA; --brass:#B5852F; --brass-soft:#F3E7CC;
+    --live:#CF4E25; --live-soft:#FBE4D8; --good:#2E7D5B; --good-soft:#DCEFE4; --shadow:24px 24px 60px rgba(40,32,15,.10);
+    --font-bn:'Hind Siliguri',system-ui,sans-serif; --font-display:'Anek Bangla','Hind Siliguri',sans-serif; --font-num:'Space Grotesk',monospace;
+  }
+  [data-theme="cool"] {
+    --paper:#EEF1F6; --card:#FFFFFF; --soft:#F4F6FA; --ink:#14161C; --muted:#6A7280;
+    --line:#E3E7EF; --accent:#3B3BDA; --accent-ink:#FFFFFF; --brass:#7C6CF0; --brass-soft:#E9E6FC;
+    --live:#E0453B; --live-soft:#FBE2E0; --good:#1F9D6B; --good-soft:#DBF1E8; --shadow:24px 24px 60px rgba(20,30,70,.12);
+  }
+  body { background:var(--paper); color:var(--ink); font-family:var(--font-bn); -webkit-font-smoothing:antialiased; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.82)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pop { 0%{transform:scale(.92);opacity:0} 100%{transform:scale(1);opacity:1} }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.14); border-radius:8px; }
+</style>
+</helmet>
+<div data-theme="{{ theme }}" data-cd="{{ cd }}" style="min-height:100vh; background:var(--paper); display:flex; flex-direction:column;">
+
+  <!-- PROTOTYPE CHROME -->
+  <div style="display:flex; align-items:center; gap:18px; padding:14px 22px; background:var(--ink); color:var(--paper); position:sticky; top:0; z-index:50;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:30px; height:30px; border-radius:9px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; color:var(--accent-ink); font-size:18px;">প</div>
+      <div style="font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:.2px;">পালা <span style="opacity:.5; font-family:var(--font-num); font-weight:500; font-size:13px;">/ Palaa</span></div>
+    </div>
+    <div style="display:flex; background:rgba(255,255,255,.10); border-radius:11px; padding:4px; gap:2px;">
+      <button onClick="{{ goCustomer }}" style="{{ tabCustomerStyle }}">কাস্টমার <span style="opacity:.6; font-size:11px;">App</span></button>
+      <button onClick="{{ goShop }}" style="{{ tabShopStyle }}">দোকানদার <span style="opacity:.6; font-size:11px;">Dashboard</span></button>
+    </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:14px;">
+      <div style="display:flex; align-items:center; gap:7px; font-size:12px; opacity:.7;">থিম
+        <div style="display:flex; background:rgba(255,255,255,.10); border-radius:9px; padding:3px;">
+          <button onClick="{{ themeWarm }}" style="{{ themeWarmStyle }}">Warm</button>
+          <button onClick="{{ themeCool }}" style="{{ themeCoolStyle }}">Cool</button>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:7px; font-size:12px; opacity:.7;">কাউন্টডাউন
+        <div style="display:flex; background:rgba(255,255,255,.10); border-radius:9px; padding:3px;">
+          <button onClick="{{ cdRing }}" style="{{ cdRingStyle }}">Ring</button>
+          <button onClick="{{ cdBar }}" style="{{ cdBarStyle }}">Bar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CUSTOMER (mobile) ===================== -->
+  <sc-if value="{{ isCustomer }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1; display:flex; justify-content:center; padding:34px 20px 48px; background:radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 7%, var(--paper)) 0%, var(--paper) 60%);">
+    <div style="width:392px; min-height:812px; background:var(--card); border-radius:42px; box-shadow:var(--shadow); border:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column; position:relative;">
+      <!-- status bar -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 26px 6px; font-family:var(--font-num); font-size:13px; font-weight:600; color:var(--ink);">
+        <span>9:41</span>
+        <span style="display:flex; gap:6px; align-items:center; opacity:.8;">‖‖ ▾ 100%</span>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; position:relative;">
+
+        <!-- HOME: nearby shops -->
+        <sc-if value="{{ cHome }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:8px 22px 120px; animation:fadeUp .3s ease;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; margin:8px 0 4px;">
+            <div>
+              <div style="font-size:13px; color:var(--muted);">আসসালামু আলাইকুম 👋</div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:25px; line-height:1.15; margin-top:2px;">কাছের সেলুন</div>
+            </div>
+            <div style="width:44px; height:44px; border-radius:14px; background:var(--soft); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent); font-family:var(--font-display);">তু</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-bottom:16px;">
+            <span style="color:var(--accent);">◉</span> মিরপুর ১০, ঢাকা <span style="margin-left:auto; color:var(--accent); font-weight:600; cursor:pointer;">পরিবর্তন</span>
+          </div>
+
+          <sc-if value="{{ hasBooking }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ goTrack }}" style="cursor:pointer; background:var(--ink); color:var(--paper); border-radius:20px; padding:16px 18px; margin-bottom:18px; display:flex; align-items:center; gap:14px; animation:pop .3s ease;">
+            <div style="position:relative; width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.10); display:flex; align-items:center; justify-content:center;">
+              <span style="width:9px; height:9px; border-radius:50%; background:var(--live); display:block; animation:pulse 1.4s infinite;"></span>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px; opacity:.6;">তোমার সিরিয়াল চলছে · {{ bookShopName }}</div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:16px;">সিরিয়াল #{{ youPos }} · আনুমানিক {{ youWaitLabel }}</div>
+            </div>
+            <span style="opacity:.5; font-size:20px;">›</span>
+          </div>
+          </sc-if>
+
+          <div style="display:flex; gap:9px; margin-bottom:16px;">
+            <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:13px; padding:11px 13px;">
+              <div style="font-family:var(--font-num); font-weight:700; font-size:19px;">{{ openShopCount }}</div>
+              <div style="font-size:11px; color:var(--muted);">খোলা দোকান</div>
+            </div>
+            <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:13px; padding:11px 13px;">
+              <div style="font-family:var(--font-num); font-weight:700; font-size:19px;">~{{ minWait }}<span style="font-size:12px;">মিন</span></div>
+              <div style="font-size:11px; color:var(--muted);">সবচেয়ে কম ওয়েট</div>
+            </div>
+          </div>
+
+          <div style="font-size:13px; font-weight:600; color:var(--muted); margin:4px 2px 12px; text-transform:uppercase; letter-spacing:.4px;">আশেপাশের দোকান</div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <sc-for list="{{ shops }}" as="shop" hint-placeholder-count="3">
+            <div onClick="{{ shop.onOpen }}" style="cursor:pointer; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; display:flex; gap:13px; align-items:center; box-shadow:0 1px 0 var(--line); transition:transform .12s ease;" style-hover="transform:translateY(-2px); border-color:var(--accent);">
+              <div style="width:54px; height:54px; border-radius:15px; background:{{ shop.avatarBg }}; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:21px; color:#fff; flex-shrink:0;">{{ shop.initial }}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:7px;">
+                  <span style="font-family:var(--font-display); font-weight:700; font-size:16px;">{{ shop.name }}</span>
+                  <sc-if value="{{ shop.isFav }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px; color:var(--brass); background:var(--brass-soft); padding:2px 7px; border-radius:20px; font-weight:600;">নিয়মিত</span></sc-if>
+                </div>
+                <div style="font-size:12px; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:8px;">
+                  <span style="color:var(--brass);">★ {{ shop.rating }}</span> · {{ shop.dist }} · {{ shop.area }}
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+                  <span style="font-size:11px; background:var(--soft); border:1px solid var(--line); padding:3px 9px; border-radius:20px; color:var(--ink);">চলছে <b style="font-family:var(--font-num);">{{ shop.queue }}</b> সিরিয়াল</span>
+                  <span style="font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; color:{{ shop.waitColor }}; background:{{ shop.waitBg }};">~{{ shop.wait }} মিন ওয়েট</span>
+                </div>
+              </div>
+              <span style="color:var(--line); font-size:22px;">›</span>
+            </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- SHOP DETAIL + BOOK -->
+        <sc-if value="{{ cShop }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeUp .3s ease; padding-bottom:150px;">
+          <div style="height:118px; background:linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #000)); position:relative;">
+            <button onClick="{{ goHome }}" style="position:absolute; top:14px; left:16px; width:36px; height:36px; border-radius:11px; background:rgba(255,255,255,.18); border:none; color:#fff; font-size:18px; cursor:pointer;">‹</button>
+          </div>
+          <div style="padding:0 22px;">
+            <div style="display:flex; gap:14px; margin-top:-30px; align-items:flex-end;">
+              <div style="width:74px; height:74px; border-radius:20px; background:{{ activeShop.avatarBg }}; border:4px solid var(--card); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:30px; color:#fff;">{{ activeShop.initial }}</div>
+              <div style="padding-bottom:4px;">
+                <div style="font-family:var(--font-display); font-weight:700; font-size:21px; line-height:1.1;">{{ activeShop.name }}</div>
+                <div style="font-size:12px; color:var(--muted);">★ {{ activeShop.rating }} · {{ activeShop.area }} · {{ activeShop.dist }}</div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:9px; margin:18px 0;">
+              <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:12px; text-align:center;">
+                <div style="font-family:var(--font-num); font-weight:700; font-size:22px;">{{ activeShop.queue }}</div>
+                <div style="font-size:11px; color:var(--muted);">এখন সিরিয়াল</div>
+              </div>
+              <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:12px; text-align:center;">
+                <div style="font-family:var(--font-num); font-weight:700; font-size:22px; color:var(--live);">~{{ activeShop.wait }}<span style="font-size:13px;">মি</span></div>
+                <div style="font-size:11px; color:var(--muted);">আনুমানিক ওয়েট</div>
+              </div>
+              <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:12px; text-align:center;">
+                <div style="font-family:var(--font-num); font-weight:700; font-size:22px;">{{ activeShop.reviews }}</div>
+                <div style="font-size:11px; color:var(--muted);">রিভিউ</div>
+              </div>
+            </div>
+
+            <div style="font-size:13px; font-weight:600; color:var(--muted); margin:6px 2px 11px; text-transform:uppercase; letter-spacing:.4px;">সার্ভিস বেছে নাও</div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ bookServices }}" as="sv" hint-placeholder-count="4">
+              <div onClick="{{ sv.onToggle }}" style="cursor:pointer; display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:14px; border:1.5px solid {{ sv.borderColor }}; background:{{ sv.bg }}; transition:all .12s ease;">
+                <div style="width:24px; height:24px; border-radius:8px; border:1.5px solid {{ sv.checkBorder }}; background:{{ sv.checkBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; flex-shrink:0;">{{ sv.check }}</div>
+                <div style="flex:1;">
+                  <div style="font-weight:600; font-size:14px;">{{ sv.name }}</div>
+                  <div style="font-size:11px; color:var(--muted);">~{{ sv.min }} মিনিট</div>
+                </div>
+                <div style="font-family:var(--font-num); font-weight:600; font-size:15px;">৳{{ sv.rate }}</div>
+              </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:18px; background:var(--soft); border:1px solid var(--line); border-radius:16px; padding:14px;">
+              <label style="display:flex; align-items:center; gap:12px; cursor:pointer;" onClick="{{ toggleAdvance }}">
+                <div style="width:42px; height:24px; border-radius:20px; background:{{ advanceTrackBg }}; position:relative; transition:all .15s; flex-shrink:0;">
+                  <div style="position:absolute; top:2px; left:{{ advanceKnobX }}; width:20px; height:20px; border-radius:50%; background:#fff; transition:all .15s; box-shadow:0 1px 3px rgba(0,0,0,.2);"></div>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-weight:600; font-size:13px;">অ্যাডভান্স পেমেন্ট দিয়ে সিরিয়াল লক করো</div>
+                  <div style="font-size:11px; color:var(--muted);">bKash/Nagad — সিরিয়াল কনফার্ম ও সিকিউর থাকবে</div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- LIVE TRACKING -->
+        <sc-if value="{{ cTrack }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeUp .3s ease; padding:8px 22px 130px;">
+          <div style="display:flex; align-items:center; gap:10px; margin:6px 0 4px;">
+            <button onClick="{{ goHome }}" style="width:36px; height:36px; border-radius:11px; background:var(--soft); border:1px solid var(--line); font-size:18px; cursor:pointer; color:var(--ink);">‹</button>
+            <div>
+              <div style="font-family:var(--font-display); font-weight:700; font-size:18px; line-height:1;">{{ bookShopName }}</div>
+              <div style="font-size:12px; color:var(--muted);">তোমার লাইভ সিরিয়াল</div>
+            </div>
+            <span style="margin-left:auto; display:flex; align-items:center; gap:6px; font-size:11px; color:var(--live); font-weight:600;"><span style="width:7px;height:7px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite;"></span>LIVE</span>
+          </div>
+
+          <!-- RING layout -->
+          <sc-if value="{{ cdIsRing }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:18px; background:var(--ink); color:var(--paper); border-radius:26px; padding:28px 22px; text-align:center; position:relative; overflow:hidden;">
+            <div style="font-size:12px; opacity:.55; letter-spacing:.5px;">তোমার সিরিয়াল আসতে বাকি</div>
+            <div style="position:relative; width:210px; height:210px; margin:14px auto 6px;">
+              <svg width="210" height="210" viewBox="0 0 210 210" style="transform:rotate(-90deg);">
+                <circle cx="105" cy="105" r="92" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="14"></circle>
+                <circle cx="105" cy="105" r="92" fill="none" stroke="var(--live)" stroke-width="14" stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="{{ ringOffset }}" style="transition:stroke-dashoffset 1s linear;"></circle>
+              </svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <div style="font-family:var(--font-num); font-weight:700; font-size:42px; line-height:1; letter-spacing:-1px;">{{ youWaitBig }}</div>
+                <div style="font-size:12px; opacity:.5; margin-top:3px;">{{ youWaitUnit }}</div>
+              </div>
+            </div>
+            <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.10); padding:8px 16px; border-radius:30px; margin-top:4px;">
+              <span style="opacity:.6; font-size:12px;">তোমার সিরিয়াল</span>
+              <span style="font-family:var(--font-display); font-weight:800; font-size:20px; color:var(--live);">#{{ youPos }}</span>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- BAR layout -->
+          <sc-if value="{{ cdIsBar }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px; background:var(--ink); color:var(--paper); border-radius:26px; padding:24px 22px;">
+            <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+              <div>
+                <div style="font-size:12px; opacity:.55;">তোমার সিরিয়াল আসতে বাকি</div>
+                <div style="font-family:var(--font-num); font-weight:700; font-size:46px; line-height:1; letter-spacing:-1px; margin-top:6px;">{{ youWaitBig }} <span style="font-size:16px; opacity:.5; font-weight:500;">{{ youWaitUnit }}</span></div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:11px; opacity:.5;">সিরিয়াল</div>
+                <div style="font-family:var(--font-display); font-weight:800; font-size:30px; color:var(--live);">#{{ youPos }}</div>
+              </div>
+            </div>
+            <div style="height:12px; border-radius:10px; background:rgba(255,255,255,.12); margin-top:18px; overflow:hidden;">
+              <div style="height:100%; width:{{ progressWidth }}; background:var(--live); border-radius:10px; transition:width 1s linear;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; opacity:.5; margin-top:8px;"><span>এখন চলছে</span><span>তোমার পালা</span></div>
+          </div>
+          </sc-if>
+
+          <div style="font-size:13px; font-weight:600; color:var(--muted); margin:22px 2px 12px; text-transform:uppercase; letter-spacing:.4px;">তোমার আগে যারা ({{ aheadCount }} জন)</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ aheadList }}" as="p" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 13px; border-radius:14px; background:{{ p.rowBg }}; border:1px solid var(--line);">
+              <div style="width:30px; height:30px; border-radius:10px; background:{{ p.numBg }}; color:{{ p.numColor }}; display:flex; align-items:center; justify-content:center; font-family:var(--font-num); font-weight:700; font-size:14px;">{{ p.pos }}</div>
+              <div style="flex:1;">
+                <div style="font-weight:600; font-size:13px;">{{ p.name }}</div>
+                <div style="font-size:11px; color:var(--muted);">{{ p.svc }}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:var(--font-num); font-weight:600; font-size:13px; color:{{ p.timeColor }};">{{ p.time }}</div>
+                <div style="font-size:10px; color:var(--muted);">{{ p.timeNote }}</div>
+              </div>
+            </div>
+            </sc-for>
+            <div style="display:flex; align-items:center; gap:12px; padding:13px; border-radius:14px; background:var(--accent); color:var(--accent-ink);">
+              <div style="width:30px; height:30px; border-radius:10px; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-family:var(--font-num); font-weight:700; font-size:14px;">{{ youPos }}</div>
+              <div style="flex:1; font-weight:700; font-size:14px;">তুমি (You)</div>
+              <div style="font-family:var(--font-num); font-weight:600; font-size:13px;">{{ youWaitLabel }}</div>
+            </div>
+          </div>
+          <button onClick="{{ goReview }}" style="width:100%; margin-top:20px; padding:13px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font-family:var(--font-bn); font-weight:600; font-size:14px; cursor:pointer;">কাজ শেষ? রিভিউ দাও ★</button>
+        </div>
+        </sc-if>
+
+        <!-- REVIEW -->
+        <sc-if value="{{ cReview }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeUp .3s ease; padding:8px 22px 130px;">
+          <button onClick="{{ goTrack }}" style="width:36px; height:36px; border-radius:11px; background:var(--soft); border:1px solid var(--line); font-size:18px; cursor:pointer; color:var(--ink); margin:6px 0 12px;">‹</button>
+          <div style="text-align:center; margin-top:10px;">
+            <div style="width:64px; height:64px; border-radius:20px; margin:0 auto; background:{{ bookShopAvatar }}; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:26px; color:#fff;">{{ bookShopInitial }}</div>
+            <div style="font-family:var(--font-display); font-weight:700; font-size:21px; margin-top:12px;">{{ bookShopName }} কেমন ছিল?</div>
+            <div style="font-size:13px; color:var(--muted); margin-top:2px;">তোমার রিভিউ দোকানের অথেন্টিসিটি বাড়াবে</div>
+          </div>
+          <div style="display:flex; justify-content:center; gap:10px; margin:26px 0;">
+            <sc-for list="{{ stars }}" as="st" hint-placeholder-count="5">
+            <button onClick="{{ st.onPick }}" style="background:none; border:none; cursor:pointer; font-size:42px; line-height:1; color:{{ st.color }}; transition:transform .1s;" style-hover="transform:scale(1.15);">★</button>
+            </sc-for>
+          </div>
+          <div style="text-align:center; font-weight:600; color:var(--accent); height:20px;">{{ ratingLabel }}</div>
+          <div style="margin-top:18px;">
+            <textarea placeholder="অভিজ্ঞতা লিখো (ঐচ্ছিক)…" style="width:100%; min-height:90px; border:1px solid var(--line); border-radius:14px; padding:13px; font-family:var(--font-bn); font-size:13px; background:var(--soft); color:var(--ink); resize:none;"></textarea>
+          </div>
+          <button onClick="{{ submitReview }}" style="width:100%; margin-top:14px; padding:15px; border-radius:15px; border:none; background:var(--accent); color:var(--accent-ink); font-family:var(--font-display); font-weight:700; font-size:15px; cursor:pointer;">রিভিউ সাবমিট করো</button>
+        </div>
+        </sc-if>
+
+        <!-- PROFILE -->
+        <sc-if value="{{ cProfile }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeUp .3s ease; padding:8px 22px 130px;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:23px; margin:10px 0 16px;">আমার প্রোফাইল</div>
+          <div style="background:var(--ink); color:var(--paper); border-radius:22px; padding:20px; display:flex; gap:15px; align-items:center;">
+            <div style="width:60px; height:60px; border-radius:18px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:24px; color:var(--accent-ink);">তু</div>
+            <div style="flex:1;">
+              <div style="font-family:var(--font-display); font-weight:700; font-size:18px;">তুহিন আহমেদ</div>
+              <div style="font-size:12px; opacity:.55;">+880 1712-345678</div>
+            </div>
+            <div style="text-align:center; background:rgba(255,255,255,.10); border-radius:14px; padding:8px 12px;">
+              <div style="font-family:var(--font-num); font-weight:700; font-size:20px; color:var(--good);">{{ trustScore }}</div>
+              <div style="font-size:10px; opacity:.6;">ট্রাস্ট স্কোর</div>
+            </div>
+          </div>
+          <div style="background:var(--good-soft); border:1px solid color-mix(in srgb, var(--good) 25%, transparent); border-radius:16px; padding:13px 15px; margin-top:13px; display:flex; gap:11px; align-items:center;">
+            <span style="font-size:22px;">🛡️</span>
+            <div style="font-size:12px; color:var(--ink); line-height:1.4;"><b>বিশ্বস্ত কাস্টমার।</b> তুমি সিরিয়াল দিয়ে সার্ভিস নাও — তাই দোকানদাররা তোমার সিরিয়াল অগ্রাধিকার দেয়।</div>
+          </div>
+          <div style="display:flex; gap:9px; margin-top:13px;">
+            <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:13px; text-align:center;"><div style="font-family:var(--font-num); font-weight:700; font-size:21px;">{{ visitCount }}</div><div style="font-size:11px; color:var(--muted);">মোট ভিজিট</div></div>
+            <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:13px; text-align:center;"><div style="font-family:var(--font-num); font-weight:700; font-size:21px;">0</div><div style="font-size:11px; color:var(--muted);">নো-শো</div></div>
+            <div style="flex:1; background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:13px; text-align:center;"><div style="font-family:var(--font-num); font-weight:700; font-size:21px;">2</div><div style="font-size:11px; color:var(--muted);">নিয়মিত দোকান</div></div>
+          </div>
+          <div style="font-size:13px; font-weight:600; color:var(--muted); margin:20px 2px 11px; text-transform:uppercase; letter-spacing:.4px;">সিরিয়াল হিস্টরি</div>
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 13px; border-radius:14px; background:var(--card); border:1px solid var(--line);">
+              <div style="width:40px; height:40px; border-radius:12px; background:{{ h.bg }}; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; color:#fff;">{{ h.initial }}</div>
+              <div style="flex:1;"><div style="font-weight:600; font-size:13px;">{{ h.shop }}</div><div style="font-size:11px; color:var(--muted);">{{ h.svc }} · {{ h.date }}</div></div>
+              <div style="text-align:right;"><div style="font-family:var(--font-num); font-weight:600; font-size:13px;">৳{{ h.amount }}</div><div style="font-size:10px; color:var(--brass);">★ {{ h.rated }}</div></div>
+            </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+
+      <!-- bottom action bar (book) shown on shop detail -->
+      <sc-if value="{{ cShop }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute; bottom:0; left:0; right:0; padding:14px 20px 22px; background:linear-gradient(to top, var(--card) 70%, transparent); display:flex; gap:12px; align-items:center;">
+        <div>
+          <div style="font-size:11px; color:var(--muted);">মোট · {{ bookTotalMin }} মিনিট</div>
+          <div style="font-family:var(--font-num); font-weight:700; font-size:22px;">৳{{ bookTotalAmount }}</div>
+        </div>
+        <button onClick="{{ confirmBooking }}" style="flex:1; padding:15px; border-radius:16px; border:none; background:var(--accent); color:var(--accent-ink); font-family:var(--font-display); font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 8px 20px color-mix(in srgb, var(--accent) 40%, transparent);">{{ bookCtaLabel }}</button>
+      </div>
+      </sc-if>
+
+      <!-- bottom nav (home/track/profile) -->
+      <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; bottom:0; left:0; right:0; display:flex; padding:10px 26px 26px; background:var(--card); border-top:1px solid var(--line);">
+        <button onClick="{{ goHome }}" style="{{ navHomeStyle }}"><span style="font-size:20px;">⌂</span><span style="font-size:10px;">হোম</span></button>
+        <button onClick="{{ goTrack }}" style="{{ navTrackStyle }}"><span style="font-size:19px; position:relative;">◉<sc-if value="{{ hasBooking }}" hint-placeholder-val="{{ false }}"><span style="position:absolute; top:-2px; right:-4px; width:7px; height:7px; border-radius:50%; background:var(--live);"></span></sc-if></span><span style="font-size:10px;">সিরিয়াল</span></button>
+        <button onClick="{{ goProfile }}" style="{{ navProfileStyle }}"><span style="font-size:19px;">○</span><span style="font-size:10px;">প্রোফাইল</span></button>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== SHOP (dashboard) ===================== -->
+  <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; display:flex; min-height:calc(100vh - 60px);">
+    <!-- sidebar -->
+    <div style="width:236px; background:var(--ink); color:var(--paper); padding:22px 16px; display:flex; flex-direction:column; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:11px; padding:0 8px 22px;">
+        <div style="width:42px; height:42px; border-radius:13px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:20px; color:var(--accent-ink);">র</div>
+        <div><div style="font-family:var(--font-display); font-weight:700; font-size:15px;">Rakib Hair Studio</div><div style="font-size:11px; opacity:.5;">মিরপুর ১০ · খোলা</div></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        <button onClick="{{ sQueue }}" style="{{ sQueueStyle }}"><span>◉</span> লাইভ সিরিয়াল <span style="margin-left:auto; font-family:var(--font-num); background:var(--live); color:#fff; font-size:11px; padding:1px 8px; border-radius:20px;">{{ queueCount }}</span></button>
+        <button onClick="{{ sIncome }}" style="{{ sIncomeStyle }}"><span>৳</span> ইনকাম</button>
+        <button onClick="{{ sAnalytics }}" style="{{ sAnalyticsStyle }}"><span>◔</span> অ্যানালিটিক্স</button>
+        <button onClick="{{ sServices }}" style="{{ sServicesStyle }}"><span>✂</span> সার্ভিস ও রেট</button>
+        <button onClick="{{ sCustomers }}" style="{{ sCustomersStyle }}"><span>♻</span> নিয়মিত কাস্টমার</button>
+        <button onClick="{{ sReviews }}" style="{{ sReviewsStyle }}"><span>★</span> রিভিউ</button>
+      </div>
+      <div style="margin-top:auto; background:rgba(255,255,255,.07); border-radius:14px; padding:14px;">
+        <div style="font-size:11px; opacity:.5;">আজকের আয়</div>
+        <div style="font-family:var(--font-num); font-weight:700; font-size:24px; color:var(--good);">৳{{ todayIncomeLabel }}</div>
+        <div style="font-size:11px; opacity:.5; margin-top:2px;">{{ doneToday }} টি কাজ সম্পন্ন</div>
+      </div>
+    </div>
+
+    <!-- main -->
+    <div style="flex:1; overflow-y:auto; max-height:calc(100vh - 60px);">
+
+      <!-- QUEUE -->
+      <sc-if value="{{ shQueue }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:28px 34px; animation:fadeUp .3s ease;">
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px;">
+          <div>
+            <div style="font-family:var(--font-display); font-weight:700; font-size:27px;">লাইভ সিরিয়াল</div>
+            <div style="font-size:13px; color:var(--muted);">আজ {{ today }} · এখন <b style="color:var(--ink);">{{ queueCount }}</b> জন অপেক্ষায়</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--live); font-weight:600; background:var(--live-soft); padding:7px 13px; border-radius:30px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite;"></span>রিয়েল-টাইম আপডেট হচ্ছে</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:18px;">
+          <!-- now serving -->
+          <div style="background:var(--ink); color:var(--paper); border-radius:22px; padding:24px; position:relative; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:8px; font-size:12px; opacity:.6; margin-bottom:14px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite;"></span>এখন চলছে · সিরিয়াল #1</div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <sc-if value="{{ cdIsRing }}" hint-placeholder-val="{{ true }}">
+              <div style="position:relative; width:128px; height:128px; flex-shrink:0;">
+                <svg width="128" height="128" viewBox="0 0 128 128" style="transform:rotate(-90deg);">
+                  <circle cx="64" cy="64" r="56" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="10"></circle>
+                  <circle cx="64" cy="64" r="56" fill="none" stroke="var(--live)" stroke-width="10" stroke-linecap="round" stroke-dasharray="352" stroke-dashoffset="{{ shopRingOffset }}" style="transition:stroke-dashoffset 1s linear;"></circle>
+                </svg>
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-family:var(--font-num); font-weight:700; font-size:26px; letter-spacing:-1px;">{{ remainingMMSS }}</div>
+                  <div style="font-size:10px; opacity:.5;">বাকি</div>
+                </div>
+              </div>
+              </sc-if>
+              <div style="flex:1;">
+                <div style="font-family:var(--font-display); font-weight:700; font-size:22px;">{{ currentName }}</div>
+                <div style="font-size:13px; opacity:.6; margin-top:2px;">{{ currentSvc }}</div>
+                <sc-if value="{{ cdIsBar }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:14px;">
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;"><span style="opacity:.6;">বাকি সময়</span><span style="font-family:var(--font-num); font-weight:700; color:var(--live);">{{ remainingMMSS }}</span></div>
+                  <div style="height:10px; border-radius:8px; background:rgba(255,255,255,.12); overflow:hidden;"><div style="height:100%; width:{{ progressWidth }}; background:var(--live); transition:width 1s linear;"></div></div>
+                </div>
+                </sc-if>
+                <div style="display:flex; gap:8px; margin-top:16px;">
+                  <span style="font-family:var(--font-num); font-weight:700; font-size:18px;">৳{{ currentAmount }}</span>
+                </div>
+              </div>
+            </div>
+            <button onClick="{{ markDone }}" style="width:100%; margin-top:18px; padding:14px; border-radius:14px; border:none; background:var(--good); color:#fff; font-family:var(--font-display); font-weight:700; font-size:15px; cursor:pointer;">✓ কাজ সম্পন্ন — পরের জন</button>
+          </div>
+
+          <!-- mini stats -->
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px;">
+              <div style="font-size:12px; color:var(--muted);">শেষ কাস্টমারের আনুমানিক ওয়েট</div>
+              <div style="font-family:var(--font-num); font-weight:700; font-size:30px; color:var(--live); margin-top:4px;">{{ lastWaitLabel }}</div>
+              <div style="font-size:11px; color:var(--muted);">সিরিয়াল #{{ queueCount }} এর জন্য</div>
+            </div>
+            <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; flex:1;">
+              <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">আজকের সারাংশ</div>
+              <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;"><span style="color:var(--muted);">সম্পন্ন</span><b style="font-family:var(--font-num);">{{ doneToday }}</b></div>
+              <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px; border-top:1px solid var(--line);"><span style="color:var(--muted);">অপেক্ষায়</span><b style="font-family:var(--font-num);">{{ queueCount }}</b></div>
+              <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px; border-top:1px solid var(--line);"><span style="color:var(--muted);">আজকের আয়</span><b style="font-family:var(--font-num); color:var(--good);">৳{{ todayIncomeLabel }}</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:13px; font-weight:600; color:var(--muted); margin:24px 2px 12px; text-transform:uppercase; letter-spacing:.4px;">অপেক্ষমাণ সিরিয়াল</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <sc-for list="{{ waitingList }}" as="w" hint-placeholder-count="4">
+          <div style="display:flex; align-items:center; gap:16px; padding:15px 18px; border-radius:16px; background:var(--card); border:1px solid var(--line);">
+            <div style="width:38px; height:38px; border-radius:12px; background:var(--soft); display:flex; align-items:center; justify-content:center; font-family:var(--font-num); font-weight:700; font-size:16px; color:var(--ink);">{{ w.pos }}</div>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:8px;"><span style="font-family:var(--font-display); font-weight:700; font-size:16px;">{{ w.name }}</span>
+                <sc-if value="{{ w.fixed }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px; color:var(--brass); background:var(--brass-soft); padding:2px 8px; border-radius:20px; font-weight:600;">নিয়মিত</span></sc-if>
+                <sc-if value="{{ w.advance }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px; color:var(--good); background:var(--good-soft); padding:2px 8px; border-radius:20px; font-weight:600;">✓ অ্যাডভান্স পেইড</span></sc-if>
+              </div>
+              <div style="font-size:12px; color:var(--muted); margin-top:2px;">{{ w.svc }}</div>
+            </div>
+            <div style="text-align:center; min-width:78px;">
+              <div style="font-size:11px; color:var(--muted);">শুরু হবে</div>
+              <div style="font-family:var(--font-num); font-weight:700; font-size:16px; color:var(--live);">{{ w.startsIn }}</div>
+            </div>
+            <div style="text-align:right; min-width:54px;"><div style="font-family:var(--font-num); font-weight:600; font-size:15px;">৳{{ w.amount }}</div></div>
+          </div>
+          </sc-for>
+          <sc-if value="{{ queueEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center; padding:34px; color:var(--muted); background:var(--card); border:1px dashed var(--line); border-radius:16px;">কোনো অপেক্ষমাণ সিরিয়াল নেই 🎉</div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- INCOME -->
+      <sc-if value="{{ shIncome }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 34px; animation:fadeUp .3s ease;">
+        <div style="font-family:var(--font-display); font-weight:700; font-size:27px; margin-bottom:4px;">ইনকাম ট্র্যাকিং</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">প্রতিটি কাজের আয় অটো যোগ হয় — “কাজ সম্পন্ন” চাপলেই</div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+          <div style="background:var(--ink); color:var(--paper); border-radius:20px; padding:22px;">
+            <div style="font-size:13px; opacity:.6;">আজ</div>
+            <div style="font-family:var(--font-num); font-weight:700; font-size:32px; color:var(--good); margin-top:6px;">৳{{ todayIncomeLabel }}</div>
+            <div style="font-size:12px; opacity:.5; margin-top:4px;">{{ doneToday }} টি কাজ</div>
+          </div>
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px;">
+            <div style="font-size:13px; color:var(--muted);">এই মাস (জুন)</div>
+            <div style="font-family:var(--font-num); font-weight:700; font-size:32px; margin-top:6px;">৳{{ monthIncomeLabel }}</div>
+            <div style="font-size:12px; color:var(--good); margin-top:4px;">▲ গত মাসের চেয়ে ১২%</div>
+          </div>
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px;">
+            <div style="font-size:13px; color:var(--muted);">এই বছর (২০২৫)</div>
+            <div style="font-family:var(--font-num); font-weight:700; font-size:32px; margin-top:6px;">৳{{ yearIncomeLabel }}</div>
+            <div style="font-size:12px; color:var(--good); margin-top:4px;">▲ স্থিতিশীল প্রবৃদ্ধি</div>
+          </div>
+        </div>
+
+        <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px; margin-top:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+            <div style="font-weight:600;">গত ১২ মাসের আয়</div>
+            <div style="font-size:12px; color:var(--muted);">৳ হাজারে</div>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:10px; height:170px;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:52%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">জুল</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:48%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">আগ</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:63%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">সেপ</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:58%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">অক্ট</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:72%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">নভ</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:88%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">ডিস</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:60%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">জান</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:55%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">ফেব</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:68%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">মার্চ</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:75%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">এপ্রিল</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:80%; background:var(--brass-soft); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">মে</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:34px; height:94%; background:var(--accent); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--ink); font-weight:600;">জুন</span></div>
+          </div>
+        </div>
+
+        <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px; margin-top:18px;">
+          <div style="font-weight:600; margin-bottom:14px;">সার্ভিস অনুযায়ী আয় (এই মাস)</div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>চুল কাটা</span><b style="font-family:var(--font-num);">৳22,500</b></div><div style="height:8px; border-radius:6px; background:var(--soft);"><div style="height:100%; width:78%; background:var(--accent); border-radius:6px;"></div></div></div>
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>শেভ ও দাড়ি</span><b style="font-family:var(--font-num);">৳12,800</b></div><div style="height:8px; border-radius:6px; background:var(--soft);"><div style="height:100%; width:46%; background:var(--brass); border-radius:6px;"></div></div></div>
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>ফেসিয়াল ও প্যাকেজ</span><b style="font-family:var(--font-num);">৳9,900</b></div><div style="height:8px; border-radius:6px; background:var(--soft);"><div style="height:100%; width:34%; background:var(--good); border-radius:6px;"></div></div></div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ANALYTICS -->
+      <sc-if value="{{ shAnalytics }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 34px; animation:fadeUp .3s ease;">
+        <div style="font-family:var(--font-display); font-weight:700; font-size:27px; margin-bottom:4px;">কাস্টমার অ্যানালিটিক্স</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">কখন কেমন চাপ থাকে বুঝে নাও — কর্মী ও সময় পরিকল্পনা করো</div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:18px;">
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px;"><div style="font-size:12px; color:var(--muted);">দৈনিক গড় কাস্টমার</div><div style="font-family:var(--font-num); font-weight:700; font-size:28px;">18</div></div>
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px;"><div style="font-size:12px; color:var(--muted);">পিক টাইম</div><div style="font-family:var(--font-num); font-weight:700; font-size:28px; color:var(--live);">7–9 PM</div></div>
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px;"><div style="font-size:12px; color:var(--muted);">গড় সার্ভিস সময়</div><div style="font-family:var(--font-num); font-weight:700; font-size:28px;">26<span style="font-size:15px;">মি</span></div></div>
+        </div>
+
+        <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px; margin-bottom:18px;">
+          <div style="font-weight:600; margin-bottom:16px;">সময় অনুযায়ী কাস্টমার চাপ (আজ)</div>
+          <div style="display:flex; align-items:flex-end; gap:8px; height:160px;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:18%; background:var(--soft); border:1px solid var(--line); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">10a</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:30%; background:var(--soft); border:1px solid var(--line); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">12p</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:42%; background:color-mix(in srgb,var(--accent) 35%,var(--soft)); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">2p</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:55%; background:color-mix(in srgb,var(--accent) 50%,var(--soft)); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">4p</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:78%; background:color-mix(in srgb,var(--accent) 75%,var(--soft)); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">6p</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:100%; background:var(--live); border-radius:7px 7px 0 0; position:relative;"><span style="position:absolute; top:-20px; left:50%; transform:translateX(-50%); font-size:10px; font-weight:700; color:var(--live);">পিক</span></div><span style="font-size:10px; color:var(--ink); font-weight:600;">8p</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; height:100%; justify-content:flex-end;"><div style="width:100%; max-width:38px; height:62%; background:color-mix(in srgb,var(--accent) 55%,var(--soft)); border-radius:7px 7px 0 0;"></div><span style="font-size:10px; color:var(--muted);">10p</span></div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px;">
+            <div style="font-weight:600; margin-bottom:16px;">সাপ্তাহিক চাপ</div>
+            <div style="display:flex; align-items:flex-end; gap:9px; height:120px;">
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:48%; background:var(--brass-soft); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--muted);">শনি</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:42%; background:var(--brass-soft); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--muted);">রবি</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:38%; background:var(--brass-soft); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--muted);">সোম</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:44%; background:var(--brass-soft); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--muted);">মঙ্গল</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:58%; background:var(--brass-soft); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--muted);">বুধ</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:82%; background:var(--brass); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--muted);">বৃহ</span></div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"><div style="width:100%; height:100%; background:var(--accent); border-radius:6px 6px 0 0;"></div><span style="font-size:10px; color:var(--ink); font-weight:600;">শুক্র</span></div>
+            </div>
+          </div>
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px;">
+            <div style="font-weight:600; margin-bottom:14px;">ইনসাইট</div>
+            <div style="display:flex; gap:10px; padding:10px 0; font-size:13px;"><span style="color:var(--live);">●</span> শুক্রবার সন্ধ্যা ৭–৯টা সবচেয়ে ব্যস্ত — অতিরিক্ত কর্মী রাখো।</div>
+            <div style="display:flex; gap:10px; padding:10px 0; font-size:13px; border-top:1px solid var(--line);"><span style="color:var(--good);">●</span> সকাল ১০–১২টা ফাঁকা — ডিসকাউন্ট দিয়ে কাস্টমার টানতে পারো।</div>
+            <div style="display:flex; gap:10px; padding:10px 0; font-size:13px; border-top:1px solid var(--line);"><span style="color:var(--brass);">●</span> নিয়মিত কাস্টমার মোট আয়ের ৬৪% এনে দেয়।</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- SERVICES -->
+      <sc-if value="{{ shServices }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 34px; animation:fadeUp .3s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:6px;">
+          <div style="font-family:var(--font-display); font-weight:700; font-size:27px;">সার্ভিস ও রেট</div>
+          <button style="padding:10px 16px; border-radius:12px; border:none; background:var(--accent); color:var(--accent-ink); font-weight:600; font-family:var(--font-bn); cursor:pointer;">+ নতুন সার্ভিস</button>
+        </div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">রেট স্বচ্ছ রাখলে কাস্টমারের হিসাবও পরিষ্কার থাকে</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <sc-for list="{{ serviceList }}" as="sv" hint-placeholder-count="6">
+          <div style="display:flex; align-items:center; gap:14px; padding:16px 18px; border-radius:16px; background:var(--card); border:1px solid var(--line);">
+            <div style="width:46px; height:46px; border-radius:13px; background:var(--soft); display:flex; align-items:center; justify-content:center; font-size:20px;">{{ sv.icon }}</div>
+            <div style="flex:1;"><div style="font-weight:600; font-size:15px;">{{ sv.name }}</div><div style="font-size:12px; color:var(--muted);">আনুমানিক {{ sv.min }} মিনিট</div></div>
+            <div style="text-align:right;"><div style="font-family:var(--font-num); font-weight:700; font-size:18px;">৳{{ sv.rate }}</div><div style="font-size:11px; color:var(--good);">● চালু</div></div>
+          </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- CUSTOMERS -->
+      <sc-if value="{{ shCustomers }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 34px; animation:fadeUp .3s ease;">
+        <div style="font-family:var(--font-display); font-weight:700; font-size:27px; margin-bottom:4px;">নিয়মিত কাস্টমার</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">এই মাসে যারা আসেনি তাদের রিমাইন্ডার পাঠাও</div>
+        <div style="display:flex; flex-direction:column; gap:11px;">
+          <sc-for list="{{ regulars }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex; align-items:center; gap:16px; padding:15px 18px; border-radius:16px; background:var(--card); border:1px solid var(--line);">
+            <div style="width:46px; height:46px; border-radius:14px; background:{{ r.bg }}; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:18px; color:#fff;">{{ r.initial }}</div>
+            <div style="flex:1;"><div style="font-family:var(--font-display); font-weight:700; font-size:16px;">{{ r.name }}</div><div style="font-size:12px; color:var(--muted);">শেষ এসেছিল {{ r.last }} · মোট {{ r.visits }} বার</div></div>
+            <div style="font-size:12px; padding:5px 12px; border-radius:20px; font-weight:600; color:{{ r.statusColor }}; background:{{ r.statusBg }};">{{ r.status }}</div>
+            <button onClick="{{ r.onRemind }}" style="padding:9px 15px; border-radius:11px; border:1.5px solid {{ r.btnBorder }}; background:{{ r.btnBg }}; color:{{ r.btnColor }}; font-family:var(--font-bn); font-weight:600; font-size:13px; cursor:pointer; min-width:120px;">{{ r.btnLabel }}</button>
+          </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- REVIEWS -->
+      <sc-if value="{{ shReviews }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 34px; animation:fadeUp .3s ease;">
+        <div style="font-family:var(--font-display); font-weight:700; font-size:27px; margin-bottom:18px;">কাস্টমার রিভিউ</div>
+        <div style="display:flex; gap:18px; margin-bottom:22px;">
+          <div style="background:var(--ink); color:var(--paper); border-radius:20px; padding:24px 30px; text-align:center;">
+            <div style="font-family:var(--font-num); font-weight:700; font-size:48px; line-height:1; color:var(--brass);">{{ shopRating }}</div>
+            <div style="color:var(--brass); font-size:18px; margin-top:4px;">★★★★★</div>
+            <div style="font-size:12px; opacity:.5; margin-top:6px;">{{ reviewCount }} রিভিউ</div>
+          </div>
+          <div style="flex:1; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px; display:flex; flex-direction:column; justify-content:center; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px;"><span style="width:20px;">5★</span><div style="flex:1; height:7px; background:var(--soft); border-radius:5px;"><div style="height:100%; width:82%; background:var(--brass); border-radius:5px;"></div></div><span style="color:var(--muted); font-family:var(--font-num);">82%</span></div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px;"><span style="width:20px;">4★</span><div style="flex:1; height:7px; background:var(--soft); border-radius:5px;"><div style="height:100%; width:13%; background:var(--brass); border-radius:5px;"></div></div><span style="color:var(--muted); font-family:var(--font-num);">13%</span></div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px;"><span style="width:20px;">3★</span><div style="flex:1; height:7px; background:var(--soft); border-radius:5px;"><div style="height:100%; width:4%; background:var(--brass); border-radius:5px;"></div></div><span style="color:var(--muted); font-family:var(--font-num);">4%</span></div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:12px;"><span style="width:20px;">2★</span><div style="flex:1; height:7px; background:var(--soft); border-radius:5px;"><div style="height:100%; width:1%; background:var(--brass); border-radius:5px;"></div></div><span style="color:var(--muted); font-family:var(--font-num);">1%</span></div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <sc-for list="{{ reviews }}" as="rv" hint-placeholder-count="3">
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+              <div style="width:38px; height:38px; border-radius:12px; background:{{ rv.bg }}; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; color:#fff;">{{ rv.initial }}</div>
+              <div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ rv.name }}</div><div style="font-size:11px; color:var(--muted);">{{ rv.date }}</div></div>
+              <div style="color:var(--brass); font-size:14px;">{{ rv.stars }}</div>
+            </div>
+            <div style="font-size:13px; color:var(--ink); line-height:1.5;">{{ rv.text }}</div>
+          </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- toast -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:13px 22px; border-radius:30px; font-size:13px; font-weight:600; box-shadow:0 12px 30px rgba(0,0,0,.25); z-index:100; animation:pop .3s ease;">{{ toast }}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    role: 'customer',
+    screen: 'home',
+    shopScreen: 'queue',
+    theme: 'warm',
+    cd: 'ring',
+    activeShopId: 's1',
+    hasBooking: false,
+    advance: true,
+    rating: 0,
+    toast: '',
+    reminded: {},
+    // shared live queue (shop = Rakib Hair Studio)
+    queue: [
+      { id:'k', name:'করিম উদ্দিন', svc:['চুল কাটা','শেভ'], min:24, amount:230, fixed:true,  advance:true },
+      { id:'s', name:'সাব্বির হাসান', svc:['চুল কাটা'], min:30, amount:150, fixed:false, advance:false },
+      { id:'j', name:'জনি রহমান', svc:['দাড়ি ট্রিম'], min:12, amount:60,  fixed:false, advance:true },
+      { id:'f', name:'ফাহিম খান', svc:['চুল কাটা','ফেসিয়াল'], min:55, amount:450, fixed:true,  advance:false },
+      { id:'r', name:'রাসেল মিয়া', svc:['শেভ'], min:15, amount:80,  fixed:false, advance:false },
+    ],
+    remainingSec: 7 * 60,
+    today: '২৬ জুন',
+    todayIncome: 2340,
+    monthIncome: 48200,
+    yearIncome: 512000,
+    doneToday: 9,
+    selected: { 'চুল কাটা': true },
+  };
+
+  SERVICES = [
+    { name:'চুল কাটা', rate:150, min:30, icon:'✂️' },
+    { name:'শেভ', rate:80, min:15, icon:'🪒' },
+    { name:'দাড়ি ট্রিম', rate:60, min:12, icon:'🧔' },
+    { name:'হেয়ার ওয়াশ', rate:50, min:10, icon:'💧' },
+    { name:'ফেসিয়াল', rate:300, min:40, icon:'✨' },
+    { name:'হেয়ার কালার', rate:500, min:50, icon:'🎨' },
+  ];
+
+  SHOPS = [
+    { id:'s1', name:'Rakib Hair Studio', initial:'র', area:'মিরপুর ১০', dist:'০.৪ কিমি', rating:'4.8', reviews:142, avatarBg:'#1C5D44', isFav:true },
+    { id:'s2', name:'Classic Gents Parlour', initial:'C', area:'কাজীপাড়া', dist:'০.৯ কিমি', rating:'4.6', reviews:98, avatarBg:'#B5852F', isFav:false },
+    { id:'s3', name:'Sharp Cutz', initial:'S', area:'শেওড়াপাড়া', dist:'১.৩ কিমি', rating:'4.5', reviews:76, avatarBg:'#3B3BDA', isFav:false },
+    { id:'s4', name:'New Look Salon', initial:'N', area:'মিরপুর ১১', dist:'১.৮ কিমি', rating:'4.3', reviews:54, avatarBg:'#CF4E25', isFav:false },
+  ];
+  SHOP_QUEUE = { s1:6, s2:3, s3:8, s4:2 };
+  SHOP_PERMIN = { s1:22, s2:16, s3:30, s4:12 };
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      this.setState(s => {
+        if (s.remainingSec <= 1) {
+          // auto-advance current job
+          if (s.queue.length > 1) {
+            const done = s.queue[0];
+            const nq = s.queue.slice(1);
+            return { remainingSec: nq[0].min * 60, queue: nq,
+              todayIncome: s.todayIncome + done.amount, monthIncome: s.monthIncome + done.amount,
+              yearIncome: s.yearIncome + done.amount, doneToday: s.doneToday + 1 };
+          }
+          return { remainingSec: 0 };
+        }
+        return { remainingSec: s.remainingSec - 1 };
+      });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  flash(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._toast);
+    this._toast = setTimeout(() => this.setState({ toast: '' }), 2400);
+  }
+
+  markDone = () => {
+    this.setState(s => {
+      if (s.queue.length === 0) return {};
+      const done = s.queue[0];
+      const nq = s.queue.slice(1);
+      const rem = nq.length ? nq[0].min * 60 : 0;
+      return { queue: nq, remainingSec: rem,
+        todayIncome: s.todayIncome + done.amount, monthIncome: s.monthIncome + done.amount,
+        yearIncome: s.yearIncome + done.amount, doneToday: s.doneToday + 1 };
+    });
+    this.flash('✓ কাজ সম্পন্ন — আয় যোগ হলো');
+  };
+
+  confirmBooking = () => {
+    const sel = Object.keys(this.state.selected).filter(k => this.state.selected[k]);
+    const chosen = sel.length ? sel : ['চুল কাটা'];
+    const min = chosen.reduce((a, n) => a + (this.SERVICES.find(x => x.name === n)?.min || 0), 0);
+    const amount = chosen.reduce((a, n) => a + (this.SERVICES.find(x => x.name === n)?.rate || 0), 0);
+    this.setState(s => {
+      const filtered = s.queue.filter(q => q.id !== 'you');
+      const you = { id:'you', name:'তুমি (You)', svc:chosen, min, amount, fixed:false, advance:s.advance, you:true };
+      return { queue: [...filtered, you], hasBooking: true, screen: 'track' };
+    });
+    this.flash(this.state.advance ? '✅ অ্যাডভান্স পেইড — সিরিয়াল লক হলো' : '✅ সিরিয়াল কনফার্ম হলো');
+  };
+
+  fmtMMSS(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+  fmtWait(totalSec) {
+    const m = Math.round(totalSec / 60);
+    if (m < 60) return { big: String(m), unit: 'মিনিট', label: m + ' মিনিট' };
+    const h = Math.floor(m / 60), mm = m % 60;
+    return { big: h + 'ঘ ' + mm, unit: 'মিনিট', label: h + ' ঘণ্টা ' + mm + ' মিনিট' };
+  }
+  money(n) { return n.toLocaleString('en-US'); }
+
+  navStyle(active) {
+    return 'flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; cursor:pointer; font-family:var(--font-bn); padding:4px; color:' + (active ? 'var(--accent)' : 'var(--muted)') + '; font-weight:' + (active ? '700' : '500') + ';';
+  }
+  sideStyle(active) {
+    return 'display:flex; align-items:center; gap:11px; padding:11px 13px; border-radius:12px; border:none; cursor:pointer; font-family:var(--font-bn); font-size:14px; text-align:left; width:100%; font-weight:' + (active ? '700' : '500') + '; background:' + (active ? 'var(--accent)' : 'transparent') + '; color:' + (active ? 'var(--accent-ink)' : 'rgba(255,255,255,.7)') + ';';
+  }
+  chromeTab(active) {
+    return 'padding:7px 15px; border-radius:8px; border:none; cursor:pointer; font-family:var(--font-bn); font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; background:' + (active ? 'var(--accent)' : 'transparent') + '; color:' + (active ? 'var(--accent-ink)' : 'rgba(255,255,255,.75)') + ';';
+  }
+  miniTab(active) {
+    return 'padding:5px 11px; border-radius:7px; border:none; cursor:pointer; font-family:var(--font-num); font-size:12px; font-weight:600; background:' + (active ? 'rgba(255,255,255,.9)' : 'transparent') + '; color:' + (active ? 'var(--ink)' : 'rgba(255,255,255,.7)') + ';';
+  }
+
+  renderVals() {
+    const s = this.state;
+    const q = s.queue;
+    const current = q[0] || { name:'—', svc:[], amount:0, min:1 };
+    const youIdx = q.findIndex(j => j.id === 'you');
+
+    // cumulative wait before each index (seconds)
+    const cum = [];
+    let acc = 0;
+    for (let i = 0; i < q.length; i++) {
+      cum[i] = acc;
+      acc += (i === 0 ? s.remainingSec : q[i].min * 60);
+    }
+    // wait until index i starts = remainingSec + sum(min[1..i-1])
+    const waitSecFor = (i) => {
+      if (i <= 0) return 0;
+      let t = s.remainingSec;
+      for (let k = 1; k < i; k++) t += q[k].min * 60;
+      return t;
+    };
+
+    const youWaitSec = youIdx > 0 ? waitSecFor(youIdx) : 0;
+    const yw = this.fmtWait(youWaitSec);
+
+    // shops with live wait for s1 reflecting queue length
+    const shops = this.SHOPS.map(sh => {
+      const qn = sh.id === 's1' ? q.length : this.SHOP_QUEUE[sh.id];
+      const wait = sh.id === 's1' ? Math.round(waitSecFor(q.length) / 60) || Math.round(s.remainingSec/60) : qn * this.SHOP_PERMIN[sh.id];
+      const fast = wait <= 40;
+      return { ...sh, queue: qn, wait,
+        waitColor: fast ? 'var(--good)' : 'var(--live)',
+        waitBg: fast ? 'var(--good-soft)' : 'var(--live-soft)',
+        onOpen: () => this.setState({ activeShopId: sh.id, screen: 'shop', selected: { 'চুল কাটা': true } }) };
+    });
+    const activeShop = shops.find(x => x.id === s.activeShopId) || shops[0];
+    const bookShop = this.SHOPS.find(x => x.id === (q.find(j=>j.id==='you') ? 's1' : s.activeShopId)) || this.SHOPS[0];
+
+    // booking services
+    const bookServices = this.SERVICES.map(sv => {
+      const on = !!s.selected[sv.name];
+      return { ...sv,
+        check: on ? '✓' : '',
+        checkBg: on ? 'var(--accent)' : 'transparent',
+        checkBorder: on ? 'var(--accent)' : 'var(--line)',
+        borderColor: on ? 'var(--accent)' : 'var(--line)',
+        bg: on ? 'color-mix(in srgb, var(--accent) 7%, var(--card))' : 'var(--card)',
+        onToggle: () => this.setState(st => ({ selected: { ...st.selected, [sv.name]: !st.selected[sv.name] } })) };
+    });
+    const selNames = Object.keys(s.selected).filter(k => s.selected[k]);
+    const bookTotalMin = selNames.reduce((a,n)=>a+(this.SERVICES.find(x=>x.name===n)?.min||0),0);
+    const bookTotalAmount = selNames.reduce((a,n)=>a+(this.SERVICES.find(x=>x.name===n)?.rate||0),0);
+
+    // ahead list for tracking (everyone before you)
+    const aheadList = (youIdx > 0 ? q.slice(0, youIdx) : q).map((j, i) => ({
+      pos: i + 1,
+      name: j.name,
+      svc: j.svc.join(' + '),
+      time: i === 0 ? this.fmtMMSS(s.remainingSec) : this.fmtWait(waitSecFor(i)).label,
+      timeNote: i === 0 ? 'চলছে' : 'শুরু হবে',
+      timeColor: i === 0 ? 'var(--live)' : 'var(--ink)',
+      rowBg: i === 0 ? 'var(--live-soft)' : 'var(--card)',
+      numBg: i === 0 ? 'var(--live)' : 'var(--soft)',
+      numColor: i === 0 ? '#fff' : 'var(--muted)',
+    }));
+
+    // waiting list for shop dashboard (all after current)
+    const waitingList = q.slice(1).map((j, i) => ({
+      pos: i + 2,
+      name: j.name,
+      svc: j.svc.join(' + '),
+      amount: j.amount,
+      fixed: j.fixed,
+      advance: j.advance,
+      startsIn: this.fmtWait(waitSecFor(i + 1)).label,
+    }));
+
+    const totalSec = (current.min || 1) * 60;
+    const pct = Math.max(0, Math.min(1, 1 - s.remainingSec / totalSec));
+    const ringOffset = 578 * (1 - pct);
+    const shopRingOffset = 352 * (1 - pct);
+
+    const ratingLabels = ['', 'খুব খারাপ', 'খারাপ', 'মোটামুটি', 'ভালো', 'চমৎকার!'];
+
+    const regulars = [
+      { id:'a', name:'করিম উদ্দিন', initial:'ক', bg:'#1C5D44', last:'৪ দিন আগে', visits:'২৮', came:true },
+      { id:'b', name:'ফাহিম খান', initial:'ফ', bg:'#B5852F', last:'২ দিন আগে', visits:'১৯', came:true },
+      { id:'c', name:'তানভীর আহমেদ', initial:'ত', bg:'#3B3BDA', last:'৩৮ দিন আগে', visits:'১৫', came:false },
+      { id:'d', name:'শাকিল হোসেন', initial:'শ', bg:'#CF4E25', last:'৪৫ দিন আগে', visits:'১১', came:false },
+    ].map(r => {
+      const reminded = !!s.reminded[r.id];
+      return { ...r,
+        status: r.came ? 'এই মাসে এসেছে' : 'আসেনি',
+        statusColor: r.came ? 'var(--good)' : 'var(--live)',
+        statusBg: r.came ? 'var(--good-soft)' : 'var(--live-soft)',
+        btnLabel: r.came ? 'মেসেজ পাঠাও' : (reminded ? '✓ পাঠানো হয়েছে' : '🔔 রিমাইন্ডার দাও'),
+        btnBg: (!r.came && !reminded) ? 'var(--accent)' : 'transparent',
+        btnColor: (!r.came && !reminded) ? 'var(--accent-ink)' : 'var(--muted)',
+        btnBorder: (!r.came && !reminded) ? 'var(--accent)' : 'var(--line)',
+        onRemind: () => { this.setState(st => ({ reminded: { ...st.reminded, [r.id]: true } })); this.flash('🔔 ' + r.name + '-কে রিমাইন্ডার পাঠানো হলো'); } };
+    });
+
+    const reviews = [
+      { initial:'আ', bg:'#1C5D44', name:'আরিফুল ইসলাম', date:'২ দিন আগে', stars:'★★★★★', text:'রাকিব ভাই খুব যত্ন নিয়ে কাজ করেন। সিরিয়াল অ্যাপে দেখে গেছি, একদম টাইম মতো হয়ে গেছে।' },
+      { initial:'স', bg:'#B5852F', name:'সাব্বির হাসান', date:'৫ দিন আগে', stars:'★★★★★', text:'আর লাইনে দাঁড়িয়ে থাকতে হয় না, অ্যাডভান্স দিয়ে সিরিয়াল লক করে রাখি।' },
+      { initial:'জ', bg:'#3B3BDA', name:'জনি রহমান', date:'১ সপ্তাহ আগে', stars:'★★★★☆', text:'কাজ ভালো, তবে শুক্রবার একটু বেশি ভিড় থাকে। অ্যাপ থাকায় সময়টা বুঝে যাই।' },
+    ];
+
+    const history = [
+      { shop:'Rakib Hair Studio', initial:'র', bg:'#1C5D44', svc:'চুল কাটা + শেভ', date:'১২ জুন', amount:230, rated:'5' },
+      { shop:'Rakib Hair Studio', initial:'র', bg:'#1C5D44', svc:'চুল কাটা', date:'২৮ মে', amount:150, rated:'5' },
+      { shop:'Classic Gents Parlour', initial:'C', bg:'#B5852F', svc:'ফেসিয়াল', date:'১৫ মে', amount:300, rated:'4' },
+    ];
+
+    const stars = [1,2,3,4,5].map(n => ({
+      onPick: () => this.setState({ rating: n }),
+      color: n <= s.rating ? 'var(--brass)' : 'var(--line)',
+    }));
+
+    const lastWait = this.fmtWait(waitSecFor(q.length));
+
+    return {
+      // role / theme / cd
+      isCustomer: s.role === 'customer',
+      isShop: s.role === 'shop',
+      theme: s.theme, cd: s.cd,
+      cdIsRing: s.cd === 'ring', cdIsBar: s.cd === 'bar',
+      goCustomer: () => this.setState({ role:'customer' }),
+      goShop: () => this.setState({ role:'shop' }),
+      themeWarm: () => this.setState({ theme:'warm' }),
+      themeCool: () => this.setState({ theme:'cool' }),
+      cdRing: () => this.setState({ cd:'ring' }),
+      cdBar: () => this.setState({ cd:'bar' }),
+      tabCustomerStyle: this.chromeTab(s.role==='customer'),
+      tabShopStyle: this.chromeTab(s.role==='shop'),
+      themeWarmStyle: this.miniTab(s.theme==='warm'),
+      themeCoolStyle: this.miniTab(s.theme==='cool'),
+      cdRingStyle: this.miniTab(s.cd==='ring'),
+      cdBarStyle: this.miniTab(s.cd==='bar'),
+
+      // customer nav
+      cHome: s.screen==='home', cShop: s.screen==='shop', cTrack: s.screen==='track',
+      cReview: s.screen==='review', cProfile: s.screen==='profile',
+      showNav: s.screen==='home' || s.screen==='track' || s.screen==='profile',
+      goHome: () => this.setState({ screen:'home' }),
+      goTrack: () => this.setState({ screen: this.state.hasBooking ? 'track' : 'home' }),
+      goProfile: () => this.setState({ screen:'profile' }),
+      goReview: () => this.setState({ screen:'review' }),
+      navHomeStyle: this.navStyle(s.screen==='home'),
+      navTrackStyle: this.navStyle(s.screen==='track'),
+      navProfileStyle: this.navStyle(s.screen==='profile'),
+
+      // home
+      hasBooking: s.hasBooking,
+      shops,
+      openShopCount: shops.length,
+      minWait: Math.min(...shops.map(x=>x.wait)),
+      youPos: youIdx >= 0 ? youIdx + 1 : q.length + 1,
+      youWaitLabel: yw.label,
+
+      // shop detail / booking
+      activeShop,
+      bookServices,
+      bookTotalMin, bookTotalAmount,
+      bookCtaLabel: s.advance ? 'অ্যাডভান্স দিয়ে কনফার্ম' : 'সিরিয়াল নাও',
+      toggleAdvance: () => this.setState(st => ({ advance: !st.advance })),
+      advanceTrackBg: s.advance ? 'var(--accent)' : 'var(--line)',
+      advanceKnobX: s.advance ? '20px' : '2px',
+      confirmBooking: this.confirmBooking,
+
+      // tracking
+      bookShopName: bookShop.name,
+      bookShopInitial: bookShop.initial,
+      bookShopAvatar: bookShop.avatarBg,
+      youWaitBig: yw.big, youWaitUnit: yw.unit,
+      ringOffset, progressWidth: (pct * 100).toFixed(1) + '%',
+      aheadList, aheadCount: youIdx > 0 ? youIdx : q.length,
+
+      // review
+      stars, ratingLabel: ratingLabels[s.rating],
+      submitReview: () => { this.setState({ screen:'home', rating:0 }); this.flash('🙏 রিভিউয়ের জন্য ধন্যবাদ!'); },
+
+      // profile
+      trustScore: '4.9', visitCount: '32', history,
+
+      // shop dashboard nav
+      shQueue: s.shopScreen==='queue', shIncome: s.shopScreen==='income',
+      shAnalytics: s.shopScreen==='analytics', shServices: s.shopScreen==='services',
+      shCustomers: s.shopScreen==='customers', shReviews: s.shopScreen==='reviews',
+      sQueue: () => this.setState({ shopScreen:'queue' }),
+      sIncome: () => this.setState({ shopScreen:'income' }),
+      sAnalytics: () => this.setState({ shopScreen:'analytics' }),
+      sServices: () => this.setState({ shopScreen:'services' }),
+      sCustomers: () => this.setState({ shopScreen:'customers' }),
+      sReviews: () => this.setState({ shopScreen:'reviews' }),
+      sQueueStyle: this.sideStyle(s.shopScreen==='queue'),
+      sIncomeStyle: this.sideStyle(s.shopScreen==='income'),
+      sAnalyticsStyle: this.sideStyle(s.shopScreen==='analytics'),
+      sServicesStyle: this.sideStyle(s.shopScreen==='services'),
+      sCustomersStyle: this.sideStyle(s.shopScreen==='customers'),
+      sReviewsStyle: this.sideStyle(s.shopScreen==='reviews'),
+
+      // queue dashboard
+      today: s.today,
+      queueCount: q.length,
+      queueEmpty: q.length === 0,
+      currentName: current.name,
+      currentSvc: current.svc.join(' + '),
+      currentAmount: current.amount,
+      remainingMMSS: this.fmtMMSS(s.remainingSec),
+      shopRingOffset,
+      markDone: this.markDone,
+      waitingList,
+      lastWaitLabel: lastWait.label,
+      doneToday: s.doneToday,
+      todayIncomeLabel: this.money(s.todayIncome),
+      monthIncomeLabel: this.money(s.monthIncome),
+      yearIncomeLabel: this.money(s.yearIncome),
+
+      // services / customers / reviews
+      serviceList: this.SERVICES,
+      regulars,
+      reviews, shopRating:'4.8', reviewCount:'142',
+
+      toast: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

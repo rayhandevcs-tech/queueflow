@@ -1,23 +1,16 @@
-// import Link from "next/link";
-
-// export default function HomePage() {
-//   return (
-//     <main className="grid min-h-dvh place-items-center">
-//       <div className="text-center">
-//         {/* <h1 className="text-2xl font-bold">QueueFlow </h1> */}
-//         <Link
-//           href="/login"
-//           className="mt-4 inline-block rounded-lg bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white"
-//         >
-//           লগইন করুন
-//         </Link>
-//       </div>
-//     </main>
-//   );
-// }
-
 import { redirect } from "next/navigation";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { ROLE_HOME } from "@/config/constants";
+import type { UserRole } from "@/types";
 
-export default function HomePage() {
-  redirect("/dashboard");
+export default async function HomePage() {
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/explore");
+
+  const role: UserRole = (user.user_metadata?.role as UserRole | undefined) ?? "customer";
+  redirect(ROLE_HOME[role]);
 }

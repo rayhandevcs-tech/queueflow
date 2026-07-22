@@ -15,8 +15,12 @@
   --color-live-soft: #fbe4d8;
   --color-good: #2e7d5b;
   --color-good-soft: #dcefe4;
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-space-grotesk);
+
+  /* font-sans = body copy (Bangla primary), font-display = headings,
+     font-number = timers/money/stat digits (Space Grotesk, monospace feel). */
+  --font-sans: var(--font-hind-siliguri);
+  --font-display: var(--font-anek-bangla);
+  --font-number: var(--font-space-grotesk);
 
   /* Warm-tinted elevation — replaces the default neutral-gray shadow scale
      so depth reads as part of the paper/ink palette, not a bolt-on. */
@@ -25,6 +29,48 @@
   --shadow-md: 0 6px 16px rgba(27, 24, 18, 0.09), 0 2px 6px rgba(27, 24, 18, 0.05);
   --shadow-lg: 0 16px 40px rgba(27, 24, 18, 0.14), 0 4px 10px rgba(27, 24, 18, 0.06);
   --shadow-glow: 0 8px 28px rgba(28, 93, 68, 0.28);
+
+  /* Design-handoff motion (design/design_handoff_palaa/README.md → Animations) */
+  --animate-pulse-live: pulse-live 1.4s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.3s ease-out;
+  --animate-pop: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pulse-live {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 body {

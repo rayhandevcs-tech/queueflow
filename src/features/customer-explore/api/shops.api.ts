@@ -1,5 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { Shop } from "@/types";
+import type { QueuePublicRow, Shop } from "@/types";
 
 /** Publicly browsable shops — RLS only exposes rows where is_open = true. */
 export async function getOpenShops(): Promise<Shop[]> {
@@ -14,15 +14,16 @@ export async function getOpenShops(): Promise<Shop[]> {
   return data;
 }
 
-/** How many people are currently waiting/being served, per shop — PII-free. */
-export async function getActiveQueueCounts(): Promise<Record<string, number>> {
+/**
+ * Live queue rows across all shops, PII-free — powers both the "N waiting"
+ * badge and the "~M min wait" estimate on the explore list/map.
+ */
+export async function getLiveQueue(): Promise<QueuePublicRow[]> {
   const supabase = getBrowserClient();
-  const { data, error } = await supabase.from("queue_public").select("shop_id");
+  const { data, error } = await supabase
+    .from("queue_public")
+    .select("shop_id, chair_id, position, status, is_walk_in, estimated_duration_min, estimated_start_at, updated_at, id");
 
   if (error) throw error;
-  const counts: Record<string, number> = {};
-  for (const row of data) {
-    counts[row.shop_id] = (counts[row.shop_id] ?? 0) + 1;
-  }
-  return counts;
+  return data;
 }

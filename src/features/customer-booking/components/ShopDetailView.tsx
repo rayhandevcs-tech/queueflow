@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Clock3, MapPin, Store, Ticket } from "lucide-react";
+import { ChevronLeft, Ticket } from "lucide-react";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
+import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useShopDetail, useShopServices } from "../hooks/use-shop-detail";
-import { useMyActiveSerial } from "../hooks/use-my-serial";
+import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useCreateBooking } from "../hooks/use-booking-mutations";
 
 export function ShopDetailView({ shopId }: { shopId: string }) {
@@ -17,8 +17,22 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const { data: shop, isPending: shopPending } = useShopDetail(shopId);
   const { data: services, isPending: servicesPending } = useShopServices(shopId);
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
+  const { data: queueRows } = useShopQueuePublic(shopId);
   const createBooking = useCreateBooking();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [advance, setAdvance] = useState(false);
+
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const queueCount = queueRows?.length ?? 0;
+  const waitMinutes = useMemo(
+    () => minutesUntil(chairFreeAtMs(queueRows ?? []).values(), nowMs) ?? 0,
+    [queueRows, nowMs],
+  );
 
   if (shopPending || servicesPending || activePending) {
     return (
@@ -29,7 +43,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   }
 
   if (!shop) {
-    return <p className="p-6 text-sm text-ink">Shop not found.</p>;
+    return <p className="p-6 text-sm text-ink">দোকান খুঁজে পাওয়া যায়নি।</p>;
   }
 
   if (activeSerial) {
@@ -41,11 +55,11 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         </div>
         <p className="text-sm text-ink">
           {sameShop
-            ? "You already have a serial at this shop."
-            : "You already have an active serial — only one at a time."}
+            ? "তোমার এই দোকানে ইতিমধ্যে একটা সিরিয়াল আছে।"
+            : "তোমার ইতিমধ্যে একটা সক্রিয় সিরিয়াল আছে — একসাথে একটাই রাখা যায়।"}
         </p>
         <Button size="lg" onClick={() => router.push("/my-serial")}>
-          View my serial
+          আমার সিরিয়াল দেখো
         </Button>
       </div>
     );
@@ -72,119 +86,173 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   };
 
   return (
-    <div className="-mx-4 -mt-6 pb-28 sm:mx-0 sm:mt-0">
-      <div className="relative h-48 w-full bg-soft sm:rounded-2xl">
-        {shop.cover_image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={shop.cover_image_url}
-            alt={shop.name}
-            className="h-full w-full object-cover sm:rounded-2xl"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center text-muted sm:rounded-2xl">
-            <Store className="h-10 w-10" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent sm:rounded-2xl" />
-        <div className="absolute inset-x-0 bottom-0 p-4">
-          <h1 className="font-display text-2xl font-bold text-accent-ink drop-shadow-sm">
-            {shop.name}
-          </h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-accent-ink/80">
-            <Badge variant="accent" className="bg-accent-ink/15 text-accent-ink">
-              {BUSINESS_TYPE_LABEL[shop.business_type]}
-            </Badge>
-            {shop.address && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                {shop.address}
-              </span>
-            )}
-          </div>
-        </div>
+    <div className="-mx-4 -mt-6 pb-32 sm:mx-0 sm:mt-0">
+      <div
+        className="relative h-29.5 w-full sm:rounded-2xl"
+        style={{
+          background:
+            "linear-gradient(120deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 60%, black))",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => router.push("/explore")}
+          className="absolute left-4 top-3.5 grid h-9 w-9 place-items-center rounded-[11px] bg-white/20 text-white"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
       </div>
 
-      <div className="mx-auto max-w-lg space-y-6 px-4 pt-5 sm:px-0">
+      <div className="mx-auto max-w-lg px-4 sm:px-0">
+        <div className="-mt-5 flex items-end gap-3.5">
+          <div className="grid h-18.5 w-18.5 shrink-0 place-items-center overflow-hidden rounded-[20px] border-4 border-card bg-accent font-display text-3xl font-extrabold text-white">
+            {shop.cover_image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={shop.cover_image_url}
+                alt={shop.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              shop.name.trim().charAt(0).toUpperCase() || "?"
+            )}
+          </div>
+          <div className="pb-1">
+            <p className="font-display text-xl leading-tight font-bold text-ink">{shop.name}</p>
+            <p className="text-xs text-muted">
+              {BUSINESS_TYPE_LABEL[shop.business_type]}
+              {shop.address ? ` · ${shop.address}` : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className="my-4.5 flex gap-2.5">
+          <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
+            <p className="font-number text-[22px] font-bold text-ink">{queueCount}</p>
+            <p className="text-[11px] text-muted">এখন সিরিয়াল</p>
+          </div>
+          <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
+            <p className="font-number text-[22px] font-bold text-live">
+              ~{waitMinutes}
+              <span className="text-[13px]">মি</span>
+            </p>
+            <p className="text-[11px] text-muted">আনুমানিক ওয়েট</p>
+          </div>
+          <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
+            <p className="font-number text-[22px] font-bold text-ink">{services?.length ?? 0}</p>
+            <p className="text-[11px] text-muted">সার্ভিস</p>
+          </div>
+        </div>
+
         {!shop.is_open && (
-          <div className="rounded-xl bg-live-soft px-4 py-3 text-sm font-medium text-live">
-            Shop is currently closed — bookings aren&apos;t open right now
+          <div className="mb-4 rounded-xl bg-live-soft px-4 py-3 text-sm font-medium text-live">
+            দোকান এখন বন্ধ — এই মুহূর্তে বুকিং করা যাচ্ছে না
           </div>
         )}
 
-        <div>
-          <p className="mb-2 text-sm font-semibold text-ink">Choose services</p>
-          {!services?.length ? (
-            <p className="text-sm text-muted">This shop has no services yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {services.map((s) => {
-                const on = selected.has(s.id);
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => toggle(s.id)}
+        <p className="mb-2.5 text-[13px] font-semibold tracking-wide text-muted uppercase">
+          সার্ভিস বেছে নাও
+        </p>
+
+        {!services?.length ? (
+          <p className="text-sm text-muted">এই দোকানে এখনো কোনো সার্ভিস যোগ করা হয়নি।</p>
+        ) : (
+          <div className="flex flex-col gap-2.25">
+            {services.map((s) => {
+              const on = selected.has(s.id);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => toggle(s.id)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-[14px] border p-3.5 text-left transition-all",
+                    on ? "border-accent bg-accent/[0.07]" : "border-line bg-card",
+                  )}
+                  style={{ borderWidth: 1.5 }}
+                >
+                  <span
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left transition-all",
-                      on
-                        ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
-                        : "border-line bg-card hover:border-accent/30",
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-lg border text-sm font-bold text-white",
+                      on ? "border-accent bg-accent" : "border-line bg-transparent",
                     )}
+                    style={{ borderWidth: 1.5 }}
                   >
-                    <span
-                      className={cn(
-                        "grid h-6 w-6 shrink-0 place-items-center rounded-md border transition-colors",
-                        on
-                          ? "border-accent bg-accent text-accent-ink"
-                          : "border-line text-transparent",
-                      )}
-                    >
-                      <Check className="h-4 w-4" />
+                    {on ? "✓" : ""}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-ink">{s.name}</span>
+                    <span className="mt-0.5 block text-[11px] text-muted">
+                      ~{s.default_duration_min} মিনিট
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-ink">{s.name}</span>
-                      <span className="mt-0.5 flex items-center gap-1 text-xs text-muted">
-                        <Clock3 className="h-3 w-3" />
-                        ~{s.default_duration_min} min
-                      </span>
-                    </span>
-                    <span className="text-sm font-semibold text-ink">৳{s.rate}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                  </span>
+                  <span className="font-number text-[15px] font-semibold text-ink">
+                    ৳{s.rate}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-4.5 rounded-2xl border border-line bg-soft p-3.5">
+          <label className="flex cursor-pointer items-center gap-3">
+            <span
+              className="relative inline-block h-6 w-10.5 shrink-0 rounded-full transition-colors"
+              style={{ background: advance ? "var(--color-accent)" : "var(--color-line)" }}
+            >
+              <input
+                type="checkbox"
+                checked={advance}
+                onChange={(e) => setAdvance(e.target.checked)}
+                className="sr-only"
+              />
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
+                style={{ left: advance ? "22px" : "2px" }}
+              />
+            </span>
+            <span className="flex-1">
+              <span className="block text-[13px] font-semibold text-ink">
+                অ্যাডভান্স পেমেন্ট দিয়ে সিরিয়াল লক করো
+              </span>
+              <span className="block text-[11px] text-muted">
+                bKash/Nagad — সিরিয়াল কনফার্ম ও সিকিউর থাকবে
+              </span>
+            </span>
+          </label>
         </div>
 
         {createBooking.isError && (
-          <p className="text-sm text-live">
+          <p className="mt-4 text-sm text-live">
             {createBooking.error instanceof Error
               ? createBooking.error.message
-              : "Couldn't book — please try again."}
+              : "বুক করা যায়নি — আবার চেষ্টা করো।"}
           </p>
         )}
       </div>
 
-      {selected.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-line bg-card/95 p-4 shadow-[0_-8px_24px_rgba(27,24,18,0.08)] backdrop-blur">
-          <div className="mx-auto flex max-w-lg items-center gap-4">
-            <div>
-              <p className="text-xs text-muted">Total · {totalMin} min</p>
-              <p className="font-display text-lg font-bold">৳{totalAmount}</p>
-            </div>
-            <Button
-              size="lg"
-              onClick={onConfirm}
-              disabled={!shop.is_open}
-              loading={createBooking.isPending}
-              className="flex-1"
-            >
-              {createBooking.isPending ? "Booking…" : "Book serial"}
-            </Button>
+      <div className="fixed inset-x-0 bottom-24 z-10 mx-auto max-w-lg px-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-line bg-card/95 p-3.5 shadow-lg backdrop-blur">
+          <div>
+            <p className="text-[11px] text-muted">মোট · {totalMin} মিনিট</p>
+            <p className="font-number text-[22px] font-bold text-ink">৳{totalAmount}</p>
           </div>
+          <Button
+            size="lg"
+            onClick={onConfirm}
+            disabled={!shop.is_open || selected.size === 0}
+            loading={createBooking.isPending}
+            className="flex-1 font-display text-[15px] shadow-glow"
+          >
+            {createBooking.isPending
+              ? "বুক হচ্ছে…"
+              : advance
+                ? "অ্যাডভান্স দিয়ে কনফার্ম"
+                : "সিরিয়াল নাও"}
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
