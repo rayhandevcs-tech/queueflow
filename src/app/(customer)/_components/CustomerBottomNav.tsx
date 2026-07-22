@@ -8,7 +8,7 @@ import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-seri
 const ITEMS = [
   { href: "/explore", icon: "⌂", label: "হোম" },
   { href: "/my-serial", icon: "◉", label: "সিরিয়াল" },
-  { href: "/account", icon: "○", label: "প্রোফাইল" },
+  { href: "/profile", icon: "○", label: "প্রোফাইল" },
 ] as const;
 
 export function CustomerBottomNav() {

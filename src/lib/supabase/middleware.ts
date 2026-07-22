@@ -12,8 +12,9 @@ const PROVIDER_PREFIXES = [
   "/settings",
   "/income",
   "/analytics",
+  "/regulars",
 ];
-const CUSTOMER_PREFIXES = ["/my-serial", "/history"];
+const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile"];
 const AUTH_PAGES = ["/login", "/register"];
 /** Any signed-in role may access these — not gated to a specific role. */
 const AUTH_REQUIRED_PREFIXES = ["/account"];

@@ -209,6 +209,44 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      reviews: {
+        Row: {
+          id: string;
+          shop_id: string;
+          serial_id: string;
+          customer_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          serial_id: string;
+          customer_id: string;
+          rating: number;
+          comment?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      regular_reminders: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string | null;
+          customer_phone: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          customer_id?: string | null;
+          customer_phone?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {

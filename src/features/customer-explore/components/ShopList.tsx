@@ -5,7 +5,7 @@ import { ChevronRight, MapPin, Store } from "lucide-react";
 import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { shopAvatarColor, shopInitial } from "../lib/shop-avatar";
+import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 
 const WAIT_OK_THRESHOLD_MIN = 40;
 

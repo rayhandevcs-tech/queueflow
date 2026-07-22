@@ -23,10 +23,18 @@ export const keys = {
   },
   serials: {
     mine: () => ["serials", "mine"] as const,
+    myHistory: () => ["serials", "my-history"] as const,
     byShop: (shopId: string) => ["serials", "shop", shopId] as const,
     today: (shopId: string) => ["serials", "today", shopId] as const,
     liveCount: (shopId: string) => ["serials", "live-count", shopId] as const,
     incomeHistory: (shopId: string) => ["serials", "income-history", shopId] as const,
     analyticsHistory: (shopId: string) => ["serials", "analytics-history", shopId] as const,
+  },
+  reviews: {
+    mine: () => ["reviews", "mine"] as const,
+    byShop: (shopId: string) => ["reviews", "shop", shopId] as const,
+  },
+  reminders: {
+    thisMonth: (shopId: string) => ["reminders", "this-month", shopId] as const,
   },
 } as const;
