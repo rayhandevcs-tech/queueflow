@@ -5,7 +5,6 @@ import { Settings } from "lucide-react";
 import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
 import { ServicesManager } from "@/features/provider-catalog/components/ServicesManager";
 import { CanPerformMatrix } from "@/features/provider-catalog/components/CanPerformMatrix";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -24,10 +23,10 @@ export default function ServicesPage() {
     return (
       <EmptyState
         icon={<Settings className="h-6 w-6" />}
-        title="Set up your shop first"
+        title="আগে তোমার শপ সেট আপ করো"
         action={
           <Link href="/settings" className="text-sm font-semibold text-accent hover:underline">
-            Go to settings →
+            সেটিংসে যাও →
           </Link>
         }
       />
@@ -36,16 +35,12 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Services & Rates"
-        description="Customers see this exact list when booking."
-      />
       <ServicesManager shopId={shop.id} />
 
       <div>
-        <h2 className="mb-1 font-display text-lg font-bold">Who can do what</h2>
+        <h2 className="mb-1 font-display text-lg font-bold text-ink">কে কোন সার্ভিস করতে পারে</h2>
         <p className="mb-3 text-sm text-muted">
-          A service you turn off here will never be assigned to that chair.
+          এখানে কোনো সার্ভিস বন্ধ রাখলে সেটা ওই চেয়ারে কখনো অ্যাসাইন হবে না।
         </p>
         <CanPerformMatrix shopId={shop.id} />
       </div>

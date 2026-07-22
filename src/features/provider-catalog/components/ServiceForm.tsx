@@ -39,7 +39,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
         <Field error={err.name?.message}>
           <Input
             {...form.register("name")}
-            placeholder="Service name (Haircut)"
+            placeholder="সার্ভিসের নাম (চুল কাটা)"
             invalid={!!err.name}
           />
         </Field>
@@ -49,7 +49,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
           {...form.register("rate")}
           type="number"
           inputMode="numeric"
-          placeholder="Rate (৳)"
+          placeholder="রেট (৳)"
           invalid={!!err.rate}
         />
       </Field>
@@ -58,16 +58,16 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
           {...form.register("default_duration_min")}
           type="number"
           inputMode="numeric"
-          placeholder="Duration (min)"
+          placeholder="সময় (মিনিট)"
           invalid={!!err.default_duration_min}
         />
       </Field>
       <div className="flex gap-2 sm:col-span-4">
         <Button type="submit" loading={busy}>
-          {busy ? "Saving…" : initial ? "Update" : "Add"}
+          {busy ? "সেভ হচ্ছে…" : initial ? "আপডেট করো" : "যোগ করো"}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          বাতিল
         </Button>
       </div>
     </form>

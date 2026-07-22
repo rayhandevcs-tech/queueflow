@@ -25,7 +25,7 @@ export function CanPerformMatrix({ shopId }: { shopId: string }) {
   if (!chairs?.length || !activeServices.length) {
     return (
       <p className="rounded-xl bg-soft p-3 text-xs text-muted">
-        You need at least one chair and one active service to see the matrix.
+        এই টেবিল দেখতে অন্তত একটা চেয়ার আর একটা চালু সার্ভিস থাকতে হবে।
       </p>
     );
   }
@@ -41,7 +41,7 @@ export function CanPerformMatrix({ shopId }: { shopId: string }) {
         <thead>
           <tr className="border-b border-line">
             <th className="p-3 text-left text-xs font-semibold text-muted">
-              Service ↓ / Chair →
+              সার্ভিস ↓ / চেয়ার →
             </th>
             {chairs.map((c) => (
               <th key={c.id} className="p-3 text-center">
