@@ -11,8 +11,8 @@ import { useToast } from "@/components/ui/Toast";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useShopDetail } from "../hooks/use-shop-detail";
 import { useCancelMySerial } from "../hooks/use-booking-mutations";
-import { useNowMs } from "../hooks/use-now";
-import { fmtMMSS, fmtWait } from "../lib/format-wait";
+import { useNowMs } from "@/hooks/use-now";
+import { fmtMMSS, fmtWait } from "@/lib/format-wait";
 
 export function LiveTrackingView() {
   const { data: serial, isPending } = useMyActiveSerial();

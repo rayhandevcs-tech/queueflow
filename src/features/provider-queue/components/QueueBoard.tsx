@@ -27,35 +27,31 @@ export function QueueBoard({ shopId }: { shopId: string }) {
   if (isError) {
     return (
       <p className="text-sm text-live">
-        Couldn&apos;t load the board — please refresh.
+        বোর্ড লোড করা যায়নি — পেজ রিফ্রেশ করো।
       </p>
     );
   }
 
   return (
     <div className="space-y-4">
-      <BoardHeader
-        shopId={shopId}
-        totals={totals}
-        onWalkIn={() => setWalkInOpen(true)}
-      />
+      <BoardHeader totals={totals} onWalkIn={() => setWalkInOpen(true)} />
 
       {lanes.length === 0 ? (
         <EmptyState
           icon={<Armchair className="h-6 w-6" />}
-          title="No chairs yet"
-          description="Add a chair to start building your live queue."
+          title="এখনো কোনো চেয়ার যোগ করা হয়নি"
+          description="লাইভ কিউ শুরু করতে একটা চেয়ার যোগ করো।"
           action={
             <Link
               href="/chairs"
               className="text-sm font-semibold text-accent hover:underline"
             >
-              Add a chair →
+              চেয়ার যোগ করো →
             </Link>
           }
         />
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
           {lanes.map((lane) => (
             <ChairColumn
               key={lane.chair.id}

@@ -25,5 +25,6 @@ export const keys = {
     mine: () => ["serials", "mine"] as const,
     byShop: (shopId: string) => ["serials", "shop", shopId] as const,
     today: (shopId: string) => ["serials", "today", shopId] as const,
+    liveCount: (shopId: string) => ["serials", "live-count", shopId] as const,
   },
 } as const;

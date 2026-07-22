@@ -78,7 +78,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display text-lg font-bold">
             <UserPlus className="h-5 w-5 text-accent" />
-            Walk-in Customer
+            ওয়াক-ইন কাস্টমার
           </h2>
           <button
             onClick={onClose}
@@ -92,7 +92,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
           <Field error={err.customerName?.message}>
             <Input
               {...form.register("customerName")}
-              placeholder="Customer name *"
+              placeholder="কাস্টমারের নাম *"
               invalid={!!err.customerName}
               autoFocus
             />
@@ -101,7 +101,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
           <Field error={err.customerPhone?.message}>
             <Input
               {...form.register("customerPhone")}
-              placeholder="Phone (optional)"
+              placeholder="ফোন (ঐচ্ছিক)"
               inputMode="tel"
               invalid={!!err.customerPhone}
             />
@@ -113,7 +113,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
             render={({ field }) => (
               <div>
                 <p className="mb-1.5 text-xs font-medium text-muted">
-                  Services *
+                  সার্ভিস *
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {services?.map((s) => {
@@ -151,7 +151,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
           />
 
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Chair</p>
+            <p className="mb-1.5 text-xs font-medium text-muted">চেয়ার</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -164,7 +164,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                 )}
               >
                 <Zap className="h-3.5 w-3.5" />
-                Auto
+                অটো
               </button>
               {activeLanes.map((lane) => (
                 <button
@@ -179,7 +179,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                   )}
                 >
                   {lane.chair.staff_name || lane.chair.label} · ~
-                  {lane.backlogMin}min
+                  {lane.backlogMin} মিন
                 </button>
               ))}
             </div>
@@ -193,7 +193,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
             loading={actions.walkIn.isPending}
             className="w-full"
           >
-            {actions.walkIn.isPending ? "Adding…" : "Add to queue"}
+            {actions.walkIn.isPending ? "যোগ হচ্ছে…" : "কিউতে যোগ করো"}
           </Button>
         </form>
       </div>
