@@ -40,7 +40,7 @@ const NAV: NavItem[] = [
   { href: "/settings", label: "সেটিংস", icon: SettingsIcon },
 ];
 
-export function ProviderSidebar() {
+export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const showToast = useToast();
   const { data: shop } = useMyShop();
@@ -50,8 +50,8 @@ export function ProviderSidebar() {
   const logout = useLogout();
 
   return (
-    <aside className="flex w-59 shrink-0 flex-col bg-ink px-4 py-5.5 text-paper">
-      <Link href="/dashboard" className="flex items-center gap-2.75 px-2 pb-5.5">
+    <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto bg-ink px-4 py-5.5 text-paper">
+      <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-5.5">
         <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
           {shop?.name?.trim().charAt(0).toUpperCase() || "?"}
         </div>
@@ -82,7 +82,10 @@ export function ProviderSidebar() {
               <button
                 key={item.href}
                 type="button"
-                onClick={() => showToast(`${item.label} — শীঘ্রই আসছে`)}
+                onClick={() => {
+                  showToast(`${item.label} — শীঘ্রই আসছে`);
+                  onNavigate?.();
+                }}
                 className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-paper/40"
               >
                 <Icon className="h-4 w-4" />
@@ -95,6 +98,7 @@ export function ProviderSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm transition-colors",
                 active
@@ -123,6 +127,7 @@ export function ProviderSidebar() {
       <div className="mt-3 flex items-center gap-1 px-1">
         <Link
           href="/account"
+          onClick={onNavigate}
           className="flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-paper/50 hover:bg-white/5 hover:text-paper/80"
         >
           <UserRound className="h-3.5 w-3.5" />
