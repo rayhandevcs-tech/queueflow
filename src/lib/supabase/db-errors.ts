@@ -77,7 +77,7 @@ const RULES: ReadonlyArray<{
 ];
 
 const FALLBACK: FriendlyDbError = {
-  message: "Something went wrong — please try again.",
+  message: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।",
   silent: false,
 };
 

@@ -8,9 +8,12 @@ import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 import { useShopDetail, useShopServices } from "../hooks/use-shop-detail";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useCreateBooking } from "../hooks/use-booking-mutations";
+import { AdvancePaymentDialog } from "./AdvancePaymentDialog";
+import type { AdvancePaymentInfo } from "../api/booking.api";
 
 export function ShopDetailView({ shopId }: { shopId: string }) {
   const router = useRouter();
@@ -19,8 +22,10 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
   const { data: queueRows } = useShopQueuePublic(shopId);
   const createBooking = useCreateBooking();
+  const showToast = useToast();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [advance, setAdvance] = useState(false);
+  const [payingWith, setPayingWith] = useState(false);
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -78,11 +83,24 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const totalMin = selectedServices.reduce((a, s) => a + s.default_duration_min, 0);
   const totalAmount = selectedServices.reduce((a, s) => a + s.rate, 0);
 
-  const onConfirm = () => {
+  const bookNow = (advanceInfo?: AdvancePaymentInfo) => {
     createBooking.mutate(
-      { shopId, serviceIds: [...selected] },
-      { onSuccess: () => router.push("/my-serial") },
+      { shopId, serviceIds: [...selected], advance: advanceInfo },
+      {
+        onSuccess: () => {
+          showToast(advanceInfo ? "✅ অ্যাডভান্স পেইড — সিরিয়াল লক হলো" : "✅ সিরিয়াল কনফার্ম হলো");
+          router.push("/my-serial");
+        },
+      },
     );
+  };
+
+  const onConfirm = () => {
+    if (advance) {
+      setPayingWith(true);
+      return;
+    }
+    bookNow();
   };
 
   return (
@@ -253,6 +271,17 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
           </Button>
         </div>
       </div>
+
+      {payingWith && (
+        <AdvancePaymentDialog
+          amount={totalAmount}
+          onClose={() => setPayingWith(false)}
+          onSuccess={(info) => {
+            setPayingWith(false);
+            bookNow(info);
+          }}
+        />
+      )}
     </div>
   );
 }

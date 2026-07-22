@@ -175,6 +175,9 @@ export type Database = {
           completed_at: string | null;
           created_at: string;
           updated_at: string;
+          advance_paid: boolean;
+          advance_method: string | null;
+          advance_txn_id: string | null;
         };
         Insert: {
           id?: string;
@@ -185,6 +188,9 @@ export type Database = {
           customer_phone?: string | null;
           service_ids: string[];
           is_walk_in?: boolean;
+          advance_paid?: boolean;
+          advance_method?: string | null;
+          advance_txn_id?: string | null;
         };
         Update: {
           status?: Database["public"]["Enums"]["serial_status"];

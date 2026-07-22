@@ -47,6 +47,11 @@ export async function getMyActiveSerial(): Promise<Serial | null> {
   return data;
 }
 
+export interface AdvancePaymentInfo {
+  method: "bkash" | "nagad";
+  transactionId: string;
+}
+
 /**
  * Book a serial. Chair/position/snapshot/amount are computed by the same
  * BEFORE INSERT trigger the provider's walk-in flow uses. The DB rejects a
@@ -55,6 +60,7 @@ export async function getMyActiveSerial(): Promise<Serial | null> {
 export async function createBooking(
   shopId: string,
   serviceIds: string[],
+  advance?: AdvancePaymentInfo,
 ): Promise<Serial> {
   return withDbErrors(async () => {
     const supabase = getBrowserClient();
@@ -74,6 +80,9 @@ export async function createBooking(
         customer_name: fullName,
         service_ids: serviceIds,
         is_walk_in: false,
+        ...(advance
+          ? { advance_paid: true, advance_method: advance.method, advance_txn_id: advance.transactionId }
+          : {}),
       })
       .select()
       .single();

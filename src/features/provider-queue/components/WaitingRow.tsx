@@ -55,6 +55,11 @@ export function WaitingRow({
                 ওয়াক-ইন
               </span>
             )}
+            {serial.advance_paid && (
+              <span className="shrink-0 rounded-full bg-good-soft px-2 py-0.5 text-[10px] font-semibold text-good">
+                ✓ অ্যাডভান্স পেইড
+              </span>
+            )}
           </div>
           <p className="mt-0.5 truncate text-xs text-muted">
             {services.map((s) => s.name).join(" + ") || "—"}
