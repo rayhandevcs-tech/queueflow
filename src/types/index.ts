@@ -13,7 +13,7 @@ export type SerialStatus = Database["public"]["Enums"]["serial_status"];
 export type AssignmentMode = Database["public"]["Enums"]["assignment_mode"];
 
 export type BusinessType = Database["public"]["Enums"]["business_type"];
-export type { TablesInsert, TablesUpdate } from "./database.types";
+export type { TablesInsert, TablesUpdate, Json } from "./database.types";
 
 /** Shape of one element inside serials.services_snapshot (frozen at booking). */
 export type ServiceSnapshotItem = {

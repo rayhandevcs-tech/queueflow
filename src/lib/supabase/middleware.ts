@@ -4,7 +4,7 @@ import type { Database } from "@/types/database.types";
 import { ROLE_HOME } from "@/config/constants";
 import type { UserRole } from "@/types";
 
-const PROVIDER_PREFIXES = ["/dashboard", "/services", "/chairs", "/summary", "/settings"];
+const PROVIDER_PREFIXES = ["/dashboard", "/services", "/chairs", "/summary", "/settings", "/income"];
 const CUSTOMER_PREFIXES = ["/my-serial", "/history"];
 const AUTH_PAGES = ["/login", "/register"];
 /** Any signed-in role may access these — not gated to a specific role. */

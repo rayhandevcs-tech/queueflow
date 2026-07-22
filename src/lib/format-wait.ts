@@ -1,5 +1,5 @@
 const BN_DIGITS = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
-const BN_MONTHS = [
+export const BN_MONTHS = [
   "জানুয়ারি",
   "ফেব্রুয়ারি",
   "মার্চ",
@@ -12,6 +12,22 @@ const BN_MONTHS = [
   "অক্টোবর",
   "নভেম্বর",
   "ডিসেম্বর",
+];
+
+/** Short month labels for chart axes, matching the design handoff's bar-chart labels. */
+export const BN_MONTHS_SHORT = [
+  "জান",
+  "ফেব",
+  "মার্চ",
+  "এপ্রিল",
+  "মে",
+  "জুন",
+  "জুল",
+  "আগ",
+  "সেপ",
+  "অক্ট",
+  "নভ",
+  "ডিস",
 ];
 
 /** "MM:SS", matching the design handoff's fmtMMSS. */
@@ -31,13 +47,17 @@ export function fmtWait(totalSec: number): { big: string; unit: string; label: s
   return { big: `${h}ঘ ${mm}`, unit: "মিনিট", label: `${h} ঘণ্টা ${mm} মিনিট` };
 }
 
+/** Converts any integer's Latin digits to Bangla digits, e.g. 2025 → "২০২৫". */
+export function toBanglaDigits(n: number): string {
+  return String(n)
+    .split("")
+    .map((c) => (c >= "0" && c <= "9" ? BN_DIGITS[Number(c)] : c))
+    .join("");
+}
+
 /** "২৬ জুন" — Bangla-digit day + Bangla Gregorian month name, matching the design handoff. */
 export function formatBanglaDate(date: Date): string {
-  const day = String(date.getDate())
-    .split("")
-    .map((d) => BN_DIGITS[Number(d)])
-    .join("");
-  return `${day} ${BN_MONTHS[date.getMonth()]}`;
+  return `${toBanglaDigits(date.getDate())} ${BN_MONTHS[date.getMonth()]}`;
 }
 
 /** Grouped Latin-digit amount, matching the design handoff's money(). */
