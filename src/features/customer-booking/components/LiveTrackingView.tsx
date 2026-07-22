@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { LiveDot } from "@/components/ui/LiveDot";
 import { CountdownRing } from "@/components/ui/CountdownRing";
-import { useToast } from "@/components/ui/Toast";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useShopDetail } from "../hooks/use-shop-detail";
 import { useCancelMySerial } from "../hooks/use-booking-mutations";
@@ -17,7 +16,6 @@ import { fmtMMSS, fmtWait } from "@/lib/format-wait";
 export function LiveTrackingView() {
   const { data: serial, isPending } = useMyActiveSerial();
   const cancel = useCancelMySerial();
-  const showToast = useToast();
   const shopQuery = useShopDetail(serial?.shop_id ?? "");
   const queuePublic = useShopQueuePublic(serial?.shop_id);
   const nowMs = useNowMs(1000);
@@ -84,8 +82,6 @@ export function LiveTrackingView() {
       if (b.status === "IN_PROGRESS") return 1;
       return a.position - b.position;
     });
-
-  const onReviewClick = () => showToast("রিভিউ ফিচার শীঘ্রই আসছে");
 
   return (
     <div className="mx-auto max-w-lg">
@@ -217,14 +213,13 @@ export function LiveTrackingView() {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onReviewClick}
-        className="mt-5 w-full rounded-[14px] border p-3.25 text-sm font-semibold text-ink"
+      <Link
+        href="/profile"
+        className="mt-5 block w-full rounded-[14px] border p-3.25 text-center text-sm font-semibold text-ink"
         style={{ borderWidth: 1.5, borderColor: "var(--color-line)", background: "var(--color-card)" }}
       >
         কাজ শেষ? রিভিউ দাও ★
-      </button>
+      </Link>
 
       {serial.status === "WAITING" && (
         <button

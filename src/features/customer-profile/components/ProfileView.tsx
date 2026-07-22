@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Settings, ShieldAlert, ShieldCheck, Sparkles, Store } from "lucide-react";
+import { Settings, ShieldAlert, ShieldCheck, Sparkles, Star, Store } from "lucide-react";
+import type { Serial } from "@/types";
 import { parseServicesSnapshot } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatBanglaDate, formatMoney } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
 import { useProfileHistory } from "../hooks/use-profile-history";
+import { ReviewDialog } from "./ReviewDialog";
 
 export function ProfileView({
   fullName,
@@ -16,6 +19,7 @@ export function ProfileView({
   phone: string | null;
 }) {
   const { history, shopsById, ratingsBySerial, trust, isPending } = useProfileHistory();
+  const [reviewing, setReviewing] = useState<Serial | null>(null);
 
   if (isPending) {
     return (
@@ -151,12 +155,38 @@ export function ProfileView({
                   <p className="font-number text-[13px] font-semibold text-ink">
                     ৳{formatMoney(s.total_amount)}
                   </p>
-                  <p className="text-[10px] text-brass">{rating ? `★ ${rating}` : "রেট করোনি"}</p>
+                  {rating ? (
+                    <p className="text-[10px] text-brass">★ {rating}</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setReviewing(s)}
+                      className="flex items-center gap-0.5 text-[10px] font-semibold text-accent"
+                    >
+                      <Star className="h-2.5 w-2.5" />
+                      রিভিউ দাও
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {reviewing && (
+        <ReviewDialog
+          shopId={reviewing.shop_id}
+          serialId={reviewing.id}
+          shopName={shopsById[reviewing.shop_id]?.name ?? "দোকান"}
+          shopAvatarBg={
+            shopsById[reviewing.shop_id] ? shopAvatarColor(reviewing.shop_id) : "var(--color-muted)"
+          }
+          shopInitial={
+            shopsById[reviewing.shop_id] ? shopInitial(shopsById[reviewing.shop_id].name) : "?"
+          }
+          onClose={() => setReviewing(null)}
+        />
       )}
     </div>
   );

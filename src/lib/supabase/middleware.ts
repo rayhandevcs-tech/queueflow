@@ -13,6 +13,7 @@ const PROVIDER_PREFIXES = [
   "/income",
   "/analytics",
   "/regulars",
+  "/reviews",
 ];
 const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile"];
 const AUTH_PAGES = ["/login", "/register"];
