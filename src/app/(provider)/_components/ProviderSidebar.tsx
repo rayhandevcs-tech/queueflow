@@ -34,7 +34,7 @@ const NAV: NavItem[] = [
   { href: "/chairs", label: "চেয়ার", icon: Armchair },
   { href: "/services", label: "সার্ভিস ও রেট", icon: Scissors },
   { href: "/income", label: "ইনকাম", icon: Wallet },
-  { href: "/analytics", label: "অ্যানালিটিক্স", icon: BarChart3, soon: true },
+  { href: "/analytics", label: "অ্যানালিটিক্স", icon: BarChart3 },
   { href: "/regulars", label: "নিয়মিত কাস্টমার", icon: Users, soon: true },
   { href: "/reviews", label: "রিভিউ", icon: Star, soon: true },
   { href: "/settings", label: "সেটিংস", icon: SettingsIcon },

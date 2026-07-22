@@ -27,5 +27,6 @@ export const keys = {
     today: (shopId: string) => ["serials", "today", shopId] as const,
     liveCount: (shopId: string) => ["serials", "live-count", shopId] as const,
     incomeHistory: (shopId: string) => ["serials", "income-history", shopId] as const,
+    analyticsHistory: (shopId: string) => ["serials", "analytics-history", shopId] as const,
   },
 } as const;
