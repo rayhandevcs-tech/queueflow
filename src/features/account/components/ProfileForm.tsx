@@ -29,11 +29,11 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <Field label="Full name" error={err.fullName?.message}>
+      <Field label="পূর্ণ নাম" error={err.fullName?.message}>
         <Input {...form.register("fullName")} invalid={!!err.fullName} />
       </Field>
 
-      <Field label="Phone" error={err.phone?.message}>
+      <Field label="ফোন নম্বর" error={err.phone?.message}>
         <Input
           {...form.register("phone")}
           placeholder="01XXXXXXXXX"
@@ -43,16 +43,16 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
       <div className="flex items-center gap-3">
         <Button type="submit" loading={update.isPending}>
-          {update.isPending ? "Saving…" : "Save changes"}
+          {update.isPending ? "সংরক্ষণ হচ্ছে…" : "পরিবর্তন সংরক্ষণ করো"}
         </Button>
 
         {update.isError && (
-          <p className="text-sm text-live">Couldn&apos;t save — please try again.</p>
+          <p className="text-sm text-live">সংরক্ষণ করা যায়নি — আবার চেষ্টা করো।</p>
         )}
         {update.isSuccess && !update.isPending && (
           <p className="flex items-center gap-1 text-sm font-medium text-good">
             <CircleCheck className="h-4 w-4" />
-            Saved
+            সংরক্ষিত হয়েছে
           </p>
         )}
       </div>
