@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Ticket } from "lucide-react";
+import { ChevronLeft, MessageCircle, Ticket } from "lucide-react";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
-import { useShopDetail, useShopServices } from "../hooks/use-shop-detail";
+import { useHasShopHistory, useShopDetail, useShopServices } from "../hooks/use-shop-detail";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useCreateBooking } from "../hooks/use-booking-mutations";
 import { AdvancePaymentDialog } from "./AdvancePaymentDialog";
@@ -21,6 +21,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const { data: services, isPending: servicesPending } = useShopServices(shopId);
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
   const { data: queueRows } = useShopQueuePublic(shopId);
+  const { data: hasHistory } = useHasShopHistory(shopId);
   const createBooking = useCreateBooking();
   const showToast = useToast();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -66,6 +67,16 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         <Button size="lg" onClick={() => router.push("/my-serial")}>
           আমার সিরিয়াল দেখো
         </Button>
+        {sameShop && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => router.push(`/explore/${shopId}/chat`)}
+          >
+            <MessageCircle className="h-4 w-4" />
+            দোকানে মেসেজ করো
+          </Button>
+        )}
       </div>
     );
   }
@@ -119,6 +130,16 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
+        {hasHistory && (
+          <button
+            type="button"
+            onClick={() => router.push(`/explore/${shopId}/chat`)}
+            aria-label="দোকানে মেসেজ করো"
+            className="absolute right-4 top-3.5 grid h-9 w-9 place-items-center rounded-[11px] bg-white/20 text-white"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <div className="mx-auto max-w-lg px-4 sm:px-0">

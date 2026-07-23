@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MessageCircle, X } from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { CountdownRing } from "@/components/ui/CountdownRing";
 import { LiveDot } from "@/components/ui/LiveDot";
@@ -17,6 +18,7 @@ export function NowServingCard({
   serial: Serial;
   actions: ReturnType<typeof useSerialActions>;
 }) {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const nowMs = useNowMs(1000);
   const services = parseServicesSnapshot(serial.services_snapshot);
@@ -33,6 +35,16 @@ export function NowServingCard({
 
   return (
     <div className="relative overflow-hidden rounded-[22px] bg-ink p-5.5 text-paper">
+      {serial.customer_id && (
+        <button
+          type="button"
+          title="কাস্টমারকে মেসেজ করো"
+          onClick={() => router.push(`/chat/${serial.customer_id}`)}
+          className="absolute top-4.5 right-11.5 text-paper/30 hover:text-paper/70"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </button>
+      )}
       <button
         type="button"
         title="ক্যানসেল করো"

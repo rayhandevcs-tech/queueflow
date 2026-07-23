@@ -37,4 +37,10 @@ export const keys = {
   reminders: {
     thisMonth: (shopId: string) => ["reminders", "this-month", shopId] as const,
   },
+  messages: {
+    thread: (shopId: string, customerId: string) => ["messages", shopId, customerId] as const,
+    hasHistoryAtShop: (shopId: string) => ["messages", "has-history", shopId] as const,
+    customerName: (shopId: string, customerId: string) =>
+      ["messages", "customer-name", shopId, customerId] as const,
+  },
 } as const;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Play, UserX } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MessageCircle, Phone, Play, UserX } from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtWait, formatMoney } from "@/lib/format-wait";
@@ -22,6 +23,7 @@ export function WaitingRow({
   lanes: Lane[];
   actions: ReturnType<typeof useSerialActions>;
 }) {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const nowMs = useNowMs(30_000);
   const services = parseServicesSnapshot(serial.services_snapshot);
@@ -87,6 +89,16 @@ export function WaitingRow({
           </a>
         )}
         <div className="ml-auto flex items-center gap-1.5">
+          {serial.customer_id && (
+            <button
+              type="button"
+              title="কাস্টমারকে মেসেজ করো"
+              onClick={() => router.push(`/chat/${serial.customer_id}`)}
+              className="grid h-7 w-7 place-items-center rounded-lg bg-soft text-muted hover:text-ink"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </button>
+          )}
           {canStart && (
             <button
               type="button"

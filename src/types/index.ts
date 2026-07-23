@@ -9,6 +9,7 @@ export type Serial = Tables<"serials">;
 export type QueuePublicRow = Tables<"queue_public">;
 export type Review = Tables<"reviews">;
 export type RegularReminder = Tables<"regular_reminders">;
+export type Message = Tables<"messages">;
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type SerialStatus = Database["public"]["Enums"]["serial_status"];

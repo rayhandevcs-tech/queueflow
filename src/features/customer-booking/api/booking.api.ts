@@ -15,6 +15,24 @@ export async function getShopDetail(shopId: string): Promise<Shop | null> {
   return data;
 }
 
+/** Gate for the "মেসেজ" entry point on the shop page — chat only opens once booked. */
+export async function hasServiceHistoryAtShop(shopId: string): Promise<boolean> {
+  const supabase = getBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { count, error } = await supabase
+    .from("serials")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", user.id)
+    .eq("shop_id", shopId);
+
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 export async function getShopServices(shopId: string): Promise<Service[]> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase

@@ -253,6 +253,29 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      messages: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string;
+          sender_id: string;
+          content: string;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          customer_id: string;
+          sender_id: string;
+          content: string;
+          is_read?: boolean;
+        };
+        Update: {
+          is_read?: boolean;
+        };
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {

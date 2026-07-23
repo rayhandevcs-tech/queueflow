@@ -16,7 +16,8 @@ type RealtimeTable =
   | "services"
   | "chair_service_stats"
   | "reviews"
-  | "regular_reminders";
+  | "regular_reminders"
+  | "messages";
 
 type RealtimeEvent = "*" | "INSERT" | "UPDATE" | "DELETE";
 
