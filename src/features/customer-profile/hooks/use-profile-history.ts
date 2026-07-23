@@ -7,6 +7,7 @@ import { getBrowserClient } from "@/lib/supabase/client";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Serial } from "@/types";
 import { getMyAllSerials, getMyRatingsBySerial, getShopsByIds } from "../api/profile-history.api";
+import { computeSpendingSummary } from "../lib/compute-spending";
 import { computeTrustSummary } from "../lib/trust-score";
 
 export function useProfileHistory() {
@@ -51,11 +52,17 @@ export function useProfileHistory() {
 
   const trust = useMemo(() => computeTrustSummary(historyQuery.data ?? []), [historyQuery.data]);
 
+  const spending = useMemo(() => {
+    const done = (historyQuery.data ?? []).filter((s) => s.status === "DONE");
+    return computeSpendingSummary(done, new Date());
+  }, [historyQuery.data]);
+
   return {
     history: historyQuery.data ?? [],
     shopsById: shopsQuery.data ?? {},
     ratingsBySerial: ratingsQuery.data ?? {},
     trust,
+    spending,
     isPending: historyQuery.isPending,
   };
 }

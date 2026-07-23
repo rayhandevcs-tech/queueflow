@@ -18,7 +18,7 @@ export function ProfileView({
   fullName: string;
   phone: string | null;
 }) {
-  const { history, shopsById, ratingsBySerial, trust, isPending } = useProfileHistory();
+  const { history, shopsById, ratingsBySerial, trust, spending, isPending } = useProfileHistory();
   const [reviewing, setReviewing] = useState<Serial | null>(null);
 
   if (isPending) {
@@ -30,6 +30,8 @@ export function ProfileView({
   }
 
   const doneHistory = history.filter((s) => s.status === "DONE");
+  const maxMonthlySpend = Math.max(1, ...spending.monthlyTrend.map((m) => m.amount));
+  const maxShopSpend = Math.max(1, ...spending.byShop.map((s) => s.amount));
 
   let callout: { icon: React.ReactNode; bg: string; border: string; text: React.ReactNode };
   if (trust.score === null) {
@@ -116,6 +118,95 @@ export function ProfileView({
           <p className="text-[11px] text-muted">নিয়মিত দোকান</p>
         </div>
       </div>
+
+      <p className="mt-5 mb-2.75 text-[13px] font-semibold tracking-wide text-muted uppercase">
+        খরচের হিসাব
+      </p>
+
+      <div className="flex gap-2.25">
+        <div className="flex-1 rounded-[18px] bg-ink p-4 text-paper">
+          <p className="text-xs opacity-60">এই মাসে খরচ</p>
+          <p className="mt-1 font-number text-2xl font-bold text-good">
+            ৳{formatMoney(spending.month.amount)}
+          </p>
+          <p className="mt-1 text-[11px] opacity-50">
+            {spending.month.changePct === null
+              ? "গত মাসে কোনো খরচ ছিল না"
+              : spending.month.changePct >= 0
+                ? `▲ গত মাসের চেয়ে ${spending.month.changePct}%`
+                : `▼ গত মাসের চেয়ে ${Math.abs(spending.month.changePct)}%`}
+          </p>
+        </div>
+        <div className="flex-1 rounded-[18px] border border-line bg-card p-4">
+          <p className="text-xs text-muted">সর্বমোট খরচ</p>
+          <p className="mt-1 font-number text-2xl font-bold text-ink">
+            ৳{formatMoney(spending.total.amount)}
+          </p>
+          <p className="mt-1 text-[11px] text-muted">{trust.visitCount} টি ভিজিট</p>
+        </div>
+      </div>
+
+      <div className="mt-2.25 rounded-[18px] border border-line bg-card p-4">
+        <div className="mb-3.5 flex items-center justify-between">
+          <p className="text-[13px] font-semibold text-ink">গত ১২ মাসের খরচ</p>
+          <p className="text-[11px] text-muted">৳ হাজারে</p>
+        </div>
+        <div className="flex h-32 items-end gap-1.75">
+          {spending.monthlyTrend.map((m, i) => (
+            <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-1.25">
+              <div
+                className="w-full max-w-6 rounded-t-[5px]"
+                style={{
+                  height: `${Math.max(2, (m.amount / maxMonthlySpend) * 100)}%`,
+                  background: m.isCurrent ? "var(--color-accent)" : "var(--color-brass-soft)",
+                }}
+                title={`৳${formatMoney(m.amount)}`}
+              />
+              <span
+                className={m.isCurrent ? "text-[9px] font-semibold text-ink" : "text-[9px] text-muted"}
+              >
+                {m.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {spending.byShop.length > 0 && (
+        <div className="mt-2.25 rounded-[18px] border border-line bg-card p-4">
+          <p className="mb-3 text-[13px] font-semibold text-ink">দোকান অনুযায়ী খরচ</p>
+          <div className="flex flex-col gap-2.75">
+            {spending.byShop.map((s) => {
+              const shop = shopsById[s.shopId];
+              return (
+                <div key={s.shopId} className="flex items-center gap-2.5">
+                  <div
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[11px] font-bold text-white"
+                    style={{ background: shop ? shopAvatarColor(shop.id) : "var(--color-muted)" }}
+                  >
+                    {shop ? shopInitial(shop.name) : <Store className="h-3.5 w-3.5" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between text-[13px] text-ink">
+                      <span className="truncate">{shop?.name ?? "দোকান"}</span>
+                      <b className="font-number shrink-0">৳{formatMoney(s.amount)}</b>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <div className="h-1.5 w-full max-w-[70%] rounded-md bg-soft">
+                        <div
+                          className="h-full rounded-md bg-accent"
+                          style={{ width: `${Math.max(2, (s.amount / maxShopSpend) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-muted">{s.visitCount} বার</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <p className="mt-5 mb-2.75 text-[13px] font-semibold tracking-wide text-muted uppercase">
         সিরিয়াল হিস্টরি
