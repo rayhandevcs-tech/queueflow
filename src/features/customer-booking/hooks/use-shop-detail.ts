@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import {
+  getChairRatings,
   getChairServiceCapabilities,
   getShopChairs,
   getShopDetail,
@@ -48,6 +49,24 @@ export function useShopChairs(shopId: string) {
     queryFn: () => getShopChairs(shopId),
     enabled: !!shopId,
   });
+}
+
+/** Per-staff avg rating map, keyed by chair_id — chairs with no reviews yet are absent. */
+export function useChairRatings(chairIds: string[]) {
+  const sortedIds = useMemo(() => chairIds.slice().sort(), [chairIds]);
+  const query = useQuery({
+    queryKey: ["chair-rating-summary", sortedIds],
+    queryFn: () => getChairRatings(sortedIds),
+    enabled: sortedIds.length > 0,
+  });
+
+  const byChairId = useMemo(() => {
+    const map = new Map<string, { avg_rating: number; review_count: number }>();
+    for (const row of query.data ?? []) map.set(row.chair_id, row);
+    return map;
+  }, [query.data]);
+
+  return byChairId;
 }
 
 /**

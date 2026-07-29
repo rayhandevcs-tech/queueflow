@@ -18,7 +18,8 @@ export async function sendMessage(params: {
   shopId: string;
   customerId: string;
   senderId: string;
-  content: string;
+  content?: string;
+  imageUrl?: string;
 }): Promise<Message> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase
@@ -27,7 +28,8 @@ export async function sendMessage(params: {
       shop_id: params.shopId,
       customer_id: params.customerId,
       sender_id: params.senderId,
-      content: params.content,
+      content: params.content?.trim() || null,
+      image_url: params.imageUrl ?? null,
     })
     .select()
     .single();
@@ -90,6 +92,101 @@ export async function getMyShopId(): Promise<string | null> {
 
   if (error) throw error;
   return data?.id ?? null;
+}
+
+/** All messages the signed-in customer has ever sent/received, newest first. */
+export async function getMyThreadMessages(customerId: string): Promise<Message[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+/** All messages ever exchanged at this shop (any customer), newest first. */
+export async function getShopThreadMessages(shopId: string): Promise<Message[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("shop_id", shopId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+/** Batch shop lookup for the customer-side chat list. */
+export async function getShopsBasics(
+  shopIds: string[],
+): Promise<Record<string, { name: string; logo_url: string | null }>> {
+  if (shopIds.length === 0) return {};
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("shops")
+    .select("id, name, logo_url")
+    .in("id", shopIds);
+
+  if (error) throw error;
+  const byId: Record<string, { name: string; logo_url: string | null }> = {};
+  for (const row of data) byId[row.id] = { name: row.name, logo_url: row.logo_url };
+  return byId;
+}
+
+/**
+ * Batch customer-name lookup for the provider-side chat list — same
+ * customer_name-snapshot-on-serials trick as getCustomerDisplayName, but
+ * one query for every customer at this shop instead of one per customer.
+ */
+export async function getCustomerNamesForShop(
+  shopId: string,
+): Promise<Record<string, string>> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("serials")
+    .select("customer_id, customer_name, created_at")
+    .eq("shop_id", shopId)
+    .not("customer_id", "is", null)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  const byId: Record<string, string> = {};
+  for (const row of data) {
+    if (row.customer_id && !(row.customer_id in byId)) byId[row.customer_id] = row.customer_name;
+  }
+  return byId;
+}
+
+/** Lightweight unread count for the customer's nav badge — no row bodies fetched. */
+export async function getMyUnreadChatCount(customerId: string): Promise<number> {
+  const supabase = getBrowserClient();
+  const { count, error } = await supabase
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", customerId)
+    .eq("is_read", false)
+    .neq("sender_id", customerId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** Lightweight unread count for the provider's nav badge. */
+export async function getShopUnreadChatCount(shopId: string, ownerId: string): Promise<number> {
+  const supabase = getBrowserClient();
+  const { count, error } = await supabase
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("shop_id", shopId)
+    .eq("is_read", false)
+    .neq("sender_id", ownerId);
+
+  if (error) throw error;
+  return count ?? 0;
 }
 
 /**

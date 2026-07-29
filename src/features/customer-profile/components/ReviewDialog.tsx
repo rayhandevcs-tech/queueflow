@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star, X } from "lucide-react";
+import { ImagePlus, Star, X } from "lucide-react";
 import { keys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
+import { getBrowserClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/Toast";
+import { Spinner } from "@/components/ui/Spinner";
+import { uploadReviewImage } from "../api/review-storage.api";
 import { submitReview } from "../api/review.api";
+
+const MAX_IMAGES = 4;
 
 const RATING_LABELS = ["", "খুব খারাপ", "খারাপ", "মোটামুটি", "ভালো", "চমৎকার!"];
 
@@ -30,6 +35,15 @@ export function ReviewDialog({
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [myId, setMyId] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const supabase = getBrowserClient();
+    supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
+  }, []);
 
   const submit = useMutation({
     mutationFn: submitReview,
@@ -42,6 +56,20 @@ export function ReviewDialog({
       showToast(err instanceof Error ? err.message : "রিভিউ দেওয়া যায়নি — আবার চেষ্টা করো।");
     },
   });
+
+  const onPickImage = async (file: File | undefined) => {
+    if (!file || !myId) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadReviewImage(myId, file);
+      setImages((prev) => [...prev, url]);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "ছবি আপলোড ব্যর্থ হয়েছে");
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
 
   const displayRating = hoverRating || rating;
 
@@ -100,10 +128,43 @@ export function ReviewDialog({
           className="mt-4.5 w-full resize-none rounded-[14px] border border-line bg-soft p-3.25 text-[13px] text-ink placeholder:text-muted"
         />
 
+        <div className="mt-3 flex flex-wrap gap-2">
+          {images.map((url) => (
+            <div key={url} className="relative h-14 w-14 overflow-hidden rounded-xl border border-line">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setImages((prev) => prev.filter((u) => u !== url))}
+                className="absolute top-0.5 right-0.5 grid h-4.5 w-4.5 place-items-center rounded-full bg-ink/60 text-white"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          ))}
+          {images.length < MAX_IMAGES && (
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="grid h-14 w-14 place-items-center rounded-xl border-2 border-dashed border-line text-muted hover:border-accent/50"
+            >
+              {uploadingImage ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
+            </button>
+          )}
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => void onPickImage(e.target.files?.[0])}
+          />
+        </div>
+
         <button
           type="button"
           disabled={rating === 0 || submit.isPending}
-          onClick={() => submit.mutate({ shopId, serialId, rating, comment })}
+          onClick={() => submit.mutate({ shopId, serialId, rating, comment, images })}
           className="mt-3.5 w-full rounded-[15px] bg-accent py-3.75 font-display text-[15px] font-bold text-accent-ink disabled:opacity-50"
         >
           {submit.isPending ? "পাঠানো হচ্ছে…" : "রিভিউ সাবমিট করো"}

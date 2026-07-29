@@ -58,10 +58,19 @@ export const keys = {
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,
   },
+  chairRatingSummary: {
+    all: () => ["chair-rating-summary", "all"] as const,
+  },
   messages: {
     thread: (shopId: string, customerId: string) => ["messages", shopId, customerId] as const,
     hasHistoryAtShop: (shopId: string) => ["messages", "has-history", shopId] as const,
     customerName: (shopId: string, customerId: string) =>
       ["messages", "customer-name", shopId, customerId] as const,
+  },
+  chatThreads: {
+    mine: () => ["chat-threads", "mine"] as const,
+    byShop: (shopId: string) => ["chat-threads", "shop", shopId] as const,
+    unreadCountMine: () => ["chat-threads", "unread-count", "mine"] as const,
+    unreadCountByShop: (shopId: string) => ["chat-threads", "unread-count", "shop", shopId] as const,
   },
 } as const;

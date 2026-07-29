@@ -3,6 +3,8 @@ export interface ReviewRow {
   serial_id: string;
   rating: number;
   comment: string | null;
+  images: string[];
+  chair_id: string | null;
   created_at: string;
 }
 

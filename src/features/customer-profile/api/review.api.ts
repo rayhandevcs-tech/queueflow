@@ -7,6 +7,7 @@ export async function submitReview(payload: {
   serialId: string;
   rating: number;
   comment: string;
+  images?: string[];
 }): Promise<Review> {
   return withDbErrors(async () => {
     const supabase = getBrowserClient();
@@ -14,6 +15,14 @@ export async function submitReview(payload: {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("লগইন করা নেই");
+
+    // Auto-tag which staff/chair served this booking, straight from the serial —
+    // the customer never has to pick a name themselves.
+    const { data: serial } = await supabase
+      .from("serials")
+      .select("chair_id")
+      .eq("id", payload.serialId)
+      .maybeSingle();
 
     const { data, error } = await supabase
       .from("reviews")
@@ -23,6 +32,8 @@ export async function submitReview(payload: {
         customer_id: user.id,
         rating: payload.rating,
         comment: payload.comment.trim() || null,
+        images: payload.images ?? [],
+        chair_id: serial?.chair_id ?? null,
       })
       .select()
       .single();

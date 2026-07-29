@@ -7,6 +7,7 @@ import {
   BarChart3,
   LogOut,
   Megaphone,
+  MessageCircle,
   Percent,
   Radio,
   Scissors,
@@ -21,6 +22,7 @@ import { formatMoney } from "@/lib/format-wait";
 import { useMyShop, useShopMutations } from "@/features/provider-catalog/hooks/use-my-shop";
 import { useLiveQueueCount, useTodaySummary } from "@/features/provider-queue/hooks/use-sidebar-stats";
 import { useLogout } from "@/features/auth/hooks/use-logout";
+import { useShopUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { useToast } from "@/components/ui/Toast";
 
 interface NavItem {
@@ -36,6 +38,7 @@ const NAV: NavItem[] = [
   { href: "/chairs", label: "চেয়ার", icon: Armchair },
   { href: "/services", label: "সার্ভিস ও রেট", icon: Scissors },
   { href: "/offers", label: "অফার", icon: Percent },
+  { href: "/chat", label: "চ্যাট", icon: MessageCircle },
   { href: "/income", label: "ইনকাম", icon: Wallet },
   { href: "/analytics", label: "অ্যানালিটিক্স", icon: BarChart3 },
   { href: "/regulars", label: "নিয়মিত কাস্টমার", icon: Users },
@@ -50,6 +53,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data: shop } = useMyShop();
   const { update } = useShopMutations();
   const liveCount = useLiveQueueCount(shop?.id);
+  const unreadChatCount = useShopUnreadChatCount(shop?.id);
   const today = useTodaySummary(shop?.id);
   const logout = useLogout();
 
@@ -120,6 +124,11 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               {item.live && liveCount > 0 && (
                 <span className="ml-auto rounded-full bg-live px-2 py-0.5 font-number text-[11px] font-bold text-white">
                   {liveCount}
+                </span>
+              )}
+              {item.href === "/chat" && unreadChatCount > 0 && (
+                <span className="ml-auto rounded-full bg-accent px-2 py-0.5 font-number text-[11px] font-bold text-accent-ink">
+                  {unreadChatCount}
                 </span>
               )}
             </Link>

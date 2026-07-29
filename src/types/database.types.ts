@@ -318,6 +318,8 @@ export type Database = {
           customer_id: string;
           rating: number;
           comment: string | null;
+          images: string[];
+          chair_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -327,7 +329,19 @@ export type Database = {
           customer_id: string;
           rating: number;
           comment?: string | null;
+          images?: string[];
+          chair_id?: string | null;
         };
+        Update: never;
+        Relationships: [];
+      };
+      chair_rating_summary: {
+        Row: {
+          chair_id: string;
+          avg_rating: number;
+          review_count: number;
+        };
+        Insert: never;
         Update: never;
         Relationships: [];
       };
@@ -354,7 +368,8 @@ export type Database = {
           shop_id: string;
           customer_id: string;
           sender_id: string;
-          content: string;
+          content: string | null;
+          image_url: string | null;
           is_read: boolean;
           created_at: string;
         };
@@ -363,7 +378,8 @@ export type Database = {
           shop_id: string;
           customer_id: string;
           sender_id: string;
-          content: string;
+          content?: string | null;
+          image_url?: string | null;
           is_read?: boolean;
         };
         Update: {

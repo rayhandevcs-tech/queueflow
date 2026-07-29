@@ -34,7 +34,7 @@ export function ProviderChatPage({ customerId }: { customerId: string }) {
     <ChatThreadView
       shopId={shopId}
       customerId={customerId}
-      backHref="/dashboard"
+      backHref="/chat"
       otherPartyName={name}
       otherPartyInitial={name.trim().charAt(0).toUpperCase() || "?"}
     />

@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, MessageCircle, Send } from "lucide-react";
+import { ChevronLeft, ImagePlus, MessageCircle, Send } from "lucide-react";
 import { toBanglaDigits } from "@/lib/format-wait";
 import type { Message } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { uploadChatImage } from "../api/storage.api";
+import { useChatPresence } from "../hooks/use-chat-presence";
 import { useChatThread } from "../hooks/use-chat-thread";
 
 function dateLabel(dateStr: string): string {
@@ -43,8 +45,21 @@ export function ChatThreadView({
 }) {
   const { myId, messages, isPending, send } = useChatThread(shopId, customerId);
   const [content, setContent] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const showToast = useToast();
+
+  const otherOnline = useChatPresence(
+    shopId && customerId ? `presence:chat:${shopId}:${customerId}` : undefined,
+    myId ?? undefined,
+  );
+
+  const lastActiveLabel = useMemo(() => {
+    if (messages.length === 0) return null;
+    const last = messages[messages.length - 1];
+    return `${dateLabel(last.created_at)} ${timeLabel(last.created_at)}-এ সক্রিয় ছিল`;
+  }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,12 +69,36 @@ export function ChatThreadView({
     const text = content.trim();
     if (!text) return;
     setContent("");
-    send.mutate(text, {
-      onError: (err) => {
-        showToast(err instanceof Error ? err.message : "মেসেজ পাঠানো যায়নি।");
-        setContent(text);
+    send.mutate(
+      { content: text },
+      {
+        onError: (err) => {
+          showToast(err instanceof Error ? err.message : "মেসেজ পাঠানো যায়নি।");
+          setContent(text);
+        },
       },
-    });
+    );
+  };
+
+  const onPickImage = async (file: File | undefined) => {
+    if (!file || !shopId || !customerId) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadChatImage(shopId, customerId, file);
+      send.mutate(
+        { imageUrl: url },
+        {
+          onError: (err) => {
+            showToast(err instanceof Error ? err.message : "ছবি পাঠানো যায়নি।");
+          },
+        },
+      );
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "ছবি আপলোড ব্যর্থ হয়েছে।");
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
   };
 
   const grouped = useMemo(() => {
@@ -88,9 +127,17 @@ export function ChatThreadView({
         >
           {otherPartyInitial}
         </div>
-        <p className="min-w-0 flex-1 truncate font-display text-[15px] font-bold text-ink">
-          {otherPartyName}
-        </p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-[15px] font-bold text-ink">{otherPartyName}</p>
+          {otherOnline ? (
+            <p className="flex items-center gap-1 text-[11px] text-good">
+              <span className="h-1.5 w-1.5 rounded-full bg-good" />
+              অনলাইন
+            </p>
+          ) : (
+            lastActiveLabel && <p className="truncate text-[11px] text-muted">{lastActiveLabel}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto py-3.5">
@@ -127,7 +174,15 @@ export function ChatThreadView({
                           : "rounded-bl-sm border border-line bg-card text-ink"
                       }`}
                     >
-                      <p className="leading-relaxed wrap-break-word">{m.content}</p>
+                      {m.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={m.image_url}
+                          alt=""
+                          className="mb-1.5 max-h-64 w-full rounded-xl object-cover"
+                        />
+                      )}
+                      {m.content && <p className="leading-relaxed wrap-break-word">{m.content}</p>}
                       <p
                         className={`mt-1 text-right text-[10px] ${mine ? "text-accent-ink/70" : "text-muted"}`}
                       >
@@ -145,6 +200,22 @@ export function ChatThreadView({
 
       <div className="shrink-0 border-t border-line pt-3">
         <div className="flex items-center gap-2">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => void onPickImage(e.target.files?.[0])}
+          />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={uploadingImage}
+            title="ছবি পাঠাও"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-soft disabled:opacity-40"
+          >
+            {uploadingImage ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
+          </button>
           <input
             value={content}
             onChange={(e) => setContent(e.target.value)}

@@ -1,15 +1,16 @@
 "use client";
 
-import { Armchair } from "lucide-react";
+import { Armchair, Star } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Chair, Service } from "@/types";
-import { useChairCapabilities, useShopChairs } from "../hooks/use-shop-detail";
+import { useChairCapabilities, useChairRatings, useShopChairs } from "../hooks/use-shop-detail";
 
 export function StaffTab({ shopId, services }: { shopId: string; services: Service[] | undefined }) {
   const { data: chairs, isPending } = useShopChairs(shopId);
   const allServiceIds = (services ?? []).map((s) => s.id);
   const { blockedByChairId } = useChairCapabilities(allServiceIds);
+  const ratingByChairId = useChairRatings((chairs ?? []).map((c) => c.id));
 
   if (isPending) {
     return (
@@ -53,9 +54,17 @@ export function StaffTab({ shopId, services }: { shopId: string; services: Servi
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-ink">
-                {chair.staff_name || chair.label}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="truncate text-sm font-semibold text-ink">
+                  {chair.staff_name || chair.label}
+                </p>
+                {ratingByChairId.get(chair.id) && (
+                  <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-brass">
+                    <Star className="h-3 w-3 fill-brass" />
+                    {ratingByChairId.get(chair.id)!.avg_rating}
+                  </span>
+                )}
+              </div>
               <p className="truncate text-xs text-muted">{chair.label}</p>
               {capableServices.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">

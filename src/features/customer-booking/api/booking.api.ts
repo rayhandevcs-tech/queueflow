@@ -144,9 +144,24 @@ export async function getShopReviewsPublic(shopId: string): Promise<ReviewRow[]>
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, serial_id, rating, comment, created_at")
+    .select("id, serial_id, rating, comment, images, chair_id, created_at")
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+/** Per-staff average rating for the Staff tab's cards — public, same as shop_rating_summary. */
+export async function getChairRatings(
+  chairIds: string[],
+): Promise<{ chair_id: string; avg_rating: number; review_count: number }[]> {
+  if (chairIds.length === 0) return [];
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("chair_rating_summary")
+    .select("*")
+    .in("chair_id", chairIds);
 
   if (error) throw error;
   return data;

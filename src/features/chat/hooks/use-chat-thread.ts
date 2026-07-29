@@ -46,6 +46,10 @@ export function useChatThread(shopId: string | undefined, customerId: string | u
       if (myId && msg.sender_id !== myId) {
         void markThreadRead(shopId!, customerId!, myId);
       }
+      void queryClient.invalidateQueries({ queryKey: keys.chatThreads.mine() });
+      void queryClient.invalidateQueries({ queryKey: keys.chatThreads.byShop(shopId!) });
+      void queryClient.invalidateQueries({ queryKey: keys.chatThreads.unreadCountMine() });
+      void queryClient.invalidateQueries({ queryKey: keys.chatThreads.unreadCountByShop(shopId!) });
     },
   });
 
@@ -56,9 +60,9 @@ export function useChatThread(shopId: string | undefined, customerId: string | u
   }, [enabled, shopId, customerId, myId, messagesQuery.data]);
 
   const send = useMutation({
-    mutationFn: (content: string) => {
+    mutationFn: (params: { content?: string; imageUrl?: string }) => {
       if (!shopId || !customerId || !myId) throw new Error("চ্যাট প্রস্তুত না — আবার চেষ্টা করো।");
-      return sendMessage({ shopId, customerId, senderId: myId, content });
+      return sendMessage({ shopId, customerId, senderId: myId, ...params });
     },
   });
 

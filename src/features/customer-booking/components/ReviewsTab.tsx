@@ -1,9 +1,11 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BadgeCheck, ImageIcon, Star } from "lucide-react";
 import { formatBanglaDate } from "@/lib/format-wait";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useShopChairs } from "../hooks/use-shop-detail";
 import { useShopReviewsPublic } from "../hooks/use-shop-reviews-public";
 
 function Stars({ count }: { count: number }) {
@@ -15,8 +17,23 @@ function Stars({ count }: { count: number }) {
   );
 }
 
+type Filter = "latest" | "with-images";
+
 export function ReviewsTab({ shopId }: { shopId: string }) {
   const { reviews, summary, isPending } = useShopReviewsPublic(shopId);
+  const { data: chairs } = useShopChairs(shopId);
+  const [filter, setFilter] = useState<Filter>("latest");
+
+  const staffNameByChairId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of chairs ?? []) map.set(c.id, c.staff_name || c.label);
+    return map;
+  }, [chairs]);
+
+  const visibleReviews = useMemo(
+    () => (filter === "with-images" ? reviews.filter((r) => r.images.length > 0) : reviews),
+    [reviews, filter],
+  );
 
   if (isPending) {
     return (
@@ -60,25 +77,79 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {reviews.map((r) => (
-          <div key={r.id} className="rounded-2xl border border-line bg-card p-4.5">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl bg-soft font-display font-bold text-muted">
-                ?
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-ink">কাস্টমার</p>
-                <p className="text-[11px] text-muted">
-                  {formatBanglaDate(new Date(r.created_at))}
-                </p>
-              </div>
-              <Stars count={r.rating} />
-            </div>
-            {r.comment && <p className="text-[13px] leading-relaxed text-ink">{r.comment}</p>}
-          </div>
+      <div className="flex gap-2">
+        {(
+          [
+            ["latest", "সর্বশেষ"],
+            ["with-images", "ছবিসহ"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setFilter(key)}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+              filter === key ? "bg-accent text-accent-ink" : "bg-soft text-muted"
+            }`}
+          >
+            {label}
+          </button>
         ))}
       </div>
+
+      {visibleReviews.length === 0 ? (
+        <EmptyState
+          icon={<ImageIcon className="h-6 w-6" />}
+          title="ছবিসহ কোনো রিভিউ নেই"
+          description="এখনো কেউ ছবি সহ রিভিউ দেয়নি।"
+        />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {visibleReviews.map((r) => (
+            <div key={r.id} className="rounded-2xl border border-line bg-card p-4.5">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl bg-soft font-display font-bold text-muted">
+                  ?
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold text-ink">কাস্টমার</p>
+                    <span
+                      title="সার্ভিস নেওয়া কাস্টমারের যাচাইকৃত রিভিউ"
+                      className="flex items-center gap-0.5 text-[10px] font-medium text-good"
+                    >
+                      <BadgeCheck className="h-3 w-3" />
+                      যাচাইকৃত
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted">
+                    {formatBanglaDate(new Date(r.created_at))}
+                    {r.chair_id && staffNameByChairId.get(r.chair_id) && (
+                      <> · {staffNameByChairId.get(r.chair_id)}</>
+                    )}
+                  </p>
+                </div>
+                <Stars count={r.rating} />
+              </div>
+              {r.comment && <p className="text-[13px] leading-relaxed text-ink">{r.comment}</p>}
+              {r.images.length > 0 && (
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {r.images.map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt=""
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

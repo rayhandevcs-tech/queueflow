@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
+import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
 
@@ -19,6 +20,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const pathname = usePathname();
   const { data: profile } = useMyProfile();
   const { data: activeSerial } = useMyActiveSerial();
+  const unreadChatCount = useMyUnreadChatCount();
   const logout = useLogout();
 
   return (
@@ -66,6 +68,9 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
                 {item.icon}
                 {item.href === "/my-serial" && activeSerial && (
                   <span className="absolute -right-1 -top-1 h-1.75 w-1.75 rounded-full bg-live" />
+                )}
+                {item.href === "/chats" && unreadChatCount > 0 && (
+                  <span className="absolute -right-1 -top-1 h-1.75 w-1.75 rounded-full bg-accent" />
                 )}
               </span>
               {item.label}
