@@ -16,9 +16,9 @@ const PROVIDER_PREFIXES = [
   "/reviews",
 ];
 const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile"];
-const AUTH_PAGES = ["/login", "/register"];
+const AUTH_PAGES = ["/login", "/register", "/forgot-password"];
 /** Any signed-in role may access these — not gated to a specific role. */
-const AUTH_REQUIRED_PREFIXES = ["/account"];
+const AUTH_REQUIRED_PREFIXES = ["/account", "/complete-profile"];
 
 function startsWithAny(path: string, prefixes: string[]) {
   return prefixes.some((p) => path === p || path.startsWith(p + "/"));

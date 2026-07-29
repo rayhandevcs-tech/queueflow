@@ -36,3 +36,31 @@ export async function updateMyProfile(values: ProfileFormOutput): Promise<Profil
   if (error) throw error;
   return data;
 }
+
+/**
+ * Supabase has no direct "verify current password" call, so we
+ * re-authenticate with it first — that both confirms it and refreshes the
+ * session before the update.
+ */
+export async function changePassword({
+  currentPassword,
+  newPassword,
+}: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  const supabase = getBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) throw new Error("লগইন করা নেই");
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (reauthError) throw reauthError;
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+}

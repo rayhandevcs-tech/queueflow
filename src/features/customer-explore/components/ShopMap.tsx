@@ -19,11 +19,13 @@ export function ShopMap({
   shops,
   counts,
   waitMin,
+  userLocation,
   isPending,
 }: {
   shops: Shop[] | undefined;
   counts: Record<string, number>;
   waitMin: Record<string, number>;
+  userLocation?: { lat: number; lng: number } | null;
   isPending: boolean;
 }) {
   if (isPending) {
@@ -51,7 +53,12 @@ export function ShopMap({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-line shadow-sm">
-      <ShopMapInner shops={located} counts={counts} waitMin={waitMin} />
+      <ShopMapInner
+        shops={located}
+        counts={counts}
+        waitMin={waitMin}
+        userLocation={userLocation}
+      />
     </div>
   );
 }

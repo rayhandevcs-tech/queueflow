@@ -9,6 +9,13 @@ import type { Shop } from "@/types";
 
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
+const userIcon = L.divIcon({
+  className: "",
+  html: `<div style="width:16px;height:16px;border-radius:50%;background:#2e7dd6;border:3px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
 function pinIcon(count: number) {
   const color = count === 0 ? "#2e7d5b" : "#db4a4a";
   return L.divIcon({
@@ -33,14 +40,20 @@ export default function ShopMapInner({
   shops,
   counts,
   waitMin,
+  userLocation,
 }: {
   shops: LocatedShop[];
   counts: Record<string, number>;
   waitMin: Record<string, number>;
+  userLocation?: { lat: number; lng: number } | null;
 }) {
   const avgLat = shops.reduce((a, s) => a + s.latitude, 0) / shops.length;
   const avgLng = shops.reduce((a, s) => a + s.longitude, 0) / shops.length;
-  const center: [number, number] = shops.length ? [avgLat, avgLng] : DEFAULT_CENTER;
+  const center: [number, number] = userLocation
+    ? [userLocation.lat, userLocation.lng]
+    : shops.length
+      ? [avgLat, avgLng]
+      : DEFAULT_CENTER;
 
   return (
     <MapContainer
@@ -53,6 +66,7 @@ export default function ShopMapInner({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; OpenStreetMap contributors"
       />
+      {userLocation && <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />}
       {shops.map((shop) => {
         const count = counts[shop.id] ?? 0;
         const wait = waitMin[shop.id] ?? 0;

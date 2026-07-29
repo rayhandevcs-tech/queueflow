@@ -15,5 +15,11 @@ export default function ProfilePage() {
     );
   }
 
-  return <ProfileView fullName={profile?.full_name ?? ""} phone={profile?.phone ?? null} />;
+  return (
+    <ProfileView
+      fullName={profile?.full_name ?? ""}
+      phone={profile?.phone ?? null}
+      avatarUrl={profile?.avatar_url ?? null}
+    />
+  );
 }

@@ -2,6 +2,7 @@ import { getBrowserClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/types";
 import type { LoginFormValues } from "../schemas/login.schema";
 import type { RegisterFormValues } from "../schemas/register.schema";
+import type { ForgotPasswordFormValues } from "../schemas/forgot-password.schema";
 
 export async function signIn(values: LoginFormValues): Promise<{ role: UserRole }> {
   const supabase = getBrowserClient();
@@ -32,5 +33,22 @@ export async function signUp(
 export async function signOut(): Promise<void> {
   const supabase = getBrowserClient();
   const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function requestPasswordReset({
+  email,
+}: ForgotPasswordFormValues): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  if (error) throw error;
+}
+
+/** Called from /reset-password, where a recovery session is already active. */
+export async function updatePassword(newPassword: string): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
 }

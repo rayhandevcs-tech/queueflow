@@ -15,6 +15,9 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"];
           full_name: string;
           phone: string | null;
+          gender: string | null;
+          avatar_url: string | null;
+          onboarding_completed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -23,12 +26,18 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"];
           full_name?: string;
           phone?: string | null;
+          gender?: string | null;
+          avatar_url?: string | null;
+          onboarding_completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           full_name?: string;
           phone?: string | null;
+          gender?: string | null;
+          avatar_url?: string | null;
+          onboarding_completed_at?: string | null;
         };
         Relationships: [];
       };

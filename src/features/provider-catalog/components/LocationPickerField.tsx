@@ -6,7 +6,7 @@ import { LocateFixed, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 
-const LocationPickerMap = dynamic(() => import("./LocationPickerMap"), {
+const LocationPickerMap = dynamic(() => import("@/components/map/LocationPickerMap"), {
   ssr: false,
   loading: () => (
     <div className="grid h-[260px] w-full place-items-center rounded-xl border border-line bg-soft">

@@ -11,11 +11,15 @@ export function ExploreView({
   shops,
   counts,
   waitMin,
+  distanceKm,
+  userLocation,
   isPending,
 }: {
   shops: Shop[] | undefined;
   counts: Record<string, number>;
   waitMin: Record<string, number>;
+  distanceKm?: Record<string, number>;
+  userLocation?: { lat: number; lng: number } | null;
   isPending: boolean;
 }) {
   const [view, setView] = useState<"map" | "list">("map");
@@ -52,9 +56,21 @@ export function ExploreView({
       </div>
 
       {view === "map" ? (
-        <ShopMap shops={shops} counts={counts} waitMin={waitMin} isPending={isPending} />
+        <ShopMap
+          shops={shops}
+          counts={counts}
+          waitMin={waitMin}
+          userLocation={userLocation}
+          isPending={isPending}
+        />
       ) : (
-        <ShopList shops={shops} counts={counts} waitMin={waitMin} isPending={isPending} />
+        <ShopList
+          shops={shops}
+          counts={counts}
+          waitMin={waitMin}
+          distanceKm={distanceKm}
+          isPending={isPending}
+        />
       )}
     </div>
   );

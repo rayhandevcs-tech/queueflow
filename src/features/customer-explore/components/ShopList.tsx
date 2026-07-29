@@ -13,11 +13,13 @@ export function ShopList({
   shops,
   counts,
   waitMin,
+  distanceKm,
   isPending,
 }: {
   shops: Shop[] | undefined;
   counts: Record<string, number>;
   waitMin: Record<string, number>;
+  distanceKm?: Record<string, number>;
   isPending: boolean;
 }) {
   if (isPending) {
@@ -46,6 +48,7 @@ export function ShopList({
         const queue = counts[shop.id] ?? 0;
         const wait = waitMin[shop.id] ?? 0;
         const waitOk = wait <= WAIT_OK_THRESHOLD_MIN;
+        const distance = distanceKm?.[shop.id];
 
         return (
           <li key={shop.id}>
@@ -98,6 +101,11 @@ export function ShopList({
                   >
                     ~<span className="font-number">{wait}</span> মিন ওয়েট
                   </span>
+                  {distance != null && (
+                    <span className="rounded-full border border-line bg-soft px-2.5 py-1 text-[11px] text-ink">
+                      ~<span className="font-number">{distance.toFixed(1)}</span> কিমি
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -15,9 +15,11 @@ import { ReviewDialog } from "./ReviewDialog";
 export function ProfileView({
   fullName,
   phone,
+  avatarUrl,
 }: {
   fullName: string;
   phone: string | null;
+  avatarUrl?: string | null;
 }) {
   const { history, shopsById, ratingsBySerial, trust, spending, isPending } = useProfileHistory();
   const [reviewing, setReviewing] = useState<Serial | null>(null);
@@ -86,6 +88,7 @@ export function ProfileView({
       <ProfileHeaderCard
         name={fullName || "কাস্টমার"}
         subtitle={phone || "—"}
+        avatarUrl={avatarUrl}
         right={
           <div className="rounded-[14px] bg-white px-3 py-2 text-center shadow-xs">
             <p className="font-number text-xl font-bold text-good">{trust.score ?? "—"}</p>

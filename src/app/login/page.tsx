@@ -5,7 +5,7 @@ import { site } from "@/config/site";
 
 export default function LoginPage() {
   return (
-    <AuthShell title="Welcome back" subtitle={`Log in to ${site.name}`}>
+    <AuthShell title="আবার স্বাগতম" subtitle={`${site.name}-এ লগইন করো`}>
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

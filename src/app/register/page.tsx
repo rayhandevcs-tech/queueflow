@@ -4,7 +4,7 @@ import { site } from "@/config/site";
 
 export default function RegisterPage() {
   return (
-    <AuthShell title="Create your account" subtitle={`Join ${site.name} in a minute`}>
+    <AuthShell title="অ্যাকাউন্ট তৈরি করো" subtitle={`মিনিটেই ${site.name}-এ যোগ দাও`}>
       <RegisterForm />
     </AuthShell>
   );

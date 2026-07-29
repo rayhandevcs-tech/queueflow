@@ -7,19 +7,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail, MailCheck, Scissors, Sparkles, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROLES, ROLE_HOME } from "@/config/constants";
+import { ROLES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useRegister } from "../hooks/use-register";
 import {
   registerSchema,
   type RegisterFormValues,
 } from "../schemas/register.schema";
-import { translateAuthError } from "../lib/auth-errors";
+import { translateAuthError } from "@/lib/auth-errors";
 
 const ROLE_OPTIONS = [
-  { value: ROLES.CUSTOMER, label: "Customer", icon: Sparkles },
-  { value: ROLES.PROVIDER, label: "Shop Owner", icon: Scissors },
+  { value: ROLES.CUSTOMER, label: "কাস্টমার", icon: Sparkles },
+  { value: ROLES.PROVIDER, label: "দোকানদার", icon: Scissors },
 ] as const;
 
 export function RegisterForm() {
@@ -40,12 +41,12 @@ export function RegisterForm() {
 
   const onSubmit = form.handleSubmit((values) => {
     register.mutate(values, {
-      onSuccess: ({ role, needsEmailConfirmation }) => {
+      onSuccess: ({ needsEmailConfirmation }) => {
         if (needsEmailConfirmation) {
           setSubmittedEmail(values.email);
           return;
         }
-        router.replace(ROLE_HOME[role]);
+        router.replace("/complete-profile");
         router.refresh();
       },
     });
@@ -61,12 +62,12 @@ export function RegisterForm() {
           <MailCheck className="h-7 w-7" />
         </div>
         <p className="text-sm text-ink">
-          A confirmation link was sent to{" "}
-          <span className="font-semibold">{submittedEmail}</span>. Check your
-          inbox and click the link, then you can log in.
+          <span className="font-semibold">{submittedEmail}</span>-এ কনফার্মেশন
+          লিংক পাঠানো হয়েছে। ইনবক্স চেক করে লিংকে ক্লিক করো, তারপর লগইন করতে
+          পারবে।
         </p>
         <Link href="/login" className="inline-block">
-          <Button size="lg">Go to login</Button>
+          <Button size="lg">লগইনে যাও</Button>
         </Link>
       </div>
     );
@@ -75,7 +76,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">Account type</label>
+        <label className="text-sm font-medium text-ink">অ্যাকাউন্টের ধরন</label>
         <div className="grid grid-cols-2 gap-2">
           {ROLE_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -102,16 +103,16 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <Field label="Name" error={err.fullName?.message}>
+      <Field label="নাম" error={err.fullName?.message}>
         <Input
           {...form.register("fullName")}
           icon={<User className="h-4 w-4" />}
-          placeholder="Your full name"
+          placeholder="তোমার পূর্ণ নাম"
           invalid={!!err.fullName}
         />
       </Field>
 
-      <Field label="Email" error={err.email?.message}>
+      <Field label="ইমেইল" error={err.email?.message}>
         <Input
           {...form.register("email")}
           type="email"
@@ -121,20 +122,18 @@ export function RegisterForm() {
         />
       </Field>
 
-      <Field label="Password" error={err.password?.message}>
-        <Input
+      <Field label="পাসওয়ার্ড" error={err.password?.message}>
+        <PasswordInput
           {...form.register("password")}
-          type="password"
           icon={<Lock className="h-4 w-4" />}
           placeholder="••••••••"
           invalid={!!err.password}
         />
       </Field>
 
-      <Field label="Confirm password" error={err.confirmPassword?.message}>
-        <Input
+      <Field label="পাসওয়ার্ড কনফার্ম করো" error={err.confirmPassword?.message}>
+        <PasswordInput
           {...form.register("confirmPassword")}
-          type="password"
           icon={<Lock className="h-4 w-4" />}
           placeholder="••••••••"
           invalid={!!err.confirmPassword}
@@ -142,7 +141,7 @@ export function RegisterForm() {
       </Field>
 
       <Button type="submit" size="lg" loading={register.isPending} className="w-full">
-        {register.isPending ? "Signing up…" : "Sign up"}
+        {register.isPending ? "সাইন আপ হচ্ছে…" : "সাইন আপ"}
       </Button>
 
       {register.isError && (
@@ -152,9 +151,9 @@ export function RegisterForm() {
       )}
 
       <p className="text-center text-sm text-muted">
-        Already have an account?{" "}
+        অ্যাকাউন্ট আছে?{" "}
         <Link href="/login" className="font-semibold text-accent hover:underline">
-          Log in
+          লগইন করো
         </Link>
       </p>
     </form>
