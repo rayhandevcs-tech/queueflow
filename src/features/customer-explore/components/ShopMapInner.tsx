@@ -10,12 +10,12 @@ import type { Shop } from "@/types";
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
 function pinIcon(count: number) {
-  const color = count === 0 ? "#2e7d5b" : "#1c5d44";
+  const color = count === 0 ? "#2e7d5b" : "#db4a4a";
   return L.divIcon({
     className: "",
     html: `
       <div style="position:relative;width:34px;height:34px">
-        <div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:${color};border:2px solid #f4f1ea;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>
+        <div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:${color};border:2px solid #ffffff;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>
         <div style="position:absolute;top:-6px;left:16px;min-width:16px;padding:0 4px;height:16px;border-radius:8px;background:#1b1812;color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center">${count}</div>
       </div>`,
     iconSize: [34, 34],

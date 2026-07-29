@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-paper: #f1ede4;
-  --color-card: #fffdf8;
-  --color-soft: #f7f3ea;
+  --color-paper: #f7f5f1;
+  --color-card: #ffffff;
+  --color-soft: #f2efea;
   --color-ink: #1b1812;
   --color-muted: #857e70;
-  --color-line: #e7e0d2;
-  --color-accent: #1c5d44;
-  --color-accent-ink: #f4f1ea;
+  --color-line: #eae4dc;
+  --color-accent: #db4a4a;
+  --color-accent-ink: #ffffff;
   --color-brass: #b5852f;
   --color-brass-soft: #f3e7cc;
-  --color-live: #cf4e25;
-  --color-live-soft: #fbe4d8;
+  --color-live: #f97316;
+  --color-live-soft: #fef0e0;
   --color-good: #2e7d5b;
   --color-good-soft: #dcefe4;
 
@@ -28,7 +28,7 @@
   --shadow-sm: 0 1px 3px rgba(27, 24, 18, 0.07), 0 1px 2px rgba(27, 24, 18, 0.05);
   --shadow-md: 0 6px 16px rgba(27, 24, 18, 0.09), 0 2px 6px rgba(27, 24, 18, 0.05);
   --shadow-lg: 0 16px 40px rgba(27, 24, 18, 0.14), 0 4px 10px rgba(27, 24, 18, 0.06);
-  --shadow-glow: 0 8px 28px rgba(28, 93, 68, 0.28);
+  --shadow-glow: 0 8px 28px rgba(219, 74, 74, 0.28);
 
   /* Design-handoff motion (design/design_handoff_palaa/README.md → Animations) */
   --animate-pulse-live: pulse-live 1.4s ease-in-out infinite;
@@ -76,7 +76,7 @@
 body {
   background:
     radial-gradient(ellipse 900px 500px at 8% -8%, rgba(181, 133, 47, 0.10), transparent 60%),
-    radial-gradient(ellipse 900px 600px at 100% 0%, rgba(28, 93, 68, 0.08), transparent 55%),
+    radial-gradient(ellipse 900px 600px at 100% 0%, rgba(219, 74, 74, 0.08), transparent 55%),
     var(--color-paper);
   background-attachment: fixed;
   color: var(--color-ink);

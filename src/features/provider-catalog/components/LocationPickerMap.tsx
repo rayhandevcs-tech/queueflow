@@ -8,7 +8,7 @@ const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
 const pinIcon = L.divIcon({
   className: "",
-  html: `<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:#1c5d44;border:2px solid #f4f1ea;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
+  html: `<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:#db4a4a;border:2px solid #ffffff;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
   iconSize: [22, 22],
   iconAnchor: [11, 22],
 });
