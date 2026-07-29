@@ -34,13 +34,13 @@ export function NowServingCard({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[22px] bg-ink p-5.5 text-paper">
+    <div className="relative overflow-hidden rounded-[22px] bg-accent p-5.5 text-accent-ink">
       {serial.customer_id && (
         <button
           type="button"
           title="কাস্টমারকে মেসেজ করো"
           onClick={() => router.push(`/chat/${serial.customer_id}`)}
-          className="absolute top-4.5 right-11.5 text-paper/30 hover:text-paper/70"
+          className="absolute top-4.5 right-11.5 text-accent-ink/30 hover:text-accent-ink/70"
         >
           <MessageCircle className="h-4 w-4" />
         </button>
@@ -53,12 +53,12 @@ export function NowServingCard({
           setError(null);
           actions.cancel.mutate(serial.id, { onError: surface });
         }}
-        className="absolute top-4.5 right-4.5 text-paper/30 hover:text-paper/70 disabled:opacity-40"
+        className="absolute top-4.5 right-4.5 text-accent-ink/30 hover:text-accent-ink/70 disabled:opacity-40"
       >
         <X className="h-4 w-4" />
       </button>
 
-      <div className="mb-3.5 flex items-center gap-2 text-xs text-paper/60">
+      <div className="mb-3.5 flex items-center gap-2 text-xs text-accent-ink/60">
         <LiveDot />
         এখন চলছে · সিরিয়াল #{serial.position}
       </div>
@@ -69,13 +69,13 @@ export function NowServingCard({
             <span className="font-number text-[26px] leading-none font-bold tracking-tight">
               {fmtMMSS(remainingSec)}
             </span>
-            <span className="mt-1 text-[10px] text-paper/50">বাকি</span>
+            <span className="mt-1 text-[10px] text-accent-ink/50">বাকি</span>
           </div>
         </CountdownRing>
 
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-xl font-bold">{serial.customer_name || "—"}</p>
-          <p className="mt-0.5 truncate text-[13px] text-paper/60">
+          <p className="mt-0.5 truncate text-[13px] text-accent-ink/60">
             {services.map((s) => s.name).join(" + ") || "—"}
           </p>
           <p className="mt-4 font-number text-lg font-bold">৳{formatMoney(serial.total_amount)}</p>
@@ -94,7 +94,7 @@ export function NowServingCard({
         {actions.complete.isPending ? "হচ্ছে…" : "✓ কাজ সম্পন্ন — পরের জন"}
       </button>
 
-      {error && <p className="mt-2 text-xs text-live">{error}</p>}
+      {error && <p className="mt-2 text-xs text-accent-ink">{error}</p>}
     </div>
   );
 }

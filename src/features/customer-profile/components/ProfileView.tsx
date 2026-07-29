@@ -8,6 +8,7 @@ import { parseServicesSnapshot } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatBanglaDate, formatMoney } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
+import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { useProfileHistory } from "../hooks/use-profile-history";
 import { ReviewDialog } from "./ReviewDialog";
 
@@ -82,19 +83,16 @@ export function ProfileView({
         </Link>
       </div>
 
-      <div className="flex items-center gap-3.75 rounded-[22px] bg-ink p-5 text-paper">
-        <div className="grid h-15 w-15 shrink-0 place-items-center rounded-[18px] bg-accent font-display text-2xl font-extrabold text-accent-ink">
-          {fullName.trim().charAt(0).toUpperCase() || "?"}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-lg font-bold">{fullName || "কাস্টমার"}</p>
-          <p className="text-xs text-paper/55">{phone || "—"}</p>
-        </div>
-        <div className="shrink-0 rounded-[14px] bg-white/10 px-3 py-2 text-center">
-          <p className="font-number text-xl font-bold text-good">{trust.score ?? "—"}</p>
-          <p className="text-[10px] text-paper/60">ট্রাস্ট স্কোর</p>
-        </div>
-      </div>
+      <ProfileHeaderCard
+        name={fullName || "কাস্টমার"}
+        subtitle={phone || "—"}
+        right={
+          <div className="rounded-[14px] bg-white px-3 py-2 text-center shadow-xs">
+            <p className="font-number text-xl font-bold text-good">{trust.score ?? "—"}</p>
+            <p className="text-[10px] text-muted">ট্রাস্ট স্কোর</p>
+          </div>
+        }
+      />
 
       <div
         className="mt-3.25 flex items-center gap-2.75 rounded-2xl p-3.5"
@@ -124,9 +122,9 @@ export function ProfileView({
       </p>
 
       <div className="flex gap-2.25">
-        <div className="flex-1 rounded-[18px] bg-ink p-4 text-paper">
+        <div className="flex-1 rounded-[18px] bg-accent p-4 text-accent-ink">
           <p className="text-xs opacity-60">এই মাসে খরচ</p>
-          <p className="mt-1 font-number text-2xl font-bold text-good">
+          <p className="mt-1 font-number text-2xl font-bold">
             ৳{formatMoney(spending.month.amount)}
           </p>
           <p className="mt-1 text-[11px] opacity-50">

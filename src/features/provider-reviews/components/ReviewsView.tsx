@@ -40,9 +40,9 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
       ) : (
         <>
           <div className="flex flex-col gap-4.5 sm:flex-row">
-            <div className="shrink-0 rounded-[20px] bg-ink px-7.5 py-6 text-center text-paper sm:w-44">
-              <p className="font-number text-5xl font-bold text-brass">{summary.average}</p>
-              <p className="mt-1 text-lg text-brass">★★★★★</p>
+            <div className="shrink-0 rounded-[20px] bg-accent px-7.5 py-6 text-center text-accent-ink sm:w-44">
+              <p className="font-number text-5xl font-bold">{summary.average}</p>
+              <p className="mt-1 text-lg">★★★★★</p>
               <p className="mt-1.5 text-xs opacity-50">{summary.count} রিভিউ</p>
             </div>
             <div className="flex flex-1 flex-col justify-center gap-2 rounded-[20px] border border-line bg-card p-5">

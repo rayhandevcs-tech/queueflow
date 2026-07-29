@@ -29,9 +29,9 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-[20px] bg-ink p-5.5 text-paper">
+        <div className="rounded-[20px] bg-accent p-5.5 text-accent-ink">
           <p className="text-[13px] opacity-60">আজ</p>
-          <p className="mt-1.5 font-number text-[32px] font-bold text-good">
+          <p className="mt-1.5 font-number text-[32px] font-bold">
             ৳{formatMoney(summary.today.amount)}
           </p>
           <p className="mt-1 text-xs opacity-50">{summary.today.doneCount} টি কাজ</p>

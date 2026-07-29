@@ -12,8 +12,8 @@ export function AuthShell({
 }) {
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden bg-ink px-12 py-14 lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-accent/30 blur-3xl" />
+      <div className="relative hidden overflow-hidden bg-accent px-12 py-14 lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-brass/20 blur-3xl" />
 
         <span className="relative font-display text-lg font-bold text-accent-ink">

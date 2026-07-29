@@ -22,7 +22,7 @@ export function ActiveBookingBanner() {
   return (
     <Link
       href="/my-serial"
-      className="mb-4.5 flex animate-pop items-center gap-3.5 rounded-[20px] bg-ink px-4.5 py-4 text-accent-ink"
+      className="mb-4.5 flex animate-pop items-center gap-3.5 rounded-[20px] bg-accent px-4.5 py-4 text-accent-ink"
     >
       <div className="grid h-11.5 w-11.5 shrink-0 place-items-center rounded-2xl bg-white/10">
         <LiveDot />

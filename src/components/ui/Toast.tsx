@@ -33,7 +33,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="animate-pop rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-accent-ink shadow-lg"
+            className="animate-pop rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink shadow-lg"
           >
             {t.message}
           </div>

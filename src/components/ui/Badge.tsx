@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 const VARIANTS = {
   neutral: "bg-soft text-muted",
   accent: "bg-accent/10 text-accent",
+  onAccent: "bg-white/15 text-accent-ink",
   good: "bg-good-soft text-good",
   live: "bg-live-soft text-live",
   brass: "bg-brass-soft text-brass",

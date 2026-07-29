@@ -104,8 +104,8 @@ export function LiveTrackingView() {
         </span>
       </div>
 
-      <div className="relative mt-4.5 overflow-hidden rounded-[26px] bg-ink px-5.5 py-7 text-center">
-        <div className="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
+      <div className="relative mt-4.5 overflow-hidden rounded-[26px] bg-accent px-5.5 py-7 text-center">
+        <div className="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
         <div className="pointer-events-none absolute -right-10 -bottom-20 h-64 w-64 rounded-full bg-brass/15 blur-3xl" />
 
         <p className="relative text-xs tracking-wide text-accent-ink/55">
@@ -125,7 +125,7 @@ export function LiveTrackingView() {
 
         <div className="relative inline-flex items-center gap-3 rounded-full bg-accent-ink/10 px-4 py-2 text-sm text-accent-ink">
           <span className="opacity-60">তোমার সিরিয়াল</span>
-          <span className="font-display text-xl font-extrabold text-live">
+          <span className="font-display text-xl font-extrabold text-accent-ink">
             #{serial.position}
           </span>
         </div>
