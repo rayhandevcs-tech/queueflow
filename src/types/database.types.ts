@@ -54,6 +54,8 @@ export type Database = {
           phone: string | null;
           logo_url: string | null;
           cover_image_url: string | null;
+          about: string | null;
+          weekly_hours: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -69,6 +71,8 @@ export type Database = {
           phone?: string | null;
           logo_url?: string | null;
           cover_image_url?: string | null;
+          about?: string | null;
+          weekly_hours?: Json | null;
         };
         Update: {
           name?: string;
@@ -80,6 +84,8 @@ export type Database = {
           phone?: string | null;
           logo_url?: string | null;
           cover_image_url?: string | null;
+          about?: string | null;
+          weekly_hours?: Json | null;
         };
         Relationships: [];
       };
@@ -159,6 +165,27 @@ export type Database = {
         };
         Update: {
           can_perform?: boolean;
+        };
+        Relationships: [];
+      };
+      shop_gallery_images: {
+        Row: {
+          id: string;
+          shop_id: string;
+          path: string;
+          url: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          path: string;
+          url: string;
+          sort_order?: number;
+        };
+        Update: {
+          sort_order?: number;
         };
         Relationships: [];
       };

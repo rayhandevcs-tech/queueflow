@@ -5,8 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Review } from "@/types";
+import { computeReviewSummary } from "@/lib/reviews";
 import { getSerialCustomerNames, getShopReviews } from "../api/reviews.api";
-import { computeReviewSummary } from "../lib/compute-reviews";
 
 export function useShopReviews(shopId: string | undefined) {
   const queryClient = useQueryClient();

@@ -8,6 +8,7 @@ export type ChairServiceStat = Tables<"chair_service_stats">;
 export type Serial = Tables<"serials">;
 export type QueuePublicRow = Tables<"queue_public">;
 export type Review = Tables<"reviews">;
+export type ShopGalleryImage = Tables<"shop_gallery_images">;
 export type RegularReminder = Tables<"regular_reminders">;
 export type Message = Tables<"messages">;
 export type Notification = Tables<"notifications">;

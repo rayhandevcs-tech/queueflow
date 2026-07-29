@@ -16,10 +16,10 @@ export async function uploadShopImage(
   file: File,
 ): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("Only images can be uploaded");
+    throw new Error("শুধু ছবি আপলোড করা যাবে");
   }
   if (file.size > MAX_BYTES) {
-    throw new Error("Image must be under 2 MB");
+    throw new Error("ছবি ২ এমবি-র নিচে হতে হবে");
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -30,8 +30,43 @@ export async function uploadShopImage(
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false });
 
-  if (error) throw new Error("Upload failed — please try again");
+  if (error) throw new Error("আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো");
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;
+}
+
+/**
+ * Upload one gallery photo. Unlike uploadShopImage this also returns the
+ * storage path (not just the public URL), so a later delete can remove the
+ * object as well as its `shop_gallery_images` row.
+ */
+export async function uploadShopGalleryImage(
+  shopId: string,
+  file: File,
+): Promise<{ url: string; path: string }> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("শুধু ছবি আপলোড করা যাবে");
+  }
+  if (file.size > MAX_BYTES) {
+    throw new Error("ছবি ২ এমবি-র নিচে হতে হবে");
+  }
+
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const path = `${shopId}/gallery-${Date.now()}.${ext}`;
+
+  const supabase = getBrowserClient();
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: false });
+
+  if (error) throw new Error("আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো");
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
+
+export async function deleteShopGalleryStorageObject(path: string): Promise<void> {
+  const supabase = getBrowserClient();
+  await supabase.storage.from(BUCKET).remove([path]);
 }

@@ -2,7 +2,11 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
-import { cancelMySerial, createBooking, type AdvancePaymentInfo } from "../api/booking.api";
+import {
+  cancelMySerial,
+  createBooking,
+  type AdvancePaymentInfo,
+} from "../api/booking.api";
 
 export function useCreateBooking() {
   const queryClient = useQueryClient();
@@ -11,11 +15,13 @@ export function useCreateBooking() {
       shopId,
       serviceIds,
       advance,
+      chairId,
     }: {
       shopId: string;
       serviceIds: string[];
       advance?: AdvancePaymentInfo;
-    }) => createBooking(shopId, serviceIds, advance),
+      chairId?: string | null;
+    }) => createBooking(shopId, serviceIds, { advance, chairId }),
     onSuccess: (serial) => {
       queryClient.setQueryData(keys.serials.mine(), serial);
     },

@@ -40,7 +40,7 @@ export function ImageUploadField({
       const url = await uploadShopImage(shopId, kind, file);
       onUploaded(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      setError(e instanceof Error ? e.message : "আপলোড ব্যর্থ হয়েছে");
       setPreview(null);
     } finally {
       setUploading(false);
@@ -65,7 +65,7 @@ export function ImageUploadField({
         ) : (
           <span className="flex flex-col items-center gap-1 text-xs">
             <ImagePlus className="h-5 w-5" />
-            Choose photo
+            ছবি বাছো
           </span>
         )}
         {uploading && (

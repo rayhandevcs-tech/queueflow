@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { useShopMutations } from "../hooks/use-my-shop";
 import { shopSchema, type ShopFormValues, type ShopFormOutput } from "../schemas/shop.schema";
+import { AboutHoursForm } from "./AboutHoursForm";
+import { GalleryManager } from "./GalleryManager";
 import { ImageUploadField } from "./ImageUploadField";
 import { LocationPickerField } from "./LocationPickerField";
 
@@ -46,9 +48,9 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
       {isEdit && (
         <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-ink">Shop open</p>
+            <p className="text-sm font-semibold text-ink">দোকান খোলা</p>
             <p className="text-xs text-muted">
-              While closed, no new serials can be booked
+              বন্ধ থাকলে নতুন কোনো সিরিয়াল বুক করা যাবে না
             </p>
           </div>
           <button
@@ -70,21 +72,21 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
                 shop.is_open ? "bg-good animate-pulse" : "bg-muted",
               )}
             />
-            {shop.is_open ? "Open" : "Closed"}
+            {shop.is_open ? "খোলা" : "বন্ধ"}
           </button>
         </div>
       )}
 
-      <Field label="Shop name" error={err.name?.message}>
+      <Field label="দোকানের নাম" error={err.name?.message}>
         <Input
           {...form.register("name")}
-          placeholder="e.g. New Star Salon"
+          placeholder="যেমন: নিউ স্টার সেলুন"
           invalid={!!err.name}
         />
       </Field>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">Type</label>
+        <label className="text-sm font-medium text-ink">ধরন</label>
         <div className="flex gap-2">
           {BUSINESS_TYPES.map((t) => {
             const selected = form.watch("business_type") === t.value;
@@ -110,14 +112,14 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           })}
         </div>
         {err.business_type && (
-          <p className="text-xs font-medium text-live">Choose a type</p>
+          <p className="text-xs font-medium text-live">একটা ধরন বেছে নাও</p>
         )}
       </div>
 
-      <Field label="Address" error={err.address?.message}>
+      <Field label="ঠিকানা" error={err.address?.message}>
         <Input
           {...form.register("address")}
-          placeholder="Road, area, city"
+          placeholder="রোড, এলাকা, শহর"
           invalid={!!err.address}
         />
       </Field>
@@ -131,7 +133,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
         }}
       />
 
-      <Field label="Phone" error={err.phone?.message}>
+      <Field label="ফোন" error={err.phone?.message}>
         <Input
           {...form.register("phone")}
           placeholder="01XXXXXXXXX"
@@ -145,7 +147,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           <ImageUploadField
             shopId={shop.id}
             kind="logo"
-            label="Logo"
+            label="লোগো"
             currentUrl={shop.logo_url}
             onUploaded={(url) =>
               update.mutate({ shopId: shop.id, patch: { logo_url: url } })
@@ -155,7 +157,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
             <ImageUploadField
               shopId={shop.id}
               kind="cover"
-              label="Cover photo"
+              label="কভার ছবি"
               aspect="wide"
               currentUrl={shop.cover_image_url}
               onUploaded={(url) =>
@@ -169,17 +171,25 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
         </div>
       ) : (
         <p className="rounded-xl bg-soft p-3 text-xs text-muted">
-          You can upload a logo and cover photo after saving the shop.
+          দোকান সংরক্ষণ করার পর লোগো ও কভার ছবি আপলোড করতে পারবে।
         </p>
       )}
 
+      {isEdit && (
+        <div className="rounded-2xl border border-line bg-card p-4 shadow-sm">
+          <GalleryManager shopId={shop.id} />
+        </div>
+      )}
+
+      {isEdit && <AboutHoursForm shop={shop} />}
+
       <Button type="submit" size="lg" loading={busy}>
-        {busy ? "Saving…" : isEdit ? "Update" : "Create shop"}
+        {busy ? "সংরক্ষণ হচ্ছে…" : isEdit ? "আপডেট করো" : "দোকান তৈরি করো"}
       </Button>
 
       {(create.error ?? update.error) && (
         <p className="text-sm text-live">
-          Couldn&apos;t save — please try again.
+          সংরক্ষণ করা যায়নি — আবার চেষ্টা করো।
         </p>
       )}
     </form>

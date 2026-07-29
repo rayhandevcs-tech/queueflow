@@ -1,7 +1,8 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { withDbErrors } from "@/lib/supabase/db-errors";
 import { ACTIVE_STATUSES } from "@/config/constants";
-import type { QueuePublicRow, Serial, Service, Shop } from "@/types";
+import type { ReviewRow } from "@/lib/reviews";
+import type { Chair, ChairServiceStat, QueuePublicRow, Serial, Service, Shop, ShopGalleryImage } from "@/types";
 
 export async function getShopDetail(shopId: string): Promise<Shop | null> {
   const supabase = getBrowserClient();
@@ -70,15 +71,22 @@ export interface AdvancePaymentInfo {
   transactionId: string;
 }
 
+export interface CreateBookingOptions {
+  advance?: AdvancePaymentInfo;
+  /** Customer's optional preferred staff/chair — null/omitted → DB assign_best_chair auto-picks. */
+  chairId?: string | null;
+}
+
 /**
  * Book a serial. Chair/position/snapshot/amount are computed by the same
- * BEFORE INSERT trigger the provider's walk-in flow uses. The DB rejects a
- * second active booking (one_active_serial_per_customer) or a closed shop.
+ * BEFORE INSERT trigger the provider's walk-in flow uses (chair_id passthrough
+ * mirrors WalkInPayload in provider-queue). The DB rejects a second active
+ * booking (one_active_serial_per_customer) or a closed shop.
  */
 export async function createBooking(
   shopId: string,
   serviceIds: string[],
-  advance?: AdvancePaymentInfo,
+  opts?: CreateBookingOptions,
 ): Promise<Serial> {
   return withDbErrors(async () => {
     const supabase = getBrowserClient();
@@ -98,8 +106,13 @@ export async function createBooking(
         customer_name: fullName,
         service_ids: serviceIds,
         is_walk_in: false,
-        ...(advance
-          ? { advance_paid: true, advance_method: advance.method, advance_txn_id: advance.transactionId }
+        chair_id: opts?.chairId ?? null,
+        ...(opts?.advance
+          ? {
+              advance_paid: true,
+              advance_method: opts.advance.method,
+              advance_txn_id: opts.advance.transactionId,
+            }
           : {}),
       })
       .select()
@@ -108,6 +121,69 @@ export async function createBooking(
     if (error) throw error;
     return data;
   });
+}
+
+/** Shop's photo gallery — public browsing, ordered for display. */
+export async function getShopGallery(shopId: string): Promise<ShopGalleryImage[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("shop_gallery_images")
+    .select("*")
+    .eq("shop_id", shopId)
+    .order("sort_order", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Reviews tab's public read — rating+comment only, never joined with
+ * `serials` (that would leak other customers' identities/RLS-block).
+ */
+export async function getShopReviewsPublic(shopId: string): Promise<ReviewRow[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("id, serial_id, rating, comment, created_at")
+    .eq("shop_id", shopId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+/** Staff tab's chair list — active chairs only, public browsing. */
+export async function getShopChairs(shopId: string): Promise<Chair[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("chairs")
+    .select("*")
+    .eq("shop_id", shopId)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Which chairs can perform which of the given services — powers Staff tab's
+ * "পারদর্শিতা" chips and the preferred-staff eligibility filter in the
+ * booking flow (a chair is eligible only if it can perform every selected service).
+ */
+export async function getChairServiceCapabilities(
+  serviceIds: string[],
+): Promise<ChairServiceStat[]> {
+  if (serviceIds.length === 0) return [];
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("chair_service_stats")
+    .select("*")
+    .in("service_id", serviceIds)
+    .eq("can_perform", true);
+
+  if (error) throw error;
+  return data;
 }
 
 /** PII-free live queue rows for one shop — powers the "ahead of you" list. */

@@ -10,12 +10,18 @@ export const keys = {
   },
   chairs: {
     byShop: (shopId: string) => ["chairs", shopId] as const,
+    publicByShop: (shopId: string) => ["chairs", "public", shopId] as const,
   },
   services: {
     byShop: (shopId: string) => ["services", shopId] as const,
   },
   chairStats: {
     byShop: (shopId: string) => ["chair-stats", shopId] as const,
+    capabilities: (serviceIds: string[]) =>
+      ["chair-stats", "capabilities", serviceIds.slice().sort()] as const,
+  },
+  shopGallery: {
+    byShop: (shopId: string) => ["shop-gallery", shopId] as const,
   },
   queuePublic: {
     byShop: (shopId: string) => ["queue-public", shopId] as const,
@@ -33,6 +39,7 @@ export const keys = {
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,
+    publicByShop: (shopId: string) => ["reviews", "public", shopId] as const,
   },
   reminders: {
     thisMonth: (shopId: string) => ["reminders", "this-month", shopId] as const,

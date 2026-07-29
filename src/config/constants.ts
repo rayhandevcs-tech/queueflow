@@ -41,15 +41,15 @@ export const BUSINESS_TYPES: ReadonlyArray<{
   value: SelectableBusinessType;
   label: string;
 }> = [
-  { value: "SALON", label: "Salon" },
-  { value: "PARLOUR", label: "Parlour" },
+  { value: "SALON", label: "সেলুন" },
+  { value: "PARLOUR", label: "পার্লার" },
 ];
 
 /** Display fallback covers every DB value, so no row can ever render blank. */
 export const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
-  SALON: "Salon",
-  PARLOUR: "Parlour",
-  UNISEX: "Unisex",
+  SALON: "সেলুন",
+  PARLOUR: "পার্লার",
+  UNISEX: "ইউনিসেক্স",
 };
 
 export const CHAIR_COLORS = [

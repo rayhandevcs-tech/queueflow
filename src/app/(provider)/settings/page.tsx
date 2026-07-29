@@ -11,8 +11,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Shop Settings"
-        description={shop ? "Update your shop's details" : "Set up your shop first"}
+        title="দোকানের সেটিংস"
+        description={shop ? "তোমার দোকানের তথ্য আপডেট করো" : "প্রথমে দোকান সেট আপ করো"}
       />
       {isPending ? (
         <div className="grid min-h-[30vh] place-items-center">

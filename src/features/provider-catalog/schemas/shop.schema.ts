@@ -5,14 +5,14 @@ export const shopSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Name must be at least 2 characters")
-    .max(80, "Max 80 characters"),
-  address: z.string().trim().max(300, "Max 300 characters").default(""),
+    .min(2, "নাম কমপক্ষে ২ অক্ষরের হতে হবে")
+    .max(80, "সর্বোচ্চ ৮০ অক্ষর"),
+  address: z.string().trim().max(300, "সর্বোচ্চ ৩০০ অক্ষর").default(""),
   phone: z
     .string()
     .trim()
-    .max(20, "Max 20 digits")
-    .regex(/^[0-9+\-\s]*$/, "Digits, +, - only")
+    .max(20, "সর্বোচ্চ ২০ সংখ্যা")
+    .regex(/^[0-9+\-\s]*$/, "শুধু সংখ্যা, +, - অনুমোদিত")
     .or(z.literal(""))
     .nullable()
     .transform((v) => (v === "" || v === null ? null : v)),

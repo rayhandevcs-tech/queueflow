@@ -1,5 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { ReviewRow } from "../lib/compute-reviews";
+import type { ReviewRow } from "@/lib/reviews";
 
 export async function getShopReviews(shopId: string): Promise<ReviewRow[]> {
   const supabase = getBrowserClient();
