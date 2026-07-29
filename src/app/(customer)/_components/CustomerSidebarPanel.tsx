@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
 
 /**
@@ -22,17 +23,20 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto bg-ink px-4 py-5.5 text-paper md:w-59">
-      <Link href="/profile" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-5.5">
-        <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
-          {profile?.full_name?.trim().charAt(0).toUpperCase() || "?"}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-display text-[15px] font-bold">
-            {profile?.full_name || "কাস্টমার"}
-          </p>
-          <p className="truncate text-[11px] text-paper/50">{profile?.phone || "—"}</p>
-        </div>
-      </Link>
+      <div className="flex items-center gap-2.75 px-2 pb-5.5">
+        <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">
+          <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
+            {profile?.full_name?.trim().charAt(0).toUpperCase() || "?"}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-display text-[15px] font-bold">
+              {profile?.full_name || "কাস্টমার"}
+            </p>
+            <p className="truncate text-[11px] text-paper/50">{profile?.phone || "—"}</p>
+          </div>
+        </Link>
+        <NotificationBell className="text-paper/70 hover:bg-white/5" />
+      </div>
 
       <nav className="hidden flex-col gap-0.75 md:flex">
         {CUSTOMER_NAV_ITEMS.map((item) => {

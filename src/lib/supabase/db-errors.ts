@@ -74,6 +74,13 @@ const RULES: ReadonlyArray<{
     match: (t) => t.includes("invalid service selection"),
     result: { message: "Service selection isn't valid — refresh the list.", silent: false },
   },
+  {
+    match: (t) => t.includes("আজকে একবার ব্রডকাস্ট পাঠানো হয়ে গেছে"),
+    result: {
+      message: "আজকে একবার ব্রডকাস্ট পাঠানো হয়ে গেছে — আগামীকাল আবার চেষ্টা করো।",
+      silent: false,
+    },
+  },
 ];
 
 const FALLBACK: FriendlyDbError = {

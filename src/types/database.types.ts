@@ -178,6 +178,8 @@ export type Database = {
           advance_paid: boolean;
           advance_method: string | null;
           advance_txn_id: string | null;
+          notified_two_ahead_at: string | null;
+          notified_turn_at: string | null;
         };
         Insert: {
           id?: string;
@@ -276,6 +278,23 @@ export type Database = {
         };
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: Database["public"]["Enums"]["notification_type"];
+          title: string;
+          body: string;
+          data: Json;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -295,12 +314,28 @@ export type Database = {
         Args: { p_shop_id: string };
         Returns: boolean;
       };
+      broadcast_shop_notification: {
+        Args: {
+          p_shop_id: string;
+          p_target: "recent" | "regulars";
+          p_title: string;
+          p_body: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       user_role: "customer" | "provider";
       serial_status: "WAITING" | "IN_PROGRESS" | "DONE" | "CANCELLED" | "NO_SHOW";
       assignment_mode: "AUTO" | "CHOSEN" | "MANUAL";
       business_type: "SALON" | "PARLOUR" | "UNISEX";
+      notification_type:
+        | "SERIAL_CONFIRMED"
+        | "QUEUE_UPDATE"
+        | "YOUR_TURN"
+        | "CANCELLED"
+        | "PROMO"
+        | "REMINDER";
     };
     CompositeTypes: { [_ in never]: never };
   };

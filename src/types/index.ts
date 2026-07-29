@@ -10,10 +10,12 @@ export type QueuePublicRow = Tables<"queue_public">;
 export type Review = Tables<"reviews">;
 export type RegularReminder = Tables<"regular_reminders">;
 export type Message = Tables<"messages">;
+export type Notification = Tables<"notifications">;
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type SerialStatus = Database["public"]["Enums"]["serial_status"];
 export type AssignmentMode = Database["public"]["Enums"]["assignment_mode"];
+export type NotificationType = Database["public"]["Enums"]["notification_type"];
 
 export type BusinessType = Database["public"]["Enums"]["business_type"];
 export type { TablesInsert, TablesUpdate, Json } from "./database.types";

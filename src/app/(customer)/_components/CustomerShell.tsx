@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { CustomerBottomNav } from "./CustomerBottomNav";
 import { CustomerSidebarPanel } from "./CustomerSidebarPanel";
 
@@ -14,14 +15,17 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh md:flex">
       <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden">
         <Logo />
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="মেনু খোলো"
-          className="grid h-9 w-9 place-items-center rounded-lg text-ink hover:bg-soft"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell className="text-ink hover:bg-soft" />
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="মেনু খোলো"
+            className="grid h-9 w-9 place-items-center rounded-lg text-ink hover:bg-soft"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {open && (
