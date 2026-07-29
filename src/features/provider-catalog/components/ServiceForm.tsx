@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Service } from "@/types";
+import { SERVICE_CATEGORIES, SERVICE_CATEGORY_LABEL } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import {
@@ -25,6 +26,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
       name: initial?.name ?? "",
       rate: initial?.rate ?? 0,
       default_duration_min: initial?.default_duration_min ?? 30,
+      category: (initial?.category as ServiceFormValues["category"]) ?? "OTHER",
     },
   });
 
@@ -62,6 +64,20 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
           invalid={!!err.default_duration_min}
         />
       </Field>
+      <div className="sm:col-span-2">
+        <Field error={err.category?.message}>
+          <select
+            {...form.register("category")}
+            className="h-11 w-full rounded-xl border border-line bg-card px-3 text-sm text-ink"
+          >
+            {SERVICE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {SERVICE_CATEGORY_LABEL[c]}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
       <div className="flex gap-2 sm:col-span-4">
         <Button type="submit" loading={busy}>
           {busy ? "সেভ হচ্ছে…" : initial ? "আপডেট করো" : "যোগ করো"}

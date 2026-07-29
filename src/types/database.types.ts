@@ -97,6 +97,7 @@ export type Database = {
           rate: number;
           default_duration_min: number;
           is_active: boolean;
+          category: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -107,13 +108,54 @@ export type Database = {
           rate: number;
           default_duration_min: number;
           is_active?: boolean;
+          category?: string | null;
         };
         Update: {
           name?: string;
           rate?: number;
           default_duration_min?: number;
           is_active?: boolean;
+          category?: string | null;
         };
+        Relationships: [];
+      };
+      offers: {
+        Row: {
+          id: string;
+          shop_id: string;
+          title: string;
+          description: string | null;
+          discount_pct: number;
+          valid_until: string;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          title: string;
+          description?: string | null;
+          discount_pct: number;
+          valid_until: string;
+          active?: boolean;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          discount_pct?: number;
+          valid_until?: string;
+          active?: boolean;
+        };
+        Relationships: [];
+      };
+      shop_rating_summary: {
+        Row: {
+          shop_id: string;
+          avg_rating: number;
+          review_count: number;
+        };
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       chairs: {

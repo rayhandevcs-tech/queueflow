@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SERVICE_CATEGORIES } from "@/config/constants";
 
 export const serviceSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(60, "Max 60 characters"),
@@ -8,6 +9,7 @@ export const serviceSchema = z.object({
     .int("Enter a whole number")
     .min(1, "At least 1 minute")
     .max(480, "Max 480 minutes"),
+  category: z.enum(SERVICE_CATEGORIES).nullable().optional(),
 });
 
 export type ServiceFormValues = z.input<typeof serviceSchema>;

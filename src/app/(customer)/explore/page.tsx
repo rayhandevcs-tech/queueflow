@@ -1,23 +1,45 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import {
   useOpenShops,
   useShopLiveStats,
 } from "@/features/customer-explore/hooks/use-open-shops";
 import { useUserLocation } from "@/features/customer-explore/hooks/use-user-location";
+import { useActiveOffers } from "@/features/customer-explore/hooks/use-offers";
+import { useShopRatings } from "@/features/customer-explore/hooks/use-ratings";
+import { useServiceCategories } from "@/features/customer-explore/hooks/use-service-categories";
 import { ActiveBookingBanner } from "@/features/customer-booking/components/ActiveBookingBanner";
 import { ExploreView } from "@/features/customer-explore/components/ExploreView";
 import { LocationPrompt } from "@/features/customer-explore/components/LocationPrompt";
+import { OfferCarousel } from "@/features/customer-explore/components/OfferCarousel";
+import { CategoryShortcutRow } from "@/features/customer-explore/components/CategoryShortcutRow";
+import { TopRatedSection } from "@/features/customer-explore/components/TopRatedSection";
+import { SearchFilterBar } from "@/features/customer-explore/components/SearchFilterBar";
+import {
+  DEFAULT_FILTERS,
+  FilterSheet,
+  hasActiveFilters,
+  type ShopFilters,
+} from "@/features/customer-explore/components/FilterSheet";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { distanceKm as computeDistanceKm } from "@/lib/geo";
+import type { SelectableBusinessType, ServiceCategory } from "@/config/constants";
 
 export default function ExplorePage() {
   const { data: profile } = useMyProfile();
   const { data: shops, isPending: shopsPending } = useOpenShops();
   const { counts, waitMin, isPending: statsPending } = useShopLiveStats();
   const location = useUserLocation();
+  const { data: offers } = useActiveOffers();
+  const { byShopId: ratingByShopId } = useShopRatings();
+  const { categoriesByShopId, serviceNamesByShopId, presentCategories } = useServiceCategories();
+
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<ServiceCategory | null>(null);
+  const [filters, setFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const distanceKm = useMemo(() => {
     if (!shops || !location.coords) return {};
@@ -38,6 +60,46 @@ export default function ExplorePage() {
       return da - db;
     });
   }, [shops, distanceKm, location.coords]);
+
+  const filteredShops = useMemo(() => {
+    let list = sortedShops ?? [];
+
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (shop) =>
+          shop.name.toLowerCase().includes(q) ||
+          (serviceNamesByShopId.get(shop.id) ?? []).some((name) => name.toLowerCase().includes(q)),
+      );
+    }
+
+    if (activeCategory) {
+      list = list.filter((shop) => categoriesByShopId.get(shop.id)?.has(activeCategory));
+    }
+
+    if (filters.types.size > 0) {
+      list = list.filter((shop) => filters.types.has(shop.business_type as SelectableBusinessType));
+    }
+
+    if (filters.minRating > 0) {
+      list = list.filter((shop) => (ratingByShopId.get(shop.id)?.avg_rating ?? 0) >= filters.minRating);
+    }
+
+    if (filters.maxDistanceKm != null) {
+      list = list.filter((shop) => (distanceKm[shop.id] ?? Infinity) <= filters.maxDistanceKm!);
+    }
+
+    return list;
+  }, [
+    sortedShops,
+    search,
+    activeCategory,
+    filters,
+    serviceNamesByShopId,
+    categoriesByShopId,
+    ratingByShopId,
+    distanceKm,
+  ]);
 
   const openShopCount = shops?.length ?? 0;
   const waits = Object.values(waitMin);
@@ -80,17 +142,42 @@ export default function ExplorePage() {
         />
       </div>
 
+      <OfferCarousel offers={offers} />
+
+      <CategoryShortcutRow
+        categories={presentCategories}
+        active={activeCategory}
+        onSelect={setActiveCategory}
+      />
+
+      <TopRatedSection shops={shops} ratingByShopId={ratingByShopId} />
+
+      <SearchFilterBar
+        value={search}
+        onChange={setSearch}
+        onOpenFilters={() => setFilterSheetOpen(true)}
+        filtersActive={hasActiveFilters(filters)}
+      />
+
       <p className="mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
         আশেপাশের দোকান
       </p>
 
       <ExploreView
-        shops={sortedShops}
+        shops={filteredShops}
         counts={counts}
         waitMin={waitMin}
         distanceKm={distanceKm}
         userLocation={location.coords}
         isPending={shopsPending || statsPending}
+      />
+
+      <FilterSheet
+        open={filterSheetOpen}
+        initial={filters}
+        hasLocation={!!location.coords}
+        onApply={setFilters}
+        onClose={() => setFilterSheetOpen(false)}
       />
     </div>
   );

@@ -52,6 +52,28 @@ export const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
   UNISEX: "ইউনিসেক্স",
 };
 
+export const SERVICE_CATEGORIES = [
+  "HAIRCUT",
+  "SHAVE",
+  "COLOR",
+  "FACIAL",
+  "SPA",
+  "BRIDAL",
+  "OTHER",
+] as const;
+
+export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+export const SERVICE_CATEGORY_LABEL: Record<ServiceCategory, string> = {
+  HAIRCUT: "চুল কাটা",
+  SHAVE: "শেভ",
+  COLOR: "কালার",
+  FACIAL: "ফেসিয়াল",
+  SPA: "স্পা",
+  BRIDAL: "ব্রাইডাল",
+  OTHER: "অন্যান্য",
+};
+
 export const CHAIR_COLORS = [
   "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444",
   "#8b5cf6", "#ec4899", "#14b8a6", "#64748b",

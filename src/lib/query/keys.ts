@@ -14,6 +14,7 @@ export const keys = {
   },
   services: {
     byShop: (shopId: string) => ["services", shopId] as const,
+    allActive: () => ["services", "all-active"] as const,
   },
   chairStats: {
     byShop: (shopId: string) => ["chair-stats", shopId] as const,
@@ -49,6 +50,13 @@ export const keys = {
   },
   favorites: {
     mine: () => ["favorites", "mine"] as const,
+  },
+  offers: {
+    byShop: (shopId: string) => ["offers", shopId] as const,
+    activeCarousel: () => ["offers", "active-carousel"] as const,
+  },
+  ratingSummary: {
+    all: () => ["rating-summary", "all"] as const,
   },
   messages: {
     thread: (shopId: string, customerId: string) => ["messages", shopId, customerId] as const,
