@@ -52,7 +52,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const logout = useLogout();
 
   return (
-    <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto bg-ink px-4 py-5.5 text-paper">
+    <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink">
       <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-5.5">
         <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
           {shop?.name?.trim().charAt(0).toUpperCase() || "?"}
@@ -66,7 +66,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               e.preventDefault();
               if (shop) update.mutate({ shopId: shop.id, patch: { is_open: !shop.is_open } });
             }}
-            className="truncate text-[11px] text-paper/50 hover:text-paper/80 disabled:pointer-events-none"
+            className="truncate text-[11px] text-muted hover:text-ink disabled:pointer-events-none"
           >
             {shop?.address ? `${shop.address} · ` : ""}
             {shop?.is_open ? "খোলা" : "বন্ধ"}
@@ -88,7 +88,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   showToast(`${item.label} — শীঘ্রই আসছে`);
                   onNavigate?.();
                 }}
-                className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-paper/40"
+                className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-muted/50"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -105,7 +105,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 "flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm transition-colors",
                 active
                   ? "bg-accent font-bold text-accent-ink"
-                  : "font-medium text-paper/70 hover:bg-white/5",
+                  : "font-medium text-muted hover:bg-soft",
               )}
             >
               <Icon className="h-4 w-4" />
@@ -120,17 +120,17 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-[14px] bg-white/7 p-3.5">
-        <p className="text-[11px] text-paper/50">আজকের আয়</p>
+      <div className="mt-auto rounded-[14px] border border-line bg-soft p-3.5">
+        <p className="text-[11px] text-muted">আজকের আয়</p>
         <p className="font-number text-2xl font-bold text-good">৳{formatMoney(today.income)}</p>
-        <p className="mt-0.5 text-[11px] text-paper/50">{today.doneCount} টি কাজ সম্পন্ন</p>
+        <p className="mt-0.5 text-[11px] text-muted">{today.doneCount} টি কাজ সম্পন্ন</p>
       </div>
 
       <div className="mt-3 flex items-center gap-1 px-1">
         <Link
           href="/account"
           onClick={onNavigate}
-          className="flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-paper/50 hover:bg-white/5 hover:text-paper/80"
+          className="flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink"
         >
           <UserRound className="h-3.5 w-3.5" />
           একাউন্ট
@@ -139,7 +139,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           type="button"
           onClick={() => logout.mutate()}
           disabled={logout.isPending}
-          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-paper/50 hover:bg-white/5 hover:text-paper/80 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink disabled:opacity-50"
         >
           <LogOut className="h-3.5 w-3.5" />
           {logout.isPending ? "…" : "সাইন আউট"}

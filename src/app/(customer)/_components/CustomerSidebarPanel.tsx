@@ -22,7 +22,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const logout = useLogout();
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto bg-ink px-4 py-5.5 text-paper md:w-59">
+    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink md:w-59">
       <div className="flex items-center gap-2.75 px-2 pb-5.5">
         <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">
           <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
@@ -32,10 +32,10 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
             <p className="truncate font-display text-[15px] font-bold">
               {profile?.full_name || "কাস্টমার"}
             </p>
-            <p className="truncate text-[11px] text-paper/50">{profile?.phone || "—"}</p>
+            <p className="truncate text-[11px] text-muted">{profile?.phone || "—"}</p>
           </div>
         </Link>
-        <NotificationBell className="text-paper/70 hover:bg-white/5" />
+        <NotificationBell className="text-muted hover:bg-soft" />
       </div>
 
       <nav className="hidden flex-col gap-0.75 md:flex">
@@ -50,7 +50,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
                 "flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm transition-colors",
                 active
                   ? "bg-accent font-bold text-accent-ink"
-                  : "font-medium text-paper/70 hover:bg-white/5",
+                  : "font-medium text-muted hover:bg-soft",
               )}
             >
               <span className="relative w-4 text-center text-[15px] leading-none">
@@ -65,11 +65,11 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-0.75 border-t border-white/10 pt-3 md:mt-3">
+      <div className="mt-auto flex flex-col gap-0.75 border-t border-line pt-3 md:mt-3">
         <Link
           href="/account"
           onClick={onNavigate}
-          className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm font-medium text-paper/70 hover:bg-white/5"
+          className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm font-medium text-muted hover:bg-soft"
         >
           <UserRound className="h-4 w-4" />
           অ্যাকাউন্ট ও সেটিংস
@@ -78,7 +78,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
           type="button"
           onClick={() => logout.mutate()}
           disabled={logout.isPending}
-          className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-paper/70 hover:bg-white/5 disabled:opacity-50"
+          className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-muted hover:bg-soft disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" />
           {logout.isPending ? "…" : "লগ-আউট"}
