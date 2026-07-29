@@ -4,6 +4,8 @@
 
 - প্রোডাক্ট স্পেক (ফিচার, ডেটা মডেল, ফ্লো): [`PROJECT-SPEC.md`](./PROJECT-SPEC.md)
 - ভিজ্যুয়াল ডিজাইন স্পেক (Palaa প্রোটোটাইপ, ডিজাইন টোকেন): [`design/design_handoff_palaa/README.md`](./design/design_handoff_palaa/README.md)
+- **🚧 বর্তমান ডেভেলপমেন্ট রোডম্যাপ (Signature-স্টাইল ফেজ, Sprint 1–11): [`docs/development-roadmap.md`](./docs/development-roadmap.md)** — নিচের পুরনো Palaa রোডম্যাপের Sprint 0–9 সম্পন্ন; নতুন কাজ ওই ফাইল অনুযায়ী হবে
+- মাস্টার প্ল্যান ও ফিচার এনালাইসিস: [`docs/queueflow-master-plan.md`](./docs/queueflow-master-plan.md), [`docs/barber-shop-feature-analysis.md`](./docs/barber-shop-feature-analysis.md)
 - স্ট্যাক: Next.js (App Router) + React + Tailwind, Supabase (Auth/Postgres/Realtime)
 
 ## Getting Started
