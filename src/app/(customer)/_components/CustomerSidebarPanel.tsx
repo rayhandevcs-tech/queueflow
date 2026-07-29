@@ -12,8 +12,8 @@ import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
 
 /**
  * Shared content for both the mobile drawer (opened via hamburger) and the
- * persistent desktop sidebar. The main হোম/সিরিয়াল/প্রোফাইল links only
- * render on lg+ since mobile/tablet already has them in CustomerBottomNav.
+ * persistent desktop sidebar — the full নেভ (হোম/সিরিয়াল/প্রোফাইল +
+ * অ্যাকাউন্ট/লগ-আউট) always renders here, on every viewport.
  */
 export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -22,7 +22,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const logout = useLogout();
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink lg:w-59">
+    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
       <div className="flex items-center gap-2.75 px-2 pb-5.5">
         <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">
           <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
@@ -47,7 +47,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
         <NotificationBell className="text-muted hover:bg-soft" />
       </div>
 
-      <nav className="hidden flex-col gap-0.75 lg:flex">
+      <nav className="flex flex-col gap-0.75">
         {CUSTOMER_NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (

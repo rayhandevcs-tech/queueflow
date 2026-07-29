@@ -171,6 +171,12 @@ export async function getShopChairs(shopId: string): Promise<Chair[]> {
  * "পারদর্শিতা" chips and the preferred-staff eligibility filter in the
  * booking flow (a chair is eligible only if it can perform every selected service).
  */
+/**
+ * All chair_service_stats rows for these services — including can_perform=false
+ * ones. A chair with NO row at all is still eligible by default (mirrors the
+ * provider's own CanPerformMatrix, which defaults an unset cell to allowed) —
+ * so callers must treat "no row" as capable and only exclude explicit false rows.
+ */
 export async function getChairServiceCapabilities(
   serviceIds: string[],
 ): Promise<ChairServiceStat[]> {
@@ -179,8 +185,7 @@ export async function getChairServiceCapabilities(
   const { data, error } = await supabase
     .from("chair_service_stats")
     .select("*")
-    .in("service_id", serviceIds)
-    .eq("can_perform", true);
+    .in("service_id", serviceIds);
 
   if (error) throw error;
   return data;

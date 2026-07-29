@@ -71,12 +71,7 @@ export function LocationPrompt({
       </div>
 
       {pickerOpen && (
-        // z-[1200]: Leaflet's own panes/controls use z-index up to 1000, and
-        // since .leaflet-container is only position:relative (no z-index of
-        // its own), those panes don't get scoped to a local stacking context
-        // — they'd otherwise paint above a plain z-30 overlay whenever a map
-        // (like the explore page's background map) sits behind this modal.
-        <div className="fixed inset-0 z-1200 grid place-items-end sm:place-items-center bg-ink/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-30 grid place-items-end sm:place-items-center bg-ink/50 p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-md rounded-2xl bg-card p-5">
             <button
               type="button"

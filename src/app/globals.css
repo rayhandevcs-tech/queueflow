@@ -119,4 +119,9 @@ body {
 .leaflet-container {
   font-family: var(--font-sans);
   background: var(--color-soft);
+  /* Leaflet's own panes/controls use z-index up to ~1000; without this the
+     container never forms its own stacking context, so those panes can
+     paint above unrelated page overlays (drawers, dialogs) that sit later
+     in the DOM but use a much lower z-index. */
+  isolation: isolate;
 }

@@ -9,7 +9,7 @@ import { useChairCapabilities, useShopChairs } from "../hooks/use-shop-detail";
 export function StaffTab({ shopId, services }: { shopId: string; services: Service[] | undefined }) {
   const { data: chairs, isPending } = useShopChairs(shopId);
   const allServiceIds = (services ?? []).map((s) => s.id);
-  const { byChairId } = useChairCapabilities(allServiceIds);
+  const { blockedByChairId } = useChairCapabilities(allServiceIds);
 
   if (isPending) {
     return (
@@ -32,8 +32,8 @@ export function StaffTab({ shopId, services }: { shopId: string; services: Servi
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {chairs.map((chair: Chair) => {
-        const capableIds = byChairId.get(chair.id);
-        const capableServices = (services ?? []).filter((s) => capableIds?.has(s.id));
+        const blockedIds = blockedByChairId.get(chair.id);
+        const capableServices = (services ?? []).filter((s) => !blockedIds?.has(s.id));
         return (
           <div
             key={chair.id}

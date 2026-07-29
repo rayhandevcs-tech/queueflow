@@ -7,6 +7,96 @@ import { parseServicesSnapshot, type Serial, type Shop } from "@/types";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatBanglaDate, formatBanglaTime, formatMoney } from "@/lib/format-wait";
 
+const WIDTH = 420;
+const PADDING = 28;
+const QR_SIZE = 180;
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+/** Draws the full receipt (shop/date/QR/itemized services/total) onto a canvas so the download includes billing details, not just the QR image. */
+async function buildReceiptImage(params: {
+  shopName: string;
+  when: Date;
+  code: string;
+  qrDataUrl: string;
+  services: { service_id: string; name: string; rate: number }[];
+  total: number;
+}): Promise<string> {
+  const { shopName, when, code, qrDataUrl, services, total } = params;
+  const rowHeight = 32;
+  const height =
+    PADDING + 30 + 20 + QR_SIZE + 30 + 20 + services.length * rowHeight + 50 + PADDING;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = WIDTH;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return qrDataUrl;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, WIDTH, height);
+
+  let y = PADDING;
+  ctx.fillStyle = "#1b1812";
+  ctx.textAlign = "center";
+  ctx.font = "bold 20px sans-serif";
+  ctx.fillText(shopName, WIDTH / 2, y + 20);
+  y += 30;
+
+  ctx.fillStyle = "#8a8478";
+  ctx.font = "13px sans-serif";
+  ctx.fillText(`${formatBanglaDate(when)} · ${formatBanglaTime(when)}`, WIDTH / 2, y + 12);
+  y += 32;
+
+  const qrImg = await loadImage(qrDataUrl);
+  ctx.drawImage(qrImg, (WIDTH - QR_SIZE) / 2, y, QR_SIZE, QR_SIZE);
+  y += QR_SIZE + 22;
+
+  ctx.fillStyle = "#1b1812";
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillText(code, WIDTH / 2, y);
+  y += 24;
+
+  ctx.strokeStyle = "#e5e1d8";
+  ctx.beginPath();
+  ctx.moveTo(PADDING, y);
+  ctx.lineTo(WIDTH - PADDING, y);
+  ctx.stroke();
+  y += 26;
+
+  ctx.textAlign = "left";
+  ctx.font = "14px sans-serif";
+  for (const s of services) {
+    ctx.fillStyle = "#1b1812";
+    ctx.fillText(s.name, PADDING, y);
+    ctx.textAlign = "right";
+    ctx.fillText(`৳${formatMoney(s.rate)}`, WIDTH - PADDING, y);
+    ctx.textAlign = "left";
+    y += rowHeight;
+  }
+
+  ctx.strokeStyle = "#e5e1d8";
+  ctx.beginPath();
+  ctx.moveTo(PADDING, y - 6);
+  ctx.lineTo(WIDTH - PADDING, y - 6);
+  ctx.stroke();
+  y += 22;
+
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText("মোট", PADDING, y);
+  ctx.textAlign = "right";
+  ctx.fillText(`৳${formatMoney(total)}`, WIDTH - PADDING, y);
+
+  return canvas.toDataURL("image/png");
+}
+
 export function EReceiptSheet({
   serial,
   shop,
@@ -17,6 +107,7 @@ export function EReceiptSheet({
   onClose: () => void;
 }) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const services = parseServicesSnapshot(serial.services_snapshot);
   const code = serial.id.slice(0, 8).toUpperCase();
   const when = new Date(serial.completed_at ?? serial.created_at);
@@ -34,6 +125,29 @@ export function EReceiptSheet({
       cancelled = true;
     };
   }, [serial.id]);
+
+  useEffect(() => {
+    if (!qrUrl) return;
+    let cancelled = false;
+    buildReceiptImage({
+      shopName: shop?.name ?? "দোকান",
+      when,
+      code,
+      qrDataUrl: qrUrl,
+      services,
+      total: serial.total_amount,
+    })
+      .then((url) => {
+        if (!cancelled) setReceiptUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setReceiptUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrUrl]);
 
   return (
     <div className="fixed inset-0 z-30 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm">
@@ -81,9 +195,9 @@ export function EReceiptSheet({
         </div>
 
         <a
-          href={qrUrl ?? undefined}
-          download={qrUrl ? `receipt-${code}.png` : undefined}
-          aria-disabled={!qrUrl}
+          href={receiptUrl ?? undefined}
+          download={receiptUrl ? `receipt-${code}.png` : undefined}
+          aria-disabled={!receiptUrl}
           className="mt-4.5 flex w-full items-center justify-center gap-2 rounded-[15px] bg-accent py-3.5 font-display text-[15px] font-bold text-accent-ink aria-disabled:pointer-events-none aria-disabled:opacity-50"
         >
           <Download className="h-4 w-4" />

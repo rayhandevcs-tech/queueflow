@@ -70,13 +70,13 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   );
 
   const selectedServiceIds = useMemo(() => [...selected], [selected]);
-  const { byChairId } = useChairCapabilities(selectedServiceIds);
+  const { blockedByChairId } = useChairCapabilities(selectedServiceIds);
   const eligibleChairs = useMemo(() => {
     if (selectedServiceIds.length === 0) return [];
     return (chairs ?? []).filter((c) =>
-      selectedServiceIds.every((sid) => byChairId.get(c.id)?.has(sid)),
+      selectedServiceIds.every((sid) => !blockedByChairId.get(c.id)?.has(sid)),
     );
-  }, [chairs, byChairId, selectedServiceIds]);
+  }, [chairs, blockedByChairId, selectedServiceIds]);
 
   // Derived, not stored: a chair a customer picked earlier silently stops
   // counting as "preferred" the moment it's no longer eligible for the

@@ -50,7 +50,12 @@ export function useShopChairs(shopId: string) {
   });
 }
 
-/** Groups chair_service_stats rows by chair_id for quick per-chair lookups. */
+/**
+ * Groups chair_service_stats rows by chair_id — but only the explicit
+ * can_perform=false ones. A chair with no row for a service has no entry
+ * here, which callers must treat as "capable" (default-allow, matching
+ * CanPerformMatrix's own semantics) rather than "unknown/excluded".
+ */
 export function useChairCapabilities(serviceIds: string[]) {
   const sortedIds = useMemo(() => serviceIds.slice().sort(), [serviceIds]);
   const query = useQuery({
@@ -59,9 +64,10 @@ export function useChairCapabilities(serviceIds: string[]) {
     enabled: sortedIds.length > 0,
   });
 
-  const byChairId = useMemo(() => {
+  const blockedByChairId = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const row of query.data ?? []) {
+      if (row.can_perform) continue;
       const set = map.get(row.chair_id) ?? new Set<string>();
       set.add(row.service_id);
       map.set(row.chair_id, set);
@@ -69,5 +75,5 @@ export function useChairCapabilities(serviceIds: string[]) {
     return map;
   }, [query.data]);
 
-  return { ...query, byChairId };
+  return { ...query, blockedByChairId };
 }

@@ -52,7 +52,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const logout = useLogout();
 
   return (
-    <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink">
+    <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink md:border-l-0 md:border-r">
       <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-5.5">
         <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
           {shop?.logo_url ? (

@@ -96,7 +96,7 @@ export function NowServingCard({
           setError(null);
           actions.complete.mutate(serial.id, { onError: surface });
         }}
-        className="mt-4.5 w-full rounded-[14px] bg-good py-3.5 font-display text-[15px] font-bold text-white disabled:opacity-60"
+        className="mt-4.5 w-full rounded-[14px] bg-accent-ink py-3.5 font-display text-[15px] font-bold text-accent disabled:opacity-60"
       >
         {actions.complete.isPending ? "হচ্ছে…" : "✓ কাজ সম্পন্ন — পরের জন"}
       </button>
