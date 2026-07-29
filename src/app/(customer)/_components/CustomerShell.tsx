@@ -12,8 +12,8 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh md:flex">
-      <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden">
+    <div className="min-h-dvh lg:flex">
+      <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3 lg:hidden">
         <Logo />
         <div className="flex items-center gap-1">
           <NotificationBell className="text-ink hover:bg-soft" />
@@ -33,20 +33,20 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
           type="button"
           aria-label="মেনু বন্ধ করো"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-30 bg-ink/50 md:hidden"
+          className="fixed inset-0 z-30 bg-ink/50 lg:hidden"
         />
       )}
 
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 md:static md:z-auto md:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <CustomerSidebarPanel onNavigate={() => setOpen(false)} />
       </div>
 
-      <main className="mx-auto min-w-0 max-w-md flex-1 px-4 pt-6 pb-28 md:pb-10">{children}</main>
+      <main className="mx-auto min-w-0 max-w-md flex-1 px-4 pt-6 pb-28 lg:pb-10">{children}</main>
 
       <CustomerBottomNav />
     </div>

@@ -64,7 +64,14 @@ export function NowServingCard({
       </div>
 
       <div className="flex items-center gap-4">
-        <CountdownRing size={128} strokeWidth={10} progress={progress} className="shrink-0">
+        <CountdownRing
+          size={128}
+          strokeWidth={10}
+          progress={progress}
+          className="shrink-0"
+          ringClassName="stroke-accent-ink"
+          trackClassName="stroke-accent-ink/20"
+        >
           <div className="flex flex-col items-center">
             <span className="font-number text-[26px] leading-none font-bold tracking-tight">
               {fmtMMSS(remainingSec)}

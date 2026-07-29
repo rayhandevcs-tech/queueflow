@@ -11,7 +11,7 @@ export function CustomerBottomNav({ className }: { className?: string }) {
   const { data: activeSerial } = useMyActiveSerial();
 
   return (
-    <nav className={cn("fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card md:hidden", className)}>
+    <nav className={cn("fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card lg:hidden", className)}>
       <div className="mx-auto flex max-w-md px-6 pb-6 pt-2.5">
         {CUSTOMER_NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");

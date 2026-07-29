@@ -113,7 +113,12 @@ export function LiveTrackingView() {
         </p>
 
         <div className="relative mx-auto mt-3.5 mb-1.5">
-          <CountdownRing progress={ringProgress} className="mx-auto">
+          <CountdownRing
+            progress={ringProgress}
+            className="mx-auto"
+            ringClassName="stroke-accent-ink"
+            trackClassName="stroke-accent-ink/20"
+          >
             <div className="flex flex-col items-center">
               <span className="font-number text-[42px] leading-none font-bold tracking-tight text-accent-ink">
                 {centerWait.big}

@@ -3,8 +3,10 @@
 import { ChevronLeft, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import type { Shop } from "@/types";
 import type { ReviewSummary } from "@/lib/reviews";
+import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
 
 interface Props {
   shop: Shop;
@@ -13,6 +15,9 @@ interface Props {
 
 export function ShopHero({ shop, summary }: Props) {
   const router = useRouter();
+  const { data: favoriteIds } = useMyFavoriteShopIds();
+  const toggleFavorite = useToggleFavorite();
+  const isFavorited = favoriteIds?.has(shop.id) ?? false;
 
   return (
     <div
@@ -40,6 +45,13 @@ export function ShopHero({ shop, summary }: Props) {
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
+
+      <FavoriteButton
+        isFavorited={isFavorited}
+        pending={toggleFavorite.isPending}
+        onToggle={() => toggleFavorite.mutate({ shopId: shop.id, isFavorited })}
+        className="absolute right-4 top-3.5 bg-white/85 shadow-sm backdrop-blur-sm"
+      />
 
       {summary.count > 0 && (
         <div className="absolute bottom-3.5 right-4 flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-bold text-ink shadow-lg">

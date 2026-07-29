@@ -9,8 +9,8 @@ import { ROLE_HOME } from "@/config/constants";
 import type { UserRole } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { AvatarUploadField } from "@/components/ui/AvatarUploadField";
 import { cn } from "@/lib/utils";
-import { AvatarUploadField } from "./AvatarUploadField";
 import { useCompleteOnboarding, useSkipOnboarding } from "../hooks/use-onboarding";
 import {
   completeProfileSchema,

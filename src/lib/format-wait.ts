@@ -60,6 +60,15 @@ export function formatBanglaDate(date: Date): string {
   return `${toBanglaDigits(date.getDate())} ${BN_MONTHS[date.getMonth()]}`;
 }
 
+/** "১০:৩০ AM" — Bangla-digit 12h clock time. */
+export function formatBanglaTime(date: Date): string {
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const period = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${toBanglaDigits(hours)}:${toBanglaDigits(minutes).padStart(2, toBanglaDigits(0))} ${period}`;
+}
+
 /** Grouped Latin-digit amount, matching the design handoff's money(). */
 export function formatMoney(n: number): string {
   return n.toLocaleString("en-US");

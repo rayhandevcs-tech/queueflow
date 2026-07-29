@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { uploadUserAvatar } from "../api/storage.api";
+import { uploadUserAvatar } from "@/lib/avatar-storage";
 
 interface Props {
   userId: string;

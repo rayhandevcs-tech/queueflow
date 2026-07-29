@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle, Ticket } from "lucide-react";
 import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { Button } from "@/components/ui/Button";
@@ -38,6 +38,7 @@ const TABS = [
 
 export function ShopDetailView({ shopId }: { shopId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: shop, isPending: shopPending } = useShopDetail(shopId);
   const { data: services, isPending: servicesPending } = useShopServices(shopId);
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
@@ -48,7 +49,10 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const createBooking = useCreateBooking();
   const showToast = useToast();
   const [tab, setTab] = useState("services");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(() => {
+    const raw = searchParams.get("services");
+    return raw ? new Set(raw.split(",").filter(Boolean)) : new Set();
+  });
   const [preferredChairId, setPreferredChairId] = useState<string | null>(null);
   const [advance, setAdvance] = useState(false);
   const [payingWith, setPayingWith] = useState(false);

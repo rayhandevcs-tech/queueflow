@@ -54,8 +54,13 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink">
       <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-5.5">
-        <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
-          {shop?.name?.trim().charAt(0).toUpperCase() || "?"}
+        <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
+          {shop?.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={shop.logo_url} alt={shop.name} className="h-full w-full object-cover" />
+          ) : (
+            shop?.name?.trim().charAt(0).toUpperCase() || "?"
+          )}
         </div>
         <div className="min-w-0">
           <p className="truncate font-display text-[15px] font-bold">{shop?.name ?? "…"}</p>

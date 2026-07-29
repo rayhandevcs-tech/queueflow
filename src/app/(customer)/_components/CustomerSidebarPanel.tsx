@@ -13,7 +13,7 @@ import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
 /**
  * Shared content for both the mobile drawer (opened via hamburger) and the
  * persistent desktop sidebar. The main হোম/সিরিয়াল/প্রোফাইল links only
- * render on md+ since mobile already has them in CustomerBottomNav.
+ * render on lg+ since mobile/tablet already has them in CustomerBottomNav.
  */
 export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -22,11 +22,20 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const logout = useLogout();
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink md:w-59">
+    <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-card px-4 py-5.5 text-ink lg:w-59">
       <div className="flex items-center gap-2.75 px-2 pb-5.5">
         <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">
-          <div className="grid h-10.5 w-10.5 shrink-0 place-items-center rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
-            {profile?.full_name?.trim().charAt(0).toUpperCase() || "?"}
+          <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
+            {profile?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.avatar_url}
+                alt={profile?.full_name ?? ""}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              profile?.full_name?.trim().charAt(0).toUpperCase() || "?"
+            )}
           </div>
           <div className="min-w-0">
             <p className="truncate font-display text-[15px] font-bold">
@@ -38,7 +47,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
         <NotificationBell className="text-muted hover:bg-soft" />
       </div>
 
-      <nav className="hidden flex-col gap-0.75 md:flex">
+      <nav className="hidden flex-col gap-0.75 lg:flex">
         {CUSTOMER_NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
@@ -65,7 +74,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-0.75 border-t border-line pt-3 md:mt-3">
+      <div className="mt-auto flex flex-col gap-0.75 border-t border-line pt-3 lg:mt-3">
         <Link
           href="/account"
           onClick={onNavigate}

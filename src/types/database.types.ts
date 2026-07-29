@@ -189,6 +189,21 @@ export type Database = {
         };
         Relationships: [];
       };
+      favorites: {
+        Row: {
+          id: string;
+          customer_id: string;
+          shop_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          shop_id: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
       serials: {
         Row: {
           id: string;

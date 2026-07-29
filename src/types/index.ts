@@ -12,6 +12,7 @@ export type ShopGalleryImage = Tables<"shop_gallery_images">;
 export type RegularReminder = Tables<"regular_reminders">;
 export type Message = Tables<"messages">;
 export type Notification = Tables<"notifications">;
+export type Favorite = Tables<"favorites">;
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type SerialStatus = Database["public"]["Enums"]["serial_status"];

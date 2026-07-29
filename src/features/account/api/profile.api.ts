@@ -37,6 +37,24 @@ export async function updateMyProfile(values: ProfileFormOutput): Promise<Profil
   return data;
 }
 
+export async function updateMyAvatar(avatarUrl: string): Promise<Profile> {
+  const supabase = getBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 /**
  * Supabase has no direct "verify current password" call, so we
  * re-authenticate with it first — that both confirms it and refreshes the

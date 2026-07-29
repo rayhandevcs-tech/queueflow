@@ -47,6 +47,9 @@ export const keys = {
   notifications: {
     mine: (userId: string) => ["notifications", "mine", userId] as const,
   },
+  favorites: {
+    mine: () => ["favorites", "mine"] as const,
+  },
   messages: {
     thread: (shopId: string, customerId: string) => ["messages", shopId, customerId] as const,
     hasHistoryAtShop: (shopId: string) => ["messages", "has-history", shopId] as const,

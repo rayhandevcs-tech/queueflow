@@ -5,7 +5,9 @@ import { ChevronRight, MapPin, Store } from "lucide-react";
 import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
+import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
 
 const WAIT_OK_THRESHOLD_MIN = 40;
 
@@ -22,6 +24,9 @@ export function ShopList({
   distanceKm?: Record<string, number>;
   isPending: boolean;
 }) {
+  const { data: favoriteIds } = useMyFavoriteShopIds();
+  const toggleFavorite = useToggleFavorite();
+
   if (isPending) {
     return (
       <div className="flex flex-col gap-3">
@@ -108,6 +113,14 @@ export function ShopList({
                   )}
                 </div>
               </div>
+
+              <FavoriteButton
+                isFavorited={favoriteIds?.has(shop.id) ?? false}
+                pending={toggleFavorite.isPending}
+                onToggle={() =>
+                  toggleFavorite.mutate({ shopId: shop.id, isFavorited: favoriteIds?.has(shop.id) ?? false })
+                }
+              />
 
               <ChevronRight className="h-5 w-5 shrink-0 text-line transition-colors group-hover:text-accent" />
             </Link>

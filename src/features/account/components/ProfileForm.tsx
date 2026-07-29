@@ -6,11 +6,13 @@ import { CircleCheck } from "lucide-react";
 import type { Profile } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
-import { useUpdateMyProfile } from "../hooks/use-profile-mutations";
+import { AvatarUploadField } from "@/components/ui/AvatarUploadField";
+import { useUpdateMyAvatar, useUpdateMyProfile } from "../hooks/use-profile-mutations";
 import { profileSchema, type ProfileFormValues } from "../schemas/profile.schema";
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const update = useUpdateMyProfile();
+  const updateAvatar = useUpdateMyAvatar();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -29,6 +31,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      <AvatarUploadField
+        userId={profile.id}
+        currentUrl={profile.avatar_url}
+        onUploaded={(url) => updateAvatar.mutate(url)}
+      />
+
       <Field label="পূর্ণ নাম" error={err.fullName?.message}>
         <Input {...form.register("fullName")} invalid={!!err.fullName} />
       </Field>

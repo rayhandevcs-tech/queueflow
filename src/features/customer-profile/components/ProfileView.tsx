@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Settings, ShieldAlert, ShieldCheck, Sparkles, Star, Store } from "lucide-react";
-import type { Serial } from "@/types";
-import { parseServicesSnapshot } from "@/types";
+import { ChevronRight, Heart, ShieldAlert, ShieldCheck, Settings, Sparkles, Store } from "lucide-react";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
-import { formatBanglaDate, formatMoney } from "@/lib/format-wait";
+import { formatMoney } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
 import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { useProfileHistory } from "../hooks/use-profile-history";
-import { ReviewDialog } from "./ReviewDialog";
+import { useMyFavoriteShops } from "../hooks/use-favorites";
 
 export function ProfileView({
   fullName,
@@ -21,8 +18,8 @@ export function ProfileView({
   phone: string | null;
   avatarUrl?: string | null;
 }) {
-  const { history, shopsById, ratingsBySerial, trust, spending, isPending } = useProfileHistory();
-  const [reviewing, setReviewing] = useState<Serial | null>(null);
+  const { shopsById, trust, spending, isPending } = useProfileHistory();
+  const { shops: favoriteShops } = useMyFavoriteShops();
 
   if (isPending) {
     return (
@@ -32,7 +29,6 @@ export function ProfileView({
     );
   }
 
-  const doneHistory = history.filter((s) => s.status === "DONE");
   const maxMonthlySpend = Math.max(1, ...spending.monthlyTrend.map((m) => m.amount));
   const maxShopSpend = Math.max(1, ...spending.byShop.map((s) => s.amount));
 
@@ -120,9 +116,16 @@ export function ProfileView({
         </div>
       </div>
 
-      <p className="mt-5 mb-2.75 text-[13px] font-semibold tracking-wide text-muted uppercase">
-        খরচের হিসাব
-      </p>
+      <div className="mt-5 mb-2.75 flex items-center justify-between">
+        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">খরচের হিসাব</p>
+        <Link
+          href="/transactions"
+          className="flex items-center gap-0.5 text-[12px] font-semibold text-accent"
+        >
+          সব লেনদেন দেখো
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
 
       <div className="flex gap-2.25">
         <div className="flex-1 rounded-[18px] bg-accent p-4 text-accent-ink">
@@ -209,76 +212,42 @@ export function ProfileView({
         </div>
       )}
 
-      <p className="mt-5 mb-2.75 text-[13px] font-semibold tracking-wide text-muted uppercase">
-        সিরিয়াল হিস্টরি
-      </p>
+      <div className="mt-5 mb-2.75 flex items-center justify-between">
+        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">প্রিয় দোকান</p>
+        {favoriteShops.length > 0 && (
+          <Link
+            href="/my-serial"
+            className="flex items-center gap-0.5 text-[12px] font-semibold text-accent"
+          >
+            সব বুকিং দেখো
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
+      </div>
 
-      {doneHistory.length === 0 ? (
+      {favoriteShops.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-muted">
-          এখনো কোনো সিরিয়াল সম্পন্ন হয়নি।
+          <Heart className="mx-auto mb-2 h-5 w-5 text-muted" />
+          এখনো কোনো দোকান প্রিয় তালিকায় নেই — শপ ডিটেইলে ♥ বাটনে ট্যাপ করো।
         </div>
       ) : (
-        <div className="flex flex-col gap-2.25">
-          {doneHistory.map((s) => {
-            const shop = shopsById[s.shop_id];
-            const services = parseServicesSnapshot(s.services_snapshot);
-            const rating = ratingsBySerial[s.id];
-            return (
-              <div
-                key={s.id}
-                className="flex items-center gap-3 rounded-[14px] border border-line bg-card p-3.25"
+        <div className="flex flex-wrap gap-2">
+          {favoriteShops.map((shop) => (
+            <Link
+              key={shop.id}
+              href={`/explore/${shop.id}`}
+              className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-2 text-[13px] font-medium text-ink hover:border-accent"
+            >
+              <span
+                className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[9px] font-bold text-white"
+                style={{ background: shopAvatarColor(shop.id) }}
               >
-                <div
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl font-display font-bold text-white"
-                  style={{ background: shop ? shopAvatarColor(shop.id) : "var(--color-muted)" }}
-                >
-                  {shop ? shopInitial(shop.name) : <Store className="h-4 w-4" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-ink">
-                    {shop?.name ?? "দোকান"}
-                  </p>
-                  <p className="truncate text-[11px] text-muted">
-                    {services.map((sv) => sv.name).join(" + ") || "—"} ·{" "}
-                    {formatBanglaDate(new Date(s.completed_at ?? s.created_at))}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-number text-[13px] font-semibold text-ink">
-                    ৳{formatMoney(s.total_amount)}
-                  </p>
-                  {rating ? (
-                    <p className="text-[10px] text-brass">★ {rating}</p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setReviewing(s)}
-                      className="flex items-center gap-0.5 text-[10px] font-semibold text-accent"
-                    >
-                      <Star className="h-2.5 w-2.5" />
-                      রিভিউ দাও
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                {shopInitial(shop.name)}
+              </span>
+              {shop.name}
+            </Link>
+          ))}
         </div>
-      )}
-
-      {reviewing && (
-        <ReviewDialog
-          shopId={reviewing.shop_id}
-          serialId={reviewing.id}
-          shopName={shopsById[reviewing.shop_id]?.name ?? "দোকান"}
-          shopAvatarBg={
-            shopsById[reviewing.shop_id] ? shopAvatarColor(reviewing.shop_id) : "var(--color-muted)"
-          }
-          shopInitial={
-            shopsById[reviewing.shop_id] ? shopInitial(shopsById[reviewing.shop_id].name) : "?"
-          }
-          onClose={() => setReviewing(null)}
-        />
       )}
     </div>
   );
