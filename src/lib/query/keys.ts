@@ -37,6 +37,10 @@ export const keys = {
     incomeHistory: (shopId: string) => ["serials", "income-history", shopId] as const,
     analyticsHistory: (shopId: string) => ["serials", "analytics-history", shopId] as const,
   },
+  dueLedger: {
+    byShop: (shopId: string) => ["due-ledger", "shop", shopId] as const,
+    countByShop: (shopId: string) => ["due-ledger", "count", "shop", shopId] as const,
+  },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,

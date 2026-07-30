@@ -51,6 +51,7 @@ export async function getTodaySummary(shopId: string): Promise<TodaySummary> {
     .select("total_amount")
     .eq("shop_id", shopId)
     .eq("status", "DONE")
+    .eq("payment_status", "PAID")
     .gte("completed_at", startOfDay.toISOString());
 
   if (error) throw error;

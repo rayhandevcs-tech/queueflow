@@ -5,11 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   Armchair,
   BarChart3,
+  CreditCard,
   LogOut,
   Megaphone,
   MessageCircle,
   Percent,
   Radio,
+  Receipt,
   Scissors,
   Settings as SettingsIcon,
   Star,
@@ -23,6 +25,7 @@ import { useMyShop, useShopMutations } from "@/features/provider-catalog/hooks/u
 import { useLiveQueueCount, useTodaySummary } from "@/features/provider-queue/hooks/use-sidebar-stats";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useShopUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
+import { useDueCount } from "@/features/provider-due-ledger/hooks/use-due-ledger";
 import { useToast } from "@/components/ui/Toast";
 
 interface NavItem {
@@ -40,10 +43,12 @@ const NAV: NavItem[] = [
   { href: "/offers", label: "অফার", icon: Percent },
   { href: "/chat", label: "চ্যাট", icon: MessageCircle },
   { href: "/income", label: "ইনকাম", icon: Wallet },
+  { href: "/due-ledger", label: "বাকির খাতা", icon: Receipt },
   { href: "/analytics", label: "অ্যানালিটিক্স", icon: BarChart3 },
   { href: "/regulars", label: "নিয়মিত কাস্টমার", icon: Users },
   { href: "/notifications/send", label: "নোটিফিকেশন পাঠান", icon: Megaphone },
   { href: "/reviews", label: "রিভিউ", icon: Star },
+  { href: "/payment-methods", label: "পেমেন্ট মেথড", icon: CreditCard },
   { href: "/settings", label: "সেটিংস", icon: SettingsIcon },
 ];
 
@@ -54,6 +59,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { update } = useShopMutations();
   const liveCount = useLiveQueueCount(shop?.id);
   const unreadChatCount = useShopUnreadChatCount(shop?.id);
+  const dueCount = useDueCount(shop?.id);
   const today = useTodaySummary(shop?.id);
   const logout = useLogout();
 
@@ -129,6 +135,11 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               {item.href === "/chat" && unreadChatCount > 0 && (
                 <span className="ml-auto rounded-full bg-accent px-2 py-0.5 font-number text-[11px] font-bold text-accent-ink">
                   {unreadChatCount}
+                </span>
+              )}
+              {item.href === "/due-ledger" && dueCount > 0 && (
+                <span className="ml-auto rounded-full bg-live px-2 py-0.5 font-number text-[11px] font-bold text-white">
+                  {dueCount}
                 </span>
               )}
             </Link>

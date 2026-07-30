@@ -273,6 +273,10 @@ export type Database = {
           advance_txn_id: string | null;
           notified_two_ahead_at: string | null;
           notified_turn_at: string | null;
+          payment_status: Database["public"]["Enums"]["payment_status"];
+          due_amount: number;
+          due_collected_at: string | null;
+          due_reminded_at: string | null;
         };
         Insert: {
           id?: string;
@@ -286,11 +290,16 @@ export type Database = {
           advance_paid?: boolean;
           advance_method?: string | null;
           advance_txn_id?: string | null;
+          payment_status?: Database["public"]["Enums"]["payment_status"];
         };
         Update: {
           status?: Database["public"]["Enums"]["serial_status"];
           chair_id?: string;
           customer_phone?: string | null;
+          payment_status?: Database["public"]["Enums"]["payment_status"];
+          due_amount?: number;
+          due_collected_at?: string | null;
+          due_reminded_at?: string | null;
         };
         Relationships: [];
       };
@@ -432,6 +441,10 @@ export type Database = {
         };
         Returns: number;
       };
+      send_due_reminder: {
+        Args: { p_serial_id: string };
+        Returns: void;
+      };
     };
     Enums: {
       user_role: "customer" | "provider";
@@ -445,6 +458,7 @@ export type Database = {
         | "CANCELLED"
         | "PROMO"
         | "REMINDER";
+      payment_status: "PAID" | "DUE" | "ADVANCE";
     };
     CompositeTypes: { [_ in never]: never };
   };

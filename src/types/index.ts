@@ -21,6 +21,7 @@ export type UserRole = Database["public"]["Enums"]["user_role"];
 export type SerialStatus = Database["public"]["Enums"]["serial_status"];
 export type AssignmentMode = Database["public"]["Enums"]["assignment_mode"];
 export type NotificationType = Database["public"]["Enums"]["notification_type"];
+export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 
 export type BusinessType = Database["public"]["Enums"]["business_type"];
 export type { TablesInsert, TablesUpdate, Json } from "./database.types";

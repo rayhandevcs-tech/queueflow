@@ -78,9 +78,16 @@ export function TransactionsView() {
                           {services.map((sv) => sv.name).join(" + ") || "—"}
                         </p>
                       </div>
-                      <p className="shrink-0 font-number text-[13px] font-semibold text-ink">
-                        ৳{formatMoney(s.total_amount)}
-                      </p>
+                      <div className="shrink-0 text-right">
+                        <p className="font-number text-[13px] font-semibold text-ink">
+                          ৳{formatMoney(s.total_amount)}
+                        </p>
+                        {s.payment_status === "DUE" && (
+                          <p className="mt-0.5 rounded-full bg-live-soft px-2 py-0.5 text-[10px] font-semibold text-live">
+                            বাকি ৳{formatMoney(s.due_amount)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

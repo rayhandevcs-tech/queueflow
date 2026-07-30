@@ -112,6 +112,7 @@ export async function createBooking(
               advance_paid: true,
               advance_method: opts.advance.method,
               advance_txn_id: opts.advance.transactionId,
+              payment_status: "ADVANCE" as const,
             }
           : {}),
       })

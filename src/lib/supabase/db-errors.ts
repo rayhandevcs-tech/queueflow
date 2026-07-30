@@ -81,6 +81,17 @@ const RULES: ReadonlyArray<{
       silent: false,
     },
   },
+  {
+    // send_due_reminder's own once-per-day guard on a serial already
+    // reminded today — expected when a customer has multiple due serials
+    // and only some are rate-limited, so this one stays silent.
+    match: (t) => t.includes("আজকে একবার রিমাইন্ডার পাঠানো হয়ে গেছে"),
+    result: { message: "", silent: true },
+  },
+  {
+    match: (t) => t.includes("এই সিরিয়ালে বাকি নেই"),
+    result: { message: "", silent: true },
+  },
 ];
 
 const FALLBACK: FriendlyDbError = {

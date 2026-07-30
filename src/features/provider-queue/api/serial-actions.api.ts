@@ -1,17 +1,17 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { withDbErrors } from "@/lib/supabase/db-errors";
-import type { Serial, SerialStatus } from "@/types";
+import type { Serial, TablesUpdate } from "@/types";
 
-/** Shared status writer — the DB transition trigger is the real validator. */
-async function setStatus(
+/** Shared row patcher — the DB transition trigger is the real validator. */
+async function patchSerial(
   serialId: string,
-  status: SerialStatus,
+  patch: TablesUpdate<"serials">,
 ): Promise<Serial> {
   return withDbErrors(async () => {
     const supabase = getBrowserClient();
     const { data, error } = await supabase
       .from("serials")
-      .update({ status })
+      .update(patch)
       .eq("id", serialId)
       .select()
       .single();
@@ -22,14 +22,37 @@ async function setStatus(
 }
 
 export const startSerial = (serialId: string) =>
-  setStatus(serialId, "IN_PROGRESS");
+  patchSerial(serialId, { status: "IN_PROGRESS" });
 
-export const completeSerial = (serialId: string) => setStatus(serialId, "DONE");
+/**
+ * due omitted → the common case: cash (or whatever) was collected in hand,
+ * marked PAID and counted toward income immediately.
+ * due passed → provider left the balance outstanding ("বাকি রেখে সম্পন্ন
+ * করো"); it shows up in the due ledger until marked collected there.
+ */
+export const completeSerial = (serialId: string, due?: { amount: number }) =>
+  patchSerial(
+    serialId,
+    due
+      ? {
+          status: "DONE",
+          payment_status: "DUE",
+          due_amount: due.amount,
+          due_collected_at: null,
+        }
+      : {
+          status: "DONE",
+          payment_status: "PAID",
+          due_amount: 0,
+          due_collected_at: new Date().toISOString(),
+        },
+  );
 
-export const markNoShow = (serialId: string) => setStatus(serialId, "NO_SHOW");
+export const markNoShow = (serialId: string) =>
+  patchSerial(serialId, { status: "NO_SHOW" });
 
 export const cancelByOwner = (serialId: string) =>
-  setStatus(serialId, "CANCELLED");
+  patchSerial(serialId, { status: "CANCELLED" });
 
 export interface WalkInPayload {
   shopId: string;

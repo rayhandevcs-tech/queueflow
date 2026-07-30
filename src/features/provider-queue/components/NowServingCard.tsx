@@ -94,11 +94,26 @@ export function NowServingCard({
         disabled={actions.complete.isPending}
         onClick={() => {
           setError(null);
-          actions.complete.mutate(serial.id, { onError: surface });
+          actions.complete.mutate({ serialId: serial.id }, { onError: surface });
         }}
         className="mt-4.5 w-full rounded-[14px] bg-accent-ink py-3.5 font-display text-[15px] font-bold text-accent disabled:opacity-60"
       >
         {actions.complete.isPending ? "হচ্ছে…" : "✓ কাজ সম্পন্ন — পরের জন"}
+      </button>
+
+      <button
+        type="button"
+        disabled={actions.complete.isPending}
+        onClick={() => {
+          setError(null);
+          actions.complete.mutate(
+            { serialId: serial.id, due: { amount: serial.total_amount } },
+            { onError: surface },
+          );
+        }}
+        className="mt-2 w-full text-center text-xs font-semibold text-accent-ink/60 disabled:opacity-40"
+      >
+        বাকি রেখে সম্পন্ন করো (৳{formatMoney(serial.total_amount)})
       </button>
 
       {error && <p className="mt-2 text-xs text-accent-ink">{error}</p>}

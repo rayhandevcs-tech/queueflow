@@ -18,6 +18,7 @@ export async function getIncomeHistory(shopId: string): Promise<DoneSerialRow[]>
     .select("completed_at, total_amount, services_snapshot")
     .eq("shop_id", shopId)
     .eq("status", "DONE")
+    .eq("payment_status", "PAID")
     .gte("completed_at", since.toISOString());
 
   if (error) throw error;

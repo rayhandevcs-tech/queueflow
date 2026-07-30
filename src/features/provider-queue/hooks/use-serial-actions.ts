@@ -58,13 +58,14 @@ export function useSerialActions(shopId: string) {
   });
 
   const complete = useMutation({
-    mutationFn: (serialId: string) => completeSerial(serialId),
-    onMutate: async (serialId) => {
+    mutationFn: (payload: { serialId: string; due?: { amount: number } }) =>
+      completeSerial(payload.serialId, payload.due),
+    onMutate: async ({ serialId }) => {
       const ctx = await snapshot();
       removeLocally(serialId); // DONE leaves the board immediately
       return ctx;
     },
-    onError: (_err, _serialId, ctx) => rollback(ctx),
+    onError: (_err, _payload, ctx) => rollback(ctx),
     onSettled: reconcile,
   });
 
