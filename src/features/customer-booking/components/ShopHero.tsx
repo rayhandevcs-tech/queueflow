@@ -6,6 +6,7 @@ import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import type { Shop } from "@/types";
 import type { ReviewSummary } from "@/lib/reviews";
+import { useT } from "@/lib/i18n";
 import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
 
 interface Props {
@@ -18,6 +19,7 @@ export function ShopHero({ shop, summary }: Props) {
   const { data: favoriteIds } = useMyFavoriteShopIds();
   const toggleFavorite = useToggleFavorite();
   const isFavorited = favoriteIds?.has(shop.id) ?? false;
+  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
 
   return (
     <div
@@ -66,7 +68,7 @@ export function ShopHero({ shop, summary }: Props) {
           {shop.name}
         </p>
         <p className="truncate text-xs text-white/85">
-          {BUSINESS_TYPE_LABEL[shop.business_type]}
+          {businessTypeT(shop.business_type)}
           {shop.address ? ` · ${shop.address}` : ""}
         </p>
       </div>

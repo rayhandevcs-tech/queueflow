@@ -26,9 +26,12 @@ import {
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { distanceKm as computeDistanceKm } from "@/lib/geo";
 import type { SelectableBusinessType, ServiceCategory } from "@/config/constants";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "@/features/customer-explore/lib/i18n";
 
 export default function ExplorePage() {
   const { data: profile } = useMyProfile();
+  const t = useT(customerExploreDict);
   const { data: shops, isPending: shopsPending } = useOpenShops();
   const { counts, waitMin, isPending: statsPending } = useShopLiveStats();
   const location = useUserLocation();
@@ -109,9 +112,9 @@ export default function ExplorePage() {
     <div className="animate-fade-up">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="text-[13px] text-muted">আসসালামু আলাইকুম 👋</p>
+          <p className="text-[13px] text-muted">{t("assalamu")}</p>
           <h1 className="mt-0.5 font-display text-[25px] font-bold leading-tight text-ink">
-            কাছের সেলুন
+            {t("nearbySalonsHeading")}
           </h1>
         </div>
         <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} />
@@ -122,14 +125,14 @@ export default function ExplorePage() {
       <div className="mb-4 flex gap-2.5">
         <div className="flex-1 rounded-[13px] border border-line bg-soft p-3">
           <p className="font-number text-[19px] font-bold text-ink">{openShopCount}</p>
-          <p className="text-[11px] text-muted">খোলা দোকান</p>
+          <p className="text-[11px] text-muted">{t("openShopsLabel")}</p>
         </div>
         <div className="flex-1 rounded-[13px] border border-line bg-soft p-3">
           <p className="font-number text-[19px] font-bold text-ink">
             ~{minWait}
-            <span className="text-xs">মিন</span>
+            <span className="text-xs">{t("minUnit")}</span>
           </p>
-          <p className="text-[11px] text-muted">সবচেয়ে কম ওয়েট</p>
+          <p className="text-[11px] text-muted">{t("lowestWaitLabel")}</p>
         </div>
       </div>
 
@@ -160,7 +163,7 @@ export default function ExplorePage() {
       />
 
       <p className="mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
-        আশেপাশের দোকান
+        {t("nearbyShopsHeading")}
       </p>
 
       <ExploreView

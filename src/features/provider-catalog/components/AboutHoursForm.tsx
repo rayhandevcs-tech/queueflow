@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import {
-  DAY_LABEL_BN,
+  dayLabel,
   DAY_ORDER,
   emptyWeeklyHours,
   parseWeeklyHours,
@@ -11,7 +11,9 @@ import {
   type WeeklyHours,
 } from "@/lib/weekly-hours";
 import type { Json, Shop } from "@/types";
+import { useT } from "@/lib/i18n";
 import { useShopMutations } from "../hooks/use-my-shop";
+import { providerCatalogDict } from "../lib/i18n";
 
 export function AboutHoursForm({ shop }: { shop: Shop }) {
   const { update } = useShopMutations();
@@ -19,6 +21,7 @@ export function AboutHoursForm({ shop }: { shop: Shop }) {
   const [hours, setHours] = useState<WeeklyHours>(
     () => parseWeeklyHours(shop.weekly_hours) ?? emptyWeeklyHours(),
   );
+  const t = useT(providerCatalogDict);
 
   const setDay = (day: DayKey, patch: Partial<WeeklyHours[DayKey]>) => {
     setHours((prev) => ({ ...prev, [day]: { ...prev[day], ...patch } }));
@@ -34,28 +37,28 @@ export function AboutHoursForm({ shop }: { shop: Shop }) {
   return (
     <div className="space-y-4 rounded-2xl border border-line bg-card p-4 shadow-sm">
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">দোকান সম্পর্কে</label>
+        <label className="text-sm font-medium text-ink">{t("aboutLabel")}</label>
         <textarea
           value={about}
           onChange={(e) => setAbout(e.target.value)}
           rows={3}
-          placeholder="তোমার দোকান সম্পর্কে কয়েক লাইন লেখো..."
+          placeholder={t("aboutPlaceholder")}
           className="w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-sm text-ink shadow-xs placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
         />
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">সাপ্তাহিক সময়সূচি</label>
+        <label className="text-sm font-medium text-ink">{t("weeklyHoursLabel")}</label>
         <div className="space-y-2">
           {DAY_ORDER.map((day) => {
             const d = hours[day];
             return (
               <div key={day} className="flex items-center gap-2 rounded-xl bg-soft p-2.5">
                 <span className="w-20 shrink-0 text-xs font-medium text-ink">
-                  {DAY_LABEL_BN[day]}
+                  {dayLabel(day)}
                 </span>
                 {d.closed ? (
-                  <span className="flex-1 text-xs text-muted">বন্ধ</span>
+                  <span className="flex-1 text-xs text-muted">{t("dayClosedStatus")}</span>
                 ) : (
                   <div className="flex flex-1 items-center gap-1.5">
                     <input
@@ -78,7 +81,7 @@ export function AboutHoursForm({ shop }: { shop: Shop }) {
                   onClick={() => setDay(day, { closed: !d.closed })}
                   className="shrink-0 rounded-full bg-card px-2.5 py-1 text-[11px] font-semibold text-muted shadow-xs"
                 >
-                  {d.closed ? "খোলা রাখো" : "বন্ধ রাখো"}
+                  {d.closed ? t("dayToggleOpen") : t("dayToggleClose")}
                 </button>
               </div>
             );
@@ -87,7 +90,7 @@ export function AboutHoursForm({ shop }: { shop: Shop }) {
       </div>
 
       <Button onClick={onSave} loading={update.isPending}>
-        {update.isPending ? "সংরক্ষণ হচ্ছে…" : "সংরক্ষণ করো"}
+        {update.isPending ? t("hoursSaving") : t("hoursSave")}
       </Button>
     </div>
   );

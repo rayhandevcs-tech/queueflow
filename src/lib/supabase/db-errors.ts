@@ -1,3 +1,5 @@
+import { translate, type Dict } from "@/lib/i18n";
+
 export interface FriendlyDbError {
   /** User-facing message, safe to show in the UI. */
   message: string;
@@ -17,108 +19,101 @@ function textOf(err: unknown): string {
   return [e.message, e.details, e.code].filter(Boolean).join(" | ");
 }
 
+const MESSAGES = {
+  oneActiveSerial: {
+    bn: "এই কাস্টমারের আগে থেকেই একটা সিরিয়াল চলছে — একসাথে একটাই রাখা যায়।",
+    en: "This customer already has a serial running — only one at a time.",
+  },
+  shopNotOpen: { bn: "দোকান এখন বন্ধ — আগে খুলে নাও।", en: "Shop is currently closed — open it first." },
+  noChairAvailable: {
+    bn: "বাছাই করা সার্ভিসের জন্য এখন কোনো চেয়ার ফাঁকা নেই।",
+    en: "No chair is free right now for the selected services.",
+  },
+  cannotPerform: {
+    bn: "এই চেয়ার ওই সার্ভিসটা করে না — অন্য চেয়ার বেছে নাও।",
+    en: "This chair doesn't offer that service — pick another chair.",
+  },
+  onlyWaitingCanMove: {
+    bn: "শুধু অপেক্ষমাণ সিরিয়াল অন্য চেয়ারে সরানো যায়।",
+    en: "Only waiting serials can be moved to another chair.",
+  },
+  collided: { bn: "দুটো পরিবর্তন একসাথে হয়ে গেছে — আবার চেষ্টা করো।", en: "Two changes collided — please try again." },
+  invalidServiceSelection: {
+    bn: "সার্ভিস বাছাই ঠিক নেই — লিস্ট রিফ্রেশ করো।",
+    en: "Service selection isn't valid — refresh the list.",
+  },
+  broadcastAlreadySentToday: {
+    bn: "আজকে একবার ব্রডকাস্ট পাঠানো হয়ে গেছে — আগামীকাল আবার চেষ্টা করো।",
+    en: "You've already sent a broadcast today — try again tomorrow.",
+  },
+  reminderMuted: {
+    bn: "এই কাস্টমার রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে।",
+    en: "This customer has muted reminder notifications.",
+  },
+  ownsShop: {
+    bn: "তোমার নামে দোকান আছে — অ্যাকাউন্ট মুছার আগে সাপোর্টে যোগাযোগ করো।",
+    en: "You own a shop — contact support before deleting your account.",
+  },
+  generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
+} satisfies Dict;
+
 const RULES: ReadonlyArray<{
   match: (t: string) => boolean;
-  result: FriendlyDbError;
+  key: keyof typeof MESSAGES | null;
+  silent: boolean;
 }> = [
-  {
-    match: (t) => t.includes("one_active_serial_per_customer"),
-    result: {
-      message: "This customer already has a serial running — only one at a time.",
-      silent: false,
-    },
-  },
-  {
-    match: (t) => t.includes("shop is not open"),
-    result: { message: "Shop is currently closed — open it first.", silent: false },
-  },
-  {
-    match: (t) => t.includes("no chair available"),
-    result: {
-      message: "No chair is free right now for the selected services.",
-      silent: false,
-    },
-  },
-  {
-    match: (t) => t.includes("cannot perform"),
-    result: {
-      message: "This chair doesn't offer that service — pick another chair.",
-      silent: false,
-    },
-  },
-  {
-    match: (t) => t.includes("only WAITING serials can be moved"),
-    result: {
-      message: "Only waiting serials can be moved to another chair.",
-      silent: false,
-    },
-  },
+  { match: (t) => t.includes("one_active_serial_per_customer"), key: "oneActiveSerial", silent: false },
+  { match: (t) => t.includes("shop is not open"), key: "shopNotOpen", silent: false },
+  { match: (t) => t.includes("no chair available"), key: "noChairAvailable", silent: false },
+  { match: (t) => t.includes("cannot perform"), key: "cannotPerform", silent: false },
+  { match: (t) => t.includes("only WAITING serials can be moved"), key: "onlyWaitingCanMove", silent: false },
   {
     // A racing tap on an already-changed serial: realtime already fixed
     // the board — surface nothing.
     match: (t) => t.includes("invalid status transition"),
-    result: { message: "", silent: true },
+    key: null,
+    silent: true,
   },
   {
     // one_in_progress_per_chair unique violation: the lane already has a
     // running job (raced [Start] taps) — reconcile silently.
     match: (t) => t.includes("one_in_progress_per_chair"),
-    result: { message: "", silent: true },
+    key: null,
+    silent: true,
   },
   {
     // Postgres deadlock (opposing lane moves) — retryable, tell them to retry.
     match: (t) => t.includes("40P01") || t.toLowerCase().includes("deadlock"),
-    result: { message: "Two changes collided — please try again.", silent: false },
+    key: "collided",
+    silent: false,
   },
-  {
-    match: (t) => t.includes("invalid service selection"),
-    result: { message: "Service selection isn't valid — refresh the list.", silent: false },
-  },
+  { match: (t) => t.includes("invalid service selection"), key: "invalidServiceSelection", silent: false },
   {
     match: (t) => t.includes("আজকে একবার ব্রডকাস্ট পাঠানো হয়ে গেছে"),
-    result: {
-      message: "আজকে একবার ব্রডকাস্ট পাঠানো হয়ে গেছে — আগামীকাল আবার চেষ্টা করো।",
-      silent: false,
-    },
+    key: "broadcastAlreadySentToday",
+    silent: false,
   },
   {
     // send_due_reminder's own once-per-day guard on a serial already
     // reminded today — expected when a customer has multiple due serials
     // and only some are rate-limited, so this one stays silent.
     match: (t) => t.includes("আজকে একবার রিমাইন্ডার পাঠানো হয়ে গেছে"),
-    result: { message: "", silent: true },
+    key: null,
+    silent: true,
   },
-  {
-    match: (t) => t.includes("এই সিরিয়ালে বাকি নেই"),
-    result: { message: "", silent: true },
-  },
-  {
-    match: (t) => t.includes("রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে"),
-    result: {
-      message: "এই কাস্টমার রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে।",
-      silent: false,
-    },
-  },
-  {
-    match: (t) => t.includes("তোমার নামে দোকান আছে"),
-    result: {
-      message: "তোমার নামে দোকান আছে — অ্যাকাউন্ট মুছার আগে সাপোর্টে যোগাযোগ করো।",
-      silent: false,
-    },
-  },
+  { match: (t) => t.includes("এই সিরিয়ালে বাকি নেই"), key: null, silent: true },
+  { match: (t) => t.includes("রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে"), key: "reminderMuted", silent: false },
+  { match: (t) => t.includes("তোমার নামে দোকান আছে"), key: "ownsShop", silent: false },
 ];
-
-const FALLBACK: FriendlyDbError = {
-  message: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।",
-  silent: false,
-};
 
 export function translateDbError(err: unknown): FriendlyDbError {
   const t = textOf(err);
   for (const rule of RULES) {
-    if (rule.match(t)) return rule.result;
+    if (rule.match(t)) {
+      return { message: rule.key ? translate(MESSAGES, rule.key) : "", silent: rule.silent };
+    }
   }
-  return FALLBACK;
+  return { message: translate(MESSAGES, "generic"), silent: false };
 }
 
 /** Error subclass mutations throw — carries the silent flag to the UI layer. */

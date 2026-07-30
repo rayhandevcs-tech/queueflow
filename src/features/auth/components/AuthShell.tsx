@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { site } from "@/config/site";
+import { useT } from "@/lib/i18n";
+import { authDict } from "../lib/i18n";
 
 export function AuthShell({
   title,
@@ -10,6 +14,8 @@ export function AuthShell({
   subtitle: string;
   children: React.ReactNode;
 }) {
+  const t = useT(authDict);
+
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-accent px-12 py-14 lg:flex lg:flex-col lg:justify-between">
@@ -24,10 +30,7 @@ export function AuthShell({
           <p className="max-w-sm font-display text-3xl font-bold leading-tight text-accent-ink">
             {site.tagline}
           </p>
-          <p className="max-w-xs text-sm text-accent-ink/55">
-            আশেপাশের সেলুন ও পার্লারের লাইভ সিরিয়াল দেখুন, বাসা থেকেই বুক করুন —
-            ম্যাপ, সিরিয়াল নম্বর, এস্টিমেটেড টাইম, সব এক জায়গায়।
-          </p>
+          <p className="max-w-xs text-sm text-accent-ink/55">{t("authTagline")}</p>
         </div>
 
         <p className="relative text-xs text-accent-ink/35">

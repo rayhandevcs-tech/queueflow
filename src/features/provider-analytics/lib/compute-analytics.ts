@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/i18n";
+
 export interface AnalyticsRow {
   completed_at: string | null;
   started_at: string | null;
@@ -24,25 +26,25 @@ export interface AnalyticsSummary {
 // widened to 8am here so shops that open earlier don't silently lose their
 // morning activity from the peak-time KPI and chart.
 const HOUR_BUCKETS = [
-  { from: 8, to: 10, short: "8a", full: "সকাল ৮টা - ১০টা" },
-  { from: 10, to: 12, short: "10a", full: "সকাল ১০টা - দুপুর ১২টা" },
-  { from: 12, to: 14, short: "12p", full: "দুপুর ১২টা - ২টা" },
-  { from: 14, to: 16, short: "2p", full: "দুপুর ২টা - বিকাল ৪টা" },
-  { from: 16, to: 18, short: "4p", full: "বিকাল ৪টা - সন্ধ্যা ৬টা" },
-  { from: 18, to: 20, short: "6p", full: "সন্ধ্যা ৬টা - ৮টা" },
-  { from: 20, to: 22, short: "8p", full: "রাত ৮টা - ১০টা" },
-  { from: 22, to: 24, short: "10p", full: "রাত ১০টা - ১২টা" },
+  { from: 8, to: 10, short: "8a", bn: "সকাল ৮টা - ১০টা", en: "8am - 10am" },
+  { from: 10, to: 12, short: "10a", bn: "সকাল ১০টা - দুপুর ১২টা", en: "10am - 12pm" },
+  { from: 12, to: 14, short: "12p", bn: "দুপুর ১২টা - ২টা", en: "12pm - 2pm" },
+  { from: 14, to: 16, short: "2p", bn: "দুপুর ২টা - বিকাল ৪টা", en: "2pm - 4pm" },
+  { from: 16, to: 18, short: "4p", bn: "বিকাল ৪টা - সন্ধ্যা ৬টা", en: "4pm - 6pm" },
+  { from: 18, to: 20, short: "6p", bn: "সন্ধ্যা ৬টা - ৮টা", en: "6pm - 8pm" },
+  { from: 20, to: 22, short: "8p", bn: "রাত ৮টা - ১০টা", en: "8pm - 10pm" },
+  { from: 22, to: 24, short: "10p", bn: "রাত ১০টা - ১২টা", en: "10pm - 12am" },
 ] as const;
 
 // Bangladesh work-week order, Saturday first.
 const WEEK_DAYS = [
-  { jsDay: 6, short: "শনি" },
-  { jsDay: 0, short: "রবি" },
-  { jsDay: 1, short: "সোম" },
-  { jsDay: 2, short: "মঙ্গল" },
-  { jsDay: 3, short: "বুধ" },
-  { jsDay: 4, short: "বৃহ" },
-  { jsDay: 5, short: "শুক্র" },
+  { jsDay: 6, bn: "শনি", en: "Sat" },
+  { jsDay: 0, bn: "রবি", en: "Sun" },
+  { jsDay: 1, bn: "সোম", en: "Mon" },
+  { jsDay: 2, bn: "মঙ্গল", en: "Tue" },
+  { jsDay: 3, bn: "বুধ", en: "Wed" },
+  { jsDay: 4, bn: "বৃহ", en: "Thu" },
+  { jsDay: 5, bn: "শুক্র", en: "Fri" },
 ] as const;
 
 function bucketIndexForHour(hour: number): number {
@@ -74,7 +76,7 @@ function quietIndex(counts: number[]): number | null {
 }
 
 /** Pure aggregation over DONE-serial history — no I/O, easy to test. */
-export function computeAnalyticsSummary(rows: AnalyticsRow[]): AnalyticsSummary {
+export function computeAnalyticsSummary(rows: AnalyticsRow[], lang: Language = "bn"): AnalyticsSummary {
   const hourCounts = new Array(HOUR_BUCKETS.length).fill(0);
   const weekCounts = new Array(WEEK_DAYS.length).fill(0);
   const daysWithActivity = new Set<string>();
@@ -113,7 +115,7 @@ export function computeAnalyticsSummary(rows: AnalyticsRow[]): AnalyticsSummary 
     isPeak: i === hourlyPeak,
   }));
   const weeklyLoad: LoadBucket[] = WEEK_DAYS.map((d, i) => ({
-    short: d.short,
+    short: d[lang],
     count: weekCounts[i],
     isPeak: i === weeklyPeak,
   }));
@@ -121,17 +123,23 @@ export function computeAnalyticsSummary(rows: AnalyticsRow[]): AnalyticsSummary 
   const insights: string[] = [];
   if (hourlyPeak !== null && weeklyPeak !== null) {
     insights.push(
-      `${WEEK_DAYS[weeklyPeak].short}বার ${HOUR_BUCKETS[hourlyPeak].full} সবচেয়ে ব্যস্ত — অতিরিক্ত কর্মী রাখতে পারো।`,
+      lang === "en"
+        ? `${WEEK_DAYS[weeklyPeak].en}s ${HOUR_BUCKETS[hourlyPeak].en} is busiest — consider extra staff.`
+        : `${WEEK_DAYS[weeklyPeak].bn}বার ${HOUR_BUCKETS[hourlyPeak].bn} সবচেয়ে ব্যস্ত — অতিরিক্ত কর্মী রাখতে পারো।`,
     );
   }
   if (hourlyQuiet !== null && hourlyQuiet !== hourlyPeak) {
-    insights.push(`${HOUR_BUCKETS[hourlyQuiet].full} তুলনামূলক ফাঁকা থাকে — ডিসকাউন্ট দিয়ে কাস্টমার টানতে পারো।`);
+    insights.push(
+      lang === "en"
+        ? `${HOUR_BUCKETS[hourlyQuiet].en} is relatively quiet — a discount could draw customers in.`
+        : `${HOUR_BUCKETS[hourlyQuiet].bn} তুলনামূলক ফাঁকা থাকে — ডিসকাউন্ট দিয়ে কাস্টমার টানতে পারো।`,
+    );
   }
 
   return {
     hasData: total > 0,
     dailyAvgCustomers: daysWithActivity.size > 0 ? Math.round(total / daysWithActivity.size) : null,
-    peakHourLabel: hourlyPeak !== null ? HOUR_BUCKETS[hourlyPeak].full : null,
+    peakHourLabel: hourlyPeak !== null ? HOUR_BUCKETS[hourlyPeak][lang] : null,
     avgServiceMin: durationSamples > 0 ? Math.round(totalDurationMin / durationSamples) : null,
     hourlyLoad,
     weeklyLoad,

@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { uploadReviewImage } from "../api/review-storage.api";
 import { submitReview } from "../api/review.api";
+import { customerProfileDict } from "../lib/i18n";
 
 const MAX_IMAGES = 4;
-
-const RATING_LABELS = ["", "খুব খারাপ", "খারাপ", "মোটামুটি", "ভালো", "চমৎকার!"];
 
 export function ReviewDialog({
   shopId,
@@ -39,6 +39,9 @@ export function ReviewDialog({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const t = useT(customerProfileDict);
+
+  const RATING_LABELS = ["", t("ratingWorst"), t("ratingBad"), t("ratingOkay"), t("ratingGood"), t("ratingGreat")];
 
   useEffect(() => {
     const supabase = getBrowserClient();
@@ -49,11 +52,11 @@ export function ReviewDialog({
     mutationFn: submitReview,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.reviews.mine() });
-      showToast("🙏 রিভিউয়ের জন্য ধন্যবাদ!");
+      showToast(t("reviewThanks"));
       onClose();
     },
     onError: (err) => {
-      showToast(err instanceof Error ? err.message : "রিভিউ দেওয়া যায়নি — আবার চেষ্টা করো।");
+      showToast(err instanceof Error ? err.message : t("reviewSubmitFailed"));
     },
   });
 
@@ -64,7 +67,7 @@ export function ReviewDialog({
       const url = await uploadReviewImage(myId, file);
       setImages((prev) => [...prev, url]);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "ছবি আপলোড ব্যর্থ হয়েছে");
+      showToast(err instanceof Error ? err.message : t("imageUploadFailed"));
     } finally {
       setUploadingImage(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -91,8 +94,8 @@ export function ReviewDialog({
           >
             {shopInitial}
           </div>
-          <p className="mt-3 font-display text-xl font-bold text-ink">{shopName} কেমন ছিল?</p>
-          <p className="mt-0.5 text-[13px] text-muted">তোমার রিভিউ দোকানের অথেন্টিসিটি বাড়াবে</p>
+          <p className="mt-3 font-display text-xl font-bold text-ink">{t("howWasShop", shopName)}</p>
+          <p className="mt-0.5 text-[13px] text-muted">{t("reviewBoostsAuthenticity")}</p>
         </div>
 
         <div className="my-6.5 flex justify-center gap-2.5">
@@ -123,7 +126,7 @@ export function ReviewDialog({
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="অভিজ্ঞতা লিখো (ঐচ্ছিক)…"
+          placeholder={t("commentPlaceholder")}
           rows={3}
           className="mt-4.5 w-full resize-none rounded-[14px] border border-line bg-soft p-3.25 text-[13px] text-ink placeholder:text-muted"
         />
@@ -167,7 +170,7 @@ export function ReviewDialog({
           onClick={() => submit.mutate({ shopId, serialId, rating, comment, images })}
           className="mt-3.5 w-full rounded-[15px] bg-accent py-3.75 font-display text-[15px] font-bold text-accent-ink disabled:opacity-50"
         >
-          {submit.isPending ? "পাঠানো হচ্ছে…" : "রিভিউ সাবমিট করো"}
+          {submit.isPending ? t("submitting") : t("submitReview")}
         </button>
       </div>
     </div>

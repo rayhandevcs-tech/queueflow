@@ -1,5 +1,6 @@
-import { BN_MONTHS_SHORT } from "@/lib/format-wait";
+import { BN_MONTHS_SHORT, EN_MONTHS_SHORT } from "@/lib/format-wait";
 import { parseServicesSnapshot, type Json } from "@/types";
+import type { Language } from "@/lib/i18n";
 
 export interface DoneSerialRow {
   completed_at: string | null;
@@ -33,7 +34,8 @@ function monthKey(d: Date): string {
 }
 
 /** Pure aggregation over "DONE this year-ish" rows — no I/O, easy to test. */
-export function computeIncomeSummary(rows: DoneSerialRow[], now: Date): IncomeSummary {
+export function computeIncomeSummary(rows: DoneSerialRow[], now: Date, lang: Language = "bn"): IncomeSummary {
+  const MONTHS_SHORT = lang === "en" ? EN_MONTHS_SHORT : BN_MONTHS_SHORT;
   const todayKey = now.toDateString();
   const thisMonthKey = monthKey(now);
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -73,7 +75,7 @@ export function computeIncomeSummary(rows: DoneSerialRow[], now: Date): IncomeSu
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     monthlyTrend.push({
-      label: BN_MONTHS_SHORT[d.getMonth()],
+      label: MONTHS_SHORT[d.getMonth()],
       amount: byMonth.get(monthKey(d)) ?? 0,
       isCurrent: i === 0,
     });

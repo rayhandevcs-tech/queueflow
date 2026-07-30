@@ -5,7 +5,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatBanglaDate } from "@/lib/format-wait";
 import type { Notification, NotificationType } from "@/types";
+import { getStoredLanguage, translate, useT } from "@/lib/i18n";
 import { useMyNotifications } from "../hooks/use-notifications";
+import { notificationsDict } from "../lib/i18n";
 
 const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
   SERIAL_CONFIRMED: <CheckCheck className="h-4.5 w-4.5" />,
@@ -21,8 +23,11 @@ function dayLabel(dateStr: string): string {
   const now = new Date();
   const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diffDays = Math.round((startOf(now) - startOf(d)) / 86_400_000);
-  if (diffDays === 0) return "আজ";
-  if (diffDays === 1) return "গতকাল";
+  if (diffDays === 0) return translate(notificationsDict, "today");
+  if (diffDays === 1) return translate(notificationsDict, "yesterday");
+  if (getStoredLanguage() === "en") {
+    return d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+  }
   return formatBanglaDate(d);
 }
 
@@ -38,6 +43,7 @@ function groupByDay(items: Notification[]): Array<[string, Notification[]]> {
 
 export function NotificationCenter() {
   const { notifications, unreadCount, isPending, markRead, markAllRead } = useMyNotifications();
+  const t = useT(notificationsDict);
 
   if (isPending) {
     return (
@@ -51,8 +57,8 @@ export function NotificationCenter() {
     return (
       <EmptyState
         icon={<Bell className="h-6 w-6" />}
-        title="এখনো কোনো নোটিফিকেশন নেই"
-        description="সিরিয়াল নিয়ে কিছু ঘটলে এখানে জানানো হবে।"
+        title={t("noNotificationsTitle")}
+        description={t("noNotificationsDesc")}
       />
     );
   }
@@ -60,7 +66,7 @@ export function NotificationCenter() {
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold text-ink">নোটিফিকেশন</h1>
+        <h1 className="font-display text-xl font-bold text-ink">{t("notificationsHeading")}</h1>
         {unreadCount > 0 && (
           <button
             type="button"
@@ -68,7 +74,7 @@ export function NotificationCenter() {
             disabled={markAllRead.isPending}
             className="text-xs font-semibold text-accent disabled:opacity-50"
           >
-            সব read করো
+            {t("markAllRead")}
           </button>
         )}
       </div>

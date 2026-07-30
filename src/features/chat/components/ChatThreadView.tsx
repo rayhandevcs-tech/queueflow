@@ -7,22 +7,30 @@ import { toBanglaDigits } from "@/lib/format-wait";
 import type { Message } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { getStoredLanguage, translate, useT } from "@/lib/i18n";
 import { uploadChatImage } from "../api/storage.api";
 import { useChatPresence } from "../hooks/use-chat-presence";
 import { useChatThread } from "../hooks/use-chat-thread";
+import { chatDict } from "../lib/i18n";
 
 function dateLabel(dateStr: string): string {
   const date = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return "আজ";
-  if (date.toDateString() === yesterday.toDateString()) return "গতকাল";
+  if (date.toDateString() === today.toDateString()) return translate(chatDict, "today");
+  if (date.toDateString() === yesterday.toDateString()) return translate(chatDict, "yesterday");
+  if (getStoredLanguage() === "en") {
+    return date.toLocaleDateString("en-US", { day: "numeric", month: "long" });
+  }
   return toBanglaDigits(date.getDate()) + " " + date.toLocaleDateString("bn-BD", { month: "long" });
 }
 
 function timeLabel(dateStr: string): string {
   const d = new Date(dateStr);
+  if (getStoredLanguage() === "en") {
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  }
   const hh = toBanglaDigits(d.getHours()).padStart(2, "০");
   const mm = toBanglaDigits(d.getMinutes()).padStart(2, "০");
   return `${hh}:${mm}`;
@@ -49,6 +57,7 @@ export function ChatThreadView({
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const showToast = useToast();
+  const t = useT(chatDict);
 
   const otherOnline = useChatPresence(
     shopId && customerId ? `presence:chat:${shopId}:${customerId}` : undefined,
@@ -58,8 +67,8 @@ export function ChatThreadView({
   const lastActiveLabel = useMemo(() => {
     if (messages.length === 0) return null;
     const last = messages[messages.length - 1];
-    return `${dateLabel(last.created_at)} ${timeLabel(last.created_at)}-এ সক্রিয় ছিল`;
-  }, [messages]);
+    return t("lastActiveAt", `${dateLabel(last.created_at)} ${timeLabel(last.created_at)}`);
+  }, [messages, t]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,7 +82,7 @@ export function ChatThreadView({
       { content: text },
       {
         onError: (err) => {
-          showToast(err instanceof Error ? err.message : "মেসেজ পাঠানো যায়নি।");
+          showToast(err instanceof Error ? err.message : t("messageSendFailed"));
           setContent(text);
         },
       },
@@ -89,12 +98,12 @@ export function ChatThreadView({
         { imageUrl: url },
         {
           onError: (err) => {
-            showToast(err instanceof Error ? err.message : "ছবি পাঠানো যায়নি।");
+            showToast(err instanceof Error ? err.message : t("imageSendFailed"));
           },
         },
       );
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "ছবি আপলোড ব্যর্থ হয়েছে।");
+      showToast(err instanceof Error ? err.message : t("imageUploadFailed"));
     } finally {
       setUploadingImage(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -132,7 +141,7 @@ export function ChatThreadView({
           {otherOnline ? (
             <p className="flex items-center gap-1 text-[11px] text-good">
               <span className="h-1.5 w-1.5 rounded-full bg-good" />
-              অনলাইন
+              {t("onlineStatus")}
             </p>
           ) : (
             lastActiveLabel && <p className="truncate text-[11px] text-muted">{lastActiveLabel}</p>
@@ -150,8 +159,8 @@ export function ChatThreadView({
             <div className="grid h-13 w-13 place-items-center rounded-full bg-accent/10 text-accent">
               <MessageCircle className="h-6 w-6" />
             </div>
-            <p className="text-sm font-medium text-ink">{otherPartyName}-কে হ্যালো বলো</p>
-            <p className="text-xs text-muted">কথোপকথন শুরু করো</p>
+            <p className="text-sm font-medium text-ink">{t("sayHello", otherPartyName)}</p>
+            <p className="text-xs text-muted">{t("startConversation")}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
@@ -211,7 +220,7 @@ export function ChatThreadView({
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={uploadingImage}
-            title="ছবি পাঠাও"
+            title={t("sendImageTitle")}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-soft disabled:opacity-40"
           >
             {uploadingImage ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
@@ -225,7 +234,7 @@ export function ChatThreadView({
                 onSend();
               }
             }}
-            placeholder="মেসেজ লেখো…"
+            placeholder={t("messagePlaceholder")}
             className="flex-1 rounded-full border border-line bg-soft px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-accent"
           />
           <button

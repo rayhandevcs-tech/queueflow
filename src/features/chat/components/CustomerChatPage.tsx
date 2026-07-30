@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useShopBasics } from "../hooks/use-chat-shop";
 import { ChatThreadView } from "./ChatThreadView";
+import { chatDict } from "../lib/i18n";
 
 export function CustomerChatPage({ shopId }: { shopId: string }) {
   const [myId, setMyId] = useState<string | null>(null);
   const { data: shop, isPending } = useShopBasics(shopId);
+  const t = useT(chatDict);
 
   useEffect(() => {
     const supabase = getBrowserClient();
@@ -25,7 +28,7 @@ export function CustomerChatPage({ shopId }: { shopId: string }) {
   }
 
   if (!shop) {
-    return <p className="p-6 text-sm text-ink">দোকান খুঁজে পাওয়া যায়নি।</p>;
+    return <p className="p-6 text-sm text-ink">{t("shopNotFound")}</p>;
   }
 
   return (

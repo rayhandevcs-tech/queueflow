@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -11,25 +11,30 @@ import { ROLES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { useT, useLanguage } from "@/lib/i18n";
 import { useRegister } from "../hooks/use-register";
 import {
   registerSchema,
   type RegisterFormValues,
 } from "../schemas/register.schema";
 import { translateAuthError } from "@/lib/auth-errors";
-
-const ROLE_OPTIONS = [
-  { value: ROLES.CUSTOMER, label: "কাস্টমার", icon: Sparkles },
-  { value: ROLES.PROVIDER, label: "দোকানদার", icon: Scissors },
-] as const;
+import { authDict } from "../lib/i18n";
 
 export function RegisterForm() {
   const router = useRouter();
   const register = useRegister();
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const { language } = useLanguage();
+  const t = useT(authDict);
 
+  const ROLE_OPTIONS = [
+    { value: ROLES.CUSTOMER, label: t("customerOption"), icon: Sparkles },
+    { value: ROLES.PROVIDER, label: t("providerOption"), icon: Scissors },
+  ] as const;
+
+  const schema = useMemo(() => registerSchema(language), [language]);
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       fullName: "",
       email: "",
@@ -61,13 +66,9 @@ export function RegisterForm() {
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-good-soft text-good">
           <MailCheck className="h-7 w-7" />
         </div>
-        <p className="text-sm text-ink">
-          <span className="font-semibold">{submittedEmail}</span>-এ কনফার্মেশন
-          লিংক পাঠানো হয়েছে। ইনবক্স চেক করে লিংকে ক্লিক করো, তারপর লগইন করতে
-          পারবে।
-        </p>
+        <p className="text-sm text-ink">{t("confirmEmailSent", submittedEmail)}</p>
         <Link href="/login" className="inline-block">
-          <Button size="lg">লগইনে যাও</Button>
+          <Button size="lg">{t("goToLogin")}</Button>
         </Link>
       </div>
     );
@@ -76,7 +77,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">অ্যাকাউন্টের ধরন</label>
+        <label className="text-sm font-medium text-ink">{t("accountTypeLabel")}</label>
         <div className="grid grid-cols-2 gap-2">
           {ROLE_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -103,16 +104,16 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <Field label="নাম" error={err.fullName?.message}>
+      <Field label={t("fullNameLabel")} error={err.fullName?.message}>
         <Input
           {...form.register("fullName")}
           icon={<User className="h-4 w-4" />}
-          placeholder="তোমার পূর্ণ নাম"
+          placeholder={t("fullNamePlaceholder")}
           invalid={!!err.fullName}
         />
       </Field>
 
-      <Field label="ইমেইল" error={err.email?.message}>
+      <Field label={t("emailLabel")} error={err.email?.message}>
         <Input
           {...form.register("email")}
           type="email"
@@ -122,7 +123,7 @@ export function RegisterForm() {
         />
       </Field>
 
-      <Field label="পাসওয়ার্ড" error={err.password?.message}>
+      <Field label={t("passwordLabel")} error={err.password?.message}>
         <PasswordInput
           {...form.register("password")}
           icon={<Lock className="h-4 w-4" />}
@@ -131,7 +132,7 @@ export function RegisterForm() {
         />
       </Field>
 
-      <Field label="পাসওয়ার্ড কনফার্ম করো" error={err.confirmPassword?.message}>
+      <Field label={t("confirmPasswordLabel")} error={err.confirmPassword?.message}>
         <PasswordInput
           {...form.register("confirmPassword")}
           icon={<Lock className="h-4 w-4" />}
@@ -141,7 +142,7 @@ export function RegisterForm() {
       </Field>
 
       <Button type="submit" size="lg" loading={register.isPending} className="w-full">
-        {register.isPending ? "সাইন আপ হচ্ছে…" : "সাইন আপ"}
+        {register.isPending ? t("signingUp") : t("signUpCta")}
       </Button>
 
       {register.isError && (
@@ -151,9 +152,9 @@ export function RegisterForm() {
       )}
 
       <p className="text-center text-sm text-muted">
-        অ্যাকাউন্ট আছে?{" "}
+        {t("haveAccount")}{" "}
         <Link href="/login" className="font-semibold text-accent hover:underline">
-          লগইন করো
+          {t("logIn")}
         </Link>
       </p>
     </form>

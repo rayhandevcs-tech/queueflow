@@ -10,12 +10,15 @@ import { formatMoney } from "@/lib/format-wait";
 import { groupByDay } from "@/lib/date-groups";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useT } from "@/lib/i18n";
 import { useProfileHistory } from "../hooks/use-profile-history";
+import { customerProfileDict } from "../lib/i18n";
 import { EReceiptSheet } from "./EReceiptSheet";
 
 export function TransactionsView() {
   const { history, shopsById, isPending } = useProfileHistory();
   const [receiptFor, setReceiptFor] = useState<Serial | null>(null);
+  const t = useT(customerProfileDict);
 
   const done = history.filter((s) => s.status === "DONE");
   const groups = groupByDay(done, (s) => s.completed_at ?? s.created_at);
@@ -29,7 +32,7 @@ export function TransactionsView() {
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="font-display text-xl font-bold text-ink">লেনদেন</h1>
+        <h1 className="font-display text-xl font-bold text-ink">{t("transactionsTitle")}</h1>
       </div>
 
       {isPending ? (
@@ -39,8 +42,8 @@ export function TransactionsView() {
       ) : done.length === 0 ? (
         <EmptyState
           icon={<Store className="h-6 w-6" />}
-          title="এখনো কোনো লেনদেন নেই"
-          description="সার্ভিস সম্পন্ন হলে এখানে খরচের হিসাব দেখতে পাবে।"
+          title={t("noTransactionsTitle")}
+          description={t("noTransactionsDesc")}
         />
       ) : (
         <div className="flex flex-col gap-4.5">
@@ -72,7 +75,7 @@ export function TransactionsView() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-semibold text-ink">
-                          {shop?.name ?? "দোকান"}
+                          {shop?.name ?? t("shopFallback")}
                         </p>
                         <p className="truncate text-[11px] text-muted">
                           {services.map((sv) => sv.name).join(" + ") || "—"}
@@ -84,7 +87,7 @@ export function TransactionsView() {
                         </p>
                         {s.payment_status === "DUE" && (
                           <p className="mt-0.5 rounded-full bg-live-soft px-2 py-0.5 text-[10px] font-semibold text-live">
-                            বাকি ৳{formatMoney(s.due_amount)}
+                            {t("dueAmount", formatMoney(s.due_amount))}
                           </p>
                         )}
                       </div>

@@ -3,6 +3,12 @@
 import { forwardRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT, type Dict } from "@/lib/i18n";
+
+const dict = {
+  hide: { bn: "পাসওয়ার্ড লুকাও", en: "Hide password" },
+  show: { bn: "পাসওয়ার্ড দেখাও", en: "Show password" },
+} satisfies Dict;
 
 interface Props extends Omit<React.ComponentProps<"input">, "type"> {
   invalid?: boolean;
@@ -12,6 +18,7 @@ interface Props extends Omit<React.ComponentProps<"input">, "type"> {
 export const PasswordInput = forwardRef<HTMLInputElement, Props>(
   ({ invalid, icon, className, ...props }, ref) => {
     const [visible, setVisible] = useState(false);
+    const t = useT(dict);
 
     return (
       <div className="relative">
@@ -37,7 +44,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>(
           tabIndex={-1}
           onClick={() => setVisible((v) => !v)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
-          aria-label={visible ? "পাসওয়ার্ড লুকাও" : "পাসওয়ার্ড দেখাও"}
+          aria-label={visible ? t("hide") : t("show")}
         >
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>

@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Copy, MessageCircle, Navigation, Phone, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import type { Shop } from "@/types";
+import { useT } from "@/lib/i18n";
+import { customerBookingDict } from "../lib/i18n";
 
 interface Props {
   shop: Shop;
@@ -48,6 +50,7 @@ function ActionButton({
 export function ShopQuickActions({ shop, hasHistory }: Props) {
   const router = useRouter();
   const showToast = useToast();
+  const t = useT(customerBookingDict);
 
   const hasCoords = shop.latitude != null && shop.longitude != null;
 
@@ -63,28 +66,28 @@ export function ShopQuickActions({ shop, hasHistory }: Props) {
     }
     try {
       await navigator.clipboard.writeText(url);
-      showToast("লিংক কপি হয়েছে");
+      showToast(t("linkCopied"));
     } catch {
-      showToast("লিংক কপি করা যায়নি");
+      showToast(t("linkCopyFailed"));
     }
   };
 
   return (
     <div className="mt-3.5 flex items-stretch rounded-2xl border border-line bg-card p-2.5">
       {shop.phone && (
-        <ActionButton icon={<Phone className="h-4 w-4" />} label="কল" href={`tel:${shop.phone}`} />
+        <ActionButton icon={<Phone className="h-4 w-4" />} label={t("call")} href={`tel:${shop.phone}`} />
       )}
       {hasHistory && (
         <ActionButton
           icon={<MessageCircle className="h-4 w-4" />}
-          label="মেসেজ"
+          label={t("message")}
           onClick={() => router.push(`/explore/${shop.id}/chat`)}
         />
       )}
       {hasCoords && (
         <ActionButton
           icon={<Navigation className="h-4 w-4" />}
-          label="ডিরেকশন"
+          label={t("direction")}
           href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
         />
       )}
@@ -96,7 +99,7 @@ export function ShopQuickActions({ shop, hasHistory }: Props) {
             <Copy className="h-4 w-4" />
           )
         }
-        label="শেয়ার"
+        label={t("share")}
         onClick={() => void onShare()}
       />
     </div>

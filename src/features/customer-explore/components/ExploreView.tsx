@@ -4,6 +4,8 @@ import { useState } from "react";
 import { MapIcon, List } from "lucide-react";
 import type { Shop } from "@/types";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 import { ShopList } from "./ShopList";
 import { ShopMap } from "./ShopMap";
 
@@ -23,6 +25,7 @@ export function ExploreView({
   isPending: boolean;
 }) {
   const [view, setView] = useState<"map" | "list">("map");
+  const t = useT(customerExploreDict);
 
   return (
     <div className="space-y-4">
@@ -38,7 +41,7 @@ export function ExploreView({
           )}
         >
           <MapIcon className="h-4 w-4" />
-          ম্যাপ
+          {t("mapView")}
         </button>
         <button
           type="button"
@@ -51,7 +54,7 @@ export function ExploreView({
           )}
         >
           <List className="h-4 w-4" />
-          লিস্ট
+          {t("listView")}
         </button>
       </div>
 

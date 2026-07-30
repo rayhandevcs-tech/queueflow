@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Serial } from "@/types";
+import { useLanguage } from "@/lib/i18n";
 import { getAnalyticsHistory } from "../api/analytics.api";
 import { computeAnalyticsSummary, type AnalyticsSummary } from "../lib/compute-analytics";
 
@@ -23,6 +24,7 @@ export function useAnalyticsSummary(shopId: string | undefined): {
   isPending: boolean;
 } {
   const queryClient = useQueryClient();
+  const { language } = useLanguage();
   const queryKey = keys.serials.analyticsHistory(shopId ?? "");
 
   const query = useQuery({
@@ -43,8 +45,8 @@ export function useAnalyticsSummary(shopId: string | undefined): {
   });
 
   const summary = useMemo(
-    () => (query.data ? computeAnalyticsSummary(query.data) : EMPTY),
-    [query.data],
+    () => (query.data ? computeAnalyticsSummary(query.data, language) : EMPTY),
+    [query.data, language],
   );
 
   return { summary, isPending: query.isPending };

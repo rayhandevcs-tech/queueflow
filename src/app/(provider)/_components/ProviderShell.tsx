@@ -4,10 +4,13 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { useT } from "@/lib/i18n";
+import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { ProviderSidebar } from "./ProviderSidebar";
 
 export function ProviderShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const t = useT(providerCatalogDict);
 
   return (
     <div className="min-h-dvh md:flex">
@@ -16,7 +19,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="মেনু খোলো"
+          aria-label={t("openMenuAria")}
           className="grid h-9 w-9 place-items-center rounded-lg text-ink hover:bg-soft"
         >
           <Menu className="h-5 w-5" />
@@ -26,7 +29,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
       {open && (
         <button
           type="button"
-          aria-label="মেনু বন্ধ করো"
+          aria-label={t("closeMenuAria")}
           onClick={() => setOpen(false)}
           className="fixed inset-0 z-30 bg-ink/50 md:hidden"
         />

@@ -1,6 +1,8 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { NotificationPrefs, Profile } from "@/types";
 import type { ProfileFormOutput } from "../schemas/profile.schema";
+import { translate } from "@/lib/i18n";
+import { accountDict } from "../lib/i18n";
 
 export async function getMyProfile(): Promise<Profile | null> {
   const supabase = getBrowserClient();
@@ -24,7 +26,7 @@ export async function updateMyProfile(values: ProfileFormOutput): Promise<Profil
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not logged in");
+  if (!user) throw new Error(translate(accountDict, "notLoggedIn"));
 
   const { data, error } = await supabase
     .from("profiles")
@@ -42,7 +44,7 @@ export async function updateMyAvatar(avatarUrl: string): Promise<Profile> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not logged in");
+  if (!user) throw new Error(translate(accountDict, "notLoggedIn"));
 
   const { data, error } = await supabase
     .from("profiles")
@@ -60,7 +62,7 @@ export async function updateMyNotificationPrefs(prefs: NotificationPrefs): Promi
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not logged in");
+  if (!user) throw new Error(translate(accountDict, "notLoggedIn"));
 
   const { data, error } = await supabase
     .from("profiles")
@@ -89,7 +91,7 @@ export async function changePassword({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user?.email) throw new Error("লগইন করা নেই");
+  if (!user?.email) throw new Error(translate(accountDict, "notLoggedIn"));
 
   const { error: reauthError } = await supabase.auth.signInWithPassword({
     email: user.email,

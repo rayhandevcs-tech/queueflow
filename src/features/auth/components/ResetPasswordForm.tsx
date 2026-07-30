@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +8,7 @@ import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { useT, useLanguage } from "@/lib/i18n";
 import { signOut } from "../api/auth.api";
 import { useResetPassword } from "../hooks/use-reset-password";
 import {
@@ -14,13 +16,17 @@ import {
   type ResetPasswordFormValues,
 } from "../schemas/reset-password.schema";
 import { translateAuthError } from "@/lib/auth-errors";
+import { authDict } from "../lib/i18n";
 
 export function ResetPasswordForm() {
   const router = useRouter();
   const resetPassword = useResetPassword();
+  const { language } = useLanguage();
+  const t = useT(authDict);
 
+  const schema = useMemo(() => resetPasswordSchema(language), [language]);
   const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { password: "", confirmPassword: "" },
   });
 
@@ -37,7 +43,7 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
-      <Field label="নতুন পাসওয়ার্ড" error={err.password?.message}>
+      <Field label={t("newPasswordLabel")} error={err.password?.message}>
         <PasswordInput
           {...form.register("password")}
           icon={<Lock className="h-4 w-4" />}
@@ -46,7 +52,7 @@ export function ResetPasswordForm() {
         />
       </Field>
 
-      <Field label="কনফার্ম করো" error={err.confirmPassword?.message}>
+      <Field label={t("confirmLabel")} error={err.confirmPassword?.message}>
         <PasswordInput
           {...form.register("confirmPassword")}
           icon={<Lock className="h-4 w-4" />}
@@ -61,7 +67,7 @@ export function ResetPasswordForm() {
         loading={resetPassword.isPending}
         className="w-full"
       >
-        {resetPassword.isPending ? "সংরক্ষণ হচ্ছে…" : "পাসওয়ার্ড বদলাও"}
+        {resetPassword.isPending ? t("changingPassword") : t("changePasswordCta")}
       </Button>
 
       {resetPassword.isError && (

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { TabBar } from "@/components/ui/TabBar";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/lib/i18n";
+import { customerBookingDict } from "../lib/i18n";
 import {
   useChairCapabilities,
   useHasShopHistory,
@@ -28,17 +30,18 @@ import { ReviewsTab } from "./ReviewsTab";
 import { DetailsTab } from "./DetailsTab";
 import type { AdvancePaymentInfo } from "../api/booking.api";
 
-const TABS = [
-  { id: "services", label: "সার্ভিস" },
-  { id: "staff", label: "স্টাফ" },
-  { id: "gallery", label: "গ্যালারি" },
-  { id: "reviews", label: "রিভিউ" },
-  { id: "details", label: "বিস্তারিত" },
-];
-
 export function ShopDetailView({ shopId }: { shopId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT(customerBookingDict);
+
+  const TABS = [
+    { id: "services", label: t("tabServices") },
+    { id: "staff", label: t("tabStaff") },
+    { id: "gallery", label: t("tabGallery") },
+    { id: "reviews", label: t("tabReviews") },
+    { id: "details", label: t("tabDetails") },
+  ];
   const { data: shop, isPending: shopPending } = useShopDetail(shopId);
   const { data: services, isPending: servicesPending } = useShopServices(shopId);
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
@@ -94,7 +97,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   }
 
   if (!shop) {
-    return <p className="p-6 text-sm text-ink">দোকান খুঁজে পাওয়া যায়নি।</p>;
+    return <p className="p-6 text-sm text-ink">{t("shopNotFound")}</p>;
   }
 
   if (activeSerial) {
@@ -105,12 +108,10 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
           <Ticket className="h-7 w-7" />
         </div>
         <p className="text-sm text-ink">
-          {sameShop
-            ? "তোমার এই দোকানে ইতিমধ্যে একটা সিরিয়াল আছে।"
-            : "তোমার ইতিমধ্যে একটা সক্রিয় সিরিয়াল আছে — একসাথে একটাই রাখা যায়।"}
+          {sameShop ? t("alreadyBookedSameShop") : t("alreadyBookedOtherShop")}
         </p>
         <Button size="lg" onClick={() => router.push("/my-serial")}>
-          আমার সিরিয়াল দেখো
+          {t("viewMySerial")}
         </Button>
         {sameShop && (
           <Button
@@ -119,7 +120,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
             onClick={() => router.push(`/explore/${shopId}/chat`)}
           >
             <MessageCircle className="h-4 w-4" />
-            দোকানে মেসেজ করো
+            {t("messageShop")}
           </Button>
         )}
       </div>
@@ -144,7 +145,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
       { shopId, serviceIds: [...selected], advance: advanceInfo, chairId: effectivePreferredChairId },
       {
         onSuccess: () => {
-          showToast(advanceInfo ? "✅ অ্যাডভান্স পেইড — সিরিয়াল লক হলো" : "✅ সিরিয়াল কনফার্ম হলো");
+          showToast(advanceInfo ? t("advancePaidToast") : t("confirmedToast"));
           router.push("/my-serial");
         },
       },
@@ -169,24 +170,24 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         <div className="my-4.5 flex gap-2.5">
           <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
             <p className="font-number text-[22px] font-bold text-ink">{queueCount}</p>
-            <p className="text-[11px] text-muted">এখন সিরিয়াল</p>
+            <p className="text-[11px] text-muted">{t("nowSerialLabel")}</p>
           </div>
           <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
             <p className="font-number text-[22px] font-bold text-live">
               ~{waitMinutes}
-              <span className="text-[13px]">মি</span>
+              <span className="text-[13px]">{t("minShort")}</span>
             </p>
-            <p className="text-[11px] text-muted">আনুমানিক ওয়েট</p>
+            <p className="text-[11px] text-muted">{t("estWaitLabel")}</p>
           </div>
           <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
             <p className="font-number text-[22px] font-bold text-ink">{services?.length ?? 0}</p>
-            <p className="text-[11px] text-muted">সার্ভিস</p>
+            <p className="text-[11px] text-muted">{t("servicesCountLabel")}</p>
           </div>
         </div>
 
         {!shop.is_open && (
           <div className="mb-4 rounded-xl bg-live-soft px-4 py-3 text-sm font-medium text-live">
-            দোকান এখন বন্ধ — এই মুহূর্তে বুকিং করা যাচ্ছে না
+            {t("shopClosedNotice")}
           </div>
         )}
 
@@ -213,7 +214,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
           <p className="mt-4 text-sm text-live">
             {createBooking.error instanceof Error
               ? createBooking.error.message
-              : "বুক করা যায়নি — আবার চেষ্টা করো।"}
+              : t("bookingFailedGeneric")}
           </p>
         )}
       </div>
@@ -222,7 +223,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         <div className="fixed inset-x-0 bottom-24 z-10 mx-auto max-w-lg px-4">
           <div className="flex items-center gap-3 rounded-2xl border border-line bg-card/95 p-3.5 shadow-lg backdrop-blur">
             <div>
-              <p className="text-[11px] text-muted">মোট · {totalMin} মিনিট</p>
+              <p className="text-[11px] text-muted">{t("totalMinutesLabel", totalMin)}</p>
               <p className="font-number text-[22px] font-bold text-ink">৳{totalAmount}</p>
             </div>
             <Button
@@ -233,10 +234,10 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
               className="flex-1 font-display text-[15px] shadow-glow"
             >
               {createBooking.isPending
-                ? "বুক হচ্ছে…"
+                ? t("booking")
                 : advance
-                  ? "অ্যাডভান্স দিয়ে কনফার্ম"
-                  : "সিরিয়াল নাও"}
+                  ? t("confirmWithAdvance")
+                  : t("takeSerial")}
             </Button>
           </div>
         </div>

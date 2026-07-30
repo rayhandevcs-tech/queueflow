@@ -1,14 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { useLanguage, useT } from "@/lib/i18n";
 import {
   offerSchema,
   type OfferFormValues,
   type OfferFormOutput,
 } from "../schemas/offer.schema";
+import { providerOffersDict } from "../lib/i18n";
 
 export function OfferForm({
   busy,
@@ -19,8 +22,12 @@ export function OfferForm({
   onSubmit: (values: OfferFormOutput) => void;
   onCancel: () => void;
 }) {
+  const { language } = useLanguage();
+  const t = useT(providerOffersDict);
+
+  const schema = useMemo(() => offerSchema(language), [language]);
   const form = useForm<OfferFormValues, unknown, OfferFormOutput>({
-    resolver: zodResolver(offerSchema),
+    resolver: zodResolver(schema),
     defaultValues: { title: "", description: "", discount_pct: 10, valid_until: "" },
   });
 
@@ -35,7 +42,7 @@ export function OfferForm({
         <Field error={err.title?.message}>
           <Input
             {...form.register("title")}
-            placeholder="অফারের নাম (ঈদ স্পেশাল)"
+            placeholder={t("offerNamePlaceholder")}
             invalid={!!err.title}
           />
         </Field>
@@ -44,7 +51,7 @@ export function OfferForm({
         <Field error={err.description?.message}>
           <Input
             {...form.register("description")}
-            placeholder="বিস্তারিত (ঐচ্ছিক)"
+            placeholder={t("descriptionOptionalPlaceholder")}
             invalid={!!err.description}
           />
         </Field>
@@ -54,7 +61,7 @@ export function OfferForm({
           {...form.register("discount_pct")}
           type="number"
           inputMode="numeric"
-          placeholder="ছাড় (%)"
+          placeholder={t("discountPctPlaceholder")}
           invalid={!!err.discount_pct}
         />
       </Field>
@@ -67,10 +74,10 @@ export function OfferForm({
       </Field>
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" loading={busy}>
-          {busy ? "সেভ হচ্ছে…" : "অফার তৈরি করো"}
+          {busy ? t("offerSaving") : t("createOffer")}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          বাতিল
+          {t("cancel")}
         </Button>
       </div>
     </form>

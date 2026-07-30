@@ -4,13 +4,10 @@ import { useState } from "react";
 import { Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { UiDbError } from "@/lib/supabase/db-errors";
+import { useT } from "@/lib/i18n";
 import { useSendBroadcast } from "../hooks/use-broadcast";
 import type { BroadcastTarget } from "../api/notifications.api";
-
-const TARGETS: { value: BroadcastTarget; label: string; hint: string }[] = [
-  { value: "recent", label: "সাম্প্রতিক কাস্টমার", hint: "গত ৩০ দিনে বুকিং করেছে" },
-  { value: "regulars", label: "নিয়মিত কাস্টমার", hint: "কমপক্ষে ২ বার সার্ভিস নিয়েছে" },
-];
+import { notificationsDict } from "../lib/i18n";
 
 export function BroadcastForm({ shopId }: { shopId: string }) {
   const [target, setTarget] = useState<BroadcastTarget>("recent");
@@ -19,6 +16,12 @@ export function BroadcastForm({ shopId }: { shopId: string }) {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const send = useSendBroadcast(shopId);
+  const t = useT(notificationsDict);
+
+  const TARGETS: { value: BroadcastTarget; label: string; hint: string }[] = [
+    { value: "recent", label: t("recentCustomers"), hint: t("recentCustomersHint") },
+    { value: "regulars", label: t("regularCustomers"), hint: t("regularCustomersHint") },
+  ];
 
   const disabled = !title.trim() || !body.trim() || send.isPending;
 
@@ -33,40 +36,38 @@ export function BroadcastForm({ shopId }: { shopId: string }) {
           { target, title: title.trim(), body: body.trim() },
           {
             onSuccess: (count) => {
-              setResult(`${count} জন কাস্টমারকে পাঠানো হয়েছে।`);
+              setResult(t("sentToCount", count));
               setTitle("");
               setBody("");
             },
             onError: (err) => {
-              setError(err instanceof UiDbError ? err.message : "কিছু একটা ভুল হয়েছে");
+              setError(err instanceof UiDbError ? err.message : t("somethingWrong"));
             },
           },
         );
       }}
     >
       <div>
-        <h1 className="font-display text-xl font-bold text-ink">নোটিফিকেশন পাঠান</h1>
-        <p className="mt-1 text-sm text-muted">
-          তোমার কাস্টমারদের কাছে সরাসরি একটা মেসেজ পাঠাও — দিনে একবার।
-        </p>
+        <h1 className="font-display text-xl font-bold text-ink">{t("sendNotificationTitle")}</h1>
+        <p className="mt-1 text-sm text-muted">{t("sendNotificationSubtitle")}</p>
       </div>
 
       <div className="space-y-2">
-        <p className="text-[13px] font-semibold text-ink">টার্গেট</p>
+        <p className="text-[13px] font-semibold text-ink">{t("targetLabel")}</p>
         <div className="flex gap-2">
-          {TARGETS.map((t) => (
+          {TARGETS.map((opt) => (
             <button
-              key={t.value}
+              key={opt.value}
               type="button"
-              onClick={() => setTarget(t.value)}
+              onClick={() => setTarget(opt.value)}
               className={
-                target === t.value
+                target === opt.value
                   ? "flex-1 rounded-[14px] border border-accent bg-accent/10 p-3 text-left"
                   : "flex-1 rounded-[14px] border border-line bg-card p-3 text-left"
               }
             >
-              <p className="text-[13px] font-semibold text-ink">{t.label}</p>
-              <p className="text-[11px] text-muted">{t.hint}</p>
+              <p className="text-[13px] font-semibold text-ink">{opt.label}</p>
+              <p className="text-[11px] text-muted">{opt.hint}</p>
             </button>
           ))}
         </div>
@@ -74,21 +75,21 @@ export function BroadcastForm({ shopId }: { shopId: string }) {
 
       <div className="space-y-1.5">
         <label className="text-[13px] font-semibold text-ink" htmlFor="broadcast-title">
-          টাইটেল
+          {t("titleLabel")}
         </label>
         <input
           id="broadcast-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={80}
-          placeholder="যেমন: আজ ২০% ছাড়!"
+          placeholder={t("titlePlaceholder")}
           className="w-full rounded-[12px] border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
         />
       </div>
 
       <div className="space-y-1.5">
         <label className="text-[13px] font-semibold text-ink" htmlFor="broadcast-body">
-          মেসেজ
+          {t("messageLabel")}
         </label>
         <textarea
           id="broadcast-body"
@@ -96,7 +97,7 @@ export function BroadcastForm({ shopId }: { shopId: string }) {
           onChange={(e) => setBody(e.target.value)}
           maxLength={300}
           rows={4}
-          placeholder="বিস্তারিত লিখো…"
+          placeholder={t("messagePlaceholder")}
           className="w-full resize-none rounded-[12px] border border-line bg-card px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
         />
       </div>
@@ -106,7 +107,7 @@ export function BroadcastForm({ shopId }: { shopId: string }) {
 
       <Button type="submit" size="lg" disabled={disabled} loading={send.isPending} className="w-full">
         <Megaphone className="h-4 w-4" />
-        পাঠাও
+        {t("send")}
       </Button>
     </form>
   );

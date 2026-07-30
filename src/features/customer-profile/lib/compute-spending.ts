@@ -1,4 +1,5 @@
-import { BN_MONTHS_SHORT } from "@/lib/format-wait";
+import { BN_MONTHS_SHORT, EN_MONTHS_SHORT } from "@/lib/format-wait";
+import type { Language } from "@/lib/i18n";
 
 export interface SpendingSerialRow {
   shop_id: string;
@@ -33,7 +34,8 @@ function monthKey(d: Date): string {
 }
 
 /** Pure aggregation over a customer's DONE serials — no I/O, mirrors provider-income's compute-income. */
-export function computeSpendingSummary(rows: SpendingSerialRow[], now: Date): SpendingSummary {
+export function computeSpendingSummary(rows: SpendingSerialRow[], now: Date, lang: Language = "bn"): SpendingSummary {
+  const MONTHS_SHORT = lang === "en" ? EN_MONTHS_SHORT : BN_MONTHS_SHORT;
   const thisMonthKey = monthKey(now);
   const lastMonthKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const thisYear = now.getFullYear();
@@ -67,7 +69,7 @@ export function computeSpendingSummary(rows: SpendingSerialRow[], now: Date): Sp
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     monthlyTrend.push({
-      label: BN_MONTHS_SHORT[d.getMonth()],
+      label: MONTHS_SHORT[d.getMonth()],
       amount: byMonth.get(monthKey(d)) ?? 0,
       isCurrent: i === 0,
     });

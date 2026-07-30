@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 const WAIT_OK_THRESHOLD_MIN = 40;
 
@@ -26,6 +28,8 @@ export function ShopList({
 }) {
   const { data: favoriteIds } = useMyFavoriteShopIds();
   const toggleFavorite = useToggleFavorite();
+  const t = useT(customerExploreDict);
+  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
 
   if (isPending) {
     return (
@@ -41,8 +45,8 @@ export function ShopList({
     return (
       <EmptyState
         icon={<Store className="h-6 w-6" />}
-        title="এখন কোনো দোকান খোলা নেই"
-        description="একটু পরে আবার দেখো, অথবা ম্যাপে আশেপাশের দোকান খুঁজে দেখো।"
+        title={t("noOpenShops")}
+        description={t("noOpenShopsDesc")}
       />
     );
   }
@@ -81,7 +85,7 @@ export function ShopList({
                 <p className="truncate font-display text-base font-bold text-ink">{shop.name}</p>
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
                   <span className="font-medium text-accent">
-                    {BUSINESS_TYPE_LABEL[shop.business_type]}
+                    {businessTypeT(shop.business_type)}
                   </span>
                   {shop.address && (
                     <>
@@ -95,7 +99,7 @@ export function ShopList({
                 </div>
                 <div className="mt-2 flex items-center gap-1.5">
                   <span className="rounded-full border border-line bg-soft px-2.5 py-1 text-[11px] text-ink">
-                    চলছে <b className="font-number">{queue}</b> সিরিয়াল
+                    {t("runningPrefix")} <b className="font-number">{queue}</b> {t("serialSuffix")}
                   </span>
                   <span
                     className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
@@ -104,11 +108,11 @@ export function ShopList({
                       background: waitOk ? "var(--color-good-soft)" : "var(--color-live-soft)",
                     }}
                   >
-                    ~<span className="font-number">{wait}</span> মিন ওয়েট
+                    ~<span className="font-number">{wait}</span> {t("minWait")}
                   </span>
                   {distance != null && (
                     <span className="rounded-full border border-line bg-soft px-2.5 py-1 text-[11px] text-ink">
-                      ~<span className="font-number">{distance.toFixed(1)}</span> কিমি
+                      ~<span className="font-number">{distance.toFixed(1)}</span> {t("km")}
                     </span>
                   )}
                 </div>

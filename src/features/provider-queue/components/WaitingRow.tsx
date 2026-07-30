@@ -8,8 +8,10 @@ import { useNowMs } from "@/hooks/use-now";
 import { fmtWait, formatMoney } from "@/lib/format-wait";
 import { UiDbError } from "@/lib/supabase/db-errors";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
+import { providerQueueDict } from "../lib/i18n";
 import { MoveSerialMenu } from "./MoveSerialMenu";
 
 export function WaitingRow({
@@ -27,6 +29,7 @@ export function WaitingRow({
   const [error, setError] = useState<string | null>(null);
   const nowMs = useNowMs(30_000);
   const services = parseServicesSnapshot(serial.services_snapshot);
+  const t = useT(providerQueueDict);
 
   const startsInSec = serial.estimated_start_at
     ? (new Date(serial.estimated_start_at).getTime() - nowMs) / 1000
@@ -34,7 +37,7 @@ export function WaitingRow({
 
   const surface = (err: unknown) => {
     if (err instanceof UiDbError && err.silent) return;
-    setError(err instanceof Error ? err.message : "কিছু একটা ভুল হয়েছে");
+    setError(err instanceof Error ? err.message : t("somethingWrong"));
   };
   const run = (fn: () => void) => {
     setError(null);
@@ -54,12 +57,12 @@ export function WaitingRow({
             </span>
             {serial.is_walk_in && (
               <span className="shrink-0 rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-muted">
-                ওয়াক-ইন
+                {t("walkInBadge")}
               </span>
             )}
             {serial.advance_paid && (
               <span className="shrink-0 rounded-full bg-good-soft px-2 py-0.5 text-[10px] font-semibold text-good">
-                ✓ অ্যাডভান্স পেইড
+                {t("advancePaidBadge")}
               </span>
             )}
           </div>
@@ -68,7 +71,7 @@ export function WaitingRow({
           </p>
         </div>
         <div className="min-w-19.5 text-center">
-          <p className="text-[11px] text-muted">শুরু হবে</p>
+          <p className="text-[11px] text-muted">{t("startsInLabel")}</p>
           <p className="font-number text-base font-bold text-live">
             {fmtWait(startsInSec).label}
           </p>
@@ -92,7 +95,7 @@ export function WaitingRow({
           {serial.customer_id && (
             <button
               type="button"
-              title="কাস্টমারকে মেসেজ করো"
+              title={t("messageCustomerTitle")}
               onClick={() => router.push(`/chat/${serial.customer_id}`)}
               className="grid h-7 w-7 place-items-center rounded-lg bg-soft text-muted hover:text-ink"
             >
@@ -109,7 +112,7 @@ export function WaitingRow({
               )}
             >
               <Play className="h-3 w-3 fill-current" />
-              শুরু
+              {t("startCta")}
             </button>
           )}
           <button

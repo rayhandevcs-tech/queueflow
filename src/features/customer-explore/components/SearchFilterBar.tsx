@@ -2,6 +2,8 @@
 
 import { Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 export function SearchFilterBar({
   value,
@@ -14,6 +16,8 @@ export function SearchFilterBar({
   onOpenFilters: () => void;
   filtersActive: boolean;
 }) {
+  const t = useT(customerExploreDict);
+
   return (
     <div className="mb-4 flex gap-2">
       <div className="flex flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2.5 shadow-xs">
@@ -21,7 +25,7 @@ export function SearchFilterBar({
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="দোকান বা সার্ভিস খুঁজো"
+          placeholder={t("searchPlaceholder")}
           className="w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
         />
       </div>

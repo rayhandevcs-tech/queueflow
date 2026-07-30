@@ -1,13 +1,15 @@
 import { formatBanglaDate } from "@/lib/format-wait";
+import { getStoredLanguage } from "@/lib/i18n";
 
-/** "আজ" / "গতকাল" / Bangla date — for grouping any date-stamped list by day. */
+/** "আজ" / "গতকাল" / date — for grouping any date-stamped list by day. Language-aware. */
 export function dayLabel(dateStr: string): string {
   const d = new Date(dateStr);
   const now = new Date();
   const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diffDays = Math.round((startOf(now) - startOf(d)) / 86_400_000);
-  if (diffDays === 0) return "আজ";
-  if (diffDays === 1) return "গতকাল";
+  const en = getStoredLanguage() === "en";
+  if (diffDays === 0) return en ? "Today" : "আজ";
+  if (diffDays === 1) return en ? "Yesterday" : "গতকাল";
   return formatBanglaDate(d);
 }
 

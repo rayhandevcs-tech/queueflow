@@ -1,16 +1,19 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Service } from "@/types";
 import { SERVICE_CATEGORIES, SERVICE_CATEGORY_LABEL } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { useLanguage, useT } from "@/lib/i18n";
 import {
   serviceSchema,
   type ServiceFormValues,
   type ServiceFormOutput,
 } from "../schemas/service.schema";
+import { providerCatalogDict } from "../lib/i18n";
 
 interface Props {
   initial?: Service;
@@ -20,8 +23,13 @@ interface Props {
 }
 
 export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
+  const { language } = useLanguage();
+  const t = useT(providerCatalogDict);
+  const categoryT = useT(SERVICE_CATEGORY_LABEL);
+
+  const schema = useMemo(() => serviceSchema(language), [language]);
   const form = useForm<ServiceFormValues, unknown, ServiceFormOutput>({
-    resolver: zodResolver(serviceSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       name: initial?.name ?? "",
       rate: initial?.rate ?? 0,
@@ -41,7 +49,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
         <Field error={err.name?.message}>
           <Input
             {...form.register("name")}
-            placeholder="সার্ভিসের নাম (চুল কাটা)"
+            placeholder={t("serviceNamePlaceholder")}
             invalid={!!err.name}
           />
         </Field>
@@ -51,7 +59,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
           {...form.register("rate")}
           type="number"
           inputMode="numeric"
-          placeholder="রেট (৳)"
+          placeholder={t("ratePlaceholder")}
           invalid={!!err.rate}
         />
       </Field>
@@ -60,7 +68,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
           {...form.register("default_duration_min")}
           type="number"
           inputMode="numeric"
-          placeholder="সময় (মিনিট)"
+          placeholder={t("durationPlaceholder")}
           invalid={!!err.default_duration_min}
         />
       </Field>
@@ -72,7 +80,7 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
           >
             {SERVICE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {SERVICE_CATEGORY_LABEL[c]}
+                {categoryT(c)}
               </option>
             ))}
           </select>
@@ -80,10 +88,10 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
       </div>
       <div className="flex gap-2 sm:col-span-4">
         <Button type="submit" loading={busy}>
-          {busy ? "সেভ হচ্ছে…" : initial ? "আপডেট করো" : "যোগ করো"}
+          {busy ? t("serviceSaving") : initial ? t("serviceUpdate") : t("serviceAdd")}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          বাতিল
+          {t("cancel")}
         </Button>
       </div>
     </form>

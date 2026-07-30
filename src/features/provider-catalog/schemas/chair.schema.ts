@@ -1,14 +1,21 @@
 import { z } from "zod";
+import type { Language } from "@/lib/i18n";
+import { resolveDict } from "@/lib/i18n";
+import { VALIDATION } from "@/lib/i18n/validation-messages";
 
-export const chairSchema = z.object({
-  label: z.string().trim().min(1, "Enter a label").max(40, "Max 40 characters"),
-  staff_name: z.string().trim().max(80, "Max 80 characters").default(""),
-  color: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "Not a valid color")
-    .nullable()
-    .default(null),
-});
+export function chairSchema(lang: Language) {
+  const m = (key: keyof typeof VALIDATION, ...args: unknown[]) =>
+    resolveDict(VALIDATION, lang, key, ...args);
+  return z.object({
+    label: z.string().trim().min(1, m("label_required")).max(40, m("max_chars", 40)),
+    staff_name: z.string().trim().max(80, m("max_chars", 80)).default(""),
+    color: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, m("invalid_color"))
+      .nullable()
+      .default(null),
+  });
+}
 
-export type ChairFormValues = z.input<typeof chairSchema>;
-export type ChairFormOutput = z.output<typeof chairSchema>;
+export type ChairFormValues = z.input<ReturnType<typeof chairSchema>>;
+export type ChairFormOutput = z.output<ReturnType<typeof chairSchema>>;

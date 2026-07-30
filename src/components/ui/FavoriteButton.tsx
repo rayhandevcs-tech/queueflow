@@ -2,6 +2,12 @@
 
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT, type Dict } from "@/lib/i18n";
+
+const dict = {
+  remove: { bn: "প্রিয় তালিকা থেকে সরাও", en: "Remove from favorites" },
+  add: { bn: "প্রিয় তালিকায় যোগ করো", en: "Add to favorites" },
+} satisfies Dict;
 
 export function FavoriteButton({
   isFavorited,
@@ -14,10 +20,11 @@ export function FavoriteButton({
   pending?: boolean;
   className?: string;
 }) {
+  const t = useT(dict);
   return (
     <button
       type="button"
-      title={isFavorited ? "প্রিয় তালিকা থেকে সরাও" : "প্রিয় তালিকায় যোগ করো"}
+      title={isFavorited ? t("remove") : t("add")}
       disabled={pending}
       onClick={(e) => {
         e.preventDefault();

@@ -2,8 +2,10 @@
 
 import { Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
+import { providerQueueDict } from "../lib/i18n";
 import { NowServingCard } from "./NowServingCard";
 import { WaitingRow } from "./WaitingRow";
 import { EmptyLane } from "./EmptyLane";
@@ -17,6 +19,7 @@ interface Props {
 export function ChairColumn({ lane, lanes, actions }: Props) {
   const { chair } = lane;
   const count = lane.waiting.length + (lane.inProgress ? 1 : 0);
+  const t = useT(providerQueueDict);
 
   return (
     <section
@@ -35,10 +38,10 @@ export function ChairColumn({ lane, lanes, actions }: Props) {
           {lane.chairInactive ? (
             <>
               <Pause className="h-3 w-3" />
-              বন্ধ
+              {t("chairClosed")}
             </>
           ) : (
-            `~${lane.backlogMin} মিন ব্যাকলগ`
+            t("backlogMin", lane.backlogMin)
           )}
         </p>
         <span className="ml-auto grid h-5.5 min-w-5.5 shrink-0 place-items-center rounded-full bg-soft px-1.5 font-number text-xs font-bold text-ink">

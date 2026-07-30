@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,31 +11,36 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { AvatarUploadField } from "@/components/ui/AvatarUploadField";
 import { cn } from "@/lib/utils";
+import { useT, useLanguage } from "@/lib/i18n";
 import { useCompleteOnboarding, useSkipOnboarding } from "../hooks/use-onboarding";
 import {
   completeProfileSchema,
   type CompleteProfileFormValues,
 } from "../schemas/complete-profile.schema";
-
-const GENDER_OPTIONS = [
-  { value: "male", label: "পুরুষ" },
-  { value: "female", label: "মহিলা" },
-  { value: "other", label: "অন্যান্য" },
-] as const;
+import { onboardingDict } from "../lib/i18n";
 
 export function CompleteProfileForm({ role }: { role: UserRole }) {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const complete = useCompleteOnboarding();
   const skip = useSkipOnboarding();
+  const { language } = useLanguage();
+  const t = useT(onboardingDict);
+
+  const GENDER_OPTIONS = [
+    { value: "male", label: t("male") },
+    { value: "female", label: t("female") },
+    { value: "other", label: t("other") },
+  ] as const;
 
   useEffect(() => {
     const supabase = getBrowserClient();
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  const schema = useMemo(() => completeProfileSchema(language), [language]);
   const form = useForm<CompleteProfileFormValues>({
-    resolver: zodResolver(completeProfileSchema),
+    resolver: zodResolver(schema),
     defaultValues: { phone: "", gender: null, avatarUrl: null },
   });
 
@@ -49,7 +54,7 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
   };
 
   const onSubmit = form.handleSubmit((values) => {
-    const parsed = completeProfileSchema.parse(values);
+    const parsed = schema.parse(values);
     complete.mutate(parsed, { onSuccess: goHome });
   });
 
@@ -67,7 +72,7 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
         />
       )}
 
-      <Field label="ফোন নম্বর" error={err.phone?.message}>
+      <Field label={t("phoneLabel")} error={err.phone?.message}>
         <Input
           {...form.register("phone")}
           placeholder="01XXXXXXXXX"
@@ -76,7 +81,7 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
       </Field>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">জেন্ডার</label>
+        <label className="text-sm font-medium text-ink">{t("genderLabel")}</label>
         <div className="grid grid-cols-3 gap-2">
           {GENDER_OPTIONS.map((opt) => {
             const selected = gender === opt.value;
@@ -105,7 +110,7 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
 
       <div className="flex items-center gap-3">
         <Button type="submit" size="lg" loading={complete.isPending} className="flex-1">
-          {complete.isPending ? "সংরক্ষণ হচ্ছে…" : "সংরক্ষণ করো"}
+          {complete.isPending ? t("saving") : t("save")}
         </Button>
       </div>
 
@@ -115,13 +120,11 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
         disabled={skip.isPending}
         className="w-full text-center text-sm font-medium text-muted hover:text-ink"
       >
-        {skip.isPending ? "এগিয়ে যাওয়া হচ্ছে…" : "এখন না, স্কিপ করো"}
+        {skip.isPending ? t("skipping") : t("skip")}
       </button>
 
       {(complete.isError || skip.isError) && (
-        <p className="text-center text-sm text-live">
-          সংরক্ষণ করা যায়নি — আবার চেষ্টা করো।
-        </p>
+        <p className="text-center text-sm text-live">{t("saveFailed")}</p>
       )}
     </form>
   );

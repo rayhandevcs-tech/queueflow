@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
 import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
+import { useLanguage } from "@/lib/i18n";
 import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
 
 export function CustomerBottomNav({ className }: { className?: string }) {
   const pathname = usePathname();
   const { data: activeSerial } = useMyActiveSerial();
   const unreadChatCount = useMyUnreadChatCount();
+  const { language } = useLanguage();
 
   return (
     <nav className={cn("fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card lg:hidden", className)}>
@@ -35,7 +37,7 @@ export function CustomerBottomNav({ className }: { className?: string }) {
                   <span className="absolute -right-1 -top-0.5 h-1.75 w-1.75 rounded-full bg-accent" />
                 )}
               </span>
-              {item.label}
+              {item.label[language]}
             </Link>
           );
         })}

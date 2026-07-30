@@ -1,12 +1,14 @@
 "use client";
 
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useAnalyticsSummary } from "../hooks/use-analytics-summary";
+import { providerAnalyticsDict } from "../lib/i18n";
 import type { LoadBucket } from "../lib/compute-analytics";
 
 const INSIGHT_DOT_COLORS = ["var(--color-live)", "var(--color-good)", "var(--color-brass)"];
 
-function HourlyBars({ buckets }: { buckets: LoadBucket[] }) {
+function HourlyBars({ buckets, peakLabel }: { buckets: LoadBucket[]; peakLabel: string }) {
   const max = Math.max(1, ...buckets.map((b) => b.count));
   return (
     <div className="flex h-40 items-end gap-2">
@@ -17,7 +19,7 @@ function HourlyBars({ buckets }: { buckets: LoadBucket[] }) {
             <div className="relative w-full max-w-9.5" style={{ height: `${Math.max(3, intensity * 100)}%` }}>
               {b.isPeak && (
                 <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-live">
-                  পিক
+                  {peakLabel}
                 </span>
               )}
               <div
@@ -63,6 +65,7 @@ function WeeklyBars({ buckets }: { buckets: LoadBucket[] }) {
 
 export function AnalyticsView({ shopId }: { shopId: string | undefined }) {
   const { summary, isPending } = useAnalyticsSummary(shopId);
+  const t = useT(providerAnalyticsDict);
 
   if (isPending) {
     return (
@@ -75,54 +78,52 @@ export function AnalyticsView({ shopId }: { shopId: string | undefined }) {
   return (
     <div className="space-y-4.5">
       <div>
-        <h1 className="font-display text-[27px] font-bold text-ink">কাস্টমার অ্যানালিটিক্স</h1>
-        <p className="mt-1 text-sm text-muted">
-          কখন কেমন চাপ থাকে বুঝে নাও — কর্মী ও সময় পরিকল্পনা করো
-        </p>
+        <h1 className="font-display text-[27px] font-bold text-ink">{t("customerAnalyticsTitle")}</h1>
+        <p className="mt-1 text-sm text-muted">{t("analyticsSubtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-line bg-card p-4.5">
-          <p className="text-xs text-muted">দৈনিক গড় কাস্টমার</p>
+          <p className="text-xs text-muted">{t("dailyAvgCustomers")}</p>
           <p className="mt-1 font-number text-[28px] font-bold text-ink">
             {summary.dailyAvgCustomers ?? "—"}
           </p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-4.5">
-          <p className="text-xs text-muted">পিক টাইম</p>
+          <p className="text-xs text-muted">{t("peakTime")}</p>
           <p className="mt-1 text-lg font-bold text-live">
-            {summary.peakHourLabel ?? (summary.hasData ? "সকাল ৮টার আগে" : "এখনো নেই")}
+            {summary.peakHourLabel ?? (summary.hasData ? t("beforeMorning8") : t("noneYet"))}
           </p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-4.5">
-          <p className="text-xs text-muted">গড় সার্ভিস সময়</p>
+          <p className="text-xs text-muted">{t("avgServiceTime")}</p>
           <p className="mt-1 font-number text-[28px] font-bold text-ink">
             {summary.avgServiceMin ?? "—"}
-            {summary.avgServiceMin !== null && <span className="text-sm">মি</span>}
+            {summary.avgServiceMin !== null && <span className="text-sm">{t("minShort")}</span>}
           </p>
         </div>
       </div>
 
       {!summary.hasData ? (
         <div className="rounded-2xl border border-dashed border-line bg-card p-8.5 text-center text-sm text-muted">
-          এখনো যথেষ্ট কাজ সম্পন্ন হয়নি — কাজ চলতে থাকলে এখানে সময়ভিত্তিক চাপ আর ইনসাইট দেখা যাবে।
+          {t("notEnoughData")}
         </div>
       ) : (
         <>
           <div className="rounded-[20px] border border-line bg-card p-5.5">
-            <p className="mb-4 font-semibold text-ink">সময় অনুযায়ী কাস্টমার চাপ (গত ৯০ দিন)</p>
-            <HourlyBars buckets={summary.hourlyLoad} />
+            <p className="mb-4 font-semibold text-ink">{t("loadByTime")}</p>
+            <HourlyBars buckets={summary.hourlyLoad} peakLabel={t("peakBadge")} />
           </div>
 
           <div className="grid grid-cols-1 gap-4.5 lg:grid-cols-2">
             <div className="rounded-[20px] border border-line bg-card p-5.5">
-              <p className="mb-4 font-semibold text-ink">সাপ্তাহিক চাপ</p>
+              <p className="mb-4 font-semibold text-ink">{t("weeklyLoad")}</p>
               <WeeklyBars buckets={summary.weeklyLoad} />
             </div>
             <div className="rounded-[20px] border border-line bg-card p-5.5">
-              <p className="mb-3.5 font-semibold text-ink">ইনসাইট</p>
+              <p className="mb-3.5 font-semibold text-ink">{t("insights")}</p>
               {summary.insights.length === 0 ? (
-                <p className="text-sm text-muted">এখনো ইনসাইট তৈরি করার মতো ডেটা নেই।</p>
+                <p className="text-sm text-muted">{t("noInsightsYet")}</p>
               ) : (
                 <div className="flex flex-col">
                   {summary.insights.map((text, i) => (

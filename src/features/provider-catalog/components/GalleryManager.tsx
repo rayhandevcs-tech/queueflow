@@ -3,13 +3,16 @@
 import { useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useShopGallery, useShopGalleryMutations } from "../hooks/use-shop-gallery";
+import { providerCatalogDict } from "../lib/i18n";
 
 export function GalleryManager({ shopId }: { shopId: string }) {
   const { data: images } = useShopGallery(shopId);
   const { upload, remove } = useShopGalleryMutations(shopId);
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useT(providerCatalogDict);
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -18,14 +21,14 @@ export function GalleryManager({ shopId }: { shopId: string }) {
       try {
         await upload.mutateAsync(file);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "আপলোড ব্যর্থ হয়েছে");
+        setError(e instanceof Error ? e.message : t("galleryUploadFailed"));
       }
     }
   }
 
   return (
     <div className="space-y-2">
-      <span className="block text-sm font-medium text-ink">গ্যালারি</span>
+      <span className="block text-sm font-medium text-ink">{t("galleryLabel")}</span>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {images?.map((img) => (
           <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl bg-soft">

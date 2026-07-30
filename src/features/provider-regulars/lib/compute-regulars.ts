@@ -1,3 +1,6 @@
+import { translate } from "@/lib/i18n";
+import { providerRegularsDict } from "./i18n";
+
 export interface VisitRow {
   customer_id: string | null;
   customer_name: string;
@@ -39,7 +42,7 @@ export function computeRegulars(rows: VisitRow[], now: Date): RegularCustomer[] 
         key,
         customerId: row.customer_id,
         customerPhone: row.customer_phone,
-        name: row.customer_name || "কাস্টমার",
+        name: row.customer_name || translate(providerRegularsDict, "customerFallback"),
         visitCount: 1,
         lastVisitAt: row.completed_at,
         visitedThisMonth: isThisMonth,

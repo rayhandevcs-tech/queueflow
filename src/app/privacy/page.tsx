@@ -3,14 +3,14 @@
 import { SharedPageShell } from "@/app/_components/SharedPageShell";
 import { LegalContentView } from "@/features/support/components/LegalContentView";
 import { PRIVACY_SECTIONS } from "@/features/support/lib/legal-content";
+import { supportDict } from "@/features/support/lib/i18n";
+import { useT } from "@/lib/i18n";
 
 export default function PrivacyPage() {
+  const t = useT(supportDict);
   return (
-    <SharedPageShell title="গোপনীয়তা নীতি">
-      <LegalContentView
-        intro="তোমার তথ্য কীভাবে রাখা ও ব্যবহার করা হয়, তার সংক্ষিপ্ত বিবরণ।"
-        sections={PRIVACY_SECTIONS}
-      />
+    <SharedPageShell title={t("privacyPolicyTitle")}>
+      <LegalContentView intro={t("privacyIntro")} sections={PRIVACY_SECTIONS} />
     </SharedPageShell>
   );
 }

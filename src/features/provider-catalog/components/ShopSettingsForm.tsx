@@ -1,14 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BUSINESS_TYPES } from "@/config/constants";
+import { BUSINESS_TYPES, type SelectableBusinessType } from "@/config/constants";
 import { cn } from "@/lib/utils";
 import type { Shop } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { useLanguage, useT } from "@/lib/i18n";
 import { useShopMutations } from "../hooks/use-my-shop";
 import { shopSchema, type ShopFormValues, type ShopFormOutput } from "../schemas/shop.schema";
+import { providerCatalogDict } from "../lib/i18n";
 import { AboutHoursForm } from "./AboutHoursForm";
 import { GalleryManager } from "./GalleryManager";
 import { ImageUploadField } from "./ImageUploadField";
@@ -18,9 +21,18 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
   const { create, update } = useShopMutations();
   const isEdit = shop !== null;
   const busy = create.isPending || update.isPending;
+  const { language } = useLanguage();
+  const t = useT(providerCatalogDict);
+  const businessTypeT = useT(
+    Object.fromEntries(BUSINESS_TYPES.map((bt) => [bt.value, bt.label])) as Record<
+      SelectableBusinessType,
+      { bn: string; en: string }
+    >,
+  );
 
+  const schema = useMemo(() => shopSchema(language), [language]);
   const form = useForm<ShopFormValues, unknown, ShopFormOutput>({
-    resolver: zodResolver(shopSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       name: shop?.name ?? "",
       address: shop?.address ?? "",
@@ -48,10 +60,8 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
       {isEdit && (
         <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4 shadow-sm">
           <div>
-            <p className="text-sm font-semibold text-ink">দোকান খোলা</p>
-            <p className="text-xs text-muted">
-              বন্ধ থাকলে নতুন কোনো সিরিয়াল বুক করা যাবে না
-            </p>
+            <p className="text-sm font-semibold text-ink">{t("shopOpenHeading")}</p>
+            <p className="text-xs text-muted">{t("shopOpenHint")}</p>
           </div>
           <button
             type="button"
@@ -72,30 +82,30 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
                 shop.is_open ? "bg-good animate-pulse" : "bg-muted",
               )}
             />
-            {shop.is_open ? "খোলা" : "বন্ধ"}
+            {shop.is_open ? t("shopOpenWord") : t("shopClosedWord")}
           </button>
         </div>
       )}
 
-      <Field label="দোকানের নাম" error={err.name?.message}>
+      <Field label={t("shopNameLabel")} error={err.name?.message}>
         <Input
           {...form.register("name")}
-          placeholder="যেমন: নিউ স্টার সেলুন"
+          placeholder={t("shopNamePlaceholder")}
           invalid={!!err.name}
         />
       </Field>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">ধরন</label>
+        <label className="text-sm font-medium text-ink">{t("businessTypeLabel")}</label>
         <div className="flex gap-2">
-          {BUSINESS_TYPES.map((t) => {
-            const selected = form.watch("business_type") === t.value;
+          {BUSINESS_TYPES.map((bt) => {
+            const selected = form.watch("business_type") === bt.value;
             return (
               <button
-                key={t.value}
+                key={bt.value}
                 type="button"
                 onClick={() =>
-                  form.setValue("business_type", t.value, {
+                  form.setValue("business_type", bt.value, {
                     shouldDirty: true,
                   })
                 }
@@ -106,20 +116,20 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
                     : "border-line bg-card text-muted hover:border-accent/40",
                 )}
               >
-                {t.label}
+                {businessTypeT(bt.value)}
               </button>
             );
           })}
         </div>
         {err.business_type && (
-          <p className="text-xs font-medium text-live">একটা ধরন বেছে নাও</p>
+          <p className="text-xs font-medium text-live">{t("businessTypeRequired")}</p>
         )}
       </div>
 
-      <Field label="ঠিকানা" error={err.address?.message}>
+      <Field label={t("addressLabel")} error={err.address?.message}>
         <Input
           {...form.register("address")}
-          placeholder="রোড, এলাকা, শহর"
+          placeholder={t("addressPlaceholder")}
           invalid={!!err.address}
         />
       </Field>
@@ -133,7 +143,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
         }}
       />
 
-      <Field label="ফোন" error={err.phone?.message}>
+      <Field label={t("phoneLabel")} error={err.phone?.message}>
         <Input
           {...form.register("phone")}
           placeholder="01XXXXXXXXX"
@@ -147,7 +157,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           <ImageUploadField
             shopId={shop.id}
             kind="logo"
-            label="লোগো"
+            label={t("logoLabel")}
             currentUrl={shop.logo_url}
             onUploaded={(url) =>
               update.mutate({ shopId: shop.id, patch: { logo_url: url } })
@@ -157,7 +167,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
             <ImageUploadField
               shopId={shop.id}
               kind="cover"
-              label="কভার ছবি"
+              label={t("coverLabel")}
               aspect="wide"
               currentUrl={shop.cover_image_url}
               onUploaded={(url) =>
@@ -170,9 +180,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           </div>
         </div>
       ) : (
-        <p className="rounded-xl bg-soft p-3 text-xs text-muted">
-          দোকান সংরক্ষণ করার পর লোগো ও কভার ছবি আপলোড করতে পারবে।
-        </p>
+        <p className="rounded-xl bg-soft p-3 text-xs text-muted">{t("saveBeforeUploadHint")}</p>
       )}
 
       {isEdit && (
@@ -184,14 +192,10 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
       {isEdit && <AboutHoursForm shop={shop} />}
 
       <Button type="submit" size="lg" loading={busy}>
-        {busy ? "সংরক্ষণ হচ্ছে…" : isEdit ? "আপডেট করো" : "দোকান তৈরি করো"}
+        {busy ? t("shopSaving") : isEdit ? t("shopUpdate") : t("shopCreate")}
       </Button>
 
-      {(create.error ?? update.error) && (
-        <p className="text-sm text-live">
-          সংরক্ষণ করা যায়নি — আবার চেষ্টা করো।
-        </p>
-      )}
+      {(create.error ?? update.error) && <p className="text-sm text-live">{t("saveFailed")}</p>}
     </form>
   );
 }

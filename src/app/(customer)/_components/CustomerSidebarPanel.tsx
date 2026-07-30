@@ -9,7 +9,9 @@ import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
 import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { useLanguage, useT } from "@/lib/i18n";
 import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
+import { customerShellDict } from "./i18n";
 
 /**
  * Shared content for both the mobile drawer (opened via hamburger) and the
@@ -22,6 +24,8 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const { data: activeSerial } = useMyActiveSerial();
   const unreadChatCount = useMyUnreadChatCount();
   const logout = useLogout();
+  const { language } = useLanguage();
+  const t = useT(customerShellDict);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
@@ -41,7 +45,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
           </div>
           <div className="min-w-0">
             <p className="truncate font-display text-[15px] font-bold">
-              {profile?.full_name || "কাস্টমার"}
+              {profile?.full_name || t("customerFallback")}
             </p>
             <p className="truncate text-[11px] text-muted">{profile?.phone || "—"}</p>
           </div>
@@ -73,7 +77,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
                   <span className="absolute -right-1 -top-1 h-1.75 w-1.75 rounded-full bg-accent" />
                 )}
               </span>
-              {item.label}
+              {item.label[language]}
             </Link>
           );
         })}
@@ -86,7 +90,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
           className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm font-medium text-muted hover:bg-soft"
         >
           <UserRound className="h-4 w-4" />
-          অ্যাকাউন্ট ও সেটিংস
+          {t("accountSettings")}
         </Link>
         <button
           type="button"
@@ -95,7 +99,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
           className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-muted hover:bg-soft disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" />
-          {logout.isPending ? "…" : "লগ-আউট"}
+          {logout.isPending ? "…" : t("logout")}
         </button>
       </div>
     </aside>

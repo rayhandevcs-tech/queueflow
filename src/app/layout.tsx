@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Hind_Siliguri, Anek_Bangla, Space_Grotesk } from "next/font/google";
 import { QueryProvider } from "@/lib/query/provider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { LanguageProvider } from "@/lib/i18n";
 import { site } from "@/config/site";
 import "./globals.css";
 
@@ -43,9 +44,11 @@ export default function RootLayout({
       className={`${hindSiliguri.variable} ${anekBangla.variable} ${spaceGrotesk.variable}`}
     >
       <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
-        <QueryProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </QueryProvider>
+        <LanguageProvider>
+          <QueryProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </QueryProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

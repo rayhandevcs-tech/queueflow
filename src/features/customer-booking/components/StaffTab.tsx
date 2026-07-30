@@ -4,13 +4,16 @@ import { Armchair, Star } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Chair, Service } from "@/types";
+import { useT } from "@/lib/i18n";
 import { useChairCapabilities, useChairRatings, useShopChairs } from "../hooks/use-shop-detail";
+import { customerBookingDict } from "../lib/i18n";
 
 export function StaffTab({ shopId, services }: { shopId: string; services: Service[] | undefined }) {
   const { data: chairs, isPending } = useShopChairs(shopId);
   const allServiceIds = (services ?? []).map((s) => s.id);
   const { blockedByChairId } = useChairCapabilities(allServiceIds);
   const ratingByChairId = useChairRatings((chairs ?? []).map((c) => c.id));
+  const t = useT(customerBookingDict);
 
   if (isPending) {
     return (
@@ -24,8 +27,8 @@ export function StaffTab({ shopId, services }: { shopId: string; services: Servi
     return (
       <EmptyState
         icon={<Armchair className="h-6 w-6" />}
-        title="কোনো স্টাফ তথ্য নেই"
-        description="এই দোকান এখনো স্টাফ/চেয়ারের তথ্য যোগ করেনি।"
+        title={t("noStaffTitle")}
+        description={t("noStaffDesc")}
       />
     );
   }

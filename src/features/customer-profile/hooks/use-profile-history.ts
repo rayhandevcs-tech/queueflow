@@ -6,12 +6,14 @@ import { keys } from "@/lib/query/keys";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Serial } from "@/types";
+import { useLanguage } from "@/lib/i18n";
 import { getMyAllSerials, getMyRatingsBySerial, getShopsByIds } from "../api/profile-history.api";
 import { computeSpendingSummary } from "../lib/compute-spending";
 import { computeTrustSummary } from "../lib/trust-score";
 
 export function useProfileHistory() {
   const queryClient = useQueryClient();
+  const { language } = useLanguage();
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,8 +56,8 @@ export function useProfileHistory() {
 
   const spending = useMemo(() => {
     const done = (historyQuery.data ?? []).filter((s) => s.status === "DONE");
-    return computeSpendingSummary(done, new Date());
-  }, [historyQuery.data]);
+    return computeSpendingSummary(done, new Date(), language);
+  }, [historyQuery.data, language]);
 
   return {
     history: historyQuery.data ?? [],

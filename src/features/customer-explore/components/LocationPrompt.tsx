@@ -6,6 +6,8 @@ import { LocateFixed, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import type { LocationStatus } from "../hooks/use-user-location";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 const LocationPickerMap = dynamic(
   () => import("@/components/map/LocationPickerMap"),
@@ -32,6 +34,7 @@ export function LocationPrompt({
 }) {
   const [dismissed, setDismissed] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const t = useT(customerExploreDict);
 
   if (status === "granted" || dismissed) return null;
 
@@ -42,9 +45,7 @@ export function LocationPrompt({
           <MapPin className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-ink">
-            আশেপাশের দোকান দূরত্ব অনুযায়ী দেখতে লোকেশন দাও
-          </p>
+          <p className="text-sm font-semibold text-ink">{t("locationPromptText")}</p>
           {error && <p className="mt-0.5 text-xs text-live">{error}</p>}
         </div>
         <button
@@ -63,10 +64,10 @@ export function LocationPrompt({
           loading={status === "locating"}
         >
           <LocateFixed className="h-3.5 w-3.5" />
-          {status === "locating" ? "খোঁজা হচ্ছে…" : "লোকেশন দাও"}
+          {status === "locating" ? t("locating") : t("giveLocation")}
         </Button>
         <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
-          ম্যানুয়ালি বেছে নাও
+          {t("pickManually")}
         </Button>
       </div>
 
@@ -80,9 +81,7 @@ export function LocationPrompt({
             >
               <X className="h-4 w-4" />
             </button>
-            <p className="mb-3 font-display text-base font-bold text-ink">
-              ম্যাপে তোমার লোকেশন বেছে নাও
-            </p>
+            <p className="mb-3 font-display text-base font-bold text-ink">{t("pickLocationOnMap")}</p>
             <div className="overflow-hidden rounded-xl border border-line">
               <LocationPickerMap
                 lat={null}

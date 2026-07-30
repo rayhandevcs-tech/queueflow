@@ -1,3 +1,5 @@
+import { getStoredLanguage } from "@/lib/i18n";
+
 export type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export interface DayHours {
@@ -19,6 +21,21 @@ export const DAY_LABEL_BN: Record<DayKey, string> = {
   sat: "শনিবার",
   sun: "রবিবার",
 };
+
+const DAY_LABEL_EN: Record<DayKey, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
+
+/** Language-aware day name — reads the current language internally so callers don't need to. */
+export function dayLabel(day: DayKey): string {
+  return getStoredLanguage() === "en" ? DAY_LABEL_EN[day] : DAY_LABEL_BN[day];
+}
 
 export function emptyDayHours(): DayHours {
   return { open: "10:00", close: "20:00", closed: false };
@@ -50,7 +67,8 @@ export function parseWeeklyHours(value: unknown): WeeklyHours | null {
 }
 
 export function formatDayHours(hours: DayHours | undefined): string {
-  if (!hours || hours.closed) return "বন্ধ";
-  if (!hours.open || !hours.close) return "সেট করা হয়নি";
+  const en = getStoredLanguage() === "en";
+  if (!hours || hours.closed) return en ? "Closed" : "বন্ধ";
+  if (!hours.open || !hours.close) return en ? "Not set" : "সেট করা হয়নি";
   return `${hours.open} – ${hours.close}`;
 }

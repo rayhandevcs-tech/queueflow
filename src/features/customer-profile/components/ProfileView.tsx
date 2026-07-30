@@ -6,8 +6,10 @@ import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatMoney } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
 import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
+import { useT } from "@/lib/i18n";
 import { useProfileHistory } from "../hooks/use-profile-history";
 import { useMyFavoriteShops } from "../hooks/use-favorites";
+import { customerProfileDict } from "../lib/i18n";
 
 export function ProfileView({
   fullName,
@@ -20,6 +22,7 @@ export function ProfileView({
 }) {
   const { shopsById, trust, spending, isPending } = useProfileHistory();
   const { shops: favoriteShops } = useMyFavoriteShops();
+  const t = useT(customerProfileDict);
 
   if (isPending) {
     return (
@@ -38,41 +41,28 @@ export function ProfileView({
       icon: <Sparkles className="h-5.5 w-5.5 text-accent" />,
       bg: "var(--color-soft)",
       border: "var(--color-line)",
-      text: (
-        <>
-          <b>নতুন কাস্টমার।</b> সিরিয়াল দিয়ে সার্ভিস নিতে থাকলে তোমার ট্রাস্ট স্কোর তৈরি হবে।
-        </>
-      ),
+      text: t("newCustomerCallout"),
     };
   } else if (trust.score >= 4) {
     callout = {
       icon: <ShieldCheck className="h-5.5 w-5.5 text-good" />,
       bg: "var(--color-good-soft)",
       border: "color-mix(in srgb, var(--color-good) 25%, transparent)",
-      text: (
-        <>
-          <b>বিশ্বস্ত কাস্টমার।</b> তুমি সিরিয়াল দিয়ে সার্ভিস নাও — তাই দোকানদাররা তোমার সিরিয়াল
-          অগ্রাধিকার দেয়।
-        </>
-      ),
+      text: t("trustedCustomerCallout"),
     };
   } else {
     callout = {
       icon: <ShieldAlert className="h-5.5 w-5.5 text-live" />,
       bg: "var(--color-live-soft)",
       border: "color-mix(in srgb, var(--color-live) 25%, transparent)",
-      text: (
-        <>
-          <b>কিছু সিরিয়ালে অনুপস্থিত ছিলে।</b> নিয়মিত সিরিয়াল রাখলে ট্রাস্ট স্কোর আবার বাড়বে।
-        </>
-      ),
+      text: t("someAbsencesCallout"),
     };
   }
 
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold text-ink">আমার প্রোফাইল</h1>
+        <h1 className="font-display text-xl font-bold text-ink">{t("myProfileTitle")}</h1>
         <Link
           href="/account"
           className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-soft"
@@ -82,13 +72,13 @@ export function ProfileView({
       </div>
 
       <ProfileHeaderCard
-        name={fullName || "কাস্টমার"}
+        name={fullName || t("customerFallback")}
         subtitle={phone || "—"}
         avatarUrl={avatarUrl}
         right={
           <div className="rounded-[14px] bg-white px-3 py-2 text-center shadow-xs">
             <p className="font-number text-xl font-bold text-good">{trust.score ?? "—"}</p>
-            <p className="text-[10px] text-muted">ট্রাস্ট স্কোর</p>
+            <p className="text-[10px] text-muted">{t("trustScoreLabel")}</p>
           </div>
         }
       />
@@ -104,56 +94,56 @@ export function ProfileView({
       <div className="mt-3.25 flex gap-2.25">
         <div className="flex-1 rounded-[14px] border border-line bg-soft p-3.25 text-center">
           <p className="font-number text-xl font-bold text-ink">{trust.visitCount}</p>
-          <p className="text-[11px] text-muted">মোট ভিজিট</p>
+          <p className="text-[11px] text-muted">{t("totalVisits")}</p>
         </div>
         <div className="flex-1 rounded-[14px] border border-line bg-soft p-3.25 text-center">
           <p className="font-number text-xl font-bold text-ink">{trust.noShowCount}</p>
-          <p className="text-[11px] text-muted">নো-শো</p>
+          <p className="text-[11px] text-muted">{t("noShows")}</p>
         </div>
         <div className="flex-1 rounded-[14px] border border-line bg-soft p-3.25 text-center">
           <p className="font-number text-xl font-bold text-ink">{trust.regularShopCount}</p>
-          <p className="text-[11px] text-muted">নিয়মিত দোকান</p>
+          <p className="text-[11px] text-muted">{t("regularShops")}</p>
         </div>
       </div>
 
       <div className="mt-5 mb-2.75 flex items-center justify-between">
-        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">খরচের হিসাব</p>
+        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">{t("spendingHeading")}</p>
         <Link
           href="/transactions"
           className="flex items-center gap-0.5 text-[12px] font-semibold text-accent"
         >
-          সব লেনদেন দেখো
+          {t("seeAllTransactions")}
           <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
       <div className="flex gap-2.25">
         <div className="flex-1 rounded-[18px] bg-accent p-4 text-accent-ink">
-          <p className="text-xs opacity-60">এই মাসে খরচ</p>
+          <p className="text-xs opacity-60">{t("spentThisMonth")}</p>
           <p className="mt-1 font-number text-2xl font-bold">
             ৳{formatMoney(spending.month.amount)}
           </p>
           <p className="mt-1 text-[11px] opacity-50">
             {spending.month.changePct === null
-              ? "গত মাসে কোনো খরচ ছিল না"
+              ? t("noSpendLastMonth")
               : spending.month.changePct >= 0
-                ? `▲ গত মাসের চেয়ে ${spending.month.changePct}%`
-                : `▼ গত মাসের চেয়ে ${Math.abs(spending.month.changePct)}%`}
+                ? t("moreThanLastMonth", spending.month.changePct)
+                : t("lessThanLastMonth", Math.abs(spending.month.changePct))}
           </p>
         </div>
         <div className="flex-1 rounded-[18px] border border-line bg-card p-4">
-          <p className="text-xs text-muted">সর্বমোট খরচ</p>
+          <p className="text-xs text-muted">{t("totalSpend")}</p>
           <p className="mt-1 font-number text-2xl font-bold text-ink">
             ৳{formatMoney(spending.total.amount)}
           </p>
-          <p className="mt-1 text-[11px] text-muted">{trust.visitCount} টি ভিজিট</p>
+          <p className="mt-1 text-[11px] text-muted">{t("visitsCountSuffix", trust.visitCount)}</p>
         </div>
       </div>
 
       <div className="mt-2.25 rounded-[18px] border border-line bg-card p-4">
         <div className="mb-3.5 flex items-center justify-between">
-          <p className="text-[13px] font-semibold text-ink">গত ১২ মাসের খরচ</p>
-          <p className="text-[11px] text-muted">৳ হাজারে</p>
+          <p className="text-[13px] font-semibold text-ink">{t("last12MonthsSpend")}</p>
+          <p className="text-[11px] text-muted">{t("inThousands")}</p>
         </div>
         <div className="flex h-32 items-end gap-1.75">
           {spending.monthlyTrend.map((m, i) => (
@@ -178,7 +168,7 @@ export function ProfileView({
 
       {spending.byShop.length > 0 && (
         <div className="mt-2.25 rounded-[18px] border border-line bg-card p-4">
-          <p className="mb-3 text-[13px] font-semibold text-ink">দোকান অনুযায়ী খরচ</p>
+          <p className="mb-3 text-[13px] font-semibold text-ink">{t("spendByShop")}</p>
           <div className="flex flex-col gap-2.75">
             {spending.byShop.map((s) => {
               const shop = shopsById[s.shopId];
@@ -192,7 +182,7 @@ export function ProfileView({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between text-[13px] text-ink">
-                      <span className="truncate">{shop?.name ?? "দোকান"}</span>
+                      <span className="truncate">{shop?.name ?? t("shopFallback")}</span>
                       <b className="font-number shrink-0">৳{formatMoney(s.amount)}</b>
                     </div>
                     <div className="mt-1 flex items-center justify-between">
@@ -202,7 +192,7 @@ export function ProfileView({
                           style={{ width: `${Math.max(2, (s.amount / maxShopSpend) * 100)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-muted">{s.visitCount} বার</span>
+                      <span className="text-[10px] text-muted">{t("visitsSuffixShort", s.visitCount)}</span>
                     </div>
                   </div>
                 </div>
@@ -213,13 +203,13 @@ export function ProfileView({
       )}
 
       <div className="mt-5 mb-2.75 flex items-center justify-between">
-        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">প্রিয় দোকান</p>
+        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">{t("favoriteShopsHeading")}</p>
         {favoriteShops.length > 0 && (
           <Link
             href="/my-serial"
             className="flex items-center gap-0.5 text-[12px] font-semibold text-accent"
           >
-            সব বুকিং দেখো
+            {t("seeAllBookings")}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         )}
@@ -228,7 +218,7 @@ export function ProfileView({
       {favoriteShops.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-muted">
           <Heart className="mx-auto mb-2 h-5 w-5 text-muted" />
-          এখনো কোনো দোকান প্রিয় তালিকায় নেই — শপ ডিটেইলে ♥ বাটনে ট্যাপ করো।
+          {t("noFavoritesYet")}
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">

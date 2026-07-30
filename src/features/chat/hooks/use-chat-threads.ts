@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { Message } from "@/types";
+import { translate } from "@/lib/i18n";
+import { chatDict } from "../lib/i18n";
 import {
   getCustomerNamesForShop,
   getMyThreadMessages,
@@ -63,7 +65,7 @@ export function useMyChatThreads() {
       if (!existing) {
         byShop.set(m.shop_id, {
           key: m.shop_id,
-          name: shop?.name ?? "দোকান",
+          name: shop?.name ?? translate(chatDict, "shopFallback"),
           avatarUrl: shop?.logo_url ?? null,
           lastMessage: m,
           unread,
@@ -98,7 +100,7 @@ export function useShopChatThreads(shopId: string | undefined) {
     if (!messagesQuery.data) return [];
     const byCustomer = new Map<string, ChatThreadSummary>();
     for (const m of messagesQuery.data) {
-      const name = namesQuery.data?.[m.customer_id] ?? "কাস্টমার";
+      const name = namesQuery.data?.[m.customer_id] ?? translate(chatDict, "customerFallback");
       const existing = byCustomer.get(m.customer_id);
       const unread = m.sender_id === m.customer_id && !m.is_read;
       if (!existing) {

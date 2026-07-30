@@ -6,6 +6,8 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import Link from "next/link";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
@@ -47,6 +49,9 @@ export default function ShopMapInner({
   waitMin: Record<string, number>;
   userLocation?: { lat: number; lng: number } | null;
 }) {
+  const t = useT(customerExploreDict);
+  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
+
   const avgLat = shops.reduce((a, s) => a + s.latitude, 0) / shops.length;
   const avgLng = shops.reduce((a, s) => a + s.longitude, 0) / shops.length;
   const center: [number, number] = userLocation
@@ -80,17 +85,15 @@ export default function ShopMapInner({
               <div className="min-w-[160px] space-y-1">
                 <p className="text-sm font-semibold text-ink">{shop.name}</p>
                 <p className="text-xs text-muted">
-                  {BUSINESS_TYPE_LABEL[shop.business_type]}
+                  {businessTypeT(shop.business_type)}
                   {shop.address ? ` · ${shop.address}` : ""}
                 </p>
-                <p className="text-xs font-medium text-ink">
-                  {count === 0 ? "কোনো সিরিয়াল নেই" : `চলছে ${count} সিরিয়াল · ~${wait} মিন ওয়েট`}
-                </p>
+                <p className="text-xs font-medium text-ink">{t("queueStatus", count, wait)}</p>
                 <Link
                   href={`/explore/${shop.id}`}
                   className="mt-1 inline-block text-xs font-semibold text-accent underline"
                 >
-                  দোকান দেখো
+                  {t("viewShop")}
                 </Link>
               </div>
             </Popup>

@@ -4,11 +4,14 @@ import { useState } from "react";
 import { Images, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useShopGallery } from "../hooks/use-shop-detail";
+import { customerBookingDict } from "../lib/i18n";
 
 export function GalleryTab({ shopId }: { shopId: string }) {
   const { data: images, isPending } = useShopGallery(shopId);
   const [preview, setPreview] = useState<string | null>(null);
+  const t = useT(customerBookingDict);
 
   if (isPending) {
     return (
@@ -22,8 +25,8 @@ export function GalleryTab({ shopId }: { shopId: string }) {
     return (
       <EmptyState
         icon={<Images className="h-6 w-6" />}
-        title="কোনো ছবি নেই"
-        description="এই দোকান এখনো গ্যালারিতে কোনো ছবি যোগ করেনি।"
+        title={t("noPhotosTitle")}
+        description={t("noPhotosDesc")}
       />
     );
   }

@@ -6,16 +6,25 @@ import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { MessageCircle } from "lucide-react";
+import { getStoredLanguage, translate, useT } from "@/lib/i18n";
 import type { ChatThreadSummary } from "../hooks/use-chat-threads";
+import { chatDict } from "../lib/i18n";
 
 function previewText(thread: ChatThreadSummary): string {
-  if (thread.lastMessage.image_url) return "📷 ছবি";
+  if (thread.lastMessage.image_url) return translate(chatDict, "photoPreview");
   return thread.lastMessage.content ?? "";
 }
 
 function timeLabel(iso: string): string {
   const d = new Date(iso);
   const today = new Date();
+  const lang = getStoredLanguage();
+  if (lang === "en") {
+    if (d.toDateString() === today.toDateString()) {
+      return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    }
+    return d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+  }
   if (d.toDateString() === today.toDateString()) {
     const hh = toBanglaDigits(d.getHours()).padStart(2, "০");
     const mm = toBanglaDigits(d.getMinutes()).padStart(2, "০");
@@ -35,6 +44,8 @@ export function ChatThreadList({
   hrefFor: (key: string) => string;
   title: string;
 }) {
+  const t = useT(chatDict);
+
   if (isPending) {
     return (
       <div className="grid min-h-[40vh] place-items-center">
@@ -50,8 +61,8 @@ export function ChatThreadList({
       {threads.length === 0 ? (
         <EmptyState
           icon={<MessageCircle className="h-6 w-6" />}
-          title="কোনো কথোপকথন নেই"
-          description="মেসেজ শুরু হলে এখানে দেখাবে।"
+          title={t("noConversationsTitle")}
+          description={t("noConversationsDesc")}
         />
       ) : (
         <div className="flex flex-col gap-1">

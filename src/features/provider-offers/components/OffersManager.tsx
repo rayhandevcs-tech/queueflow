@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatBanglaDate } from "@/lib/format-wait";
+import { useT } from "@/lib/i18n";
 import { useOfferMutations, useOffers } from "../hooks/use-offers";
+import { providerOffersDict } from "../lib/i18n";
 import { OfferForm } from "./OfferForm";
 
 export function OffersManager({ shopId }: { shopId: string }) {
@@ -14,6 +16,7 @@ export function OffersManager({ shopId }: { shopId: string }) {
   const { create, toggleActive } = useOfferMutations(shopId);
   const [creating, setCreating] = useState(false);
   const [now] = useState(() => Date.now());
+  const t = useT(providerOffersDict);
 
   if (isPending) {
     return (
@@ -27,10 +30,8 @@ export function OffersManager({ shopId }: { shopId: string }) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-[27px] font-bold text-ink">অফার</h1>
-          <p className="mt-0.5 text-[13px] text-muted">
-            অফার তৈরি করলে নিয়মিত কাস্টমারদের নোটিফিকেশন যাবে
-          </p>
+          <h1 className="font-display text-[27px] font-bold text-ink">{t("offersTitle")}</h1>
+          <p className="mt-0.5 text-[13px] text-muted">{t("offersSubtitle")}</p>
         </div>
         {!creating && (
           <button
@@ -39,7 +40,7 @@ export function OffersManager({ shopId }: { shopId: string }) {
             className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink"
           >
             <Plus className="h-4 w-4" />
-            নতুন অফার
+            {t("newOfferCta")}
           </button>
         )}
       </div>
@@ -55,8 +56,8 @@ export function OffersManager({ shopId }: { shopId: string }) {
       {offers?.length === 0 ? (
         <EmptyState
           icon={<Percent className="h-6 w-6" />}
-          title="এখনো কোনো অফার তৈরি হয়নি"
-          description="প্রথম অফার তৈরি করো, নিয়মিত কাস্টমারদের কাছে পৌঁছে যাবে।"
+          title={t("noOffersTitle")}
+          description={t("noOffersDesc")}
         />
       ) : (
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
@@ -80,8 +81,8 @@ export function OffersManager({ shopId }: { shopId: string }) {
                     {o.title}
                   </p>
                   <p className="text-xs text-muted">
-                    {o.discount_pct}% ছাড় · মেয়াদ {formatBanglaDate(new Date(o.valid_until))}
-                    {expired && " (শেষ)"}
+                    {t("discountOffValidUntil", o.discount_pct, formatBanglaDate(new Date(o.valid_until)))}
+                    {expired && t("expiredSuffix")}
                   </p>
                 </div>
                 <span
@@ -97,7 +98,7 @@ export function OffersManager({ shopId }: { shopId: string }) {
                   className="shrink-0 text-[11px] font-semibold"
                   style={{ color: o.active ? "var(--color-good)" : "var(--color-muted)" }}
                 >
-                  ● {o.active ? "চালু" : "বন্ধ"}
+                  ● {o.active ? t("offerActiveWord") : t("offerInactiveWord")}
                 </span>
               </div>
             );

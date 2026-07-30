@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { uploadShopImage, type UploadKind } from "../api/storage.api";
+import { providerCatalogDict } from "../lib/i18n";
 
 interface Props {
   shopId: string;
@@ -28,6 +30,7 @@ export function ImageUploadField({
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT(providerCatalogDict);
 
   const src = preview ?? currentUrl;
 
@@ -40,7 +43,7 @@ export function ImageUploadField({
       const url = await uploadShopImage(shopId, kind, file);
       onUploaded(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "আপলোড ব্যর্থ হয়েছে");
+      setError(e instanceof Error ? e.message : t("uploadFailedGeneric"));
       setPreview(null);
     } finally {
       setUploading(false);
@@ -65,7 +68,7 @@ export function ImageUploadField({
         ) : (
           <span className="flex flex-col items-center gap-1 text-xs">
             <ImagePlus className="h-5 w-5" />
-            ছবি বাছো
+            {t("pickImage")}
           </span>
         )}
         {uploading && (

@@ -1,4 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { translate } from "@/lib/i18n";
+import { customerProfileDict } from "../lib/i18n";
 
 const BUCKET = "review-media";
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -10,10 +12,10 @@ const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
  */
 export async function uploadReviewImage(userId: string, file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("শুধু ছবি আপলোড করা যাবে");
+    throw new Error(translate(customerProfileDict, "onlyImagesAllowed"));
   }
   if (file.size > MAX_BYTES) {
-    throw new Error("ছবি ২ এমবি-র নিচে হতে হবে");
+    throw new Error(translate(customerProfileDict, "imageTooLarge"));
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -24,7 +26,7 @@ export async function uploadReviewImage(userId: string, file: File): Promise<str
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false });
 
-  if (error) throw new Error("আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো");
+  if (error) throw new Error(translate(customerProfileDict, "uploadFailedRetry"));
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;

@@ -5,8 +5,10 @@ import { BadgeCheck, ImageIcon, Star } from "lucide-react";
 import { formatBanglaDate } from "@/lib/format-wait";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useShopChairs } from "../hooks/use-shop-detail";
 import { useShopReviewsPublic } from "../hooks/use-shop-reviews-public";
+import { customerBookingDict } from "../lib/i18n";
 
 function Stars({ count }: { count: number }) {
   return (
@@ -23,6 +25,7 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
   const { reviews, summary, isPending } = useShopReviewsPublic(shopId);
   const { data: chairs } = useShopChairs(shopId);
   const [filter, setFilter] = useState<Filter>("latest");
+  const t = useT(customerBookingDict);
 
   const staffNameByChairId = useMemo(() => {
     const map = new Map<string, string>();
@@ -47,8 +50,8 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
     return (
       <EmptyState
         icon={<Star className="h-6 w-6" />}
-        title="এখনো কোনো রিভিউ আসেনি"
-        description="কাস্টমাররা সিরিয়াল শেষে রিভিউ দিলে এখানে দেখাবে।"
+        title={t("noReviewsTitle")}
+        description={t("noReviewsDesc")}
       />
     );
   }
@@ -59,7 +62,7 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
         <div className="shrink-0 rounded-[20px] bg-accent px-7.5 py-6 text-center text-accent-ink sm:w-44">
           <p className="font-number text-5xl font-bold">{summary.average}</p>
           <p className="mt-1 text-lg">★★★★★</p>
-          <p className="mt-1.5 text-xs opacity-50">{summary.count} রিভিউ</p>
+          <p className="mt-1.5 text-xs opacity-50">{t("reviewCountSuffix", summary.count)}</p>
         </div>
         <div className="flex flex-1 flex-col justify-center gap-2 rounded-[20px] border border-line bg-card p-5">
           {summary.distribution.map((d) => (
@@ -80,8 +83,8 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
       <div className="flex gap-2">
         {(
           [
-            ["latest", "সর্বশেষ"],
-            ["with-images", "ছবিসহ"],
+            ["latest", t("latestFilter")],
+            ["with-images", t("withImagesFilter")],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -100,8 +103,8 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
       {visibleReviews.length === 0 ? (
         <EmptyState
           icon={<ImageIcon className="h-6 w-6" />}
-          title="ছবিসহ কোনো রিভিউ নেই"
-          description="এখনো কেউ ছবি সহ রিভিউ দেয়নি।"
+          title={t("noImageReviewsTitle")}
+          description={t("noImageReviewsDesc")}
         />
       ) : (
         <div className="flex flex-col gap-3">
@@ -113,13 +116,13 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <p className="truncate text-sm font-semibold text-ink">কাস্টমার</p>
+                    <p className="truncate text-sm font-semibold text-ink">{t("customerFallback")}</p>
                     <span
-                      title="সার্ভিস নেওয়া কাস্টমারের যাচাইকৃত রিভিউ"
+                      title={t("verifiedTitle")}
                       className="flex items-center gap-0.5 text-[10px] font-medium text-good"
                     >
                       <BadgeCheck className="h-3 w-3" />
-                      যাচাইকৃত
+                      {t("verifiedBadge")}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted">

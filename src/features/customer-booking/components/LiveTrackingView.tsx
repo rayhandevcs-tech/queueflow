@@ -12,6 +12,8 @@ import { useShopDetail } from "../hooks/use-shop-detail";
 import { useCancelMySerial } from "../hooks/use-booking-mutations";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtMMSS, fmtWait } from "@/lib/format-wait";
+import { useT } from "@/lib/i18n";
+import { customerBookingDict } from "../lib/i18n";
 
 export function LiveTrackingView() {
   const { data: serial, isPending } = useMyActiveSerial();
@@ -19,6 +21,7 @@ export function LiveTrackingView() {
   const shopQuery = useShopDetail(serial?.shop_id ?? "");
   const queuePublic = useShopQueuePublic(serial?.shop_id);
   const nowMs = useNowMs(1000);
+  const t = useT(customerBookingDict);
 
   if (isPending) {
     return (
@@ -34,9 +37,9 @@ export function LiveTrackingView() {
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-soft text-muted">
           <Ticket className="h-7 w-7" />
         </div>
-        <p className="text-sm text-ink">তোমার এখন কোনো সক্রিয় সিরিয়াল নেই।</p>
+        <p className="text-sm text-ink">{t("noActiveSerial")}</p>
         <Link href="/explore">
-          <Button size="lg">দোকান খুঁজো</Button>
+          <Button size="lg">{t("findShop")}</Button>
         </Link>
       </div>
     );
@@ -96,7 +99,7 @@ export function LiveTrackingView() {
           <p className="font-display text-lg leading-none font-bold text-ink">
             {shop?.name ?? "…"}
           </p>
-          <p className="mt-1 text-xs text-muted">তোমার লাইভ সিরিয়াল</p>
+          <p className="mt-1 text-xs text-muted">{t("yourLiveSerial")}</p>
         </div>
         <span className="ml-auto flex items-center gap-1.5 text-[11px] font-semibold text-live">
           <LiveDot />
@@ -109,7 +112,7 @@ export function LiveTrackingView() {
         <div className="pointer-events-none absolute -right-10 -bottom-20 h-64 w-64 rounded-full bg-brass/15 blur-3xl" />
 
         <p className="relative text-xs tracking-wide text-accent-ink/55">
-          {myInProgress ? "তোমার সার্ভিস চলছে" : "তোমার সিরিয়াল আসতে বাকি"}
+          {myInProgress ? t("yourServiceRunning") : t("yourSerialComingUp")}
         </p>
 
         <div className="relative mx-auto mt-3.5 mb-1.5">
@@ -129,7 +132,7 @@ export function LiveTrackingView() {
         </div>
 
         <div className="relative inline-flex items-center gap-3 rounded-full bg-accent-ink/10 px-4 py-2 text-sm text-accent-ink">
-          <span className="opacity-60">তোমার সিরিয়াল</span>
+          <span className="opacity-60">{t("yourSerialLabel")}</span>
           <span className="font-display text-xl font-extrabold text-accent-ink">
             #{serial.position}
           </span>
@@ -137,7 +140,7 @@ export function LiveTrackingView() {
       </div>
 
       <p className="mt-5.5 mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
-        তোমার আগে যারা ({aheadRows.length} জন)
+        {t("aheadOfYou", aheadRows.length)}
       </p>
 
       <div className="flex flex-col gap-2">
@@ -170,10 +173,10 @@ export function LiveTrackingView() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-semibold text-ink">
-                  {row.is_walk_in ? "ওয়াক-ইন কাস্টমার" : "অনলাইন বুকিং"}
+                  {row.is_walk_in ? t("walkInCustomer") : t("onlineBooking")}
                 </p>
                 <p className="text-[11px] text-muted">
-                  ~{row.estimated_duration_min} মিনিটের সার্ভিস
+                  {t("serviceMinutes", row.estimated_duration_min)}
                 </p>
               </div>
               <div className="text-right">
@@ -183,7 +186,7 @@ export function LiveTrackingView() {
                 >
                   {time}
                 </p>
-                <p className="text-[10px] text-muted">{live ? "চলছে" : "শুরু হবে"}</p>
+                <p className="text-[10px] text-muted">{live ? t("running") : t("willStart")}</p>
               </div>
             </div>
           );
@@ -193,16 +196,16 @@ export function LiveTrackingView() {
           <div className="grid h-7.5 w-7.5 shrink-0 place-items-center rounded-[10px] bg-white/20 font-number text-sm font-bold">
             {serial.position}
           </div>
-          <div className="flex-1 text-sm font-bold">তুমি (You)</div>
+          <div className="flex-1 text-sm font-bold">{t("you")}</div>
           <div className="font-number text-[13px] font-semibold">
-            {myInProgress ? "চলছে" : centerWait.label}
+            {myInProgress ? t("running") : centerWait.label}
           </div>
         </div>
       </div>
 
       {services.length > 0 && (
         <div className="mt-4.5 rounded-2xl border border-line bg-card p-4">
-          <p className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">সার্ভিস</p>
+          <p className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">{t("servicesLabel")}</p>
           <ul className="space-y-1.5 text-sm text-ink">
             {services.map((s) => (
               <li key={s.service_id} className="flex justify-between">
@@ -212,7 +215,7 @@ export function LiveTrackingView() {
             ))}
           </ul>
           <div className="mt-2 flex justify-between border-t border-line pt-2 text-sm font-bold text-ink">
-            <span>মোট</span>
+            <span>{t("totalLabel")}</span>
             <span className="font-number">৳{serial.total_amount}</span>
           </div>
         </div>
@@ -223,7 +226,7 @@ export function LiveTrackingView() {
         className="mt-5 block w-full rounded-[14px] border p-3.25 text-center text-sm font-semibold text-ink"
         style={{ borderWidth: 1.5, borderColor: "var(--color-line)", background: "var(--color-card)" }}
       >
-        কাজ শেষ? রিভিউ দাও ★
+        {t("doneReviewCta")}
       </Link>
 
       {serial.status === "WAITING" && (
@@ -235,10 +238,10 @@ export function LiveTrackingView() {
         >
           {cancel.isPending ? (
             <span className="inline-flex items-center gap-1.5">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> ক্যানসেল হচ্ছে…
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("cancelling")}
             </span>
           ) : (
-            "সিরিয়াল ক্যানসেল করো"
+            t("cancelSerial")
           )}
         </button>
       )}

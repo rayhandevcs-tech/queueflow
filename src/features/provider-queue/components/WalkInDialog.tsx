@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import type { Service } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { useLanguage, useT } from "@/lib/i18n";
 import {
   walkInSchema,
   type WalkInFormValues,
@@ -19,6 +20,7 @@ import {
 } from "../schemas/walk-in.schema";
 import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
+import { providerQueueDict } from "../lib/i18n";
 
 async function getActiveServices(shopId: string): Promise<Service[]> {
   const supabase = getBrowserClient();
@@ -41,14 +43,17 @@ interface Props {
 
 export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
+  const { language } = useLanguage();
+  const t = useT(providerQueueDict);
 
   const { data: services } = useQuery({
     queryKey: keys.services.byShop(shopId),
     queryFn: () => getActiveServices(shopId),
   });
 
+  const schema = useMemo(() => walkInSchema(language), [language]);
   const form = useForm<WalkInFormValues, unknown, WalkInFormOutput>({
-    resolver: zodResolver(walkInSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       customerName: "",
       customerPhone: "",
@@ -63,7 +68,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
       onSuccess: onClose,
       onError: (err) => {
         if (err instanceof UiDbError && err.silent) return;
-        setError(err instanceof Error ? err.message : "Something went wrong");
+        setError(err instanceof Error ? err.message : t("somethingWrong"));
       },
     });
   });
@@ -78,7 +83,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display text-lg font-bold">
             <UserPlus className="h-5 w-5 text-accent" />
-            ওয়াক-ইন কাস্টমার
+            {t("walkInCustomerTitle")}
           </h2>
           <button
             onClick={onClose}
@@ -92,7 +97,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
           <Field error={err.customerName?.message}>
             <Input
               {...form.register("customerName")}
-              placeholder="কাস্টমারের নাম *"
+              placeholder={t("customerNamePlaceholder")}
               invalid={!!err.customerName}
               autoFocus
             />
@@ -101,7 +106,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
           <Field error={err.customerPhone?.message}>
             <Input
               {...form.register("customerPhone")}
-              placeholder="ফোন (ঐচ্ছিক)"
+              placeholder={t("phoneOptionalPlaceholder")}
               inputMode="tel"
               invalid={!!err.customerPhone}
             />
@@ -112,9 +117,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
             name="serviceIds"
             render={({ field }) => (
               <div>
-                <p className="mb-1.5 text-xs font-medium text-muted">
-                  সার্ভিস *
-                </p>
+                <p className="mb-1.5 text-xs font-medium text-muted">{t("servicesLabel")}</p>
                 <div className="flex flex-wrap gap-2">
                   {services?.map((s) => {
                     const on = field.value.includes(s.id);
@@ -151,7 +154,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
           />
 
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">চেয়ার</p>
+            <p className="mb-1.5 text-xs font-medium text-muted">{t("chairLabel")}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -164,7 +167,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                 )}
               >
                 <Zap className="h-3.5 w-3.5" />
-                অটো
+                {t("autoChair")}
               </button>
               {activeLanes.map((lane) => (
                 <button
@@ -178,8 +181,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                       : "border-line bg-card text-muted hover:border-accent/40",
                   )}
                 >
-                  {lane.chair.staff_name || lane.chair.label} · ~
-                  {lane.backlogMin} মিন
+                  {lane.chair.staff_name || lane.chair.label} · {t("backlogSuffixMin", lane.backlogMin)}
                 </button>
               ))}
             </div>
@@ -193,7 +195,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
             loading={actions.walkIn.isPending}
             className="w-full"
           >
-            {actions.walkIn.isPending ? "যোগ হচ্ছে…" : "কিউতে যোগ করো"}
+            {actions.walkIn.isPending ? t("adding") : t("addToQueue")}
           </Button>
         </form>
       </div>

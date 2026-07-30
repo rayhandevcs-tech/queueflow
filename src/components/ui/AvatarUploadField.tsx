@@ -4,6 +4,13 @@ import { useRef, useState } from "react";
 import { ImagePlus } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { uploadUserAvatar } from "@/lib/avatar-storage";
+import { useT, type Dict } from "@/lib/i18n";
+
+const dict = {
+  uploadFailed: { bn: "আপলোড ব্যর্থ হয়েছে", en: "Upload failed" },
+  profilePhoto: { bn: "প্রোফাইল ছবি", en: "Profile photo" },
+  chooseImage: { bn: "ছবি বেছে নাও", en: "Choose an image" },
+} satisfies Dict;
 
 interface Props {
   userId: string;
@@ -16,6 +23,7 @@ export function AvatarUploadField({ userId, currentUrl, onUploaded }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useT(dict);
 
   const src = preview ?? currentUrl;
 
@@ -28,7 +36,7 @@ export function AvatarUploadField({ userId, currentUrl, onUploaded }: Props) {
       const url = await uploadUserAvatar(userId, file);
       onUploaded(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "আপলোড ব্যর্থ হয়েছে");
+      setError(e instanceof Error ? e.message : t("uploadFailed"));
       setPreview(null);
     } finally {
       setUploading(false);
@@ -37,7 +45,7 @@ export function AvatarUploadField({ userId, currentUrl, onUploaded }: Props) {
 
   return (
     <div className="space-y-1.5">
-      <span className="block text-sm font-medium text-ink">প্রোফাইল ছবি</span>
+      <span className="block text-sm font-medium text-ink">{t("profilePhoto")}</span>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -46,11 +54,11 @@ export function AvatarUploadField({ userId, currentUrl, onUploaded }: Props) {
       >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="প্রোফাইল ছবি" className="h-full w-full object-cover" />
+          <img src={src} alt={t("profilePhoto")} className="h-full w-full object-cover" />
         ) : (
           <span className="flex flex-col items-center gap-1 text-xs">
             <ImagePlus className="h-5 w-5" />
-            ছবি বেছে নাও
+            {t("chooseImage")}
           </span>
         )}
         {uploading && (

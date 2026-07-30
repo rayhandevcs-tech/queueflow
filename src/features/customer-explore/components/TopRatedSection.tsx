@@ -5,6 +5,8 @@ import { Star } from "lucide-react";
 import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 export function TopRatedSection({
   shops,
@@ -13,6 +15,9 @@ export function TopRatedSection({
   shops: Shop[] | undefined;
   ratingByShopId: Map<string, { avg_rating: number; review_count: number }>;
 }) {
+  const t = useT(customerExploreDict);
+  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
+
   const topRated = (shops ?? [])
     .map((shop) => ({ shop, rating: ratingByShopId.get(shop.id) }))
     .filter((r): r is { shop: Shop; rating: { avg_rating: number; review_count: number } } => !!r.rating)
@@ -24,7 +29,7 @@ export function TopRatedSection({
   return (
     <div className="mb-5">
       <p className="mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
-        টপ-রেটেড দোকান
+        {t("topRatedHeading")}
       </p>
       <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {topRated.map(({ shop, rating }) => (
@@ -46,7 +51,7 @@ export function TopRatedSection({
             </div>
             <div className="min-w-0">
               <p className="truncate text-[13px] font-bold text-ink">{shop.name}</p>
-              <p className="truncate text-[11px] text-muted">{BUSINESS_TYPE_LABEL[shop.business_type]}</p>
+              <p className="truncate text-[11px] text-muted">{businessTypeT(shop.business_type)}</p>
             </div>
             <div className="flex items-center gap-1 text-[11px] font-semibold text-ink">
               <Star className="h-3.5 w-3.5 fill-live text-live" />

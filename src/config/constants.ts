@@ -39,17 +39,17 @@ export type SelectableBusinessType =
 
 export const BUSINESS_TYPES: ReadonlyArray<{
   value: SelectableBusinessType;
-  label: string;
+  label: { bn: string; en: string };
 }> = [
-  { value: "SALON", label: "সেলুন" },
-  { value: "PARLOUR", label: "পার্লার" },
+  { value: "SALON", label: { bn: "সেলুন", en: "Salon" } },
+  { value: "PARLOUR", label: { bn: "পার্লার", en: "Parlour" } },
 ];
 
 /** Display fallback covers every DB value, so no row can ever render blank. */
-export const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
-  SALON: "সেলুন",
-  PARLOUR: "পার্লার",
-  UNISEX: "ইউনিসেক্স",
+export const BUSINESS_TYPE_LABEL: Record<BusinessType, { bn: string; en: string }> = {
+  SALON: { bn: "সেলুন", en: "Salon" },
+  PARLOUR: { bn: "পার্লার", en: "Parlour" },
+  UNISEX: { bn: "ইউনিসেক্স", en: "Unisex" },
 };
 
 export const SERVICE_CATEGORIES = [
@@ -64,14 +64,19 @@ export const SERVICE_CATEGORIES = [
 
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
 
-export const SERVICE_CATEGORY_LABEL: Record<ServiceCategory, string> = {
-  HAIRCUT: "চুল কাটা",
-  SHAVE: "শেভ",
-  COLOR: "কালার",
-  FACIAL: "ফেসিয়াল",
-  SPA: "স্পা",
-  BRIDAL: "ব্রাইডাল",
-  OTHER: "অন্যান্য",
+export const SERVICE_CATEGORY_LABEL: Record<ServiceCategory, { bn: string; en: string }> = {
+  HAIRCUT: { bn: "চুল কাটা", en: "Haircut" },
+  SHAVE: { bn: "শেভ", en: "Shave" },
+  COLOR: { bn: "কালার", en: "Color" },
+  FACIAL: { bn: "ফেসিয়াল", en: "Facial" },
+  SPA: { bn: "স্পা", en: "Spa" },
+  BRIDAL: { bn: "ব্রাইডাল", en: "Bridal" },
+  OTHER: { bn: "অন্যান্য", en: "Other" },
+};
+
+export const ROLE_LABEL: Record<UserRole, { bn: string; en: string }> = {
+  customer: { bn: "কাস্টমার", en: "Customer" },
+  provider: { bn: "দোকানদার", en: "Provider" },
 };
 
 export const CHAIR_COLORS = [

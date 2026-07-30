@@ -27,6 +27,8 @@ import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useShopUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { useDueCount } from "@/features/provider-due-ledger/hooks/use-due-ledger";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/lib/i18n";
+import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 interface NavItem {
   href: string;
@@ -35,22 +37,6 @@ interface NavItem {
   live?: boolean;
   soon?: boolean;
 }
-
-const NAV: NavItem[] = [
-  { href: "/dashboard", label: "লাইভ সিরিয়াল", icon: Radio, live: true },
-  { href: "/chairs", label: "চেয়ার", icon: Armchair },
-  { href: "/services", label: "সার্ভিস ও রেট", icon: Scissors },
-  { href: "/offers", label: "অফার", icon: Percent },
-  { href: "/chat", label: "চ্যাট", icon: MessageCircle },
-  { href: "/income", label: "ইনকাম", icon: Wallet },
-  { href: "/due-ledger", label: "বাকির খাতা", icon: Receipt },
-  { href: "/analytics", label: "অ্যানালিটিক্স", icon: BarChart3 },
-  { href: "/regulars", label: "নিয়মিত কাস্টমার", icon: Users },
-  { href: "/notifications/send", label: "নোটিফিকেশন পাঠান", icon: Megaphone },
-  { href: "/reviews", label: "রিভিউ", icon: Star },
-  { href: "/payment-methods", label: "পেমেন্ট মেথড", icon: CreditCard },
-  { href: "/settings", label: "সেটিংস", icon: SettingsIcon },
-];
 
 export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -62,6 +48,23 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const dueCount = useDueCount(shop?.id);
   const today = useTodaySummary(shop?.id);
   const logout = useLogout();
+  const t = useT(providerCatalogDict);
+
+  const NAV: NavItem[] = [
+    { href: "/dashboard", label: t("navLiveQueue"), icon: Radio, live: true },
+    { href: "/chairs", label: t("navChairs"), icon: Armchair },
+    { href: "/services", label: t("navServices"), icon: Scissors },
+    { href: "/offers", label: t("navOffers"), icon: Percent },
+    { href: "/chat", label: t("navChat"), icon: MessageCircle },
+    { href: "/income", label: t("navIncome"), icon: Wallet },
+    { href: "/due-ledger", label: t("navDueLedger"), icon: Receipt },
+    { href: "/analytics", label: t("navAnalytics"), icon: BarChart3 },
+    { href: "/regulars", label: t("navRegulars"), icon: Users },
+    { href: "/notifications/send", label: t("navSendNotification"), icon: Megaphone },
+    { href: "/reviews", label: t("navReviews"), icon: Star },
+    { href: "/payment-methods", label: t("navPaymentMethods"), icon: CreditCard },
+    { href: "/settings", label: t("navSettings"), icon: SettingsIcon },
+  ];
 
   return (
     <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink md:border-l-0 md:border-r">
@@ -86,7 +89,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             className="truncate text-[11px] text-muted hover:text-ink disabled:pointer-events-none"
           >
             {shop?.address ? `${shop.address} · ` : ""}
-            {shop?.is_open ? "খোলা" : "বন্ধ"}
+            {shop?.is_open ? t("shopOpenWord") : t("shopClosedWord")}
           </button>
         </div>
       </Link>
@@ -102,7 +105,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 key={item.href}
                 type="button"
                 onClick={() => {
-                  showToast(`${item.label} — শীঘ্রই আসছে`);
+                  showToast(t("comingSoon", item.label));
                   onNavigate?.();
                 }}
                 className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-muted/50"
@@ -148,9 +151,9 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="mt-auto rounded-[14px] border border-line bg-soft p-3.5">
-        <p className="text-[11px] text-muted">আজকের আয়</p>
+        <p className="text-[11px] text-muted">{t("todayIncomeLabel")}</p>
         <p className="font-number text-2xl font-bold text-good">৳{formatMoney(today.income)}</p>
-        <p className="mt-0.5 text-[11px] text-muted">{today.doneCount} টি কাজ সম্পন্ন</p>
+        <p className="mt-0.5 text-[11px] text-muted">{t("doneCountLabel", today.doneCount)}</p>
       </div>
 
       <div className="mt-3 flex items-center gap-1 px-1">
@@ -160,7 +163,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           className="flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink"
         >
           <UserRound className="h-3.5 w-3.5" />
-          একাউন্ট
+          {t("accountLink")}
         </Link>
         <button
           type="button"
@@ -169,7 +172,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink disabled:opacity-50"
         >
           <LogOut className="h-3.5 w-3.5" />
-          {logout.isPending ? "…" : "সাইন আউট"}
+          {logout.isPending ? "…" : t("signOut")}
         </button>
       </div>
     </aside>

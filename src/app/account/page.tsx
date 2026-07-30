@@ -9,27 +9,27 @@ import { ProfileForm } from "@/features/account/components/ProfileForm";
 import { ChangePasswordForm } from "@/features/account/components/ChangePasswordForm";
 import { DeleteAccountSection } from "@/features/account/components/DeleteAccountSection";
 import { useLogout } from "@/features/auth/hooks/use-logout";
-import { ROLES } from "@/config/constants";
-import type { UserRole } from "@/types";
+import { ROLES, ROLE_LABEL } from "@/config/constants";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { SettingsRow } from "@/components/ui/SettingsRow";
+import { cn } from "@/lib/utils";
+import { useT, useLanguage } from "@/lib/i18n";
+import { accountDict } from "@/features/account/lib/i18n";
 import { CustomerShell } from "@/app/(customer)/_components/CustomerShell";
 import { ProviderShell } from "@/app/(provider)/_components/ProviderShell";
-
-const ROLE_LABEL: Record<UserRole, string> = {
-  [ROLES.CUSTOMER]: "কাস্টমার",
-  [ROLES.PROVIDER]: "দোকানদার",
-};
 
 function AccountContent({ backHref }: { backHref: string }) {
   const { data: profile, isPending } = useMyProfile();
   const logout = useLogout();
   const [email, setEmail] = useState<string | null>(null);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const { language, setLanguage } = useLanguage();
+  const t = useT(accountDict);
+  const roleT = useT(ROLE_LABEL);
 
   useEffect(() => {
     const supabase = getBrowserClient();
@@ -45,7 +45,7 @@ function AccountContent({ backHref }: { backHref: string }) {
   }
 
   if (!profile) {
-    return <p className="text-sm text-ink">তোমার প্রোফাইল লোড করা যায়নি।</p>;
+    return <p className="text-sm text-ink">{t("profileLoadFailed")}</p>;
   }
 
   return (
@@ -57,40 +57,72 @@ function AccountContent({ backHref }: { backHref: string }) {
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="font-display text-xl font-bold text-ink">অ্যাকাউন্ট ও সেটিংস</h1>
+        <h1 className="font-display text-xl font-bold text-ink">{t("accountTitle")}</h1>
       </div>
 
       <ProfileHeaderCard
-        name={profile.full_name || "নাম নেই"}
+        name={profile.full_name || t("noName")}
         subtitle={email ?? "—"}
         avatarUrl={profile.avatar_url}
         right={
           <Badge variant="onAccent" className="shrink-0">
-            {ROLE_LABEL[profile.role]}
+            {roleT(profile.role)}
           </Badge>
         }
       />
 
       <div className="mt-4 rounded-[18px] border border-line bg-card p-5">
         <p className="mb-4 text-[13px] font-semibold tracking-wide text-muted uppercase">
-          প্রোফাইল তথ্য
+          {t("profileInfoSection")}
         </p>
         <ProfileForm profile={profile} />
       </div>
 
       <div className="mt-4 rounded-[18px] border border-line bg-card p-5">
         <p className="mb-4 text-[13px] font-semibold tracking-wide text-muted uppercase">
-          পাসওয়ার্ড পরিবর্তন
+          {t("changePasswordSection")}
         </p>
         <ChangePasswordForm />
       </div>
 
+      <div className="mt-4 rounded-[18px] border border-line bg-card p-5">
+        <p className="mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
+          {t("languageSection")}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setLanguage("bn")}
+            className={cn(
+              "rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all",
+              language === "bn"
+                ? "border-accent bg-accent text-accent-ink shadow-sm"
+                : "border-line bg-card text-muted hover:border-accent/40 hover:bg-soft",
+            )}
+          >
+            {t("languageBn")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage("en")}
+            className={cn(
+              "rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all",
+              language === "en"
+                ? "border-accent bg-accent text-accent-ink shadow-sm"
+                : "border-line bg-card text-muted hover:border-accent/40 hover:bg-soft",
+            )}
+          >
+            {t("languageEn")}
+          </button>
+        </div>
+      </div>
+
       <div className="mt-4 rounded-[18px] border border-line bg-card p-2">
-        <SettingsRow href="/notification-settings" icon={<Bell className="h-4.5 w-4.5" />} label="নোটিফিকেশন সেটিংস" />
-        <SettingsRow href="/help" icon={<HelpCircle className="h-4.5 w-4.5" />} label="হেল্প সেন্টার" />
-        <SettingsRow href="/privacy" icon={<Shield className="h-4.5 w-4.5" />} label="গোপনীয়তা নীতি" />
-        <SettingsRow href="/terms" icon={<ScrollText className="h-4.5 w-4.5" />} label="ব্যবহারের শর্তাবলী" />
-        <SettingsRow href="/cancellation-policy" icon={<Undo2 className="h-4.5 w-4.5" />} label="বাতিল নীতি" />
+        <SettingsRow href="/notification-settings" icon={<Bell className="h-4.5 w-4.5" />} label={t("notificationSettings")} />
+        <SettingsRow href="/help" icon={<HelpCircle className="h-4.5 w-4.5" />} label={t("helpCenter")} />
+        <SettingsRow href="/privacy" icon={<Shield className="h-4.5 w-4.5" />} label={t("privacyPolicy")} />
+        <SettingsRow href="/terms" icon={<ScrollText className="h-4.5 w-4.5" />} label={t("termsOfUse")} />
+        <SettingsRow href="/cancellation-policy" icon={<Undo2 className="h-4.5 w-4.5" />} label={t("cancellationPolicy")} />
       </div>
 
       <Button
@@ -100,7 +132,7 @@ function AccountContent({ backHref }: { backHref: string }) {
         className="mt-4 w-full"
       >
         <LogOut className="h-4 w-4" />
-        লগ-আউট
+        {t("logout")}
       </Button>
 
       <div className="mt-3">
@@ -109,10 +141,10 @@ function AccountContent({ backHref }: { backHref: string }) {
 
       <ConfirmSheet
         open={logoutConfirmOpen}
-        title="লগ-আউট করবে?"
-        description="আবার লগইন করতে তোমার ইমেইল ও পাসওয়ার্ড লাগবে।"
-        confirmLabel="লগ-আউট করো"
-        cancelLabel="থাক"
+        title={t("logoutConfirmTitle")}
+        description={t("logoutConfirmDescription")}
+        confirmLabel={t("logoutConfirmCta")}
+        cancelLabel={t("stay")}
         loading={logout.isPending}
         onConfirm={() => logout.mutate()}
         onCancel={() => setLogoutConfirmOpen(false)}

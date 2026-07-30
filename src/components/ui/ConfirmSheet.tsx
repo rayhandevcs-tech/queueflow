@@ -1,13 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { useT, type Dict } from "@/lib/i18n";
+
+const dict = {
+  confirm: { bn: "নিশ্চিত করো", en: "Confirm" },
+  cancel: { bn: "বাতিল", en: "Cancel" },
+} satisfies Dict;
 
 export function ConfirmSheet({
   open,
   title,
   description,
-  confirmLabel = "নিশ্চিত করো",
-  cancelLabel = "বাতিল",
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
   loading,
@@ -23,6 +29,8 @@ export function ConfirmSheet({
   loading?: boolean;
   variant?: "danger" | "primary";
 }) {
+  const t = useT(dict);
+
   if (!open) return null;
 
   return (
@@ -35,7 +43,7 @@ export function ConfirmSheet({
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={onCancel} disabled={loading} className="sm:w-auto">
-            {cancelLabel}
+            {cancelLabel ?? t("cancel")}
           </Button>
           <Button
             variant={variant}
@@ -43,7 +51,7 @@ export function ConfirmSheet({
             loading={loading}
             className="sm:w-auto"
           >
-            {confirmLabel}
+            {confirmLabel ?? t("confirm")}
           </Button>
         </div>
       </div>

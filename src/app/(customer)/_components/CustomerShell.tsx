@@ -5,11 +5,14 @@ import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { useT } from "@/lib/i18n";
 import { CustomerBottomNav } from "./CustomerBottomNav";
 import { CustomerSidebarPanel } from "./CustomerSidebarPanel";
+import { customerShellDict } from "./i18n";
 
 export function CustomerShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const t = useT(customerShellDict);
 
   return (
     <div className="min-h-dvh lg:flex">
@@ -20,7 +23,7 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            aria-label="মেনু খোলো"
+            aria-label={t("openMenu")}
             className="grid h-9 w-9 place-items-center rounded-lg text-ink hover:bg-soft"
           >
             <Menu className="h-5 w-5" />
@@ -31,7 +34,7 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
       {open && (
         <button
           type="button"
-          aria-label="মেনু বন্ধ করো"
+          aria-label={t("closeMenu")}
           onClick={() => setOpen(false)}
           className="fixed inset-0 z-30 bg-ink/50 lg:hidden"
         />

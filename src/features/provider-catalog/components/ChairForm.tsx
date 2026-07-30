@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check } from "lucide-react";
@@ -8,11 +9,13 @@ import { cn } from "@/lib/utils";
 import type { Chair } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { useLanguage, useT } from "@/lib/i18n";
 import {
   chairSchema,
   type ChairFormValues,
   type ChairFormOutput,
 } from "../schemas/chair.schema";
+import { providerCatalogDict } from "../lib/i18n";
 
 interface Props {
   initial?: Chair;
@@ -22,8 +25,12 @@ interface Props {
 }
 
 export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
+  const { language } = useLanguage();
+  const t = useT(providerCatalogDict);
+
+  const schema = useMemo(() => chairSchema(language), [language]);
   const form = useForm<ChairFormValues, unknown, ChairFormOutput>({
-    resolver: zodResolver(chairSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       label: initial?.label ?? "",
       staff_name: initial?.staff_name ?? "",
@@ -43,21 +50,21 @@ export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
         <Field error={err.label?.message}>
           <Input
             {...form.register("label")}
-            placeholder="Label (Chair 1)"
+            placeholder={t("chairLabelPlaceholder")}
             invalid={!!err.label}
           />
         </Field>
         <Field error={err.staff_name?.message}>
           <Input
             {...form.register("staff_name")}
-            placeholder="Staff name (Rahim)"
+            placeholder={t("staffNamePlaceholder")}
             invalid={!!err.staff_name}
           />
         </Field>
       </div>
 
       <div>
-        <span className="mb-1.5 block text-xs font-medium text-muted">Lane color</span>
+        <span className="mb-1.5 block text-xs font-medium text-muted">{t("laneColorLabel")}</span>
         <div className="flex gap-2">
           {CHAIR_COLORS.map((c) => (
             <button
@@ -81,10 +88,10 @@ export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
 
       <div className="flex gap-2 pt-1">
         <Button type="submit" loading={busy}>
-          {busy ? "Saving…" : initial ? "Update" : "Add chair"}
+          {busy ? t("chairSaving") : initial ? t("chairUpdate") : t("chairAdd")}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {t("cancel")}
         </Button>
       </div>
     </form>

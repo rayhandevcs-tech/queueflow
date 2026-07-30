@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import type { Chair, Service } from "@/types";
+import { useT } from "@/lib/i18n";
+import { customerBookingDict } from "../lib/i18n";
 
 interface Props {
   services: Service[] | undefined;
@@ -24,15 +26,16 @@ export function ServicesTab({
   advance,
   onAdvanceChange,
 }: Props) {
+  const t = useT(customerBookingDict);
   return (
     <div className="space-y-4">
       <div>
         <p className="mb-2.5 text-[13px] font-semibold tracking-wide text-muted uppercase">
-          সার্ভিস বেছে নাও
+          {t("chooseServicesLabel")}
         </p>
 
         {!services?.length ? (
-          <p className="text-sm text-muted">এই দোকানে এখনো কোনো সার্ভিস যোগ করা হয়নি।</p>
+          <p className="text-sm text-muted">{t("noServicesAtShop")}</p>
         ) : (
           <div className="flex flex-col gap-2.25">
             {services.map((s) => {
@@ -60,7 +63,7 @@ export function ServicesTab({
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-ink">{s.name}</span>
                     <span className="mt-0.5 block text-[11px] text-muted">
-                      ~{s.default_duration_min} মিনিট
+                      {t("minutesSuffix", s.default_duration_min)}
                     </span>
                   </span>
                   <span className="font-number text-[15px] font-semibold text-ink">
@@ -76,7 +79,7 @@ export function ServicesTab({
       {selected.size > 0 && (
         <div>
           <p className="mb-2.5 text-[13px] font-semibold tracking-wide text-muted uppercase">
-            পছন্দের স্টাফ
+            {t("preferredStaffLabel")}
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -89,7 +92,7 @@ export function ServicesTab({
                   : "border-line bg-card text-muted hover:border-accent/40",
               )}
             >
-              অটো (সেরা মিল)
+              {t("autoBestMatch")}
             </button>
             {eligibleChairs.map((chair) => (
               <button
@@ -130,11 +133,9 @@ export function ServicesTab({
             </span>
             <span className="flex-1">
               <span className="block text-[13px] font-semibold text-ink">
-                অ্যাডভান্স পেমেন্ট দিয়ে সিরিয়াল লক করো
+                {t("advanceLockLabel")}
               </span>
-              <span className="block text-[11px] text-muted">
-                bKash/Nagad — সিরিয়াল কনফার্ম ও সিকিউর থাকবে
-              </span>
+              <span className="block text-[11px] text-muted">{t("advanceLockHint")}</span>
             </span>
           </label>
         </div>

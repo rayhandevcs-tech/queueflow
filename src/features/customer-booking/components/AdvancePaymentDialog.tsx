@@ -6,12 +6,9 @@ import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format-wait";
 import { paymentGateway } from "@/lib/payment/mock-gateway";
 import type { PaymentMethod } from "@/lib/payment/types";
+import { useT } from "@/lib/i18n";
 import type { AdvancePaymentInfo } from "../api/booking.api";
-
-const METHODS: { id: PaymentMethod; label: string; color: string }[] = [
-  { id: "bkash", label: "বিকাশ", color: "#E2136E" },
-  { id: "nagad", label: "নগদ", color: "#F6921E" },
-];
+import { customerBookingDict } from "../lib/i18n";
 
 type Step = "method" | "pin" | "processing" | "success" | "error";
 
@@ -29,6 +26,12 @@ export function AdvancePaymentDialog({
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const t = useT(customerBookingDict);
+
+  const METHODS: { id: PaymentMethod; label: string; color: string }[] = [
+    { id: "bkash", label: t("bkashLabel"), color: "#E2136E" },
+    { id: "nagad", label: t("nagadLabel"), color: "#F6921E" },
+  ];
 
   const selectedMethod = METHODS.find((m) => m.id === method);
 
@@ -60,8 +63,10 @@ export function AdvancePaymentDialog({
 
         {step === "method" && (
           <div>
-            <p className="mb-1 font-display text-lg font-bold text-ink">অ্যাডভান্স পেমেন্ট</p>
-            <p className="mb-4.5 text-[13px] text-muted">মোট ৳{formatMoney(amount)} — মেথড বেছে নাও</p>
+            <p className="mb-1 font-display text-lg font-bold text-ink">{t("advancePaymentTitle")}</p>
+            <p className="mb-4.5 text-[13px] text-muted">
+              {t("totalChooseMethod", formatMoney(amount))}
+            </p>
 
             <div className="mb-4.5 flex gap-3">
               {METHODS.map((m) => (
@@ -84,7 +89,7 @@ export function AdvancePaymentDialog({
             </div>
 
             <label className="mb-1.5 block text-xs font-medium text-muted">
-              {selectedMethod?.label ?? ""} নাম্বার
+              {t("numberLabel", selectedMethod?.label ?? "")}
             </label>
             <input
               value={phone}
@@ -100,7 +105,7 @@ export function AdvancePaymentDialog({
               onClick={() => setStep("pin")}
               className="mt-4.5 w-full rounded-[14px] bg-accent py-3.25 font-display text-sm font-bold text-accent-ink disabled:opacity-50"
             >
-              পরবর্তী
+              {t("next")}
             </button>
           </div>
         )}
@@ -113,7 +118,7 @@ export function AdvancePaymentDialog({
               className="mb-3 flex items-center gap-1 text-xs font-medium text-muted"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              ফিরে যাও
+              {t("goBack")}
             </button>
             <div
               className="mb-4.5 rounded-2xl p-4 text-white"
@@ -122,7 +127,7 @@ export function AdvancePaymentDialog({
               <p className="text-xs opacity-80">{selectedMethod.label} · {phone}</p>
               <p className="mt-1 font-number text-2xl font-bold">৳{formatMoney(amount)}</p>
             </div>
-            <label className="mb-1.5 block text-xs font-medium text-muted">PIN দাও</label>
+            <label className="mb-1.5 block text-xs font-medium text-muted">{t("enterPin")}</label>
             <input
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 5))}
@@ -138,7 +143,7 @@ export function AdvancePaymentDialog({
               className="mt-4.5 w-full rounded-[14px] py-3.25 font-display text-sm font-bold text-white disabled:opacity-50"
               style={{ background: selectedMethod.color }}
             >
-              পে করো ৳{formatMoney(amount)}
+              {t("payAmount", formatMoney(amount))}
             </button>
           </div>
         )}
@@ -146,7 +151,7 @@ export function AdvancePaymentDialog({
         {step === "processing" && (
           <div className="py-8 text-center">
             <div className="mx-auto mb-4 h-9 w-9 animate-spin rounded-full border-3 border-accent border-t-transparent" />
-            <p className="text-sm text-muted">পেমেন্ট প্রসেস হচ্ছে…</p>
+            <p className="text-sm text-muted">{t("paymentProcessing")}</p>
           </div>
         )}
 
@@ -155,8 +160,8 @@ export function AdvancePaymentDialog({
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-good-soft text-good">
               <Check className="h-7 w-7" />
             </div>
-            <p className="font-display text-base font-bold text-ink">পেমেন্ট সফল হয়েছে</p>
-            <p className="mt-1 text-xs text-muted">সিরিয়াল কনফার্ম হচ্ছে…</p>
+            <p className="font-display text-base font-bold text-ink">{t("paymentSuccess")}</p>
+            <p className="mt-1 text-xs text-muted">{t("serialConfirming")}</p>
           </div>
         )}
 
@@ -165,14 +170,14 @@ export function AdvancePaymentDialog({
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-live-soft text-live">
               <AlertCircle className="h-7 w-7" />
             </div>
-            <p className="font-display text-base font-bold text-ink">পেমেন্ট ব্যর্থ হয়েছে</p>
+            <p className="font-display text-base font-bold text-ink">{t("paymentFailed")}</p>
             <p className="mt-1 text-xs text-muted">{error}</p>
             <button
               type="button"
               onClick={() => setStep("pin")}
               className="mt-4.5 w-full rounded-[14px] bg-accent py-3.25 font-display text-sm font-bold text-accent-ink"
             >
-              আবার চেষ্টা করো
+              {t("tryAgain")}
             </button>
           </div>
         )}

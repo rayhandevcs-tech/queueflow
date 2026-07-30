@@ -6,6 +6,7 @@ import { keys } from "@/lib/query/keys";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import { useNowMs } from "@/hooks/use-now";
 import type { Serial } from "@/types";
+import { useLanguage } from "@/lib/i18n";
 import { getIncomeHistory } from "../api/income.api";
 import { computeIncomeSummary, type IncomeSummary } from "../lib/compute-income";
 
@@ -22,6 +23,7 @@ export function useIncomeSummary(shopId: string | undefined): {
   isPending: boolean;
 } {
   const queryClient = useQueryClient();
+  const { language } = useLanguage();
   const queryKey = keys.serials.incomeHistory(shopId ?? "");
   // Recompute once a minute so "today"/"this month" roll over on their own
   // without needing a page refresh.
@@ -46,8 +48,8 @@ export function useIncomeSummary(shopId: string | undefined): {
 
   const summary = useMemo(() => {
     if (!query.data) return EMPTY;
-    return computeIncomeSummary(query.data, new Date(nowMs));
-  }, [query.data, nowMs]);
+    return computeIncomeSummary(query.data, new Date(nowMs), language);
+  }, [query.data, nowMs, language]);
 
   return { summary, isPending: query.isPending };
 }

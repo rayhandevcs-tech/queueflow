@@ -6,14 +6,17 @@ import { cn } from "@/lib/utils";
 import type { Service } from "@/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useServiceMutations, useServices } from "../hooks/use-services";
 import { serviceEmoji } from "../lib/service-icon";
+import { providerCatalogDict } from "../lib/i18n";
 import { ServiceForm } from "./ServiceForm";
 
 export function ServicesManager({ shopId }: { shopId: string }) {
   const { data: services, isPending } = useServices(shopId);
   const { create, update, toggleActive } = useServiceMutations(shopId);
   const [editing, setEditing] = useState<Service | "new" | null>(null);
+  const t = useT(providerCatalogDict);
 
   if (isPending) {
     return (
@@ -27,10 +30,8 @@ export function ServicesManager({ shopId }: { shopId: string }) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-[27px] font-bold text-ink">সার্ভিস ও রেট</h1>
-          <p className="mt-0.5 text-[13px] text-muted">
-            রেট স্বচ্ছ রাখলে কাস্টমারের হিসাবও পরিষ্কার থাকে
-          </p>
+          <h1 className="font-display text-[27px] font-bold text-ink">{t("servicesPageTitle")}</h1>
+          <p className="mt-0.5 text-[13px] text-muted">{t("servicesPageSubtitle")}</p>
         </div>
         {editing === null && (
           <button
@@ -39,7 +40,7 @@ export function ServicesManager({ shopId }: { shopId: string }) {
             className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink"
           >
             <Plus className="h-4 w-4" />
-            নতুন সার্ভিস
+            {t("newServiceCta")}
           </button>
         )}
       </div>
@@ -65,8 +66,8 @@ export function ServicesManager({ shopId }: { shopId: string }) {
       {services?.length === 0 ? (
         <EmptyState
           icon={<ListChecks className="h-6 w-6" />}
-          title="এখনো কোনো সার্ভিস যোগ করা হয়নি"
-          description="প্রথম সার্ভিস যোগ করো, কাস্টমাররা বুকিং শুরু করতে পারবে।"
+          title={t("noServicesTitle")}
+          description={t("noServicesDesc")}
         />
       ) : (
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
@@ -89,7 +90,7 @@ export function ServicesManager({ shopId }: { shopId: string }) {
                 >
                   {s.name}
                 </p>
-                <p className="text-xs text-muted">আনুমানিক {s.default_duration_min} মিনিট</p>
+                <p className="text-xs text-muted">{t("estimatedMinutes", s.default_duration_min)}</p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="font-number text-lg font-bold text-ink">৳{s.rate}</p>
@@ -110,7 +111,7 @@ export function ServicesManager({ shopId }: { shopId: string }) {
                   className="text-[11px] font-semibold"
                   style={{ color: s.is_active ? "var(--color-good)" : "var(--color-muted)" }}
                 >
-                  ● {s.is_active ? "চালু" : "বন্ধ"}
+                  ● {s.is_active ? t("serviceActiveWord") : t("serviceInactiveWord")}
                 </span>
               </div>
             </button>

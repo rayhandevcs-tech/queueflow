@@ -6,7 +6,9 @@ import { formatBanglaDate } from "@/lib/format-wait";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useShopReviews } from "../hooks/use-shop-reviews";
+import { providerReviewsDict } from "../lib/i18n";
 
 function Stars({ count }: { count: number }) {
   return (
@@ -22,6 +24,7 @@ type Filter = "latest" | "with-images";
 export function ReviewsView({ shopId }: { shopId: string | undefined }) {
   const { reviews, namesBySerial, staffNameByChairId, summary, isPending } = useShopReviews(shopId);
   const [filter, setFilter] = useState<Filter>("latest");
+  const t = useT(providerReviewsDict);
 
   const visibleReviews = useMemo(
     () => (filter === "with-images" ? reviews.filter((r) => r.images.length > 0) : reviews),
@@ -38,13 +41,13 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
 
   return (
     <div className="space-y-5">
-      <h1 className="font-display text-[27px] font-bold text-ink">কাস্টমার রিভিউ</h1>
+      <h1 className="font-display text-[27px] font-bold text-ink">{t("customerReviewsTitle")}</h1>
 
       {summary.count === 0 ? (
         <EmptyState
           icon={<Star className="h-6 w-6" />}
-          title="এখনো কোনো রিভিউ আসেনি"
-          description="কাস্টমাররা সিরিয়াল শেষে রিভিউ দিলে এখানে দেখাবে।"
+          title={t("noReviewsTitle")}
+          description={t("noReviewsDesc")}
         />
       ) : (
         <>
@@ -52,7 +55,7 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
             <div className="shrink-0 rounded-[20px] bg-accent px-7.5 py-6 text-center text-accent-ink sm:w-44">
               <p className="font-number text-5xl font-bold">{summary.average}</p>
               <p className="mt-1 text-lg">★★★★★</p>
-              <p className="mt-1.5 text-xs opacity-50">{summary.count} রিভিউ</p>
+              <p className="mt-1.5 text-xs opacity-50">{t("reviewCountSuffix", summary.count)}</p>
             </div>
             <div className="flex flex-1 flex-col justify-center gap-2 rounded-[20px] border border-line bg-card p-5">
               {summary.distribution.map((d) => (
@@ -73,8 +76,8 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
           <div className="flex gap-2">
             {(
               [
-                ["latest", "সর্বশেষ"],
-                ["with-images", "ছবিসহ"],
+                ["latest", t("latestFilter")],
+                ["with-images", t("withImagesFilter")],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -93,13 +96,13 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
           {visibleReviews.length === 0 ? (
             <EmptyState
               icon={<ImageIcon className="h-6 w-6" />}
-              title="ছবিসহ কোনো রিভিউ নেই"
-              description="এখনো কেউ ছবি সহ রিভিউ দেয়নি।"
+              title={t("noImageReviewsTitle")}
+              description={t("noImageReviewsDesc")}
             />
           ) : (
             <div className="flex flex-col gap-3">
               {visibleReviews.map((r) => {
-                const name = namesBySerial[r.serial_id] ?? "কাস্টমার";
+                const name = namesBySerial[r.serial_id] ?? t("customerFallback");
                 return (
                   <div key={r.id} className="rounded-2xl border border-line bg-card p-4.5">
                     <div className="mb-2 flex items-center gap-3">
@@ -113,11 +116,11 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
                         <div className="flex items-center gap-1.5">
                           <p className="truncate text-sm font-semibold text-ink">{name}</p>
                           <span
-                            title="সার্ভিস নেওয়া কাস্টমারের যাচাইকৃত রিভিউ"
+                            title={t("verifiedTitle")}
                             className="flex items-center gap-0.5 text-[10px] font-medium text-good"
                           >
                             <BadgeCheck className="h-3 w-3" />
-                            যাচাইকৃত
+                            {t("verifiedBadge")}
                           </span>
                         </div>
                         <p className="text-[11px] text-muted">

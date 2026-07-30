@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleCheck } from "lucide-react";
@@ -7,15 +8,20 @@ import type { Profile } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { AvatarUploadField } from "@/components/ui/AvatarUploadField";
+import { useT, useLanguage } from "@/lib/i18n";
 import { useUpdateMyAvatar, useUpdateMyProfile } from "../hooks/use-profile-mutations";
 import { profileSchema, type ProfileFormValues } from "../schemas/profile.schema";
+import { accountDict } from "../lib/i18n";
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const update = useUpdateMyProfile();
   const updateAvatar = useUpdateMyAvatar();
+  const { language } = useLanguage();
+  const t = useT(accountDict);
 
+  const schema = useMemo(() => profileSchema(language), [language]);
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       fullName: profile.full_name ?? "",
       phone: profile.phone ?? "",
@@ -23,7 +29,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   });
 
   const onSubmit = form.handleSubmit((values) => {
-    const parsed = profileSchema.parse(values);
+    const parsed = schema.parse(values);
     update.mutate(parsed);
   });
 
@@ -37,11 +43,11 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         onUploaded={(url) => updateAvatar.mutate(url)}
       />
 
-      <Field label="পূর্ণ নাম" error={err.fullName?.message}>
+      <Field label={t("fullNameLabel")} error={err.fullName?.message}>
         <Input {...form.register("fullName")} invalid={!!err.fullName} />
       </Field>
 
-      <Field label="ফোন নম্বর" error={err.phone?.message}>
+      <Field label={t("phoneLabel")} error={err.phone?.message}>
         <Input
           {...form.register("phone")}
           placeholder="01XXXXXXXXX"
@@ -51,16 +57,14 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
       <div className="flex items-center gap-3">
         <Button type="submit" loading={update.isPending}>
-          {update.isPending ? "সংরক্ষণ হচ্ছে…" : "পরিবর্তন সংরক্ষণ করো"}
+          {update.isPending ? t("saving") : t("saveChanges")}
         </Button>
 
-        {update.isError && (
-          <p className="text-sm text-live">সংরক্ষণ করা যায়নি — আবার চেষ্টা করো।</p>
-        )}
+        {update.isError && <p className="text-sm text-live">{t("saveFailed")}</p>}
         {update.isSuccess && !update.isPending && (
           <p className="flex items-center gap-1 text-sm font-medium text-good">
             <CircleCheck className="h-4 w-4" />
-            সংরক্ষিত হয়েছে
+            {t("saved")}
           </p>
         )}
       </div>

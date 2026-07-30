@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleCheck, KeyRound } from "lucide-react";
@@ -8,18 +8,23 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { translateAuthError } from "@/lib/auth-errors";
+import { useT, useLanguage } from "@/lib/i18n";
 import { useChangePassword } from "../hooks/use-change-password";
 import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from "../schemas/change-password.schema";
+import { accountDict } from "../lib/i18n";
 
 export function ChangePasswordForm() {
   const [open, setOpen] = useState(false);
   const change = useChangePassword();
+  const { language } = useLanguage();
+  const t = useT(accountDict);
 
+  const schema = useMemo(() => changePasswordSchema(language), [language]);
   const form = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
 
@@ -42,28 +47,28 @@ export function ChangePasswordForm() {
         className="flex w-full items-center gap-2.5 rounded-xl border border-line bg-soft px-4 py-3 text-sm font-semibold text-ink hover:border-accent/40"
       >
         <KeyRound className="h-4 w-4 text-muted" />
-        পাসওয়ার্ড পরিবর্তন করো
+        {t("changePassword")}
       </button>
     );
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <Field label="বর্তমান পাসওয়ার্ড" error={err.currentPassword?.message}>
+      <Field label={t("currentPasswordLabel")} error={err.currentPassword?.message}>
         <PasswordInput
           {...form.register("currentPassword")}
           invalid={!!err.currentPassword}
         />
       </Field>
 
-      <Field label="নতুন পাসওয়ার্ড" error={err.newPassword?.message}>
+      <Field label={t("newPasswordLabel")} error={err.newPassword?.message}>
         <PasswordInput
           {...form.register("newPassword")}
           invalid={!!err.newPassword}
         />
       </Field>
 
-      <Field label="কনফার্ম করো" error={err.confirmPassword?.message}>
+      <Field label={t("confirmLabel")} error={err.confirmPassword?.message}>
         <PasswordInput
           {...form.register("confirmPassword")}
           invalid={!!err.confirmPassword}
@@ -72,7 +77,7 @@ export function ChangePasswordForm() {
 
       <div className="flex items-center gap-3">
         <Button type="submit" loading={change.isPending}>
-          {change.isPending ? "সংরক্ষণ হচ্ছে…" : "পাসওয়ার্ড বদলাও"}
+          {change.isPending ? t("changingPassword") : t("changePasswordCta")}
         </Button>
         <button
           type="button"
@@ -82,7 +87,7 @@ export function ChangePasswordForm() {
           }}
           className="text-sm font-medium text-muted hover:text-ink"
         >
-          বাতিল
+          {t("cancel")}
         </button>
 
         {change.isError && (
@@ -91,7 +96,7 @@ export function ChangePasswordForm() {
         {change.isSuccess && !change.isPending && (
           <p className="flex items-center gap-1 text-sm font-medium text-good">
             <CircleCheck className="h-4 w-4" />
-            বদলানো হয়েছে
+            {t("passwordChanged")}
           </p>
         )}
       </div>

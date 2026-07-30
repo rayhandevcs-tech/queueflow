@@ -1,6 +1,8 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { withDbErrors } from "@/lib/supabase/db-errors";
 import type { Review } from "@/types";
+import { translate } from "@/lib/i18n";
+import { customerProfileDict } from "../lib/i18n";
 
 export async function submitReview(payload: {
   shopId: string;
@@ -14,7 +16,7 @@ export async function submitReview(payload: {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("লগইন করা নেই");
+    if (!user) throw new Error(translate(customerProfileDict, "notLoggedIn"));
 
     // Auto-tag which staff/chair served this booking, straight from the serial —
     // the customer never has to pick a name themselves.

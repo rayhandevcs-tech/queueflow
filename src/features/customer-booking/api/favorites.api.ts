@@ -1,4 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { translate } from "@/lib/i18n";
+import { customerBookingDict } from "../lib/i18n";
 
 export async function getMyFavoriteShopIds(): Promise<Set<string>> {
   const supabase = getBrowserClient();
@@ -21,7 +23,7 @@ export async function addFavorite(shopId: string): Promise<void> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("লগইন করা নেই");
+  if (!user) throw new Error(translate(customerBookingDict, "notLoggedIn"));
 
   const { error } = await supabase
     .from("favorites")
@@ -34,7 +36,7 @@ export async function removeFavorite(shopId: string): Promise<void> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("লগইন করা নেই");
+  if (!user) throw new Error(translate(customerBookingDict, "notLoggedIn"));
 
   const { error } = await supabase
     .from("favorites")

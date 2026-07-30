@@ -6,6 +6,8 @@ import { Download, X } from "lucide-react";
 import { parseServicesSnapshot, type Serial, type Shop } from "@/types";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatBanglaDate, formatBanglaTime, formatMoney } from "@/lib/format-wait";
+import { translate, useT } from "@/lib/i18n";
+import { customerProfileDict } from "../lib/i18n";
 
 const WIDTH = 420;
 const PADDING = 28;
@@ -90,7 +92,7 @@ async function buildReceiptImage(params: {
   y += 22;
 
   ctx.font = "bold 16px sans-serif";
-  ctx.fillText("মোট", PADDING, y);
+  ctx.fillText(translate(customerProfileDict, "totalLabel"), PADDING, y);
   ctx.textAlign = "right";
   ctx.fillText(`৳${formatMoney(total)}`, WIDTH - PADDING, y);
 
@@ -111,6 +113,7 @@ export function EReceiptSheet({
   const services = parseServicesSnapshot(serial.services_snapshot);
   const code = serial.id.slice(0, 8).toUpperCase();
   const when = new Date(serial.completed_at ?? serial.created_at);
+  const t = useT(customerProfileDict);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,7 +133,7 @@ export function EReceiptSheet({
     if (!qrUrl) return;
     let cancelled = false;
     buildReceiptImage({
-      shopName: shop?.name ?? "দোকান",
+      shopName: shop?.name ?? translate(customerProfileDict, "shopFallback"),
       when,
       code,
       qrDataUrl: qrUrl,
@@ -161,7 +164,7 @@ export function EReceiptSheet({
         </button>
 
         <div className="text-center">
-          <p className="font-display text-lg font-bold text-ink">{shop?.name ?? "দোকান"}</p>
+          <p className="font-display text-lg font-bold text-ink">{shop?.name ?? t("shopFallback")}</p>
           <p className="mt-0.5 text-xs text-muted">
             {formatBanglaDate(when)} · {formatBanglaTime(when)}
           </p>
@@ -170,7 +173,7 @@ export function EReceiptSheet({
         <div className="my-4.5 grid place-items-center">
           {qrUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={qrUrl} alt={`রিসিট কোড ${code}`} className="h-40 w-40 rounded-xl border border-line" />
+            <img src={qrUrl} alt={t("receiptCodeAlt", code)} className="h-40 w-40 rounded-xl border border-line" />
           ) : (
             <div className="grid h-40 w-40 place-items-center rounded-xl border border-line bg-soft">
               <Spinner className="h-5 w-5 text-muted" />
@@ -189,7 +192,7 @@ export function EReceiptSheet({
             ))}
           </div>
           <div className="mt-2.5 flex items-center justify-between border-t border-line pt-2.5 text-sm font-bold text-ink">
-            <span>মোট</span>
+            <span>{t("totalLabel")}</span>
             <span className="font-number">৳{formatMoney(serial.total_amount)}</span>
           </div>
         </div>
@@ -201,7 +204,7 @@ export function EReceiptSheet({
           className="mt-4.5 flex w-full items-center justify-center gap-2 rounded-[15px] bg-accent py-3.5 font-display text-[15px] font-bold text-accent-ink aria-disabled:pointer-events-none aria-disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
-          ডাউনলোড
+          {t("download")}
         </a>
       </div>
     </div>

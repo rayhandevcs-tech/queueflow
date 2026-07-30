@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { Percent } from "lucide-react";
 import type { OfferWithShop } from "../api/offers.api";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 export function OfferCarousel({ offers }: { offers: OfferWithShop[] | undefined }) {
+  const t = useT(customerExploreDict);
+
   if (!offers?.length) return null;
 
   return (
@@ -27,7 +31,7 @@ export function OfferCarousel({ offers }: { offers: OfferWithShop[] | undefined 
             <div className="relative">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm">
                 <Percent className="h-3 w-3" />
-                {offer.discount_pct}% ছাড়
+                {t("discountOff", offer.discount_pct)}
               </span>
               <p className="mt-2.5 truncate font-display text-base font-bold">{offer.title}</p>
               {offer.description && (
@@ -35,7 +39,7 @@ export function OfferCarousel({ offers }: { offers: OfferWithShop[] | undefined 
               )}
             </div>
             <p className="relative mt-3 truncate text-[11px] font-semibold text-white/70">
-              {offer.shops?.name ?? "দোকান"}
+              {offer.shops?.name ?? t("shopFallback")}
             </p>
           </Link>
         ))}

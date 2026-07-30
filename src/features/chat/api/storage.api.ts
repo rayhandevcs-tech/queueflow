@@ -1,4 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { translate } from "@/lib/i18n";
+import { chatDict } from "../lib/i18n";
 
 const BUCKET = "chat-media";
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -15,10 +17,10 @@ export async function uploadChatImage(
   file: File,
 ): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("শুধু ছবি পাঠানো যাবে");
+    throw new Error(translate(chatDict, "imagesOnlyError"));
   }
   if (file.size > MAX_BYTES) {
-    throw new Error("ছবি ২ এমবি-র নিচে হতে হবে");
+    throw new Error(translate(chatDict, "imageSizeLimitError"));
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -29,7 +31,7 @@ export async function uploadChatImage(
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false });
 
-  if (error) throw new Error("আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো");
+  if (error) throw new Error(translate(chatDict, "uploadFailedError"));
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;

@@ -5,6 +5,8 @@ import { MapPinOff } from "lucide-react";
 import type { Shop } from "@/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 const ShopMapInner = dynamic(() => import("./ShopMapInner"), {
   ssr: false,
@@ -28,6 +30,8 @@ export function ShopMap({
   userLocation?: { lat: number; lng: number } | null;
   isPending: boolean;
 }) {
+  const t = useT(customerExploreDict);
+
   if (isPending) {
     return (
       <div className="grid h-110 w-full place-items-center rounded-2xl border border-line bg-card shadow-sm">
@@ -45,8 +49,8 @@ export function ShopMap({
     return (
       <EmptyState
         icon={<MapPinOff className="h-6 w-6" />}
-        title="এখনো কোনো দোকানের লোকেশন সেট করা নেই"
-        description="লিস্ট ভিউতে গিয়ে খোলা দোকানগুলো দেখো।"
+        title={t("noShopLocations")}
+        description={t("noShopLocationsDesc")}
       />
     );
   }

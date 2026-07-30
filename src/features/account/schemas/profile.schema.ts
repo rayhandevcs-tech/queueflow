@@ -1,20 +1,23 @@
 import { z } from "zod";
+import type { Language } from "@/lib/i18n";
+import { resolveDict } from "@/lib/i18n";
+import { VALIDATION } from "@/lib/i18n/validation-messages";
 
-export const profileSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "নাম কমপক্ষে ২ অক্ষরের হতে হবে")
-    .max(80, "সর্বোচ্চ ৮০ অক্ষর"),
-  phone: z
-    .string()
-    .trim()
-    .max(20, "সর্বোচ্চ ২০ ডিজিট")
-    .regex(/^[0-9+\-\s]*$/, "শুধু সংখ্যা, +, - ব্যবহার করা যাবে")
-    .or(z.literal(""))
-    .nullable()
-    .transform((v) => (v === "" || v === null ? null : v)),
-});
+export function profileSchema(lang: Language) {
+  const m = (key: keyof typeof VALIDATION, ...args: unknown[]) =>
+    resolveDict(VALIDATION, lang, key, ...args);
+  return z.object({
+    fullName: z.string().trim().min(2, m("min_chars", 2)).max(80, m("max_chars", 80)),
+    phone: z
+      .string()
+      .trim()
+      .max(20, m("max_digits", 20))
+      .regex(/^[0-9+\-\s]*$/, m("phone_digits_only"))
+      .or(z.literal(""))
+      .nullable()
+      .transform((v) => (v === "" || v === null ? null : v)),
+  });
+}
 
-export type ProfileFormValues = z.input<typeof profileSchema>;
-export type ProfileFormOutput = z.output<typeof profileSchema>;
+export type ProfileFormValues = z.input<ReturnType<typeof profileSchema>>;
+export type ProfileFormOutput = z.output<ReturnType<typeof profileSchema>>;

@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { SERVICE_CATEGORY_LABEL, type ServiceCategory } from "@/config/constants";
 import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
+import { useT } from "@/lib/i18n";
 
 export function CategoryShortcutRow({
   categories,
@@ -13,6 +14,8 @@ export function CategoryShortcutRow({
   active: ServiceCategory | null;
   onSelect: (category: ServiceCategory | null) => void;
 }) {
+  const categoryT = useT(SERVICE_CATEGORY_LABEL);
+
   if (categories.size === 0) return null;
 
   return (
@@ -38,7 +41,7 @@ export function CategoryShortcutRow({
               <Icon className="h-5 w-5" />
             </div>
             <span className={cn("text-[11px]", isActive ? "font-semibold text-ink" : "text-muted")}>
-              {SERVICE_CATEGORY_LABEL[category]}
+              {categoryT(category)}
             </span>
           </button>
         );

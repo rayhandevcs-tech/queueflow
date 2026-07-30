@@ -2,6 +2,8 @@
 
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { providerCatalogDict } from "../lib/i18n";
 import { useChairs } from "../hooks/use-chairs";
 import { useServices } from "../hooks/use-services";
 import {
@@ -19,14 +21,13 @@ export function CanPerformMatrix({ shopId }: { shopId: string }) {
   const { data: services } = useServices(shopId);
   const { data: stats } = useChairStats(shopId);
   const toggle = useCanPerformMutation(shopId);
+  const t = useT(providerCatalogDict);
 
   const activeServices = services?.filter((s) => s.is_active) ?? [];
 
   if (!chairs?.length || !activeServices.length) {
     return (
-      <p className="rounded-xl bg-soft p-3 text-xs text-muted">
-        এই টেবিল দেখতে অন্তত একটা চেয়ার আর একটা চালু সার্ভিস থাকতে হবে।
-      </p>
+      <p className="rounded-xl bg-soft p-3 text-xs text-muted">{t("canPerformGuardHint")}</p>
     );
   }
 
@@ -41,7 +42,7 @@ export function CanPerformMatrix({ shopId }: { shopId: string }) {
         <thead>
           <tr className="border-b border-line">
             <th className="p-3 text-left text-xs font-semibold text-muted">
-              সার্ভিস ↓ / চেয়ার →
+              {t("matrixHeader")}
             </th>
             {chairs.map((c) => (
               <th key={c.id} className="p-3 text-center">

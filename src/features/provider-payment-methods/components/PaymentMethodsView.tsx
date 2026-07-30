@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Banknote, Check, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/lib/i18n";
+import { providerPaymentMethodsDict } from "../lib/i18n";
 
 interface Method {
   id: string;
@@ -12,44 +14,6 @@ interface Method {
   icon: typeof Banknote;
   enabled: boolean;
 }
-
-const METHODS: Method[] = [
-  {
-    id: "cash",
-    label: "ক্যাশ",
-    description: "সার্ভিস শেষে হাতে হাতে টাকা নেওয়া — ডিফল্ট মেথড",
-    icon: Banknote,
-    enabled: true,
-  },
-  {
-    id: "bkash",
-    label: "বিকাশ",
-    description: "সরাসরি চেকআউটে শীঘ্রই আসছে",
-    icon: Smartphone,
-    enabled: false,
-  },
-  {
-    id: "nagad",
-    label: "নগদ",
-    description: "সরাসরি চেকআউটে শীঘ্রই আসছে",
-    icon: Smartphone,
-    enabled: false,
-  },
-  {
-    id: "rocket",
-    label: "রকেট",
-    description: "সরাসরি চেকআউটে শীঘ্রই আসছে",
-    icon: Wallet,
-    enabled: false,
-  },
-  {
-    id: "card",
-    label: "কার্ড",
-    description: "সরাসরি চেকআউটে শীঘ্রই আসছে",
-    icon: CreditCard,
-    enabled: false,
-  },
-];
 
 /**
  * UI-only preview of accepted payment rails — no gateway wired up yet
@@ -62,14 +26,21 @@ const METHODS: Method[] = [
 export function PaymentMethodsView() {
   const showToast = useToast();
   const [selected, setSelected] = useState("cash");
+  const t = useT(providerPaymentMethodsDict);
+
+  const METHODS: Method[] = [
+    { id: "cash", label: t("cashLabel"), description: t("cashDesc"), icon: Banknote, enabled: true },
+    { id: "bkash", label: t("bkashLabel"), description: t("comingSoonDesc"), icon: Smartphone, enabled: false },
+    { id: "nagad", label: t("nagadLabel"), description: t("comingSoonDesc"), icon: Smartphone, enabled: false },
+    { id: "rocket", label: t("rocketLabel"), description: t("comingSoonDesc"), icon: Wallet, enabled: false },
+    { id: "card", label: t("cardLabel"), description: t("comingSoonDesc"), icon: CreditCard, enabled: false },
+  ];
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-[27px] font-bold text-ink">পেমেন্ট মেথড</h1>
-        <p className="mt-1 text-[13px] text-muted">
-          কাস্টমারের কাছ থেকে টাকা নেওয়ার মাধ্যম বেছে নাও
-        </p>
+        <h1 className="font-display text-[27px] font-bold text-ink">{t("pageTitle")}</h1>
+        <p className="mt-1 text-[13px] text-muted">{t("pageSubtitle")}</p>
       </div>
 
       <div className="flex flex-col gap-2.75">
@@ -82,7 +53,7 @@ export function PaymentMethodsView() {
               type="button"
               onClick={() => {
                 if (!m.enabled) {
-                  showToast(`${m.label} — শীঘ্রই আসছে`);
+                  showToast(t("comingSoonToast", m.label));
                   return;
                 }
                 setSelected(m.id);
@@ -113,7 +84,7 @@ export function PaymentMethodsView() {
                 )
               ) : (
                 <span className="shrink-0 rounded-full bg-soft px-2.5 py-1 text-[11px] font-semibold text-muted">
-                  শীঘ্রই আসছে
+                  {t("comingSoonBadge")}
                 </span>
               )}
             </button>

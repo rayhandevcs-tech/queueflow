@@ -4,11 +4,14 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
 import { ReviewsView } from "@/features/provider-reviews/components/ReviewsView";
+import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 
 export default function ReviewsPage() {
   const { data: shop, isPending } = useMyShop();
+  const t = useT(providerCatalogDict);
 
   if (isPending) {
     return (
@@ -22,10 +25,10 @@ export default function ReviewsPage() {
     return (
       <EmptyState
         icon={<Settings className="h-6 w-6" />}
-        title="আগে তোমার শপ সেট আপ করো"
+        title={t("noShopTitle")}
         action={
           <Link href="/settings" className="text-sm font-semibold text-accent hover:underline">
-            সেটিংসে যাও →
+            {t("goToSettings")}
           </Link>
         }
       />

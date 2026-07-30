@@ -1,25 +1,32 @@
 import { z } from "zod";
+import type { Language } from "@/lib/i18n";
+import { resolveDict } from "@/lib/i18n";
+import { VALIDATION } from "@/lib/i18n/validation-messages";
 
-export const completeProfileSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .max(20, "সর্বোচ্চ ২০ ডিজিট")
-    .regex(/^[0-9+\-\s]*$/, "শুধু সংখ্যা, +, - ব্যবহার করা যাবে")
-    .or(z.literal(""))
-    .nullable()
-    .transform((v) => (v === "" || v === null ? null : v)),
-  gender: z
-    .enum(["male", "female", "other"])
-    .nullable()
-    .optional()
-    .transform((v) => v ?? null),
-  avatarUrl: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((v) => v ?? null),
-});
+export function completeProfileSchema(lang: Language) {
+  const m = (key: keyof typeof VALIDATION, ...args: unknown[]) =>
+    resolveDict(VALIDATION, lang, key, ...args);
+  return z.object({
+    phone: z
+      .string()
+      .trim()
+      .max(20, m("max_digits", 20))
+      .regex(/^[0-9+\-\s]*$/, m("phone_digits_only"))
+      .or(z.literal(""))
+      .nullable()
+      .transform((v) => (v === "" || v === null ? null : v)),
+    gender: z
+      .enum(["male", "female", "other"])
+      .nullable()
+      .optional()
+      .transform((v) => v ?? null),
+    avatarUrl: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((v) => v ?? null),
+  });
+}
 
-export type CompleteProfileFormValues = z.input<typeof completeProfileSchema>;
-export type CompleteProfileFormOutput = z.output<typeof completeProfileSchema>;
+export type CompleteProfileFormValues = z.input<ReturnType<typeof completeProfileSchema>>;
+export type CompleteProfileFormOutput = z.output<ReturnType<typeof completeProfileSchema>>;

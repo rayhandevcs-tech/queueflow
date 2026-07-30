@@ -1,4 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { translate } from "@/lib/i18n";
+import { providerCatalogDict } from "../lib/i18n";
 
 const BUCKET = "shop-media";
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -16,10 +18,10 @@ export async function uploadShopImage(
   file: File,
 ): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("শুধু ছবি আপলোড করা যাবে");
+    throw new Error(translate(providerCatalogDict, "onlyImagesAllowed"));
   }
   if (file.size > MAX_BYTES) {
-    throw new Error("ছবি ২ এমবি-র নিচে হতে হবে");
+    throw new Error(translate(providerCatalogDict, "imageTooLarge"));
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -30,7 +32,7 @@ export async function uploadShopImage(
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false });
 
-  if (error) throw new Error("আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো");
+  if (error) throw new Error(translate(providerCatalogDict, "uploadFailedRetry"));
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;
@@ -46,10 +48,10 @@ export async function uploadShopGalleryImage(
   file: File,
 ): Promise<{ url: string; path: string }> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("শুধু ছবি আপলোড করা যাবে");
+    throw new Error(translate(providerCatalogDict, "onlyImagesAllowed"));
   }
   if (file.size > MAX_BYTES) {
-    throw new Error("ছবি ২ এমবি-র নিচে হতে হবে");
+    throw new Error(translate(providerCatalogDict, "imageTooLarge"));
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -60,7 +62,7 @@ export async function uploadShopGalleryImage(
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false });
 
-  if (error) throw new Error("আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো");
+  if (error) throw new Error(translate(providerCatalogDict, "uploadFailedRetry"));
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return { url: data.publicUrl, path };

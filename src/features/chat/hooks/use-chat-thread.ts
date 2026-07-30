@@ -6,7 +6,9 @@ import { keys } from "@/lib/query/keys";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Message } from "@/types";
+import { translate } from "@/lib/i18n";
 import { getThreadMessages, markThreadRead, sendMessage } from "../api/chat.api";
+import { chatDict } from "../lib/i18n";
 
 export function useChatThread(shopId: string | undefined, customerId: string | undefined) {
   const queryClient = useQueryClient();
@@ -61,7 +63,7 @@ export function useChatThread(shopId: string | undefined, customerId: string | u
 
   const send = useMutation({
     mutationFn: (params: { content?: string; imageUrl?: string }) => {
-      if (!shopId || !customerId || !myId) throw new Error("চ্যাট প্রস্তুত না — আবার চেষ্টা করো।");
+      if (!shopId || !customerId || !myId) throw new Error(translate(chatDict, "chatNotReady"));
       return sendMessage({ shopId, customerId, senderId: myId, ...params });
     },
   });

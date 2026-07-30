@@ -9,7 +9,9 @@ import { LiveDot } from "@/components/ui/LiveDot";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtMMSS, formatMoney } from "@/lib/format-wait";
 import { UiDbError } from "@/lib/supabase/db-errors";
+import { useT } from "@/lib/i18n";
 import type { useSerialActions } from "../hooks/use-serial-actions";
+import { providerQueueDict } from "../lib/i18n";
 
 export function NowServingCard({
   serial,
@@ -22,6 +24,7 @@ export function NowServingCard({
   const [error, setError] = useState<string | null>(null);
   const nowMs = useNowMs(1000);
   const services = parseServicesSnapshot(serial.services_snapshot);
+  const t = useT(providerQueueDict);
 
   const startedMs = serial.started_at ? new Date(serial.started_at).getTime() : nowMs;
   const totalSec = serial.estimated_duration_min * 60;
@@ -30,7 +33,7 @@ export function NowServingCard({
 
   const surface = (err: unknown) => {
     if (err instanceof UiDbError && err.silent) return;
-    setError(err instanceof Error ? err.message : "কিছু একটা ভুল হয়েছে");
+    setError(err instanceof Error ? err.message : t("somethingWrong"));
   };
 
   return (
@@ -38,7 +41,7 @@ export function NowServingCard({
       {serial.customer_id && (
         <button
           type="button"
-          title="কাস্টমারকে মেসেজ করো"
+          title={t("messageCustomerTitle")}
           onClick={() => router.push(`/chat/${serial.customer_id}`)}
           className="absolute top-4.5 right-11.5 text-accent-ink/30 hover:text-accent-ink/70"
         >
@@ -47,7 +50,7 @@ export function NowServingCard({
       )}
       <button
         type="button"
-        title="ক্যানসেল করো"
+        title={t("cancelTitle")}
         disabled={actions.cancel.isPending}
         onClick={() => {
           setError(null);
@@ -60,7 +63,7 @@ export function NowServingCard({
 
       <div className="mb-3.5 flex items-center gap-2 text-xs text-accent-ink/60">
         <LiveDot />
-        এখন চলছে · সিরিয়াল #{serial.position}
+        {t("nowServingPrefix")} · {t("serialHash", serial.position)}
       </div>
 
       <div className="flex items-center gap-4">
@@ -76,7 +79,7 @@ export function NowServingCard({
             <span className="font-number text-[26px] leading-none font-bold tracking-tight">
               {fmtMMSS(remainingSec)}
             </span>
-            <span className="mt-1 text-[10px] text-accent-ink/50">বাকি</span>
+            <span className="mt-1 text-[10px] text-accent-ink/50">{t("remainingWord")}</span>
           </div>
         </CountdownRing>
 
@@ -98,7 +101,7 @@ export function NowServingCard({
         }}
         className="mt-4.5 w-full rounded-[14px] bg-accent-ink py-3.5 font-display text-[15px] font-bold text-accent disabled:opacity-60"
       >
-        {actions.complete.isPending ? "হচ্ছে…" : "✓ কাজ সম্পন্ন — পরের জন"}
+        {actions.complete.isPending ? t("doing") : t("jobDoneNext")}
       </button>
 
       <button
@@ -113,7 +116,7 @@ export function NowServingCard({
         }}
         className="mt-2 w-full text-center text-xs font-semibold text-accent-ink/60 disabled:opacity-40"
       >
-        বাকি রেখে সম্পন্ন করো (৳{formatMoney(serial.total_amount)})
+        {t("completeWithDue", formatMoney(serial.total_amount))}
       </button>
 
       {error && <p className="mt-2 text-xs text-accent-ink">{error}</p>}

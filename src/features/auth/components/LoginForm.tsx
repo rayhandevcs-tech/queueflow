@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -9,18 +10,23 @@ import { ROLE_HOME } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { useT, useLanguage } from "@/lib/i18n";
 import { useLogin } from "../hooks/use-login";
 import { loginSchema, type LoginFormValues } from "../schemas/login.schema";
 import { translateAuthError } from "@/lib/auth-errors";
+import { authDict } from "../lib/i18n";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
   const login = useLogin();
+  const { language } = useLanguage();
+  const t = useT(authDict);
 
+  const schema = useMemo(() => loginSchema(language), [language]);
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
 
@@ -41,11 +47,11 @@ export function LoginForm() {
     <form onSubmit={onSubmit} className="w-full space-y-5">
       {resetSuccess && (
         <p className="rounded-lg bg-good-soft px-3 py-2 text-center text-sm font-medium text-good">
-          পাসওয়ার্ড বদলানো হয়েছে — নতুন পাসওয়ার্ড দিয়ে লগইন করো।
+          {t("resetSuccess")}
         </p>
       )}
 
-      <Field label="ইমেইল" error={err.email?.message}>
+      <Field label={t("emailLabel")} error={err.email?.message}>
         <Input
           {...form.register("email")}
           type="email"
@@ -55,7 +61,7 @@ export function LoginForm() {
         />
       </Field>
 
-      <Field label="পাসওয়ার্ড" error={err.password?.message}>
+      <Field label={t("passwordLabel")} error={err.password?.message}>
         <PasswordInput
           {...form.register("password")}
           icon={<Lock className="h-4 w-4" />}
@@ -69,7 +75,7 @@ export function LoginForm() {
           href="/forgot-password"
           className="text-xs font-medium text-accent hover:underline"
         >
-          পাসওয়ার্ড ভুলে গেছো?
+          {t("forgotPassword")}
         </Link>
       </div>
 
@@ -79,7 +85,7 @@ export function LoginForm() {
         loading={login.isPending}
         className="w-full"
       >
-        {login.isPending ? "লগইন হচ্ছে…" : "লগইন"}
+        {login.isPending ? t("loggingIn") : t("login")}
       </Button>
 
       {login.isError && (
@@ -89,9 +95,9 @@ export function LoginForm() {
       )}
 
       <p className="text-center text-sm text-muted">
-        অ্যাকাউন্ট নেই?{" "}
+        {t("noAccount")}{" "}
         <Link href="/register" className="font-semibold text-accent hover:underline">
-          সাইন আপ করো
+          {t("signUp")}
         </Link>
       </p>
     </form>

@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import { useMyNotifications } from "../hooks/use-notifications";
+import { notificationsDict } from "../lib/i18n";
 
 export function NotificationBell({ className }: { className?: string }) {
   const { unreadCount } = useMyNotifications();
+  const t = useT(notificationsDict);
 
   return (
     <Link
       href="/notifications"
-      aria-label="নোটিফিকেশন"
+      aria-label={t("notificationsAria")}
       className={cn("relative grid h-9 w-9 shrink-0 place-items-center rounded-lg", className)}
     >
       <Bell className="h-5 w-5" />

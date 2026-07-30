@@ -5,8 +5,10 @@ import { Armchair } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
 import { useProviderQueue } from "../hooks/use-provider-queue";
 import { useSerialActions } from "../hooks/use-serial-actions";
+import { providerQueueDict } from "../lib/i18n";
 import { BoardHeader } from "./BoardHeader";
 import { ChairColumn } from "./ChairColumn";
 import { WalkInDialog } from "./WalkInDialog";
@@ -15,6 +17,7 @@ export function QueueBoard({ shopId }: { shopId: string }) {
   const { lanes, totals, isPending, isError } = useProviderQueue(shopId);
   const actions = useSerialActions(shopId);
   const [walkInOpen, setWalkInOpen] = useState(false);
+  const t = useT(providerQueueDict);
 
   if (isPending) {
     return (
@@ -25,11 +28,7 @@ export function QueueBoard({ shopId }: { shopId: string }) {
   }
 
   if (isError) {
-    return (
-      <p className="text-sm text-live">
-        বোর্ড লোড করা যায়নি — পেজ রিফ্রেশ করো।
-      </p>
-    );
+    return <p className="text-sm text-live">{t("boardLoadFailed")}</p>;
   }
 
   return (
@@ -39,14 +38,14 @@ export function QueueBoard({ shopId }: { shopId: string }) {
       {lanes.length === 0 ? (
         <EmptyState
           icon={<Armchair className="h-6 w-6" />}
-          title="এখনো কোনো চেয়ার যোগ করা হয়নি"
-          description="লাইভ কিউ শুরু করতে একটা চেয়ার যোগ করো।"
+          title={t("noChairsTitle")}
+          description={t("noChairsDesc")}
           action={
             <Link
               href="/chairs"
               className="text-sm font-semibold text-accent hover:underline"
             >
-              চেয়ার যোগ করো →
+              {t("addChairCta")}
             </Link>
           }
         />

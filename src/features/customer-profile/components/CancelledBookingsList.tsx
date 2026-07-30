@@ -7,6 +7,8 @@ import { parseServicesSnapshot } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatBanglaDate, formatMoney } from "@/lib/format-wait";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useT } from "@/lib/i18n";
+import { customerProfileDict } from "../lib/i18n";
 
 export function CancelledBookingsList({
   bookings,
@@ -16,13 +18,14 @@ export function CancelledBookingsList({
   shopsById: Record<string, Shop>;
 }) {
   const router = useRouter();
+  const t = useT(customerProfileDict);
 
   if (bookings.length === 0) {
     return (
       <EmptyState
         icon={<Store className="h-6 w-6" />}
-        title="বাতিল হওয়া কোনো সিরিয়াল নেই"
-        description="বাতিল বা মিস হওয়া সিরিয়াল এখানে দেখতে পাবে।"
+        title={t("noCancelledTitle")}
+        description={t("noCancelledDesc")}
       />
     );
   }
@@ -43,7 +46,7 @@ export function CancelledBookingsList({
                 {shop ? shopInitial(shop.name) : <Store className="h-4 w-4" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-ink">{shop?.name ?? "দোকান"}</p>
+                <p className="truncate text-[13px] font-semibold text-ink">{shop?.name ?? t("shopFallback")}</p>
                 <p className="truncate text-[11px] text-muted">
                   {shop?.address ? `${shop.address} · ` : ""}
                   {formatBanglaDate(new Date(s.created_at))}
@@ -63,7 +66,7 @@ export function CancelledBookingsList({
                 onClick={() => router.push(`/explore/${s.shop_id}?services=${s.service_ids.join(",")}`)}
                 className="mt-3 w-full rounded-[12px] bg-accent py-2.5 text-[13px] font-bold text-accent-ink"
               >
-                আবার বুক করুন
+                {t("bookAgain")}
               </button>
             )}
           </div>

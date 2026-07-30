@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
+import { customerExploreDict } from "../lib/i18n";
 
 export type LocationStatus = "idle" | "prompt" | "locating" | "granted" | "denied" | "unsupported";
 
@@ -21,11 +23,12 @@ export function useUserLocation(): UserLocationState {
       : "prompt",
   );
   const [error, setError] = useState<string | null>(null);
+  const t = useT(customerExploreDict);
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setStatus("unsupported");
-      setError("এই ব্রাউজার লোকেশন সাপোর্ট করে না।");
+      setError(t("locationUnsupported"));
       return;
     }
     setStatus("locating");
@@ -37,10 +40,10 @@ export function useUserLocation(): UserLocationState {
       },
       () => {
         setStatus("denied");
-        setError("লোকেশন পাওয়া যায়নি — ম্যানুয়ালি বেছে নাও।");
+        setError(t("locationDenied"));
       },
     );
-  }, []);
+  }, [t]);
 
   const setManualLocation = useCallback((lat: number, lng: number) => {
     setCoords({ lat, lng });
