@@ -32,7 +32,14 @@
 1. **লেআউট রিইউজ, স্টাইল সোয়াপ:** বিদ্যমান লেআউট স্ট্রাকচার/কম্পোনেন্ট অক্ষত; শুধু **কালার টোকেন + কম্পোনেন্ট স্টাইল** Signature-স্টাইলে (লাল/কোরাল #E85B5B ঘরানা, সাদা কার্ড, নরম শ্যাডো, ফুল-পিল বাটন) বদলাবে। নতুন স্ক্রিনে Signature-এর প্যাটার্ন: বটম-শিট, চিপ পিকার, হরাইজন্টাল ট্যাব বার, হিরো হেডার + ফ্লোটিং রেটিং ব্যাজ, স্টিকি বটম CTA।
 2. **প্রোভাইডার UI:** সাইডবার লেআউট থাকবে, কিন্তু সাদা/লাইট থিমে (বাকি অ্যাপের সাথে সামঞ্জস্যপূর্ণ) — accent Signature-রেডে; ডার্ক chrome আর না (Sprint 1-এ ছিল, পরে বাদ দেওয়া হয়েছে)।
 3. **পেমেন্ট:** রিয়েল গেটওয়ে **এখন না** — Payment Methods UI-তে Cash/bKash/Nagad/Rocket/Card অপশন থাকবে (অনলাইনগুলো "শীঘ্রই আসছে"), mock ইন্টারফেস অক্ষত, পরে গেটওয়ে সোয়াপ।
-4. **ভাষা:** সব UI টেক্সট বাংলা; ইংরেজি টগল Sprint 10-এ।
+4. **ভাষা (Sprint 10 থেকে বাধ্যতামূলক নিয়ম — ভবিষ্যতের সব ফিচারে প্রযোজ্য):** অ্যাপে হালকা কাস্টম bilingual সিস্টেম আছে (`src/lib/i18n/`, কোনো heavy dependency ছাড়া) — ডিফল্ট বাংলা, টগলে ইংরেজি, পছন্দ `localStorage`-এ persist। **নতুন যেকোনো UI টেক্সট এই প্যাটার্ন ছাড়া লেখা যাবে না:**
+   - প্রতিটা ফিচারের নিজস্ব `lib/i18n.ts`-এ `{bn, en}` key যোগ করো (`satisfies Dict`); কম্পোনেন্টে `useT(dict)` দিয়ে পড়ো। নতুন ফিচার হলে নতুন dict বানাও।
+   - কোনো স্ট্রিং প্যারামিটার নিলে entry-টা ফাংশন করো: `{ bn: (n) => \`${n}টা\`, en: (n) => \`${n} items\` }`।
+   - কম্পোনেন্টের বাইরে (api.ts/hook/module-scope helper) স্ট্রিং লাগলে `translate(dict, "key", ...)` — `useT()` না, ওটা হুক।
+   - নতুন zod ভ্যালিডেশন স্কিমা static const না, factory ফাংশন: `export function xSchema(lang: Language) {...}`, কমন মেসেজ `resolveDict(VALIDATION, lang, "key")` (`src/lib/i18n/validation-messages.ts`); ফর্মে `useMemo(() => xSchema(language), [language])`।
+   - কখনোই কোনো translate() করা টেক্সট module-scope static array/object-এ বেক করে রাখবে না (import-time ভাষায় আটকে যায়, টগলে বদলায় না) — component-এর ভেতরে বানাও বা lazily resolve করো।
+   - ইউজার-জেনারেটেড কন্টেন্ট (রিভিউ কমেন্ট, অফার-টাইটেল, চ্যাট মেসেজ) আর DB-ট্রিগার-জেনারেটেড নোটিফিকেশন টেক্সট অনুবাদ করার দরকার নেই — শুধু অ্যাপের নিজস্ব UI কপি bilingual হবে।
+   - পুরো আর্কিটেকচার+উদাহরণ Sprint 10-এর নোটে (নিচে) ও memory-তে ([[project_palaa_i18n_architecture]]) আছে।
 5. **প্রতি স্প্রিন্টে বাধ্যতামূলক:** মোবাইল-ফার্স্ট রেসপনসিভ (ছোট ফোন → ট্যাবলেট → ডেস্কটপ) · ইউজার-ফ্রেন্ডলি (লোডিং/এম্পটি/এরর স্টেট সহ) · বিদ্যমান ফিচার রিগ্রেশন নয় · নতুন টেবিলে মাইগ্রেশন (`supabase/migrations/`) + RLS পলিসি · `npm run build` ও lint সবুজ করে কমিট · এই ফাইলের চেকবক্স আপডেট।
 6. **স্ট্যাক বদলানো যাবে না;** ভারী নতুন ডিপেন্ডেন্সি এড়ানো হবে।
 7. **বাদ (ব্যাকলগে):** সোশ্যাল ফলোয়ার লেয়ার, প্যাকেজ/বান্ডেল, social login, ইন-অ্যাপ টার্ন-বাই-টার্ন রুট/geofence, PayPal/Apple Pay।
@@ -132,12 +139,16 @@
 - [x] ইংরেজি অনুবাদ + সেটিংসে ভাষা সিলেক্টর; ডিফল্ট বাংলা; প্রেফারেন্স persist
   - (নোট: হালকা কাস্টম i18n (`src/lib/i18n/`) — কোনো নতুন heavy dependency ছাড়া। প্রতিটা ফিচারের নিজস্ব `lib/i18n.ts` ডিকশনারি (`{bn, en}` per key), শেয়ার্ড `useT()`/`translate()`/`resolveDict()` হেল্পার। ভাষা পছন্দ `localStorage`-এ persist হয় (ডিভাইস-লোকাল, লগইন-নির্ভর না)। Zod স্কিমাগুলো factory function-এ রূপান্তরিত হয়েছে (`xSchema(lang)`) যাতে ভ্যালিডেশন মেসেজও ভাষা-সচেতন থাকে। `format-wait.ts`/`weekly-hours.ts`/`date-groups.ts` এখন ভাষা-সচেতন internally, তাই কল-সাইট বদলাতে হয়নি। ইউজার-জেনারেটেড কন্টেন্ট (রিভিউ কমেন্ট, অফার টাইটেল, চ্যাট মেসেজ, DB ট্রিগার-জেনারেটেড নোটিফিকেশন টেক্সট) ইচ্ছাকৃতভাবে অনুবাদ করা হয়নি — শুধু অ্যাপের নিজস্ব UI কপি।)
 
-### Sprint 11 — টেস্টিং ও হার্ডেনিং
+### Sprint 11 — টেস্টিং ও হার্ডেনিং ✅
 
-- [ ] ETA ক্যালকুলেশন ইউনিট টেস্ট (serial N wait = current remaining + Σ আগেরদের service minutes)
-- [ ] one-active-serial এনফোর্সমেন্ট টেস্ট
-- [ ] কী-ফ্লো: বুকিং → লাইভ ট্র্যাকিং → Done → ইনকাম/নোটিফিকেশন আপডেট
-- [ ] RLS রিভিউ (নতুন টেবিলসহ), এজ-কেস (দোকান বন্ধ হলে active serial, ক্যানসেল রেস)
+- [x] ETA ক্যালকুলেশন ইউনিট টেস্ট (serial N wait = current remaining + Σ আগেরদের service minutes)
+- [x] one-active-serial এনফোর্সমেন্ট টেস্ট
+- [x] কী-ফ্লো: বুকিং → লাইভ ট্র্যাকিং → Done → ইনকাম/নোটিফিকেশন আপডেট
+- [x] RLS রিভিউ (নতুন টেবিলসহ), এজ-কেস (দোকান বন্ধ হলে active serial, ক্যানসেল রেস)
+  - (নোট: **বড় আবিষ্কার** — পুরো কিউ ইঞ্জিন, `serial_before_insert`/`serial_before_update`/`serial_after_insert`/`serial_after_update`/`sync_queue_public`/`recalc_queue_estimates`/`assign_best_chair`/`estimate_duration_on_chair`/`chair_backlog_min`/`is_shop_owner`/`enforce_provider_owner`/`lock_profile_role` ট্রিগার-ফাংশন, `one_active_serial_per_customer`/`one_in_progress_per_chair` কনস্ট্রেইন্ট, আর `shops`/`services`/`chairs`/`chair_service_stats`/`serials`/`profiles`-এর RLS পলিসি — এসবের কোনো SQL এই রিপোর কোনো migration-এ ছিলই না (লাইভ Supabase ড্যাশবোর্ডে সরাসরি বসানো, রিপোর হিস্ট্রির আগে থেকেই)। Read-only SQL দিয়ে লাইভ প্রজেক্ট থেকে সব ফাংশন/ট্রিগার/কনস্ট্রেইন্ট/পলিসি বের করে **`supabase/migrations/20260730_capture_baseline_queue_engine.sql`**-এ idempotent বেসলাইন হিসেবে ক্যাপচার করা হয়েছে (আচরণ বদলায় না, শুধু ভার্শন-কন্ট্রোলে আনে)।
+  - **`recalc_queue_estimates(chair_id)`**-ই আসল ETA ফর্মুলা: চেয়ারের WAITING/IN_PROGRESS রো position-অনুযায়ী হেঁটে, IN_PROGRESS জবের বাকি সময় থেকে কার্সার শুরু করে প্রতিটা WAITING রো-তে `estimated_start_at = কার্সার` বসায়, তারপর কার্সার ওই রো-র duration দিয়ে এগোয় — ঠিক "বাকি + আগেরদের যোগফল" সূত্র। যেহেতু লোকাল Postgres/CLI নেই, এই SQL ফাংশনের সরাসরি ইউনিট টেস্ট সম্ভব না — তার বদলে ক্লায়েন্ট-সাইড প্রতিফলন (`src/lib/queue-wait.ts`-এর `chairFreeAtMs`/`minutesUntil`, যেগুলো `estimated_start_at`-ই কনজিউম করে) আর one-active-serial-এর error-contract (`src/lib/supabase/db-errors.ts`-এর `translateDbError`) Vitest দিয়ে ইউনিট-টেস্ট করা হয়েছে (নতুন dev dependency, "ভারী নতুন ডিপেন্ডেন্সি এড়ানো"-র সচেতন ব্যতিক্রম) — মোট ৫টা টেস্ট ফাইল, ৪৯টা টেস্ট (queue-wait, db-errors, provider-income/customer-profile/provider-analytics-এর compute-* ফাংশন)। `npm test` স্ক্রিপ্ট যোগ হয়েছে।
+  - **RLS রিভিউয়ে একটা আসল বাগ পাওয়া গেছে ও ফিক্স করা হয়েছে:** `chairs` টেবিলে দুইটা permissive SELECT পলিসি ছিল — একটা `is_active = true` কন্ডিশনসহ, আরেকটা শর্তহীন (`true`)। Postgres একই কমান্ডের একাধিক permissive পলিসি **OR** দিয়ে মেশায়, তাই শর্তহীন পলিসিটা `is_active` রেস্ট্রিকশনকে অকেজো করে দিচ্ছিল — ইনঅ্যাক্টিভ (সরানো) চেয়ারও পাবলিকলি দেখা যাচ্ছিল। ফিক্স: **`supabase/migrations/20260730_fix_chairs_public_read_rls.sql`** (আলাদা, ছোট migration যেহেতু এটা সত্যিকারের বিহেভিয়ার বদলায়) — বাকি সব পলিসি (shops/services/serials/profiles/chair_service_stats) রিভিউ করে ঠিক পাওয়া গেছে (customer শুধু নিজের সিরিয়াল CANCELLED-এ নিতে পারে, provider শুধু নিজের শপ ম্যানেজ করতে পারে, cross-user/cross-shop কোনো লিক নেই)।
+  - **এজ-কেস লাইভ Playwright QA দিয়ে ভেরিফাইড** (দুই টেস্ট অ্যাকাউন্টে, শুধু Karim-এর চেয়ার, Rahim/Md. Rayhan-এর real বুকিং অস্পৃষ্ট): (১) one-active-serial — শপ-স্কোপড ক্লায়েন্ট গার্ড দ্বিতীয় বুকিং আটকায় সুন্দরভাবে ("তোমার এই দোকানে ইতিমধ্যে একটা সিরিয়াল আছে"), DB-লেভেলে গ্লোবাল (সব শপ জুড়ে) পার্শিয়াল ইউনিক ইনডেক্স দিয়ে এনফোর্সড। (২) কী-ফ্লো: বুকিং→লাইভ ট্র্যাকিং→provider Start (নোটিফিকেশন YOUR_TURN+SERIAL_CONFIRMED ফায়ার্ড)→Done→ইনকাম ৳750→৳900 আপডেট, সব কনফার্মড। (৩) শপ বন্ধ এজ-কেস: **বাগ না, ডিজাইন অনুযায়ী** — শপ বন্ধ করলে বিদ্যমান অ্যাক্টিভ সিরিয়াল স্বাভাবিকভাবে চলতে থাকে (লাইভ ট্র্যাকিং/প্রোভাইডার Start-Done সবই কাজ করে), শুধু নতুন বুকিং আটকায়, স্পষ্ট মেসেজসহ ("শপ এখন বন্ধ — এই মুহূর্তে বুকিং করা যাচ্ছে না") — কোনো ফিক্স লাগেনি। (৪) ক্যানসেল রেস: কাস্টমার cancel + provider Start প্রায় একসাথে ফায়ার করে দেখা হয়েছে — realtime দিয়ে ক্লিনভাবে reconcile হয়, কোনো ক্র্যাশ/ঝুলে-থাকা স্টেট/এরর টোস্ট আটকে থাকেনি।)
 
 ---
 
