@@ -29,15 +29,36 @@ create policy "push_subscriptions: manage own" on public.push_subscriptions for 
 -- ---------------------------------------------------------------------------
 -- Webhook: every new notifications row calls the app's /api/push/send route,
 -- which looks up that user's push_subscriptions and delivers a real browser push.
--- supabase_functions.http_request is Supabase's built-in pg_net-backed helper —
--- no Edge Function or Dashboard webhook config needed, this trigger is the whole thing.
+--
+-- Uses pg_net directly (net.http_post) rather than the Dashboard's "Database
+-- Webhooks" feature (supabase_functions.http_request) — that schema is only
+-- provisioned once a project has opened the Webhooks tab in the Dashboard at
+-- least once, so a fresh project won't have it yet. pg_net is a plain Postgres
+-- extension any project can self-enable via SQL, so this trigger works with no
+-- Dashboard-UI step at all.
 -- ---------------------------------------------------------------------------
+create extension if not exists pg_net;
+
+create or replace function public.notify_push_webhook()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform net.http_post(
+    url := 'https://queueflow-delta.vercel.app/api/push/send',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'x-push-webhook-secret', '<PUSH_WEBHOOK_SECRET>'
+    ),
+    body := jsonb_build_object('record', to_jsonb(new)),
+    timeout_milliseconds := 5000
+  );
+  return new;
+end;
+$$;
+
 drop trigger if exists notifications_push_webhook on public.notifications;
 create trigger notifications_push_webhook after insert on public.notifications
-  for each row execute function supabase_functions.http_request(
-    'https://queueflow-delta.vercel.app/api/push/send',
-    'POST',
-    '{"Content-type":"application/json","x-push-webhook-secret":"<PUSH_WEBHOOK_SECRET>"}',
-    '{}',
-    '5000'
-  );
+  for each row execute function public.notify_push_webhook();
