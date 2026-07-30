@@ -92,6 +92,20 @@ const RULES: ReadonlyArray<{
     match: (t) => t.includes("এই সিরিয়ালে বাকি নেই"),
     result: { message: "", silent: true },
   },
+  {
+    match: (t) => t.includes("রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে"),
+    result: {
+      message: "এই কাস্টমার রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে।",
+      silent: false,
+    },
+  },
+  {
+    match: (t) => t.includes("তোমার নামে দোকান আছে"),
+    result: {
+      message: "তোমার নামে দোকান আছে — অ্যাকাউন্ট মুছার আগে সাপোর্টে যোগাযোগ করো।",
+      silent: false,
+    },
+  },
 ];
 
 const FALLBACK: FriendlyDbError = {

@@ -77,7 +77,12 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                           setJustReminded((prev) => new Set(prev).add(g.key));
                           showToast("🔔 রিমাইন্ডার পাঠানো হয়েছে");
                         },
-                        onError: () => showToast("রিমাইন্ডার পাঠানো যায়নি — আবার চেষ্টা করো"),
+                        onError: (err) =>
+                          showToast(
+                            err instanceof Error && err.message
+                              ? err.message
+                              : "রিমাইন্ডার পাঠানো যায়নি — আবার চেষ্টা করো",
+                          ),
                       });
                     }}
                     className="grid h-9 w-9 place-items-center rounded-xl border border-line text-muted disabled:opacity-40"

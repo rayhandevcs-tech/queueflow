@@ -18,6 +18,7 @@ export type Database = {
           gender: string | null;
           avatar_url: string | null;
           onboarding_completed_at: string | null;
+          notification_prefs: Json;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +30,7 @@ export type Database = {
           gender?: string | null;
           avatar_url?: string | null;
           onboarding_completed_at?: string | null;
+          notification_prefs?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -38,6 +40,7 @@ export type Database = {
           gender?: string | null;
           avatar_url?: string | null;
           onboarding_completed_at?: string | null;
+          notification_prefs?: Json;
         };
         Relationships: [];
       };
@@ -443,6 +446,14 @@ export type Database = {
       };
       send_due_reminder: {
         Args: { p_serial_id: string };
+        Returns: void;
+      };
+      notification_enabled: {
+        Args: { p_user_id: string; p_type: string };
+        Returns: boolean;
+      };
+      delete_my_account: {
+        Args: Record<PropertyKey, never>;
         Returns: void;
       };
     };

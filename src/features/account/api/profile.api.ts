@@ -1,5 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { Profile } from "@/types";
+import type { NotificationPrefs, Profile } from "@/types";
 import type { ProfileFormOutput } from "../schemas/profile.schema";
 
 export async function getMyProfile(): Promise<Profile | null> {
@@ -47,6 +47,24 @@ export async function updateMyAvatar(avatarUrl: string): Promise<Profile> {
   const { data, error } = await supabase
     .from("profiles")
     .update({ avatar_url: avatarUrl })
+    .eq("id", user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMyNotificationPrefs(prefs: NotificationPrefs): Promise<Profile> {
+  const supabase = getBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ notification_prefs: prefs })
     .eq("id", user.id)
     .select()
     .single();

@@ -26,6 +26,9 @@ export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 export type BusinessType = Database["public"]["Enums"]["business_type"];
 export type { TablesInsert, TablesUpdate, Json } from "./database.types";
 
+/** profiles.notification_prefs: missing key / non-false value = enabled (opt-out model). */
+export type NotificationPrefs = Partial<Record<NotificationType, boolean>>;
+
 /** Shape of one element inside serials.services_snapshot (frozen at booking). */
 export type ServiceSnapshotItem = {
   service_id: string;

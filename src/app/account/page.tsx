@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, LogOut } from "lucide-react";
+import { Bell, ChevronLeft, HelpCircle, LogOut, ScrollText, Shield, Undo2 } from "lucide-react";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { ProfileForm } from "@/features/account/components/ProfileForm";
 import { ChangePasswordForm } from "@/features/account/components/ChangePasswordForm";
+import { DeleteAccountSection } from "@/features/account/components/DeleteAccountSection";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { ROLES } from "@/config/constants";
 import type { UserRole } from "@/types";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { SettingsRow } from "@/components/ui/SettingsRow";
 import { CustomerShell } from "@/app/(customer)/_components/CustomerShell";
 import { ProviderShell } from "@/app/(provider)/_components/ProviderShell";
 
@@ -83,6 +85,14 @@ function AccountContent({ backHref }: { backHref: string }) {
         <ChangePasswordForm />
       </div>
 
+      <div className="mt-4 rounded-[18px] border border-line bg-card p-2">
+        <SettingsRow href="/notification-settings" icon={<Bell className="h-4.5 w-4.5" />} label="নোটিফিকেশন সেটিংস" />
+        <SettingsRow href="/help" icon={<HelpCircle className="h-4.5 w-4.5" />} label="হেল্প সেন্টার" />
+        <SettingsRow href="/privacy" icon={<Shield className="h-4.5 w-4.5" />} label="গোপনীয়তা নীতি" />
+        <SettingsRow href="/terms" icon={<ScrollText className="h-4.5 w-4.5" />} label="ব্যবহারের শর্তাবলী" />
+        <SettingsRow href="/cancellation-policy" icon={<Undo2 className="h-4.5 w-4.5" />} label="বাতিল নীতি" />
+      </div>
+
       <Button
         variant="danger"
         size="lg"
@@ -92,6 +102,10 @@ function AccountContent({ backHref }: { backHref: string }) {
         <LogOut className="h-4 w-4" />
         লগ-আউট
       </Button>
+
+      <div className="mt-3">
+        <DeleteAccountSection />
+      </div>
 
       <ConfirmSheet
         open={logoutConfirmOpen}
