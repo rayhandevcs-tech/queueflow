@@ -55,6 +55,9 @@ export const keys = {
   favorites: {
     mine: () => ["favorites", "mine"] as const,
   },
+  pushSubscription: {
+    mine: () => ["push-subscription", "mine"] as const,
+  },
   offers: {
     byShop: (shopId: string) => ["offers", shopId] as const,
     activeCarousel: () => ["offers", "active-carousel"] as const,

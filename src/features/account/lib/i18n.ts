@@ -45,6 +45,32 @@ export const accountDict = {
   reminderLabel: { bn: "রিমাইন্ডার", en: "Reminders" },
   reminderHint: { bn: "বাকি টাকা ও আবার আসার রিমাইন্ডার", en: "Due-balance and come-back reminders" },
 
+  pushSectionTitle: { bn: "পুশ নোটিফিকেশন", en: "Push notifications" },
+  pushSectionHint: {
+    bn: "অ্যাপ বন্ধ থাকলেও তোমার ডিভাইসে নোটিফিকেশন পৌঁছাবে।",
+    en: "Get notified on this device even when the app is closed.",
+  },
+  pushEnableCta: { bn: "চালু করো", en: "Enable" },
+  pushDisableCta: { bn: "বন্ধ করো", en: "Disable" },
+  pushEnabling: { bn: "চালু হচ্ছে…", en: "Enabling…" },
+  pushDisabling: { bn: "বন্ধ হচ্ছে…", en: "Disabling…" },
+  pushEnabledStatus: { bn: "এই ডিভাইসে চালু আছে", en: "Enabled on this device" },
+  pushUnsupported: {
+    bn: "এই ব্রাউজার পুশ নোটিফিকেশন সাপোর্ট করে না।",
+    en: "This browser doesn't support push notifications.",
+  },
+  pushPermissionDenied: {
+    bn: "ব্রাউজারে নোটিফিকেশন পারমিশন বন্ধ আছে — ব্রাউজার সেটিংস থেকে চালু করে আবার চেষ্টা করো।",
+    en: "Notification permission is blocked — enable it in your browser settings and try again.",
+  },
+  pushSubscribeFailed: { bn: "চালু করা যায়নি — আবার চেষ্টা করো।", en: "Couldn't enable — try again." },
+
+  installPromptTitle: { bn: "হোমস্ক্রিনে যোগ করো", en: "Add to Home Screen" },
+  installPromptIOSHint: {
+    bn: "আইফোনে ইনস্টল করতে Share বাটনে চেপে \"Add to Home Screen\" বেছে নাও।",
+    en: 'On iPhone, tap the Share button and choose "Add to Home Screen".',
+  },
+
   // Account page
   accountTitle: { bn: "অ্যাকাউন্ট ও সেটিংস", en: "Account & Settings" },
   profileLoadFailed: { bn: "তোমার প্রোফাইল লোড করা যায়নি।", en: "Couldn't load your profile." },
