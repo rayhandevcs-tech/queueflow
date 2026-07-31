@@ -18,6 +18,7 @@ export function CustomerBottomNav({ className }: { className?: string }) {
     <nav className={cn("fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card lg:hidden", className)}>
       <div className="mx-auto flex max-w-md px-6 pb-6 pt-2.5">
         {CUSTOMER_NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
@@ -28,13 +29,18 @@ export function CustomerBottomNav({ className }: { className?: string }) {
                 active ? "font-bold text-accent" : "font-medium text-muted",
               )}
             >
-              <span className="relative text-[19px] leading-none">
-                {item.icon}
+              <span
+                className={cn(
+                  "relative grid h-7.5 w-7.5 place-items-center rounded-[11px] transition-colors",
+                  active && "bg-accent/10",
+                )}
+              >
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.3 : 1.8} />
                 {item.href === "/my-serial" && activeSerial && (
-                  <span className="absolute -right-1 -top-0.5 h-1.75 w-1.75 rounded-full bg-live" />
+                  <span className="absolute right-1 top-1 h-1.75 w-1.75 rounded-full bg-live ring-2 ring-card" />
                 )}
                 {item.href === "/chats" && unreadChatCount > 0 && (
-                  <span className="absolute -right-1 -top-0.5 h-1.75 w-1.75 rounded-full bg-accent" />
+                  <span className="absolute right-1 top-1 h-1.75 w-1.75 rounded-full bg-accent ring-2 ring-card" />
                 )}
               </span>
               {item.label[language]}
