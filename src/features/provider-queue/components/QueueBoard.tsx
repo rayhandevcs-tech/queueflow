@@ -50,7 +50,7 @@ export function QueueBoard({ shopId }: { shopId: string }) {
           }
         />
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
           {lanes.map((lane) => (
             <ChairColumn
               key={lane.chair.id}
