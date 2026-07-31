@@ -79,6 +79,17 @@ export const ROLE_LABEL: Record<UserRole, { bn: string; en: string }> = {
   provider: { bn: "দোকানদার", en: "Provider" },
 };
 
+/**
+ * Single source for which payment methods the app currently supports.
+ * Only "cash" is enabled today (bKash/Nagad/Rocket/Card show as "coming
+ * soon" on the payment-methods screen) — Sprint 18 moves this to real
+ * per-shop settings; until then this is the one place both the settings
+ * screen and the queue board's payment sheet read from.
+ */
+export const PAYMENT_METHOD_VALUES = ["cash", "bkash", "nagad", "rocket", "card"] as const;
+export type PaymentMethodValue = (typeof PAYMENT_METHOD_VALUES)[number];
+export const ENABLED_PAYMENT_METHODS: readonly PaymentMethodValue[] = ["cash"];
+
 export const CHAIR_COLORS = [
   "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444",
   "#8b5cf6", "#ec4899", "#14b8a6", "#64748b",

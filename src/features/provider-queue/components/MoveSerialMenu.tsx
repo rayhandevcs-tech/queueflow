@@ -6,8 +6,10 @@ import { ArrowLeftRight, ChevronDown } from "lucide-react";
 import { keys } from "@/lib/query/keys";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { ChairServiceStat, Serial } from "@/types";
 import type { Lane } from "../lib/lanes";
+import { providerQueueDict } from "../lib/i18n";
 
 async function getStats(shopId: string): Promise<ChairServiceStat[]> {
   const supabase = getBrowserClient();
@@ -28,6 +30,7 @@ interface Props {
 
 export function MoveSerialMenu({ serial, lanes, moving, onMove }: Props) {
   const [open, setOpen] = useState(false);
+  const t = useT(providerQueueDict);
 
   const { data: stats } = useQuery({
     queryKey: keys.chairStats.byShop(serial.shop_id),
@@ -58,7 +61,7 @@ export function MoveSerialMenu({ serial, lanes, moving, onMove }: Props) {
         className="flex min-h-9 items-center gap-1 rounded-lg bg-soft px-3 text-sm font-semibold text-muted transition hover:bg-line disabled:opacity-50"
       >
         <ArrowLeftRight className="h-3.5 w-3.5" />
-        {moving ? "Moving…" : "Move"}
+        {moving ? t("movingCta") : t("moveCta")}
         <ChevronDown className="h-3 w-3" />
       </button>
 
@@ -71,9 +74,7 @@ export function MoveSerialMenu({ serial, lanes, moving, onMove }: Props) {
           />
           <div className="absolute right-0 z-20 mt-1.5 w-48 overflow-hidden rounded-xl border border-line bg-card shadow-lg">
             {eligibleLanes.length === 0 && (
-              <p className="p-3 text-xs text-muted">
-                No eligible chair to move to
-              </p>
+              <p className="p-3 text-xs text-muted">{t("noEligibleChair")}</p>
             )}
             {eligibleLanes.map((lane) => (
               <button
@@ -91,9 +92,7 @@ export function MoveSerialMenu({ serial, lanes, moving, onMove }: Props) {
                 <span className="min-w-0 flex-1 truncate">
                   {lane.chair.staff_name || lane.chair.label}
                 </span>
-                <span className="text-xs text-muted">
-                  ~{lane.backlogMin} min
-                </span>
+                <span className="text-xs text-muted">{t("backlogSuffixMin", lane.backlogMin)}</span>
               </button>
             ))}
           </div>

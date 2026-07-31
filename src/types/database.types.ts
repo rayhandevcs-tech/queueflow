@@ -299,6 +299,9 @@ export type Database = {
           due_amount: number;
           due_collected_at: string | null;
           due_reminded_at: string | null;
+          payment_method: string | null;
+          extended_min: number;
+          customer_avatar_url: string | null;
         };
         Insert: {
           id?: string;
@@ -322,6 +325,9 @@ export type Database = {
           due_amount?: number;
           due_collected_at?: string | null;
           due_reminded_at?: string | null;
+          payment_method?: string | null;
+          extended_min?: number;
+          estimated_duration_min?: number;
         };
         Relationships: [];
       };

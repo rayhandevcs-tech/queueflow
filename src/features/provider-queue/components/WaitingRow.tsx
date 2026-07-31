@@ -8,6 +8,7 @@ import { useNowMs } from "@/hooks/use-now";
 import { fmtWait, formatMoney } from "@/lib/format-wait";
 import { UiDbError } from "@/lib/supabase/db-errors";
 import { cn } from "@/lib/utils";
+import { AvatarChip } from "@/components/ui/AvatarChip";
 import { useT } from "@/lib/i18n";
 import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
@@ -47,8 +48,16 @@ export function WaitingRow({
   return (
     <div className="rounded-2xl border border-line bg-card p-3.5">
       <div className="flex items-center gap-4">
-        <div className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl bg-soft font-number text-base font-bold text-ink">
-          {serial.position}
+        <div className="relative shrink-0">
+          <AvatarChip
+            label={serial.customer_name}
+            avatarUrl={serial.customer_avatar_url}
+            shape="circle"
+            size={38}
+          />
+          <span className="absolute -right-1 -bottom-1 grid h-5 w-5 place-items-center rounded-full border-2 border-card bg-ink font-number text-[10px] font-bold text-white">
+            {serial.position}
+          </span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

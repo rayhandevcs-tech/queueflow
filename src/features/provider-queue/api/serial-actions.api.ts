@@ -25,28 +25,41 @@ export const startSerial = (serialId: string) =>
   patchSerial(serialId, { status: "IN_PROGRESS" });
 
 /**
- * due omitted → the common case: cash (or whatever) was collected in hand,
- * marked PAID and counted toward income immediately.
- * due passed → provider left the balance outstanding ("বাকি রেখে সম্পন্ন
- * করো"); it shows up in the due ledger until marked collected there.
+ * `{ method }` → paid in full right now via that method, marked PAID and
+ * counted toward income immediately.
+ * `{ due: amount }` → provider left the balance outstanding ("বাকি"); it
+ * shows up in the due ledger until marked collected there. No method is
+ * recorded yet since nothing was actually collected.
  */
-export const completeSerial = (serialId: string, due?: { amount: number }) =>
+export const completeSerial = (
+  serialId: string,
+  payment: { method: string } | { due: number },
+) =>
   patchSerial(
     serialId,
-    due
+    "due" in payment
       ? {
           status: "DONE",
           payment_status: "DUE",
-          due_amount: due.amount,
+          due_amount: payment.due,
           due_collected_at: null,
+          payment_method: null,
         }
       : {
           status: "DONE",
           payment_status: "PAID",
           due_amount: 0,
           due_collected_at: new Date().toISOString(),
+          payment_method: payment.method,
         },
   );
+
+/** Manual time-extension on a running job — the DB trigger recalculates every ETA behind it. */
+export const extendSerialTime = (serialId: string, newDuration: number, newExtended: number) =>
+  patchSerial(serialId, {
+    estimated_duration_min: newDuration,
+    extended_min: newExtended,
+  });
 
 export const markNoShow = (serialId: string) =>
   patchSerial(serialId, { status: "NO_SHOW" });

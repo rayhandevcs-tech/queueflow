@@ -12,18 +12,36 @@ export const providerQueueDict = {
     en: (n: number) => `Serial #${n}`,
   },
   remainingWord: { bn: "বাকি", en: "left" },
-  doing: { bn: "হচ্ছে…", en: "Working…" },
   jobDoneNext: { bn: "✓ কাজ সম্পন্ন — পরের জন", en: "✓ Job done — next" },
-  completeWithDue: {
-    bn: (amount: string) => `বাকি রেখে সম্পন্ন করো (৳${amount})`,
-    en: (amount: string) => `Complete, leave due (৳${amount})`,
+  extendedByLabel: {
+    bn: (n: number) => `+${n} মিনিট বাড়ানো হয়েছে`,
+    en: (n: number) => `+${n} min added`,
   },
+  extendCustomLabel: { bn: "কাস্টম", en: "Custom" },
+  extendCustomPlaceholder: { bn: "মিনিট", en: "Minutes" },
+  extendConfirm: { bn: "যোগ করো", en: "Add" },
+  extendCancel: { bn: "বাতিল", en: "Cancel" },
+
+  // PaymentConfirmSheet
+  paymentSheetTitle: { bn: "পেমেন্ট নিশ্চিত করো", en: "Confirm payment" },
+  cashOption: { bn: "ক্যাশ", en: "Cash" },
+  bkashOption: { bn: "বিকাশ", en: "bKash" },
+  nagadOption: { bn: "নগদ", en: "Nagad" },
+  rocketOption: { bn: "রকেট", en: "Rocket" },
+  cardOption: { bn: "কার্ড", en: "Card" },
+  dueOption: { bn: "বাকি", en: "Due" },
+  confirmPaymentCta: { bn: "নিশ্চিত করো", en: "Confirm" },
 
   // WaitingRow
   walkInBadge: { bn: "ওয়াক-ইন", en: "Walk-in" },
   advancePaidBadge: { bn: "✓ অ্যাডভান্স পেইড", en: "✓ Advance paid" },
   startsInLabel: { bn: "শুরু হবে", en: "Starts in" },
   startCta: { bn: "শুরু", en: "Start" },
+
+  // MoveSerialMenu
+  moveCta: { bn: "সরাও", en: "Move" },
+  movingCta: { bn: "সরানো হচ্ছে…", en: "Moving…" },
+  noEligibleChair: { bn: "সরানোর মতো কোনো চেয়ার নেই", en: "No eligible chair to move to" },
 
   // QueueBoard
   boardLoadFailed: { bn: "বোর্ড লোড করা যায়নি — পেজ রিফ্রেশ করো।", en: "Couldn't load the board — refresh the page." },

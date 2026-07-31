@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { MessageCircle, X } from "lucide-react";
+import { X } from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { CountdownRing } from "@/components/ui/CountdownRing";
 import { LiveDot } from "@/components/ui/LiveDot";
@@ -12,6 +11,7 @@ import { UiDbError } from "@/lib/supabase/db-errors";
 import { useT } from "@/lib/i18n";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
+import { PaymentConfirmSheet } from "./PaymentConfirmSheet";
 
 export function NowServingCard({
   serial,
@@ -20,8 +20,10 @@ export function NowServingCard({
   serial: Serial;
   actions: ReturnType<typeof useSerialActions>;
 }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [customExtend, setCustomExtend] = useState(false);
+  const [customMin, setCustomMin] = useState("");
   const nowMs = useNowMs(1000);
   const services = parseServicesSnapshot(serial.services_snapshot);
   const t = useT(providerQueueDict);
@@ -36,18 +38,20 @@ export function NowServingCard({
     setError(err instanceof Error ? err.message : t("somethingWrong"));
   };
 
+  const extend = (extraMin: number) => {
+    if (extraMin <= 0) return;
+    actions.extendTime.mutate(
+      {
+        serialId: serial.id,
+        newDuration: serial.estimated_duration_min + extraMin,
+        newExtended: serial.extended_min + extraMin,
+      },
+      { onError: surface },
+    );
+  };
+
   return (
     <div className="relative overflow-hidden rounded-[22px] bg-accent p-5.5 text-accent-ink">
-      {serial.customer_id && (
-        <button
-          type="button"
-          title={t("messageCustomerTitle")}
-          onClick={() => router.push(`/chat/${serial.customer_id}`)}
-          className="absolute top-4.5 right-11.5 text-accent-ink/30 hover:text-accent-ink/70"
-        >
-          <MessageCircle className="h-4 w-4" />
-        </button>
-      )}
       <button
         type="button"
         title={t("cancelTitle")}
@@ -56,7 +60,7 @@ export function NowServingCard({
           setError(null);
           actions.cancel.mutate(serial.id, { onError: surface });
         }}
-        className="absolute top-4.5 right-4.5 text-accent-ink/30 hover:text-accent-ink/70 disabled:opacity-40"
+        className="absolute top-4.5 right-4.5 text-accent-ink/30 hover:text-accent-ink/70"
       >
         <X className="h-4 w-4" />
       </button>
@@ -92,34 +96,83 @@ export function NowServingCard({
         </div>
       </div>
 
-      <button
-        type="button"
-        disabled={actions.complete.isPending}
-        onClick={() => {
-          setError(null);
-          actions.complete.mutate({ serialId: serial.id }, { onError: surface });
-        }}
-        className="mt-4.5 w-full rounded-[14px] bg-accent-ink py-3.5 font-display text-[15px] font-bold text-accent disabled:opacity-60"
-      >
-        {actions.complete.isPending ? t("doing") : t("jobDoneNext")}
-      </button>
+      <div className="mt-4 flex items-center gap-2">
+        {!customExtend ? (
+          <>
+            <button
+              type="button"
+              onClick={() => extend(5)}
+              className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
+            >
+              +৫
+            </button>
+            <button
+              type="button"
+              onClick={() => extend(10)}
+              className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
+            >
+              +১০
+            </button>
+            <button
+              type="button"
+              onClick={() => setCustomExtend(true)}
+              className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
+            >
+              {t("extendCustomLabel")}
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              type="number"
+              min={1}
+              value={customMin}
+              onChange={(e) => setCustomMin(e.target.value)}
+              placeholder={t("extendCustomPlaceholder")}
+              autoFocus
+              className="w-20 rounded-lg bg-accent-ink/15 px-2 py-1.5 text-xs font-semibold text-accent-ink outline-none placeholder:text-accent-ink/50"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                extend(parseInt(customMin, 10) || 0);
+                setCustomExtend(false);
+                setCustomMin("");
+              }}
+              className="rounded-full bg-accent-ink px-3 py-1.5 text-xs font-semibold text-accent"
+            >
+              {t("extendConfirm")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCustomExtend(false);
+                setCustomMin("");
+              }}
+              className="text-xs font-semibold text-accent-ink/60"
+            >
+              {t("extendCancel")}
+            </button>
+          </>
+        )}
+      </div>
+      {serial.extended_min > 0 && (
+        <p className="mt-1.5 text-[11px] text-accent-ink/50">{t("extendedByLabel", serial.extended_min)}</p>
+      )}
 
       <button
         type="button"
-        disabled={actions.complete.isPending}
-        onClick={() => {
-          setError(null);
-          actions.complete.mutate(
-            { serialId: serial.id, due: { amount: serial.total_amount } },
-            { onError: surface },
-          );
-        }}
-        className="mt-2 w-full text-center text-xs font-semibold text-accent-ink/60 disabled:opacity-40"
+        onClick={() => setPaymentOpen(true)}
+        className="mt-4.5 w-full rounded-[14px] bg-accent-ink py-3.5 font-display text-[15px] font-bold text-accent disabled:opacity-60"
       >
-        {t("completeWithDue", formatMoney(serial.total_amount))}
+        {t("jobDoneNext")}
       </button>
 
       {error && <p className="mt-2 text-xs text-accent-ink">{error}</p>}
+
+      {paymentOpen && (
+        <PaymentConfirmSheet serial={serial} actions={actions} onClose={() => setPaymentOpen(false)} />
+      )}
     </div>
   );
 }

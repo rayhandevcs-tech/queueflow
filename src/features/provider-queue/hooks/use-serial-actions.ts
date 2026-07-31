@@ -7,6 +7,7 @@ import {
   addWalkIn,
   cancelByOwner,
   completeSerial,
+  extendSerialTime,
   markNoShow,
   moveSerial,
   startSerial,
@@ -58,8 +59,10 @@ export function useSerialActions(shopId: string) {
   });
 
   const complete = useMutation({
-    mutationFn: (payload: { serialId: string; due?: { amount: number } }) =>
-      completeSerial(payload.serialId, payload.due),
+    mutationFn: (payload: {
+      serialId: string;
+      payment: { method: string } | { due: number };
+    }) => completeSerial(payload.serialId, payload.payment),
     onMutate: async ({ serialId }) => {
       const ctx = await snapshot();
       removeLocally(serialId); // DONE leaves the board immediately
@@ -113,5 +116,18 @@ export function useSerialActions(shopId: string) {
     onSettled: reconcile,
   });
 
-  return { start, complete, noShow, cancel, walkIn, move };
+  const extendTime = useMutation({
+    mutationFn: ({
+      serialId,
+      newDuration,
+      newExtended,
+    }: {
+      serialId: string;
+      newDuration: number;
+      newExtended: number;
+    }) => extendSerialTime(serialId, newDuration, newExtended),
+    onSettled: reconcile,
+  });
+
+  return { start, complete, noShow, cancel, walkIn, move, extendTime };
 }

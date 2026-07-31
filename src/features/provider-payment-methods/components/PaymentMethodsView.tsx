@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { Banknote, Check, CreditCard, Smartphone, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ENABLED_PAYMENT_METHODS, PAYMENT_METHOD_VALUES, type PaymentMethodValue } from "@/config/constants";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/lib/i18n";
 import { providerPaymentMethodsDict } from "../lib/i18n";
 
 interface Method {
-  id: string;
+  id: PaymentMethodValue;
   label: string;
   description: string;
   icon: typeof Banknote;
@@ -28,13 +29,31 @@ export function PaymentMethodsView() {
   const [selected, setSelected] = useState("cash");
   const t = useT(providerPaymentMethodsDict);
 
-  const METHODS: Method[] = [
-    { id: "cash", label: t("cashLabel"), description: t("cashDesc"), icon: Banknote, enabled: true },
-    { id: "bkash", label: t("bkashLabel"), description: t("comingSoonDesc"), icon: Smartphone, enabled: false },
-    { id: "nagad", label: t("nagadLabel"), description: t("comingSoonDesc"), icon: Smartphone, enabled: false },
-    { id: "rocket", label: t("rocketLabel"), description: t("comingSoonDesc"), icon: Wallet, enabled: false },
-    { id: "card", label: t("cardLabel"), description: t("comingSoonDesc"), icon: CreditCard, enabled: false },
-  ];
+  const ICON: Record<PaymentMethodValue, typeof Banknote> = {
+    cash: Banknote,
+    bkash: Smartphone,
+    nagad: Smartphone,
+    rocket: Wallet,
+    card: CreditCard,
+  };
+  const LABEL: Record<PaymentMethodValue, string> = {
+    cash: t("cashLabel"),
+    bkash: t("bkashLabel"),
+    nagad: t("nagadLabel"),
+    rocket: t("rocketLabel"),
+    card: t("cardLabel"),
+  };
+
+  const METHODS: Method[] = PAYMENT_METHOD_VALUES.map((id) => {
+    const enabled = ENABLED_PAYMENT_METHODS.includes(id);
+    return {
+      id,
+      label: LABEL[id],
+      description: enabled ? t("cashDesc") : t("comingSoonDesc"),
+      icon: ICON[id],
+      enabled,
+    };
+  });
 
   return (
     <div className="space-y-5">
