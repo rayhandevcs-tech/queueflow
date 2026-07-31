@@ -1,7 +1,6 @@
 import type { Dict } from "@/lib/i18n";
 
 export const onboardingDict = {
-  phoneLabel: { bn: "ফোন নম্বর", en: "Phone number" },
   genderLabel: { bn: "জেন্ডার", en: "Gender" },
   male: { bn: "পুরুষ", en: "Male" },
   female: { bn: "মহিলা", en: "Female" },
@@ -16,7 +15,7 @@ export const onboardingDict = {
   },
   pageTitle: { bn: "প্রোফাইল সম্পূর্ণ করো", en: "Complete your profile" },
   pageSubtitle: {
-    bn: "ছবি, ফোন, জেন্ডার — চাইলে এখন দাও, চাইলে পরে",
-    en: "Photo, phone, gender — give them now or later",
+    bn: "ছবি, জেন্ডার — চাইলে এখন দাও, চাইলে পরে",
+    en: "Photo, gender — give them now or later",
   },
 } satisfies Dict;

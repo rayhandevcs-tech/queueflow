@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BUSINESS_TYPES, type SelectableBusinessType } from "@/config/constants";
 import { cn } from "@/lib/utils";
 import type { Shop } from "@/types";
+import { getBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { useLanguage, useT } from "@/lib/i18n";
@@ -43,6 +44,20 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
       longitude: shop?.longitude ?? null,
     },
   });
+
+  // First shop creation only: prefill business_type from the choice made at registration
+  // (shops don't exist yet at signup time, so it's carried in auth user_metadata until now).
+  useEffect(() => {
+    if (isEdit) return;
+    const supabase = getBrowserClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const metaType = data.user?.user_metadata?.business_type as SelectableBusinessType | undefined;
+      if (metaType === "SALON" || metaType === "PARLOUR") {
+        form.setValue("business_type", metaType);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit]);
 
   const onSubmit = form.handleSubmit((values) => {
     if (isEdit) {

@@ -30,6 +30,10 @@ const AUTH_ERROR_DICT = {
     bn: "একটু পরে আবার চেষ্টা করো — অনেকবার হয়ে গেছে।",
     en: "Try again in a bit — too many attempts.",
   },
+  invalid_code: {
+    bn: "কোডটা ভুল বা মেয়াদ শেষ — আবার চেষ্টা করো।",
+    en: "That code is wrong or expired — try again.",
+  },
   weak_password: {
     bn: "পাসওয়ার্ড দুর্বল — কমপক্ষে ৬ অক্ষর দিয়ে চেষ্টা করো।",
     en: "Password is too weak — use at least 6 characters.",
@@ -69,6 +73,13 @@ export function translateAuthError(err: unknown): string {
   }
   if (code === "over_email_send_rate_limit" || text.includes("rate limit")) {
     return translate(AUTH_ERROR_DICT, "rate_limit");
+  }
+  if (
+    code === "otp_expired" ||
+    code === "invalid_otp" ||
+    (text.includes("token") && (text.includes("expired") || text.includes("invalid")))
+  ) {
+    return translate(AUTH_ERROR_DICT, "invalid_code");
   }
   if (code === "weak_password" || text.includes("password")) {
     return translate(AUTH_ERROR_DICT, "weak_password");

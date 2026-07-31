@@ -8,7 +8,6 @@ import { getBrowserClient } from "@/lib/supabase/client";
 import { ROLE_HOME } from "@/config/constants";
 import type { UserRole } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Input";
 import { AvatarUploadField } from "@/components/ui/AvatarUploadField";
 import { cn } from "@/lib/utils";
 import { useT, useLanguage } from "@/lib/i18n";
@@ -41,12 +40,11 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
   const schema = useMemo(() => completeProfileSchema(language), [language]);
   const form = useForm<CompleteProfileFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { phone: "", gender: null, avatarUrl: null },
+    defaultValues: { gender: null, avatarUrl: null },
   });
 
   const avatarUrl = form.watch("avatarUrl");
   const gender = form.watch("gender");
-  const err = form.formState.errors;
 
   const goHome = () => {
     router.replace(ROLE_HOME[role]);
@@ -71,14 +69,6 @@ export function CompleteProfileForm({ role }: { role: UserRole }) {
           onUploaded={(url) => form.setValue("avatarUrl", url, { shouldDirty: true })}
         />
       )}
-
-      <Field label={t("phoneLabel")} error={err.phone?.message}>
-        <Input
-          {...form.register("phone")}
-          placeholder="01XXXXXXXXX"
-          invalid={!!err.phone}
-        />
-      </Field>
 
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-ink">{t("genderLabel")}</label>

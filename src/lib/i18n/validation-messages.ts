@@ -30,6 +30,14 @@ export const VALIDATION = {
     bn: "শুধু সংখ্যা, +, - ব্যবহার করা যাবে",
     en: "Only digits, +, - allowed",
   },
+  invalid_bd_phone: {
+    bn: "সঠিক মোবাইল নম্বর লিখো (যেমন ০১৭xxxxxxxx)",
+    en: "Enter a valid mobile number (e.g. 017xxxxxxxx)",
+  },
+  business_type_required: {
+    bn: "ব্যবসার ধরন বেছে নাও",
+    en: "Choose a business type",
+  },
   label_required: { bn: "লেবেল লিখো", en: "Enter a label" },
   invalid_color: { bn: "সঠিক রং বেছে নাও", en: "Not a valid color" },
   customer_name_required: {

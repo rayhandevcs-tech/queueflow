@@ -42,6 +42,10 @@ export function LoginForm() {
   });
 
   const err = form.formState.errors;
+  const loginErr = login.error as { code?: string; message?: string } | null;
+  const notConfirmed =
+    loginErr?.code === "email_not_confirmed" ||
+    (loginErr?.message ?? "").toLowerCase().includes("email not confirmed");
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
@@ -89,9 +93,17 @@ export function LoginForm() {
       </Button>
 
       {login.isError && (
-        <p className="text-center text-sm text-live">
-          {translateAuthError(login.error)}
-        </p>
+        <div className="text-center text-sm text-live">
+          <p>{translateAuthError(login.error)}</p>
+          {notConfirmed && (
+            <Link
+              href={`/verify-email?email=${encodeURIComponent(form.getValues("email"))}`}
+              className="font-semibold underline"
+            >
+              {t("emailNotConfirmedVerifyLink")}
+            </Link>
+          )}
+        </div>
       )}
 
       <p className="text-center text-sm text-muted">

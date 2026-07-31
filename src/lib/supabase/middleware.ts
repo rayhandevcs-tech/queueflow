@@ -16,7 +16,7 @@ const PROVIDER_PREFIXES = [
   "/reviews",
 ];
 const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile"];
-const AUTH_PAGES = ["/login", "/register", "/forgot-password"];
+const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/verify-email"];
 /** Any signed-in role may access these — not gated to a specific role. */
 const AUTH_REQUIRED_PREFIXES = [
   "/account",

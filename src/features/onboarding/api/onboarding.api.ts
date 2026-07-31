@@ -14,7 +14,6 @@ export async function completeOnboarding(
   const { data, error } = await supabase
     .from("profiles")
     .update({
-      phone: values.phone,
       gender: values.gender,
       avatar_url: values.avatarUrl,
       onboarding_completed_at: new Date().toISOString(),

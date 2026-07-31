@@ -36,18 +36,39 @@ export const authDict = {
   providerOption: { bn: "দোকানদার", en: "Provider" },
   fullNameLabel: { bn: "নাম", en: "Name" },
   fullNamePlaceholder: { bn: "তোমার পূর্ণ নাম", en: "Your full name" },
+  phoneLabel: { bn: "মোবাইল নম্বর", en: "Mobile number" },
+  businessTypeLabel: { bn: "ব্যবসার ধরন", en: "Business type" },
+  salonOption: { bn: "সেলুন", en: "Salon" },
+  parlourOption: { bn: "পার্লার", en: "Parlour" },
   confirmPasswordLabel: { bn: "পাসওয়ার্ড কনফার্ম করো", en: "Confirm password" },
   signingUp: { bn: "সাইন আপ হচ্ছে…", en: "Signing up…" },
   signUpCta: { bn: "সাইন আপ", en: "Sign up" },
   haveAccount: { bn: "অ্যাকাউন্ট আছে?", en: "Already have an account?" },
   logIn: { bn: "লগইন করো", en: "Log in" },
-  confirmEmailSent: {
-    bn: (email: string) =>
-      `${email}-এ কনফার্মেশন লিংক পাঠানো হয়েছে। ইনবক্স চেক করে লিংকে ক্লিক করো, তারপর লগইন করতে পারবে।`,
-    en: (email: string) =>
-      `A confirmation link has been sent to ${email}. Check your inbox and click the link, then you can log in.`,
+
+  // Verify email (code entry)
+  verifyEmailTitle: { bn: "ইমেইল ভেরিফাই করো", en: "Verify your email" },
+  verifyEmailSubtitle: {
+    bn: "৬-ডিজিট কোডটা লিখে অ্যাকাউন্ট চালু করো",
+    en: "Enter the 6-digit code to activate your account",
   },
-  goToLogin: { bn: "লগইনে যাও", en: "Go to login" },
+  verifyEmailCodeSentTo: {
+    bn: (email: string) => `কোড পাঠানো হয়েছে ${email}-এ`,
+    en: (email: string) => `Code sent to ${email}`,
+  },
+  verifyCta: { bn: "ভেরিফাই করো", en: "Verify" },
+  verifying: { bn: "ভেরিফাই হচ্ছে…", en: "Verifying…" },
+  resendCode: { bn: "কোড আবার পাঠাও", en: "Resend code" },
+  resendIn: {
+    bn: (s: number) => `আবার পাঠাতে পারবে ${s} সেকেন্ড পর`,
+    en: (s: number) => `Resend available in ${s}s`,
+  },
+  codeResent: { bn: "নতুন কোড পাঠানো হয়েছে", en: "A new code has been sent" },
+  wrongEmailGoBack: { bn: "ইমেইল ভুল? আবার সাইন আপ করো", en: "Wrong email? Sign up again" },
+  emailNotConfirmedVerifyLink: {
+    bn: "এখনো ভেরিফাই করোনি? কোড দিয়ে ভেরিফাই করো",
+    en: "Haven't verified yet? Verify with your code",
+  },
 
   // Forgot password
   forgotTitle: { bn: "পাসওয়ার্ড ভুলে গেছো?", en: "Forgot your password?" },
