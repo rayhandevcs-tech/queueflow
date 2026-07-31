@@ -5,11 +5,13 @@ export function AvatarChip({
   label,
   avatarUrl,
   size = 44,
+  shape = "rounded",
   className,
 }: {
   label?: string | null;
   avatarUrl?: string | null;
   size?: number;
+  shape?: "circle" | "rounded";
   className?: string;
 }) {
   const initial = label?.trim()?.charAt(0)?.toUpperCase();
@@ -17,7 +19,8 @@ export function AvatarChip({
   return (
     <div
       className={cn(
-        "grid shrink-0 place-items-center overflow-hidden rounded-2xl border border-line bg-soft font-display font-bold text-accent",
+        "grid shrink-0 place-items-center overflow-hidden border border-line bg-soft font-display font-bold text-accent",
+        shape === "circle" ? "rounded-full" : "rounded-2xl",
         className,
       )}
       style={{ width: size, height: size, fontSize: size * 0.4 }}

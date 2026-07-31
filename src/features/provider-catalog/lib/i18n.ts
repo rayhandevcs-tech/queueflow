@@ -140,6 +140,12 @@ export const providerCatalogDict = {
     bn: (n: number) => `${n} টি কাজ সম্পন্ন`,
     en: (n: number) => `${n} jobs done`,
   },
+  revealIncomeAria: { bn: "আয় দেখাও/ঢাকো", en: "Show/hide income" },
+
+  // Quick language toggle
+  languageBnShort: { bn: "বাং", en: "বাং" },
+  languageEnShort: { bn: "Eng", en: "Eng" },
+  quickLanguageAria: { bn: "ভাষা বদলাও", en: "Switch language" },
 
   // ProviderShell
   openMenuAria: { bn: "মেনু খোলো", en: "Open menu" },

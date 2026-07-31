@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Armchair,
   BarChart3,
   CreditCard,
+  Eye,
+  EyeOff,
   LogOut,
   Megaphone,
   MessageCircle,
@@ -15,7 +18,6 @@ import {
   Scissors,
   Settings as SettingsIcon,
   Star,
-  UserRound,
   Users,
   Wallet,
 } from "lucide-react";
@@ -26,8 +28,12 @@ import { useLiveQueueCount, useTodaySummary } from "@/features/provider-queue/ho
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useShopUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { useDueCount } from "@/features/provider-due-ledger/hooks/use-due-ledger";
+import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useToast } from "@/components/ui/Toast";
-import { useT } from "@/lib/i18n";
+import { AvatarChip } from "@/components/ui/AvatarChip";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { Switch } from "@/components/ui/Switch";
+import { useT, useLanguage } from "@/lib/i18n";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 interface NavItem {
@@ -42,12 +48,15 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const showToast = useToast();
   const { data: shop } = useMyShop();
+  const { data: profile } = useMyProfile();
   const { update } = useShopMutations();
   const liveCount = useLiveQueueCount(shop?.id);
   const unreadChatCount = useShopUnreadChatCount(shop?.id);
   const dueCount = useDueCount(shop?.id);
   const today = useTodaySummary(shop?.id);
   const logout = useLogout();
+  const { language, setLanguage } = useLanguage();
+  const [incomeRevealed, setIncomeRevealed] = useState(false);
   const t = useT(providerCatalogDict);
 
   const NAV: NavItem[] = [
@@ -67,32 +76,61 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   ];
 
   return (
-    <aside className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink md:border-l-0 md:border-r">
-      <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-5.5">
-        <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
-          {shop?.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={shop.logo_url} alt={shop.name} className="h-full w-full object-cover" />
-          ) : (
-            shop?.name?.trim().charAt(0).toUpperCase() || "?"
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-display text-[15px] font-bold">{shop?.name ?? "…"}</p>
+    <aside
+      className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink md:border-l-0 md:border-r"
+      style={{ paddingBottom: "max(1.375rem, env(safe-area-inset-bottom))" }}
+    >
+      <div className="mb-3.5 flex items-center justify-between px-2">
+        <div
+          role="group"
+          aria-label={t("quickLanguageAria")}
+          className="inline-flex rounded-full bg-soft p-0.5 text-[11px] font-semibold"
+        >
           <button
             type="button"
-            disabled={!shop || update.isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              if (shop) update.mutate({ shopId: shop.id, patch: { is_open: !shop.is_open } });
-            }}
-            className="truncate text-[11px] text-muted hover:text-ink disabled:pointer-events-none"
+            onClick={() => setLanguage("bn")}
+            className={cn(
+              "min-h-11 min-w-11 rounded-full px-2.5 transition-colors",
+              language === "bn" ? "bg-accent text-accent-ink" : "text-muted",
+            )}
           >
-            {shop?.address ? `${shop.address} · ` : ""}
-            {shop?.is_open ? t("shopOpenWord") : t("shopClosedWord")}
+            {t("languageBnShort")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage("en")}
+            className={cn(
+              "min-h-11 min-w-11 rounded-full px-2.5 transition-colors",
+              language === "en" ? "bg-accent text-accent-ink" : "text-muted",
+            )}
+          >
+            {t("languageEnShort")}
           </button>
         </div>
+      </div>
+
+      <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-3">
+        <AvatarChip label={shop?.name} avatarUrl={shop?.logo_url} size={42} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-[15px] font-bold">{shop?.name ?? "…"}</p>
+          {shop?.address && <p className="truncate text-[11px] text-muted">{shop.address}</p>}
+        </div>
       </Link>
+
+      <div className="mb-5.5 flex items-center justify-between gap-2 rounded-xl bg-soft px-3 py-2">
+        <StatusPill
+          tone={shop?.is_open ? "good" : "neutral"}
+          pulse={shop?.is_open}
+          label={shop?.is_open ? t("shopOpenWord") : t("shopClosedWord")}
+        />
+        <Switch
+          checked={!!shop?.is_open}
+          disabled={!shop || update.isPending}
+          onChange={(next) => {
+            if (shop) update.mutate({ shopId: shop.id, patch: { is_open: next } });
+          }}
+        />
+      </div>
 
       <nav className="flex flex-col gap-0.75">
         {NAV.map((item) => {
@@ -108,7 +146,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   showToast(t("comingSoon", item.label));
                   onNavigate?.();
                 }}
-                className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-left text-sm font-medium text-muted/50"
+                className="flex items-center gap-2.75 rounded-xl px-3.25 py-3 text-left text-sm font-medium text-muted/50"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -122,7 +160,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm transition-colors",
+                "flex items-center gap-2.75 rounded-xl px-3.25 py-3 text-sm transition-colors",
                 active
                   ? "bg-accent font-bold text-accent-ink"
                   : "font-medium text-muted hover:bg-soft",
@@ -150,26 +188,40 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-[14px] border border-line bg-soft p-3.5">
-        <p className="text-[11px] text-muted">{t("todayIncomeLabel")}</p>
-        <p className="font-number text-2xl font-bold text-good">৳{formatMoney(today.income)}</p>
+      <button
+        type="button"
+        onClick={() => setIncomeRevealed((v) => !v)}
+        aria-label={t("revealIncomeAria")}
+        className="mt-auto rounded-[14px] border border-line bg-soft p-3.5 text-left"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-muted">{t("todayIncomeLabel")}</p>
+          {incomeRevealed ? (
+            <EyeOff className="h-3.5 w-3.5 text-muted" />
+          ) : (
+            <Eye className="h-3.5 w-3.5 text-muted" />
+          )}
+        </div>
+        <p className="font-number text-2xl font-bold text-good">
+          {incomeRevealed ? `৳${formatMoney(today.income)}` : "৳••••"}
+        </p>
         <p className="mt-0.5 text-[11px] text-muted">{t("doneCountLabel", today.doneCount)}</p>
-      </div>
+      </button>
 
       <div className="mt-3 flex items-center gap-1 px-1">
         <Link
           href="/account"
           onClick={onNavigate}
-          className="flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg py-1.5 pl-1 pr-2 text-xs text-muted hover:bg-soft hover:text-ink"
         >
-          <UserRound className="h-3.5 w-3.5" />
-          {t("accountLink")}
+          <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} shape="circle" size={26} />
+          <span className="truncate">{t("accountLink")}</span>
         </Link>
         <button
           type="button"
           onClick={() => logout.mutate()}
           disabled={logout.isPending}
-          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink disabled:opacity-50"
+          className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-soft hover:text-ink disabled:opacity-50"
         >
           <LogOut className="h-3.5 w-3.5" />
           {logout.isPending ? "…" : t("signOut")}

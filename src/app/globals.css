@@ -1,11 +1,24 @@
 @import "tailwindcss";
 
+/*
+ * Breakpoint convention (Tailwind defaults, no custom config — Tailwind v4 is
+ * CSS-first, see globals.css only, no tailwind.config.*):
+ *   no prefix  — 320px baseline (small phone). Every screen must work here
+ *                first; desktop is the enhancement, not the other way around.
+ *   sm: (640px) — in-page overlay breakpoint: bottom-sheet → centered dialog
+ *                 (BottomSheet, ConfirmSheet).
+ *   md: (768px) — app-shell breakpoint: sidebar drawer → static column
+ *                 (ProviderShell). CustomerShell still breaks at lg: — an
+ *                 existing inconsistency left alone here (customer-side,
+ *                 Sprint 20 scope) and tracked in DEVELOPMENT.md.
+ */
+
 @theme inline {
   --color-paper: #f7f5f1;
   --color-card: #ffffff;
   --color-soft: #f2efea;
   --color-ink: #1b1812;
-  --color-muted: #857e70;
+  --color-muted: #6b6355;
   --color-line: #eae4dc;
   --color-accent: #db4a4a;
   --color-accent-ink: #ffffff;

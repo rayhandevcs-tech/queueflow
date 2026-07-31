@@ -14,13 +14,16 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh md:flex">
-      <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden">
+      <div
+        className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden"
+        style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+      >
         <Logo />
         <button
           type="button"
           onClick={() => setOpen(true)}
           aria-label={t("openMenuAria")}
-          className="grid h-9 w-9 place-items-center rounded-lg text-ink hover:bg-soft"
+          className="grid h-11 w-11 place-items-center rounded-lg text-ink hover:bg-soft"
         >
           <Menu className="h-5 w-5" />
         </button>
