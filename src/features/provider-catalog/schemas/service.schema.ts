@@ -16,6 +16,10 @@ export function serviceSchema(lang: Language) {
       .min(1, m("duration_min_1"))
       .max(480, m("duration_max_480")),
     category: z.enum(SERVICE_CATEGORIES).nullable().optional(),
+    // No .default() — stays `undefined` (dropped from the JSON payload
+    // Supabase sends) unless actually touched, so services.image_url being
+    // pending its migration doesn't break plain create/edit for everyone.
+    image_url: z.string().nullable().optional(),
   });
 }
 

@@ -14,15 +14,17 @@ import {
   type ServiceFormOutput,
 } from "../schemas/service.schema";
 import { providerCatalogDict } from "../lib/i18n";
+import { ImageUploadField } from "./ImageUploadField";
 
 interface Props {
+  shopId: string;
   initial?: Service;
   busy: boolean;
   onSubmit: (values: ServiceFormOutput) => void;
   onCancel: () => void;
 }
 
-export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
+export function ServiceForm({ shopId, initial, busy, onSubmit, onCancel }: Props) {
   const { language } = useLanguage();
   const t = useT(providerCatalogDict);
   const categoryT = useT(SERVICE_CATEGORY_LABEL);
@@ -35,6 +37,9 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
       rate: initial?.rate ?? 0,
       default_duration_min: initial?.default_duration_min ?? 30,
       category: (initial?.category as ServiceFormValues["category"]) ?? "OTHER",
+      // undefined (not null) unless a photo already exists — see schema
+      // comment: keeps image_url out of the payload for untouched forms.
+      image_url: initial?.image_url ?? undefined,
     },
   });
 
@@ -85,6 +90,16 @@ export function ServiceForm({ initial, busy, onSubmit, onCancel }: Props) {
             ))}
           </select>
         </Field>
+      </div>
+      <div className="sm:col-span-4">
+        <ImageUploadField
+          shopId={shopId}
+          kind="service"
+          label={t("serviceImageLabel")}
+          currentUrl={form.watch("image_url") ?? null}
+          aspect="wide"
+          onUploaded={(url) => form.setValue("image_url", url, { shouldDirty: true })}
+        />
       </div>
       <div className="flex gap-2 sm:col-span-4">
         <Button type="submit" loading={busy}>

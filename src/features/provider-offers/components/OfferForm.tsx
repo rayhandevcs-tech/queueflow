@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Offer } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { useLanguage, useT } from "@/lib/i18n";
@@ -13,11 +14,22 @@ import {
 } from "../schemas/offer.schema";
 import { providerOffersDict } from "../lib/i18n";
 
+/** ISO timestamp → the local yyyy-mm-dd a native date input expects. */
+function toDateInputValue(iso: string): string {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function OfferForm({
+  initial,
   busy,
   onSubmit,
   onCancel,
 }: {
+  initial?: Offer;
   busy: boolean;
   onSubmit: (values: OfferFormOutput) => void;
   onCancel: () => void;
@@ -28,7 +40,12 @@ export function OfferForm({
   const schema = useMemo(() => offerSchema(language), [language]);
   const form = useForm<OfferFormValues, unknown, OfferFormOutput>({
     resolver: zodResolver(schema),
-    defaultValues: { title: "", description: "", discount_pct: 10, valid_until: "" },
+    defaultValues: {
+      title: initial?.title ?? "",
+      description: initial?.description ?? "",
+      discount_pct: initial?.discount_pct ?? 10,
+      valid_until: initial ? toDateInputValue(initial.valid_until) : "",
+    },
   });
 
   const err = form.formState.errors;
@@ -74,7 +91,7 @@ export function OfferForm({
       </Field>
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" loading={busy}>
-          {busy ? t("offerSaving") : t("createOffer")}
+          {busy ? t("offerSaving") : initial ? t("offerUpdate") : t("createOffer")}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           {t("cancel")}

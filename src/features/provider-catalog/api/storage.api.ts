@@ -5,7 +5,7 @@ import { providerCatalogDict } from "../lib/i18n";
 const BUCKET = "shop-media";
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
-export type UploadKind = "logo" | "cover" | "avatar";
+export type UploadKind = "logo" | "cover" | "avatar" | "service";
 
 /**
  * Upload an image to Supabase Storage and return its public URL.

@@ -101,6 +101,7 @@ export type Database = {
           default_duration_min: number;
           is_active: boolean;
           category: string | null;
+          image_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -112,6 +113,7 @@ export type Database = {
           default_duration_min: number;
           is_active?: boolean;
           category?: string | null;
+          image_url?: string | null;
         };
         Update: {
           name?: string;
@@ -119,6 +121,7 @@ export type Database = {
           default_duration_min?: number;
           is_active?: boolean;
           category?: string | null;
+          image_url?: string | null;
         };
         Relationships: [];
       };

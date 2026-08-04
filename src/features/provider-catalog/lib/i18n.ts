@@ -50,6 +50,9 @@ export const providerCatalogDict = {
   uploadFailedGeneric: { bn: "আপলোড ব্যর্থ হয়েছে", en: "Upload failed" },
   pickImage: { bn: "ছবি বাছো", en: "Choose image" },
 
+  // ServiceForm — photo
+  serviceImageLabel: { bn: "সার্ভিসের ছবি", en: "Service photo" },
+
   // storage.api.ts
   onlyImagesAllowed: { bn: "শুধু ছবি আপলোড করা যাবে", en: "Only images can be uploaded" },
   imageTooLarge: { bn: "ছবি ২ এমবি-র নিচে হতে হবে", en: "Image must be under 2 MB" },
@@ -81,6 +84,10 @@ export const providerCatalogDict = {
     en: "You need at least one chair and one active service to see this table.",
   },
   matrixHeader: { bn: "সার্ভিস ↓ / চেয়ার →", en: "Service ↓ / Chair →" },
+  capableCount: {
+    bn: (capable: number, total: number) => `${capable}/${total} সার্ভিস পারে`,
+    en: (capable: number, total: number) => `${capable}/${total} services`,
+  },
 
   // ServicesManager
   servicesPageTitle: { bn: "সার্ভিস ও রেট", en: "Services & rates" },
@@ -100,6 +107,21 @@ export const providerCatalogDict = {
   },
   serviceActiveWord: { bn: "চালু", en: "Active" },
   serviceInactiveWord: { bn: "বন্ধ", en: "Inactive" },
+  deleteServiceAria: { bn: "সার্ভিস মুছো", en: "Delete service" },
+  deleteServiceTitle: { bn: "এই সার্ভিসটা মুছে ফেলবে?", en: "Delete this service?" },
+  deleteServiceDesc: {
+    bn: "এটা আর কাস্টমারের কাছে দেখা যাবে না, নতুন কোনো বুকিংয়েও যোগ করা যাবে না।",
+    en: "It won't be visible to customers anymore, or addable to any new booking.",
+  },
+  deleteServiceActiveWarning: {
+    bn: "এই সার্ভিসটা এখন একটা চলমান সিরিয়ালে ব্যবহৃত হচ্ছে — মুছে ফেললেও সেই কাস্টমারের কাজ প্রভাবিত হবে না, শুধু নতুন বুকিংয়ে আর দেখা যাবে না।",
+    en: "This service is currently in an active serial — deleting it won't affect that customer's job, it just won't be offered for new bookings anymore.",
+  },
+  deleteServiceConfirm: { bn: "মুছে ফেলো", en: "Delete" },
+  deleteServiceFallbackNote: {
+    bn: "সরাসরি মুছে ফেলা যায়নি, তাই বন্ধ করে দেওয়া হয়েছে।",
+    en: "Couldn't delete it directly, so it's been deactivated instead.",
+  },
 
   // (provider)/settings/page.tsx
   settingsPageTitle: { bn: "দোকানের সেটিংস", en: "Shop settings" },

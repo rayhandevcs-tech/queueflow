@@ -6,9 +6,11 @@ import { upsertById } from "@/lib/query/realtime-cache";
 import type { Offer } from "@/types";
 import {
   createOffer,
+  deleteOffer,
   getOffers,
   notifyRegularsAboutOffer,
   setOfferActive,
+  updateOffer,
 } from "../api/offers.api";
 import type { OfferFormOutput } from "../schemas/offer.schema";
 
@@ -38,6 +40,23 @@ export function useOfferMutations(shopId: string) {
     },
   });
 
+  const update = useMutation({
+    mutationFn: ({ offerId, values }: { offerId: string; values: OfferFormOutput }) =>
+      updateOffer(offerId, values),
+    onSuccess: (offer) => {
+      queryClient.setQueryData<Offer[]>(listKey, (rows) =>
+        upsertById(rows, offer, (a, b) => b.created_at.localeCompare(a.created_at)),
+      );
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: (offerId: string) => deleteOffer(offerId),
+    onSuccess: (_void, offerId) => {
+      queryClient.setQueryData<Offer[]>(listKey, (rows) => rows?.filter((o) => o.id !== offerId) ?? []);
+    },
+  });
+
   // optimistic toggle with rollback
   const toggleActive = useMutation({
     mutationFn: ({ offerId, active }: { offerId: string; active: boolean }) =>
@@ -58,5 +77,5 @@ export function useOfferMutations(shopId: string) {
     },
   });
 
-  return { create, toggleActive };
+  return { create, update, remove, toggleActive };
 }

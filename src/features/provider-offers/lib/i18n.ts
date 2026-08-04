@@ -19,6 +19,13 @@ export const providerOffersDict = {
   expiredSuffix: { bn: " (শেষ)", en: " (expired)" },
   offerActiveWord: { bn: "চালু", en: "Active" },
   offerInactiveWord: { bn: "বন্ধ", en: "Inactive" },
+  deleteOfferAria: { bn: "অফার মুছো", en: "Delete offer" },
+  deleteOfferTitle: { bn: "এই অফারটা মুছে ফেলবে?", en: "Delete this offer?" },
+  deleteOfferDesc: {
+    bn: "কাস্টমাররা আর এই অফারটা দেখবে না।",
+    en: "Customers will no longer see this offer.",
+  },
+  deleteOfferConfirm: { bn: "মুছে ফেলো", en: "Delete" },
 
   // OfferForm
   offerNamePlaceholder: { bn: "অফারের নাম (ঈদ স্পেশাল)", en: "Offer name (Eid Special)" },
@@ -26,5 +33,6 @@ export const providerOffersDict = {
   discountPctPlaceholder: { bn: "ছাড় (%)", en: "Discount (%)" },
   offerSaving: { bn: "সেভ হচ্ছে…", en: "Saving…" },
   createOffer: { bn: "অফার তৈরি করো", en: "Create offer" },
+  offerUpdate: { bn: "আপডেট করো", en: "Update" },
   cancel: { bn: "বাতিল", en: "Cancel" },
 } satisfies Dict;

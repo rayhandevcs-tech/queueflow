@@ -6,6 +6,7 @@ import { upsertById } from "@/lib/query/realtime-cache";
 import type { Service } from "@/types";
 import {
   createService,
+  deleteService,
   getServices,
   setServiceActive,
   updateService,
@@ -80,5 +81,20 @@ export function useServiceMutations(shopId: string) {
     },
   });
 
-  return { create, update, toggleActive };
+  // hard delete when safe, deactivate fallback when the DB rejects it — see deleteService
+  const remove = useMutation({
+    mutationFn: (serviceId: string) => deleteService(serviceId),
+    onSuccess: ({ deleted }, serviceId) => {
+      queryClient.setQueryData<Service[]>(listKey, (rows) =>
+        deleted
+          ? rows?.filter((s) => s.id !== serviceId)
+          : rows?.map((s) => (s.id === serviceId ? { ...s, is_active: false } : s)),
+      );
+      void queryClient.invalidateQueries({
+        queryKey: keys.chairStats.byShop(shopId),
+      });
+    },
+  });
+
+  return { create, update, toggleActive, remove };
 }

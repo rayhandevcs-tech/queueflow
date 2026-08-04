@@ -46,6 +46,31 @@ export async function setOfferActive(offerId: string, active: boolean): Promise<
   return data;
 }
 
+export async function updateOffer(offerId: string, values: OfferFormOutput): Promise<Offer> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("offers")
+    .update({
+      title: values.title,
+      description: values.description || null,
+      discount_pct: values.discount_pct,
+      valid_until: new Date(`${values.valid_until}T23:59:59`).toISOString(),
+    })
+    .eq("id", offerId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/** Offers have no downstream reference (unlike services), so a real delete is safe. */
+export async function deleteOffer(offerId: string): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.from("offers").delete().eq("id", offerId);
+  if (error) throw error;
+}
+
 /**
  * Best-effort: reuses the Sprint 2 broadcast RPC to tell regulars about a new
  * offer. The RPC enforces a 1-broadcast-per-shop-per-day limit shared with the
