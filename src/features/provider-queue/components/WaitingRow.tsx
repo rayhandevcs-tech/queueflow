@@ -46,7 +46,7 @@ export function WaitingRow({
   };
 
   return (
-    <div className="rounded-2xl border border-line bg-card p-3.5">
+    <div className="rounded-2xl border border-accent/15 bg-accent/10 p-3.5">
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
           <AvatarChip
