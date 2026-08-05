@@ -25,6 +25,9 @@ export const keys = {
   shopGallery: {
     byShop: (shopId: string) => ["shop-gallery", shopId] as const,
   },
+  display: {
+    board: (shopId: string) => ["display", shopId] as const,
+  },
   queuePublic: {
     byShop: (shopId: string) => ["queue-public", shopId] as const,
     counts: () => ["queue-public", "counts"] as const,

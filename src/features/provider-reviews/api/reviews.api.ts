@@ -1,11 +1,14 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { withDbErrors } from "@/lib/supabase/db-errors";
 import type { ReviewRow } from "@/lib/reviews";
 
 export async function getShopReviews(shopId: string): Promise<ReviewRow[]> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, serial_id, rating, comment, images, chair_id, created_at, hidden_at")
+    .select(
+      "id, serial_id, rating, comment, images, chair_id, created_at, hidden_at, owner_reply, owner_replied_at",
+    )
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
 
@@ -49,4 +52,23 @@ export async function getSerialCustomerInfo(
   const byId: Record<string, SerialCustomerInfo> = {};
   for (const row of data) byId[row.id] = { name: row.customer_name, avatarUrl: row.customer_avatar_url };
   return byId;
+}
+
+/**
+ * Post, edit or clear the shop's public answer to a review.
+ *
+ * An RPC because the owner deliberately has no UPDATE policy on `reviews` at
+ * all — a shop must never be able to touch the rating or the customer's words,
+ * and RLS can't restrict an update to particular columns. Passing null (or an
+ * empty string) deletes the reply.
+ */
+export async function setReviewReply(reviewId: string, reply: string | null): Promise<void> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.rpc("set_review_reply", {
+      p_review_id: reviewId,
+      p_reply: reply,
+    });
+    if (error) throw error;
+  });
 }

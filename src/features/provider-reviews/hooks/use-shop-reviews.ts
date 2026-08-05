@@ -1,12 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Review } from "@/types";
 import { computeReviewSummary } from "@/lib/reviews";
-import { getChairNames, getSerialCustomerInfo, getShopReviews } from "../api/reviews.api";
+import {
+  getChairNames,
+  getSerialCustomerInfo,
+  getShopReviews,
+  setReviewReply,
+} from "../api/reviews.api";
 
 export function useShopReviews(shopId: string | undefined) {
   const queryClient = useQueryClient();
@@ -60,4 +65,17 @@ export function useShopReviews(shopId: string | undefined) {
     summary,
     isPending: reviewsQuery.isPending,
   };
+}
+
+export function useReviewReply(shopId: string | undefined) {
+  const queryClient = useQueryClient();
+  const reviewsKey = keys.reviews.byShop(shopId ?? "");
+
+  return useMutation({
+    mutationFn: ({ reviewId, reply }: { reviewId: string; reply: string | null }) =>
+      setReviewReply(reviewId, reply),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: reviewsKey });
+    },
+  });
 }

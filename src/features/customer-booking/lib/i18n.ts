@@ -243,4 +243,6 @@ export const customerBookingDict = {
   cancelJustThisOne: { bn: "শুধু এই জনেরটা বাতিল করো", en: "Cancel just this one" },
   partyCancelledToast: { bn: "দলের সবার সিরিয়াল বাতিল হয়েছে", en: "The whole party has been cancelled" },
   memberCancelledToast: { bn: "ওই জনের সিরিয়াল বাতিল হয়েছে", en: "That person's serial has been cancelled" },
+
+  ownerReplyLabel: { bn: "দোকানের উত্তর", en: "Shop's reply" },
 } satisfies Dict;

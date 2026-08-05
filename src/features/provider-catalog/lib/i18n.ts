@@ -271,4 +271,28 @@ export const providerCatalogDict = {
     bn: "বন্ধ করলে দোকান খোলাই থাকবে ও কাস্টমাররা দেখতে পাবে — শুধু নতুন কেউ সিরিয়াল নিতে পারবে না। যারা লাইনে আছে তাদের কাজ স্বাভাবিকভাবে চলবে।",
     en: "Turning this off keeps the shop open and visible — it only stops new bookings. Everyone already in line is served as normal.",
   },
+
+  // QrPosterCard + counter display (Sprint 30)
+  posterCardTitle: { bn: "দোকানের QR পোস্টার", en: "Shop QR poster" },
+  posterCardHint: {
+    bn: "প্রিন্ট করে কাউন্টারে বা দরজায় লাগাও — কাস্টমার স্ক্যান করেই সিরিয়াল নিতে পারবে।",
+    en: "Print it and stick it on the counter or the door — customers can book straight from it.",
+  },
+  posterHeadline: { bn: "লাইনে দাঁড়ানোর দরকার নেই", en: "No need to stand in line" },
+  posterSubline: {
+    bn: "স্ক্যান করে সিরিয়াল নাও",
+    en: "Scan to take your serial",
+  },
+  posterDownloadCta: { bn: "পোস্টার ডাউনলোড করো", en: "Download poster" },
+  posterFailed: { bn: "পোস্টার বানানো যায়নি", en: "Couldn't build the poster" },
+  displayCardTitle: { bn: "কাউন্টার ডিসপ্লে", en: "Counter display" },
+  displayCardHint: {
+    bn: "পুরনো একটা ফোন বা ট্যাবে এই লিংক খুলে রাখো — দোকানে বসা সবাই লাইভ সিরিয়াল দেখতে পাবে। লগইন লাগে না।",
+    en: "Open this link on a spare phone or tablet — everyone in the shop sees the live queue. No login needed.",
+  },
+  displayOpenCta: { bn: "খুলে দেখো →", en: "Open it →" },
+  displayCopyCta: { bn: "লিংক কপি করো", en: "Copy link" },
+  displayLinkCopied: { bn: "লিংক কপি হয়েছে", en: "Link copied" },
+  displayLinkCopyFailed: { bn: "কপি করা যায়নি", en: "Couldn't copy" },
+
 } satisfies Dict;

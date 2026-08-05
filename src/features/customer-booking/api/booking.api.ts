@@ -158,7 +158,9 @@ export async function getShopReviewsPublic(shopId: string): Promise<ReviewRow[]>
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, serial_id, rating, comment, images, chair_id, created_at")
+    .select(
+      "id, serial_id, rating, comment, images, chair_id, created_at, owner_reply, owner_replied_at",
+    )
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
 

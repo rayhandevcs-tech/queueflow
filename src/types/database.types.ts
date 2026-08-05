@@ -452,6 +452,9 @@ export type Database = {
           hidden_at: string | null;
           hidden_reason: string | null;
           hidden_by: string | null;
+          /** The shop's public answer — written only by set_review_reply(). */
+          owner_reply: string | null;
+          owner_replied_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -843,6 +846,15 @@ export type Database = {
         Args: { p_group_id: string; p_method: string };
         /** How many outstanding party serials were settled. */
         Returns: number;
+      };
+      /** Public, unauthenticated read for the counter display. Null = no ACTIVE shop. */
+      shop_display_board: {
+        Args: { p_shop_id: string };
+        Returns: Json;
+      };
+      set_review_reply: {
+        Args: { p_review_id: string; p_reply: string | null };
+        Returns: void;
       };
     };
     Enums: {

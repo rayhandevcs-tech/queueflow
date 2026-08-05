@@ -26,4 +26,26 @@ export const providerReviewsDict = {
     bn: "মডারেশনে লুকানো — কাস্টমাররা এটি দেখতে পাচ্ছে না, রেটিং গড়েও ধরা হয়নি",
     en: "Hidden by moderation — customers can't see it and it's out of the rating average",
   },
+
+  // Review replies (Sprint 30)
+  replyCta: { bn: "উত্তর দাও", en: "Reply" },
+  replyEditCta: { bn: "উত্তর সম্পাদনা", en: "Edit reply" },
+  replyPlaceholder: {
+    bn: "কাস্টমারকে উত্তর লেখো — সবাই দেখতে পাবে",
+    en: "Write a public answer — everyone will see it",
+  },
+  replySaveCta: { bn: "উত্তর দাও", en: "Post reply" },
+  replyDeleteCta: { bn: "মুছে ফেলো", en: "Delete" },
+  replyCancelCta: { bn: "থাক", en: "Cancel" },
+  replySavedToast: { bn: "উত্তর দেওয়া হয়েছে", en: "Reply posted" },
+  replyDeletedToast: { bn: "উত্তর মুছে ফেলা হয়েছে", en: "Reply deleted" },
+  replyFailedToast: {
+    bn: "উত্তর দেওয়া যায়নি — আবার চেষ্টা করো।",
+    en: "Couldn't post the reply — try again.",
+  },
+  replyTooLong: {
+    bn: "উত্তর ৬০০ অক্ষরের বেশি হতে পারবে না।",
+    en: "A reply can't be longer than 600 characters.",
+  },
+  ownerReplyLabel: { bn: "দোকানের উত্তর", en: "Shop's reply" },
 } satisfies Dict;

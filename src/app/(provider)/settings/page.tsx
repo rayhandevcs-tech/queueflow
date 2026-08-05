@@ -2,6 +2,7 @@
 
 import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
 import { ShopSettingsForm } from "@/features/provider-catalog/components/ShopSettingsForm";
+import { QrPosterCard } from "@/features/provider-catalog/components/QrPosterCard";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
@@ -22,7 +23,12 @@ export default function SettingsPage() {
           <Spinner className="h-6 w-6 text-muted" />
         </div>
       ) : (
-        <ShopSettingsForm shop={shop ?? null} />
+        <>
+          <ShopSettingsForm shop={shop ?? null} />
+          {/* Only once the shop exists — a poster pointing at nothing, and a
+              display link for a shop with no chairs, would both be dead ends. */}
+          {shop && <QrPosterCard shop={shop} />}
+        </>
       )}
     </div>
   );
