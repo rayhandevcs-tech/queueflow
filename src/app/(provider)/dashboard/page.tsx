@@ -7,6 +7,8 @@ import { keys } from "@/lib/query/keys";
 import { ACTIVE_STATUSES } from "@/config/constants";
 import { QueueBoard } from "@/features/provider-queue/components/QueueBoard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { translate } from "@/lib/i18n";
+import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabase();
@@ -25,10 +27,10 @@ export default async function DashboardPage() {
     return (
       <EmptyState
         icon={<Settings className="h-6 w-6" />}
-        title="Set up your shop first"
+        title={translate(providerCatalogDict, "noShopTitle")}
         action={
           <Link href="/settings" className="text-sm font-semibold text-accent hover:underline">
-            Go to settings →
+            {translate(providerCatalogDict, "goToSettings")}
           </Link>
         }
       />

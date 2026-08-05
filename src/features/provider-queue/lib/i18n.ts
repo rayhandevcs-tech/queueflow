@@ -33,7 +33,7 @@ export const providerQueueDict = {
   confirmPaymentCta: { bn: "নিশ্চিত করো", en: "Confirm" },
 
   // WaitingRow
-  walkInBadge: { bn: "ওয়াক-ইন", en: "Walk-in" },
+  walkInBadge: { bn: "অফ-লাইন", en: "Offline" },
   advancePaidBadge: { bn: "✓ অ্যাডভান্স পেইড", en: "✓ Advance paid" },
   startsInLabel: { bn: "শুরু হবে", en: "Starts in" },
   startCta: { bn: "শুরু", en: "Start" },
@@ -54,12 +54,12 @@ export const providerQueueDict = {
   // ChairColumn
   chairClosed: { bn: "বন্ধ", en: "Closed" },
   backlogMin: {
-    bn: (n: number) => `~${n} মিন ব্যাকলগ`,
-    en: (n: number) => `~${n} min backlog`,
+    bn: (n: number) => `~${n} মিন অপেক্ষা`,
+    en: (n: number) => `~${n} min wait`,
   },
 
   // WalkInDialog
-  walkInCustomerTitle: { bn: "ওয়াক-ইন কাস্টমার", en: "Walk-in customer" },
+  walkInCustomerTitle: { bn: "অফ-লাইন কাস্টমার", en: "Offline customer" },
   customerNamePlaceholder: { bn: "কাস্টমারের নাম *", en: "Customer name *" },
   phoneOptionalPlaceholder: { bn: "ফোন (ঐচ্ছিক)", en: "Phone (optional)" },
   servicesLabel: { bn: "সার্ভিস *", en: "Services *" },
@@ -73,7 +73,11 @@ export const providerQueueDict = {
   addToQueue: { bn: "কিউতে যোগ করো", en: "Add to queue" },
 
   // EmptyLane
-  noWaitingSerials: { bn: "কোনো অপেক্ষমাণ সিরিয়াল নেই 🎉", en: "No serials waiting 🎉" },
+  noWaitingSerials: { bn: "কোনো কাস্টমার অপেক্ষায় নেই", en: "No customers waiting" },
+  noWaitingSerialsDesc: {
+    bn: "নতুন সিরিয়াল এলে এখানে দেখা যাবে।",
+    en: "New serials will show up here as they come in.",
+  },
 
   // BoardHeader
   liveQueueHeading: { bn: "লাইভ সিরিয়াল", en: "Live queue" },
@@ -82,5 +86,5 @@ export const providerQueueDict = {
     en: (date: string, n: number) => `Today ${date} · ${n} waiting now`,
   },
   realtimeUpdating: { bn: "রিয়েল-টাইম আপডেট হচ্ছে", en: "Updating in real time" },
-  walkInCta: { bn: "ওয়াক-ইন", en: "Walk-in" },
+  walkInCta: { bn: "অফ-লাইন", en: "Offline" },
 } satisfies Dict;

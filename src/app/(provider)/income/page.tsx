@@ -6,9 +6,12 @@ import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
 import { IncomeView } from "@/features/provider-income/components/IncomeView";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
+import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 export default function IncomePage() {
   const { data: shop, isPending } = useMyShop();
+  const t = useT(providerCatalogDict);
 
   if (isPending) {
     return (
@@ -22,10 +25,10 @@ export default function IncomePage() {
     return (
       <EmptyState
         icon={<Settings className="h-6 w-6" />}
-        title="Set up your shop first"
+        title={t("noShopTitle")}
         action={
           <Link href="/settings" className="text-sm font-semibold text-accent hover:underline">
-            Go to settings →
+            {t("goToSettings")}
           </Link>
         }
       />

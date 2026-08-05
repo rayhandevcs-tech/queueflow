@@ -105,7 +105,7 @@ export function ServicesManager({ shopId }: { shopId: string }) {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={s.image_url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <CategoryIcon className="h-5 w-5" />
+                      <CategoryIcon className="h-6.5 w-6.5" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">

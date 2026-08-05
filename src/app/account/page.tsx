@@ -89,7 +89,7 @@ function AccountContent({ backHref }: { backHref: string }) {
         onAvatarFileSelected={onAvatarFileSelected}
         avatarUploading={avatarUploading}
         right={
-          <Badge variant="onAccent" className="shrink-0">
+          <Badge variant="accent" className="shrink-0 bg-white shadow-xs">
             {roleT(profile.role)}
           </Badge>
         }

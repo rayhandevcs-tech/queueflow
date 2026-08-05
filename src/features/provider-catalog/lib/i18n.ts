@@ -130,13 +130,45 @@ export const providerCatalogDict = {
   settingsDescExisting: { bn: "তোমার দোকানের তথ্য আপডেট করো", en: "Update your shop's info" },
   settingsDescNew: { bn: "প্রথমে দোকান সেট আপ করো", en: "First, set up your shop" },
 
-  // (provider)/services/page.tsx
+  // (provider)/services/page.tsx — also reused by chairs/dashboard/analytics/income pages
   noShopTitle: { bn: "আগে তোমার শপ সেট আপ করো", en: "Set up your shop first" },
   goToSettings: { bn: "সেটিংসে যাও →", en: "Go to settings →" },
   canPerformHeading: { bn: "কে কোন সার্ভিস করতে পারে", en: "Who can perform which service" },
   canPerformDesc: {
     bn: "এখানে কোনো সার্ভিস বন্ধ রাখলে সেটা ওই চেয়ারে কখনো অ্যাসাইন হবে না।",
     en: "Turning a service off here means it will never be assigned to that chair.",
+  },
+
+  // (provider)/chairs/page.tsx + ChairsManager
+  chairsPageTitle: { bn: "চেয়ার ও স্টাফ", en: "Chairs & Staff" },
+  chairsPageDesc: {
+    bn: "প্রতিটা চেয়ার ড্যাশবোর্ডে একটা লেন — নতুন সিরিয়াল বন্ধ করতে চেয়ার পজ করো।",
+    en: "Each chair is one lane on the dashboard — pause a chair to stop new serials.",
+  },
+  newChairCta: { bn: "নতুন চেয়ার", en: "New chair" },
+  noChairsYetTitle: { bn: "এখনো কোনো চেয়ার যোগ করা হয়নি", en: "No chairs yet" },
+  noChairsYetDesc: {
+    bn: "প্রথম চেয়ার বা স্টাফ লেন যোগ করো, সিরিয়াল নেওয়া শুরু করতে।",
+    en: "Add your first chair or staff lane to start taking serials.",
+  },
+  chairEditCta: { bn: "এডিট", en: "Edit" },
+  chairActiveWord: { bn: "চালু", en: "Active" },
+  chairPausedWord: { bn: "পজড", en: "Paused" },
+  chairNoStaffName: { bn: "স্টাফের নাম নেই", en: "No staff name" },
+  deleteChairAria: { bn: "চেয়ার মুছো", en: "Delete chair" },
+  deleteChairTitle: { bn: "এই চেয়ারটা মুছে ফেলবে?", en: "Delete this chair?" },
+  deleteChairDesc: {
+    bn: "এটা আর ড্যাশবোর্ডে দেখা যাবে না, নতুন কোনো সিরিয়ালও এখানে আসবে না।",
+    en: "It won't appear on the dashboard anymore, and no new serials will come here.",
+  },
+  deleteChairActiveWarning: {
+    bn: "এই চেয়ারে এখন একটা চলমান সিরিয়াল আছে — মুছে ফেললেও সেই কাস্টমারের কাজ প্রভাবিত হবে না, শুধু চেয়ারটা পজ হয়ে যাবে।",
+    en: "This chair currently has an active serial — deleting it won't affect that customer's job, it'll just get paused instead.",
+  },
+  deleteChairConfirm: { bn: "মুছে ফেলো", en: "Delete" },
+  deleteChairFallbackNote: {
+    bn: "সরাসরি মুছে ফেলা যায়নি, তাই পজ করে দেওয়া হয়েছে।",
+    en: "Couldn't delete it directly, so it's been paused instead.",
   },
 
   // ProviderSidebar — nav labels
@@ -146,6 +178,7 @@ export const providerCatalogDict = {
   navOffers: { bn: "অফার", en: "Offers" },
   navChat: { bn: "মেসেজ", en: "Messages" },
   navIncome: { bn: "ইনকাম", en: "Income" },
+  navManualEntries: { bn: "ম্যানুয়াল এন্ট্রি", en: "Manual entries" },
   navDueLedger: { bn: "বাকির খাতা", en: "Due ledger" },
   navAnalytics: { bn: "অ্যানালিটিক্স", en: "Analytics" },
   navRegulars: { bn: "নিয়মিত কাস্টমার", en: "Regular customers" },
@@ -158,12 +191,6 @@ export const providerCatalogDict = {
   },
   accountLink: { bn: "একাউন্ট", en: "Account" },
   signOut: { bn: "সাইন আউট", en: "Sign out" },
-  todayIncomeLabel: { bn: "আজকের আয়", en: "Today's income" },
-  doneCountLabel: {
-    bn: (n: number) => `${n} টি কাজ সম্পন্ন`,
-    en: (n: number) => `${n} jobs done`,
-  },
-  revealIncomeAria: { bn: "আয় দেখাও/ঢাকো", en: "Show/hide income" },
 
   // Quick language toggle
   languageBnShort: { bn: "বাং", en: "বাং" },

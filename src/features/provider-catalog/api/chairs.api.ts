@@ -1,4 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { ACTIVE_STATUSES } from "@/config/constants";
 import type { Chair } from "@/types";
 import type { ChairFormOutput } from "../schemas/chair.schema";
 
@@ -47,4 +48,31 @@ export async function updateChair(
 
   if (error) throw error;
   return data;
+}
+
+/** True if a currently-active (waiting/in-progress) serial references this chair. */
+export async function isChairInActiveUse(shopId: string, chairId: string): Promise<boolean> {
+  const supabase = getBrowserClient();
+  const { count, error } = await supabase
+    .from("serials")
+    .select("id", { count: "exact", head: true })
+    .eq("shop_id", shopId)
+    .in("status", ACTIVE_STATUSES)
+    .eq("chair_id", chairId);
+
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Hard-deletes the chair when nothing references it; falls back to pausing it if a foreign key blocks the delete. */
+export async function deleteChair(chairId: string): Promise<{ deleted: boolean }> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.from("chairs").delete().eq("id", chairId);
+
+  if (!error) return { deleted: true };
+  if (error.code === "23503") {
+    await updateChair(chairId, { is_active: false });
+    return { deleted: false };
+  }
+  throw error;
 }

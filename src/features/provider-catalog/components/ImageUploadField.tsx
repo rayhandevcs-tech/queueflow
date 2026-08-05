@@ -59,7 +59,7 @@ export function ImageUploadField({
         disabled={uploading}
         className={cn(
           "relative overflow-hidden rounded-xl border-2 border-dashed border-line bg-soft text-muted transition-colors hover:border-accent/50 hover:bg-accent/5",
-          aspect === "square" ? "h-24 w-24 rounded-full" : "h-32 w-full",
+          aspect === "square" ? "h-24 w-24 rounded-full" : "h-44 w-full",
         )}
       >
         {src ? (

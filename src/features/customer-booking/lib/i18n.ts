@@ -148,7 +148,7 @@ export const customerBookingDict = {
   yourSerialComingUp: { bn: "তোমার সিরিয়াল আসতে বাকি", en: "Your serial is coming up" },
   yourSerialLabel: { bn: "তোমার সিরিয়াল", en: "Your serial" },
   aheadOfYou: { bn: (n: number) => `তোমার আগে যারা (${n} জন)`, en: (n: number) => `Ahead of you (${n})` },
-  walkInCustomer: { bn: "ওয়াক-ইন কাস্টমার", en: "Walk-in customer" },
+  walkInCustomer: { bn: "অফ-লাইন কাস্টমার", en: "Offline customer" },
   onlineBooking: { bn: "অনলাইন বুকিং", en: "Online booking" },
   serviceMinutes: { bn: (n: number) => `~${n} মিনিটের সার্ভিস`, en: (n: number) => `~${n} min service` },
   running: { bn: "চলছে", en: "Running" },

@@ -9,7 +9,6 @@ import { useLanguage, useT } from "@/lib/i18n";
 import { useIncomeSummary } from "../hooks/use-income-summary";
 import { useManualEntryPickers } from "../hooks/use-manual-entries";
 import { providerIncomeDict } from "../lib/i18n";
-import { ManualEntrySection } from "./ManualEntrySection";
 
 export function IncomeView({ shopId }: { shopId: string | undefined }) {
   const { summary, isPending } = useIncomeSummary(shopId);
@@ -48,13 +47,13 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-[20px] bg-accent p-5.5 text-accent-ink">
-          <p className="text-[13px] opacity-60">{t("today")}</p>
-          <p className="mt-1.5 font-number text-[32px] font-bold">
+        <div className="rounded-[20px] bg-accent/10 p-5.5 text-ink">
+          <p className="text-[13px] text-muted">{t("today")}</p>
+          <p className="mt-1.5 font-number text-[32px] font-bold text-accent">
             ৳{formatMoney(summary.today.amount)}
           </p>
-          <p className="mt-1 text-xs opacity-50">{t("jobsCountSuffix", summary.today.doneCount)}</p>
-          <p className="mt-2 text-xs opacity-70">
+          <p className="mt-1 text-xs text-muted">{t("jobsCountSuffix", summary.today.doneCount)}</p>
+          <p className="mt-2 text-xs font-medium text-ink/80">
             {t("cashDueBreakdown", formatMoney(summary.today.cash), formatMoney(summary.today.due))}
           </p>
         </div>
@@ -168,8 +167,6 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
           </div>
         )}
       </div>
-
-      {shopId && <ManualEntrySection shopId={shopId} />}
     </div>
   );
 }

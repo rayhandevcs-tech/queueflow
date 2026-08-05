@@ -7,9 +7,12 @@ import { ChairsManager } from "@/features/provider-catalog/components/ChairsMana
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/lib/i18n";
+import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 export default function ChairsPage() {
   const { data: shop, isPending } = useMyShop();
+  const t = useT(providerCatalogDict);
 
   if (isPending) {
     return (
@@ -23,10 +26,10 @@ export default function ChairsPage() {
     return (
       <EmptyState
         icon={<Settings className="h-6 w-6" />}
-        title="Set up your shop first"
+        title={t("noShopTitle")}
         action={
           <Link href="/settings" className="text-sm font-semibold text-accent hover:underline">
-            Go to settings →
+            {t("goToSettings")}
           </Link>
         }
       />
@@ -36,8 +39,8 @@ export default function ChairsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Chairs & Staff"
-        description="Each chair is one lane on the dashboard — pause a chair to stop new serials."
+        title={t("chairsPageTitle")}
+        description={t("chairsPageDesc")}
       />
       <ChairsManager shopId={shop.id} />
     </div>

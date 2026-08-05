@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Armchair,
   BarChart3,
-  Eye,
-  EyeOff,
   LogOut,
   Megaphone,
   MessageCircle,
+  NotebookPen,
   Percent,
   Radio,
   Receipt,
@@ -21,9 +19,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/format-wait";
 import { useMyShop, useShopMutations } from "@/features/provider-catalog/hooks/use-my-shop";
-import { useLiveQueueCount, useTodaySummary } from "@/features/provider-queue/hooks/use-sidebar-stats";
+import { useLiveQueueCount } from "@/features/provider-queue/hooks/use-sidebar-stats";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useShopUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { useDueCount } from "@/features/provider-due-ledger/hooks/use-due-ledger";
@@ -52,10 +49,8 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const liveCount = useLiveQueueCount(shop?.id);
   const unreadChatCount = useShopUnreadChatCount(shop?.id);
   const dueCount = useDueCount(shop?.id);
-  const today = useTodaySummary(shop?.id);
   const logout = useLogout();
   const { language, setLanguage } = useLanguage();
-  const [incomeRevealed, setIncomeRevealed] = useState(false);
   const t = useT(providerCatalogDict);
 
   const NAV: NavItem[] = [
@@ -65,6 +60,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     { href: "/offers", label: t("navOffers"), icon: Percent },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },
     { href: "/income", label: t("navIncome"), icon: Wallet },
+    { href: "/manual-entries", label: t("navManualEntries"), icon: NotebookPen },
     { href: "/due-ledger", label: t("navDueLedger"), icon: Receipt },
     { href: "/analytics", label: t("navAnalytics"), icon: BarChart3 },
     { href: "/regulars", label: t("navRegulars"), icon: Users },
@@ -88,7 +84,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             type="button"
             onClick={() => setLanguage("bn")}
             className={cn(
-              "min-h-11 min-w-11 rounded-full px-2.5 transition-colors",
+              "min-h-9 min-w-9 rounded-full px-2 transition-colors",
               language === "bn" ? "bg-accent text-accent-ink" : "text-muted",
             )}
           >
@@ -98,7 +94,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             type="button"
             onClick={() => setLanguage("en")}
             className={cn(
-              "min-h-11 min-w-11 rounded-full px-2.5 transition-colors",
+              "min-h-9 min-w-9 rounded-full px-2 transition-colors",
               language === "en" ? "bg-accent text-accent-ink" : "text-muted",
             )}
           >
@@ -186,27 +182,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <button
-        type="button"
-        onClick={() => setIncomeRevealed((v) => !v)}
-        aria-label={t("revealIncomeAria")}
-        className="mt-auto rounded-[14px] border border-line bg-soft p-3.5 text-left"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[11px] text-muted">{t("todayIncomeLabel")}</p>
-          {incomeRevealed ? (
-            <EyeOff className="h-3.5 w-3.5 text-muted" />
-          ) : (
-            <Eye className="h-3.5 w-3.5 text-muted" />
-          )}
-        </div>
-        <p className="font-number text-2xl font-bold text-good">
-          {incomeRevealed ? `৳${formatMoney(today.income)}` : "৳••••"}
-        </p>
-        <p className="mt-0.5 text-[11px] text-muted">{t("doneCountLabel", today.doneCount)}</p>
-      </button>
-
-      <div className="mt-3 flex items-center gap-1 px-1">
+      <div className="mt-auto flex items-center gap-1 px-1">
         <Link
           href="/account"
           onClick={onNavigate}

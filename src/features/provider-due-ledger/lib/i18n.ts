@@ -4,9 +4,11 @@ export const providerDueLedgerDict = {
   dueLedgerTitle: { bn: "বাকির খাতা", en: "Due ledger" },
   noOneOwes: { bn: "এখন কারো কাছে কোনো বাকি নেই", en: "No one owes anything right now" },
   totalDueSummary: {
-    bn: (amount: string, n: number) => `মোট বাকি ৳${amount} · ${n} জন কাস্টমার`,
-    en: (amount: string, n: number) => `Total due ৳${amount} · ${n} customers`,
+    bn: (amount: string, n: number) => `মোট বাকি ৳${amount} · ${n}টি এন্ট্রি`,
+    en: (amount: string, n: number) => `Total due ৳${amount} · ${n} entries`,
   },
+  manualEntriesSectionTitle: { bn: "ম্যানুয়াল এন্ট্রির বাকি", en: "Manual entry dues" },
+  manualEntryFallbackName: { bn: "ম্যানুয়াল এন্ট্রি", en: "Manual entry" },
   emptyLedgerTitle: { bn: "বাকির খাতা খালি", en: "Ledger is empty" },
   emptyLedgerDesc: {
     bn: '"বাকি রেখে সম্পন্ন করো" দিয়ে কাজ শেষ করলে সেই কাস্টমার এখানে দেখাবে।',

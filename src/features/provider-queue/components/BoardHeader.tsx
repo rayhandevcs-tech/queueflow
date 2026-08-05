@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { formatBanglaDate } from "@/lib/format-wait";
 import { Button } from "@/components/ui/Button";
 import { LiveDot } from "@/components/ui/LiveDot";
@@ -35,7 +35,7 @@ export function BoardHeader({ totals, onWalkIn }: Props) {
           {t("realtimeUpdating")}
         </span>
         <Button onClick={onWalkIn}>
-          <Plus className="h-4 w-4" />
+          <UserPlus className="h-4 w-4" />
           {t("walkInCta")}
         </Button>
       </div>

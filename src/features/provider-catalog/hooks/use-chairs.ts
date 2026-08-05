@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { upsertById } from "@/lib/query/realtime-cache";
 import type { Chair } from "@/types";
-import { createChair, getChairs, updateChair } from "../api/chairs.api";
+import { createChair, deleteChair, getChairs, updateChair } from "../api/chairs.api";
 import type { ChairFormOutput } from "../schemas/chair.schema";
 
 const bySortOrder = (a: Chair, b: Chair) => a.sort_order - b.sort_order;
@@ -77,5 +77,17 @@ export function useChairMutations(shopId: string) {
     },
   });
 
-  return { create, update, toggleActive };
+  // hard delete when safe, pause fallback when the DB rejects it — see deleteChair
+  const remove = useMutation({
+    mutationFn: (chairId: string) => deleteChair(chairId),
+    onSuccess: ({ deleted }, chairId) => {
+      queryClient.setQueryData<Chair[]>(listKey, (rows) =>
+        deleted
+          ? rows?.filter((c) => c.id !== chairId)
+          : rows?.map((c) => (c.id === chairId ? { ...c, is_active: false } : c)),
+      );
+    },
+  });
+
+  return { create, update, toggleActive, remove };
 }

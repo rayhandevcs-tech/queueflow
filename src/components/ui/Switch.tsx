@@ -29,8 +29,8 @@ export function Switch({
     >
       <span
         className={cn(
-          "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-transform duration-150",
-          checked ? "translate-x-[calc(100%+2px)]" : "translate-x-0.5",
+          "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-sm transition-all duration-150",
+          checked ? "right-0.5" : "left-0.5",
         )}
       />
     </button>

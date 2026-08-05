@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
-import { AnalyticsView } from "@/features/provider-analytics/components/AnalyticsView";
+import { ManualEntrySection } from "@/features/provider-income/components/ManualEntrySection";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
-export default function AnalyticsPage() {
+export default function ManualEntriesPage() {
   const { data: shop, isPending } = useMyShop();
   const t = useT(providerCatalogDict);
 
@@ -35,5 +35,5 @@ export default function AnalyticsPage() {
     );
   }
 
-  return <AnalyticsView shopId={shop.id} />;
+  return <ManualEntrySection shopId={shop.id} />;
 }

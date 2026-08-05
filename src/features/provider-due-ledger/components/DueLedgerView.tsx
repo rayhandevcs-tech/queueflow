@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, MessageCircle, Wallet } from "lucide-react";
+import { Bell, Check, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBanglaDate, formatMoney } from "@/lib/format-wait";
 import { toWhatsAppLink } from "@/lib/phone";
@@ -16,7 +16,8 @@ import { useDueLedger } from "../hooks/use-due-ledger";
 import { providerDueLedgerDict } from "../lib/i18n";
 
 export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
-  const { groups, totalDue, isPending, collect, remind } = useDueLedger(shopId);
+  const { groups, manualEntries, totalDue, isPending, collect, collectManual, remind } =
+    useDueLedger(shopId);
   const router = useRouter();
   const showToast = useToast();
   const [justReminded, setJustReminded] = useState<Set<string>>(new Set());
@@ -30,24 +31,28 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
     );
   }
 
+  const isEmpty = groups.length === 0 && manualEntries.length === 0;
+
   return (
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-[27px] font-bold text-ink">{t("dueLedgerTitle")}</h1>
         <p className="mt-1 text-[13px] text-muted">
-          {groups.length === 0
+          {isEmpty
             ? t("noOneOwes")
-            : t("totalDueSummary", formatMoney(totalDue), groups.length)}
+            : t("totalDueSummary", formatMoney(totalDue), groups.length + manualEntries.length)}
         </p>
       </div>
 
-      {groups.length === 0 ? (
+      {isEmpty ? (
         <EmptyState
-          icon={<Wallet className="h-6 w-6" />}
+          icon={<span className="font-display text-2xl font-extrabold">৳</span>}
           title={t("emptyLedgerTitle")}
           description={t("emptyLedgerDesc")}
         />
       ) : (
+        <div className="space-y-5">
+        {groups.length > 0 && (
         <div className="flex flex-col gap-2.75">
           {groups.map((g) => {
             const reminded = justReminded.has(g.key);
@@ -136,6 +141,53 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
               </div>
             );
           })}
+        </div>
+        )}
+
+        {manualEntries.length > 0 && (
+          <div>
+            <p className="mb-2.75 text-xs font-semibold tracking-wide text-muted uppercase">
+              {t("manualEntriesSectionTitle")}
+            </p>
+            <div className="flex flex-col gap-2.75">
+              {manualEntries.map((e) => (
+                <div key={e.id} className="rounded-2xl border border-line bg-card p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display text-base font-bold text-ink">
+                        {e.service_name || t("manualEntryFallbackName")}
+                      </p>
+                      <p className="truncate text-xs text-muted">
+                        {t("dueSince", formatBanglaDate(new Date(e.created_at)))}
+                        {e.note ? ` · ${e.note}` : ""}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-live-soft px-3 py-1 font-number text-sm font-bold text-live">
+                      ৳{formatMoney(e.amount)}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={collectManual.isPending}
+                      onClick={() => {
+                        collectManual.mutate([e.id], {
+                          onSuccess: () => showToast(t("markedCollected")),
+                          onError: () => showToast(t("markFailed")),
+                        });
+                      }}
+                      className="ml-auto flex h-9 items-center gap-1.5 rounded-xl bg-good px-3.5 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {t("markCollected")}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         </div>
       )}
     </div>

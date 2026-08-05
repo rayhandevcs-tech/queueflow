@@ -41,6 +41,8 @@ export const keys = {
   dueLedger: {
     byShop: (shopId: string) => ["due-ledger", "shop", shopId] as const,
     countByShop: (shopId: string) => ["due-ledger", "count", "shop", shopId] as const,
+    manualByShop: (shopId: string) => ["due-ledger", "manual", "shop", shopId] as const,
+    manualCountByShop: (shopId: string) => ["due-ledger", "manual-count", "shop", shopId] as const,
   },
   reviews: {
     mine: () => ["reviews", "mine"] as const,

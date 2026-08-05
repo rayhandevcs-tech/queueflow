@@ -25,13 +25,13 @@ export function ProfileHeaderCard({
   const editable = !!onAvatarFileSelected;
 
   return (
-    <div className="flex items-start gap-3.75 rounded-[22px] bg-accent p-5 text-accent-ink">
+    <div className="flex items-start gap-3.75 rounded-[22px] bg-accent/10 p-5 text-ink">
       <button
         type="button"
         disabled={!editable || avatarUploading}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "relative grid h-15 w-15 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white font-display text-2xl font-extrabold text-accent",
+          "relative grid h-18 w-18 shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white font-display text-3xl font-extrabold text-accent",
           editable && "cursor-pointer",
         )}
       >
@@ -47,8 +47,8 @@ export function ProfileHeaderCard({
           </span>
         )}
         {editable && !avatarUploading && (
-          <span className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full border border-line bg-white text-accent shadow-sm">
-            <Pencil className="h-3 w-3" />
+          <span className="absolute -bottom-1 -right-1 grid h-6.5 w-6.5 place-items-center rounded-full border border-line bg-white text-accent shadow-sm">
+            <Pencil className="h-3.5 w-3.5" />
           </span>
         )}
       </button>
@@ -67,7 +67,7 @@ export function ProfileHeaderCard({
       )}
       <div className="min-w-0 flex-1">
         <p className="truncate font-display text-lg font-bold">{name || "—"}</p>
-        <p className="truncate text-xs text-accent-ink/60">{subtitle || "—"}</p>
+        <p className="truncate text-xs text-muted">{subtitle || "—"}</p>
         {right && <div className="mt-2 inline-flex">{right}</div>}
       </div>
     </div>
