@@ -334,6 +334,38 @@ export type Database = {
         };
         Relationships: [];
       };
+      manual_entries: {
+        Row: {
+          id: string;
+          shop_id: string;
+          service_id: string;
+          chair_id: string | null;
+          amount: number;
+          payment_method: string | null;
+          payment_status: "PAID" | "DUE";
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          service_id: string;
+          chair_id?: string | null;
+          amount: number;
+          payment_method?: string | null;
+          payment_status?: "PAID" | "DUE";
+          note?: string | null;
+        };
+        Update: {
+          service_id?: string;
+          chair_id?: string | null;
+          amount?: number;
+          payment_method?: string | null;
+          payment_status?: "PAID" | "DUE";
+          note?: string | null;
+        };
+        Relationships: [];
+      };
       queue_public: {
         Row: {
           id: string;

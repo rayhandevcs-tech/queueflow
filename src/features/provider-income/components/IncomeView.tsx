@@ -2,12 +2,18 @@
 
 import { BN_MONTHS, EN_MONTHS, formatMoney, toBanglaDigits } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
+import { AvatarChip } from "@/components/ui/AvatarChip";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Trophy } from "lucide-react";
 import { useLanguage, useT } from "@/lib/i18n";
 import { useIncomeSummary } from "../hooks/use-income-summary";
+import { useManualEntryPickers } from "../hooks/use-manual-entries";
 import { providerIncomeDict } from "../lib/i18n";
+import { ManualEntrySection } from "./ManualEntrySection";
 
 export function IncomeView({ shopId }: { shopId: string | undefined }) {
   const { summary, isPending } = useIncomeSummary(shopId);
+  const { chairs } = useManualEntryPickers(shopId);
   const { language } = useLanguage();
   const t = useT(providerIncomeDict);
 
@@ -22,8 +28,17 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
   const now = new Date();
   const maxMonthly = Math.max(1, ...summary.monthlyTrend.map((m) => m.amount));
   const maxService = Math.max(1, ...summary.byService.map((s) => s.amount));
+  const maxStaff = Math.max(1, ...summary.byStaff.map((s) => s.amount));
   const monthName = language === "en" ? EN_MONTHS[now.getMonth()] : BN_MONTHS[now.getMonth()];
   const yearLabel = toBanglaDigits(now.getFullYear());
+
+  const staffLabel = (chairId: string) => {
+    const chair = chairs.find((c) => c.id === chairId);
+    return {
+      name: chair?.staff_name || chair?.label || t("manualEntryUnknownService"),
+      avatarUrl: chair?.staff_avatar_url,
+    };
+  };
 
   return (
     <div className="space-y-4.5">
@@ -39,6 +54,9 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
             ৳{formatMoney(summary.today.amount)}
           </p>
           <p className="mt-1 text-xs opacity-50">{t("jobsCountSuffix", summary.today.doneCount)}</p>
+          <p className="mt-2 text-xs opacity-70">
+            {t("cashDueBreakdown", formatMoney(summary.today.cash), formatMoney(summary.today.due))}
+          </p>
         </div>
         <div className="rounded-[20px] border border-line bg-card p-5.5">
           <p className="text-[13px] text-muted">{t("thisMonth", monthName)}</p>
@@ -52,11 +70,17 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
                 ? t("moreThanLastMonth", summary.month.changePct)
                 : t("lessThanLastMonth", Math.abs(summary.month.changePct))}
           </p>
+          <p className="mt-2 text-xs text-muted">
+            {t("cashDueBreakdown", formatMoney(summary.month.cash), formatMoney(summary.month.due))}
+          </p>
         </div>
         <div className="rounded-[20px] border border-line bg-card p-5.5">
           <p className="text-[13px] text-muted">{t("thisYear", yearLabel)}</p>
           <p className="mt-1.5 font-number text-[32px] font-bold text-ink">
             ৳{formatMoney(summary.year.amount)}
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            {t("cashDueBreakdown", formatMoney(summary.year.cash), formatMoney(summary.year.due))}
           </p>
         </div>
       </div>
@@ -66,7 +90,7 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
           <p className="font-semibold text-ink">{t("last12MonthsIncome")}</p>
           <p className="text-xs text-muted">{t("inThousands")}</p>
         </div>
-        <div className="flex h-42.5 items-end gap-2.5">
+        <div className="flex h-42.5 items-end gap-1.5 sm:gap-2.5">
           {summary.monthlyTrend.map((m, i) => (
             <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-1.75">
               <div
@@ -110,6 +134,42 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
           </div>
         )}
       </div>
+
+      <div className="rounded-[20px] border border-line bg-card p-5.5">
+        <p className="mb-3.5 font-semibold text-ink">{t("incomeByStaff")}</p>
+        {summary.byStaff.length === 0 ? (
+          <EmptyState
+            icon={<Trophy className="h-6 w-6" />}
+            title={t("noStaffIncomeThisMonth")}
+            className="border-none bg-transparent p-0 shadow-none"
+          />
+        ) : (
+          <div className="flex flex-col gap-3.25">
+            {summary.byStaff.map((s) => {
+              const staff = staffLabel(s.chairId);
+              return (
+                <div key={s.chairId} className="flex items-center gap-3">
+                  <AvatarChip label={staff.name} avatarUrl={staff.avatarUrl} size={36} shape="circle" />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1.25 flex justify-between text-[13px] text-ink">
+                      <span className="truncate">{staff.name}</span>
+                      <b className="font-number shrink-0">৳{formatMoney(s.amount)}</b>
+                    </div>
+                    <div className="h-2 rounded-md bg-soft">
+                      <div
+                        className="h-full rounded-md bg-accent"
+                        style={{ width: `${Math.max(2, (s.amount / maxStaff) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {shopId && <ManualEntrySection shopId={shopId} />}
     </div>
   );
 }

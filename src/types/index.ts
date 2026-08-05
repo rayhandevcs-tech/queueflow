@@ -15,6 +15,7 @@ export type Notification = Tables<"notifications">;
 export type Favorite = Tables<"favorites">;
 export type PushSubscriptionRow = Tables<"push_subscriptions">;
 export type Offer = Tables<"offers">;
+export type ManualEntry = Tables<"manual_entries">;
 export type ShopRatingSummary = Tables<"shop_rating_summary">;
 export type ChairRatingSummary = Tables<"chair_rating_summary">;
 

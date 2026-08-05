@@ -62,6 +62,9 @@ export const keys = {
     byShop: (shopId: string) => ["offers", shopId] as const,
     activeCarousel: () => ["offers", "active-carousel"] as const,
   },
+  manualEntries: {
+    byShop: (shopId: string) => ["manual-entries", shopId] as const,
+  },
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,
   },

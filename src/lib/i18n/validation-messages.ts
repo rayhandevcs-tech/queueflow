@@ -63,4 +63,6 @@ export const VALIDATION = {
     bn: "মেয়াদ শেষের তারিখ দাও",
     en: "Choose an expiry date",
   },
+  service_required: { bn: "একটা সার্ভিস বেছে নাও", en: "Choose a service" },
+  amount_min_1: { bn: "কমপক্ষে ৳১ লিখো", en: "Enter at least ৳1" },
 } satisfies Dict;
