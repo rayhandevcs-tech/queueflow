@@ -14,6 +14,13 @@ export function chairSchema(lang: Language) {
       .regex(/^#[0-9A-Fa-f]{6}$/, m("invalid_color"))
       .nullable()
       .default(null),
+    // Kept as a string through the form so an empty box reads as 0 rather
+    // than NaN; the coercion happens once, here.
+    commission_pct: z.coerce
+      .number()
+      .min(0, m("commission_range"))
+      .max(100, m("commission_range"))
+      .default(0),
   });
 }
 

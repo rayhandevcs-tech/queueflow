@@ -72,6 +72,9 @@ export const keys = {
   manualEntries: {
     byShop: (shopId: string) => ["manual-entries", shopId] as const,
   },
+  expenses: {
+    byShop: (shopId: string) => ["shop-expenses", shopId] as const,
+  },
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,
   },

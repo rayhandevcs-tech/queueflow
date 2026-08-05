@@ -19,7 +19,8 @@ type RealtimeTable =
   | "regular_reminders"
   | "messages"
   | "notifications"
-  | "manual_entries";
+  | "manual_entries"
+  | "shop_expenses";
 
 type RealtimeEvent = "*" | "INSERT" | "UPDATE" | "DELETE";
 

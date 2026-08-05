@@ -209,6 +209,8 @@ export type Database = {
           sort_order: number;
           staff_avatar_url: string | null;
           color: string | null;
+          /** Staff's cut of what they bring in, 0–100. 0 = salaried. */
+          commission_pct: number;
           created_at: string;
           updated_at: string;
         };
@@ -221,6 +223,7 @@ export type Database = {
           sort_order?: number;
           staff_avatar_url?: string | null;
           color?: string | null;
+          commission_pct?: number;
         };
         Update: {
           label?: string;
@@ -229,6 +232,7 @@ export type Database = {
           sort_order?: number;
           staff_avatar_url?: string | null;
           color?: string | null;
+          commission_pct?: number;
         };
         Relationships: [];
       };
@@ -419,6 +423,33 @@ export type Database = {
           payment_status?: "PAID" | "DUE";
           note?: string | null;
           customer_name?: string | null;
+        };
+        Relationships: [];
+      };
+      shop_expenses: {
+        Row: {
+          id: string;
+          shop_id: string;
+          category: Database["public"]["Enums"]["expense_category"];
+          amount: number;
+          note: string | null;
+          /** The day the money was for, not the day it was typed in. */
+          spent_on: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          category: Database["public"]["Enums"]["expense_category"];
+          amount: number;
+          note?: string | null;
+          spent_on?: string;
+        };
+        Update: {
+          category?: Database["public"]["Enums"]["expense_category"];
+          amount?: number;
+          note?: string | null;
+          spent_on?: string;
         };
         Relationships: [];
       };
@@ -856,12 +887,22 @@ export type Database = {
         Args: { p_review_id: string; p_reply: string | null };
         Returns: void;
       };
+      /**
+       * Service-role only (not granted to `authenticated`) — it walks every
+       * shop on the platform. Called by the nightly cron route.
+       */
+      send_daily_summaries: {
+        Args: { p_day?: string | null };
+        /** How many summaries were sent. */
+        Returns: number;
+      };
     };
     Enums: {
       user_role: "customer" | "provider";
       serial_status: "WAITING" | "IN_PROGRESS" | "DONE" | "CANCELLED" | "NO_SHOW";
       assignment_mode: "AUTO" | "CHOSEN" | "MANUAL";
       business_type: "SALON" | "PARLOUR" | "UNISEX";
+      expense_category: "RENT" | "UTILITY" | "SUPPLIES" | "STAFF" | "OTHER";
       notification_type:
         | "SERIAL_CONFIRMED"
         | "QUEUE_UPDATE"
@@ -871,7 +912,8 @@ export type Database = {
         | "REMINDER"
         | "SYSTEM"
         | "NEW_BOOKING"
-        | "LEAVE_NOW";
+        | "LEAVE_NOW"
+        | "DAILY_SUMMARY";
       payment_status: "PAID" | "DUE" | "ADVANCE";
       // shop_status / admin_level are CHECK constraints in Postgres rather than
       // real enum types; they live here so the app has one name for the values.

@@ -40,6 +40,7 @@ export const VALIDATION = {
   },
   label_required: { bn: "লেবেল লিখো", en: "Enter a label" },
   invalid_color: { bn: "সঠিক রং বেছে নাও", en: "Not a valid color" },
+  commission_range: { bn: "কমিশন ০ থেকে ১০০-এর মধ্যে হতে হবে", en: "Commission must be between 0 and 100" },
   customer_name_required: {
     bn: "কাস্টমারের নাম লিখো",
     en: "Enter the customer's name",

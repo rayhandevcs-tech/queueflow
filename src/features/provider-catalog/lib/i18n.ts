@@ -295,4 +295,10 @@ export const providerCatalogDict = {
   displayLinkCopied: { bn: "লিংক কপি হয়েছে", en: "Link copied" },
   displayLinkCopyFailed: { bn: "কপি করা যায়নি", en: "Couldn't copy" },
 
+
+  commissionLabel: { bn: "কমিশন (%)", en: "Commission (%)" },
+  commissionHint: {
+    bn: "এই স্টাফ যত টাকা আনবে তার কত শতাংশ পাবে। বেতনভুক্ত হলে ০ রাখো।",
+    en: "What share of their takings this person keeps. Leave 0 if they're salaried.",
+  },
 } satisfies Dict;

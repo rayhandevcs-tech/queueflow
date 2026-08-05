@@ -74,4 +74,81 @@ export const providerIncomeDict = {
     en: "Deleting this manual entry also removes it from your income totals.",
   },
   manualEntryDeleteConfirm: { bn: "মুছে ফেলো", en: "Delete" },
+
+  // Tabs + profit (Sprint 31)
+  tabSummary: { bn: "সারাংশ", en: "Summary" },
+  tabStaff: { bn: "স্টাফ", en: "Staff" },
+  tabExpenses: { bn: "খরচ", en: "Expenses" },
+  profitThisMonth: {
+    bn: (month: string) => `${month} মাসের আসল লাভ`,
+    en: (month: string) => `Real profit in ${month}`,
+  },
+  profitFormula: {
+    bn: (income: string, expense: string) => `আয় ৳${income} − খরচ ৳${expense}`,
+    en: (income: string, expense: string) => `৳${income} in − ৳${expense} out`,
+  },
+
+  // Staff earnings
+  thisMonthShort: { bn: "এই মাস", en: "This month" },
+  thisYearShort: { bn: "এই বছর", en: "This year" },
+  staffShareTotal: { bn: "স্টাফদের প্রাপ্য", en: "Owed to staff" },
+  shopShareTotal: { bn: "দোকানের অংশ", en: "Shop's share" },
+  pendingShareTotal: { bn: "বাকি আদায় হলে দিতে হবে", en: "Due once collected" },
+  noStaffTitle: { bn: "কোনো স্টাফ যোগ করা হয়নি", en: "No staff added" },
+  noStaffDesc: {
+    bn: "চেয়ার/স্টাফ যোগ করলে কে কত আনলো তার হিসাব এখানে দেখাবে।",
+    en: "Add chairs or staff and their takings will show up here.",
+  },
+  goToChairs: { bn: "চেয়ার ও স্টাফে যাও →", en: "Go to Chairs & Staff →" },
+  noCommissionSetHint: {
+    bn: "কারো কমিশন বসানো নেই, তাই পুরোটাই দোকানের অংশ দেখাচ্ছে।",
+    en: "No commission is set for anyone, so it all shows as the shop's share.",
+  },
+  setCommissionCta: { bn: "কমিশন বসাও", en: "Set commission" },
+  jobsAndCommission: {
+    bn: (jobs: number, pct: number) => `${jobs} টা কাজ · কমিশন ${pct}%`,
+    en: (jobs: number, pct: number) => `${jobs} jobs · ${pct}% commission`,
+  },
+  broughtInLabel: { bn: "মোট এনেছে", en: "Brought in" },
+  staffGetsLabel: { bn: "স্টাফ পাবে", en: "Staff gets" },
+  shopKeepsLabel: { bn: "দোকান রাখবে", en: "Shop keeps" },
+  afterDueLabel: { bn: "বাকি আদায়ের পর", en: "After dues" },
+  commissionRuleNote: {
+    bn: "কমিশন শুধু আদায় হওয়া টাকার উপর হিসাব হয় — বাকি থাকা টাকার কমিশন আদায়ের পর যোগ হবে। প্রতি স্টাফের কমিশন হার \"চেয়ার ও স্টাফ\" পেজে বসানো যায়।",
+    en: "Commission is calculated on money actually collected — an outstanding balance adds to it once it comes in. Set each person's rate on the Chairs & Staff page.",
+  },
+
+  // Expenses
+  expenseToday: { bn: "আজকের খরচ", en: "Today's expenses" },
+  expenseThisMonth: { bn: "এই মাসের খরচ", en: "This month's expenses" },
+  expenseThisYear: { bn: "এই বছরের খরচ", en: "This year's expenses" },
+  expenseByCategory: { bn: "এই মাসের খাত অনুযায়ী", en: "This month by category" },
+  categoryRent: { bn: "ভাড়া", en: "Rent" },
+  categoryUtility: { bn: "বিদ্যুৎ/পানি", en: "Utilities" },
+  categorySupplies: { bn: "মালামাল", en: "Supplies" },
+  categoryStaff: { bn: "স্টাফ", en: "Staff" },
+  categoryOther: { bn: "অন্যান্য", en: "Other" },
+  addExpenseCta: { bn: "খরচ যোগ করো", en: "Add an expense" },
+  expenseAmountLabel: { bn: "টাকার পরিমাণ", en: "Amount" },
+  expenseDateLabel: { bn: "কোন দিনের খরচ", en: "Date it was for" },
+  expenseNoteLabel: { bn: "নোট (ঐচ্ছিক)", en: "Note (optional)" },
+  expenseNotePlaceholder: { bn: "যেমন: আগস্টের দোকান ভাড়া", en: "e.g. August shop rent" },
+  expenseAmountInvalid: { bn: "সঠিক পরিমাণ লেখো", en: "Enter a valid amount" },
+  expenseSaveCta: { bn: "সংরক্ষণ করো", en: "Save" },
+  expenseCancelCta: { bn: "থাক", en: "Cancel" },
+  expenseAddedToast: { bn: "খরচ যোগ হয়েছে", en: "Expense added" },
+  expenseDeletedToast: { bn: "খরচ মুছে ফেলা হয়েছে", en: "Expense deleted" },
+  expenseFailedToast: { bn: "কাজটা করা যায়নি — আবার চেষ্টা করো।", en: "Couldn't do that — try again." },
+  noExpensesTitle: { bn: "এখনো কোনো খরচ যোগ করা হয়নি", en: "No expenses yet" },
+  noExpensesDesc: {
+    bn: "ভাড়া, বিদ্যুৎ, মালামাল যোগ করলে আসল লাভ দেখা যাবে।",
+    en: "Add rent, utilities and supplies to see your real profit.",
+  },
+  deleteExpenseAria: { bn: "খরচ মুছো", en: "Delete expense" },
+  deleteExpenseTitle: { bn: "এই খরচটা মুছে ফেলবে?", en: "Delete this expense?" },
+  deleteExpenseDesc: {
+    bn: "হিসাব থেকে সরে যাবে, ফেরানো যাবে না।",
+    en: "It'll come out of your accounts and can't be undone.",
+  },
+  deleteExpenseConfirm: { bn: "মুছে ফেলো", en: "Delete" },
 } satisfies Dict;

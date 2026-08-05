@@ -10,6 +10,7 @@ import {
   Radio,
   ShieldCheck,
   UserPlus,
+  Wallet,
   XCircle,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -30,6 +31,7 @@ const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
   SYSTEM: <ShieldCheck className="h-4.5 w-4.5" />,
   NEW_BOOKING: <UserPlus className="h-4.5 w-4.5" />,
   LEAVE_NOW: <Navigation className="h-4.5 w-4.5" />,
+  DAILY_SUMMARY: <Wallet className="h-4.5 w-4.5" />,
 };
 
 function dayLabel(dateStr: string): string {

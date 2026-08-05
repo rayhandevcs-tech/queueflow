@@ -1,5 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { Chair, ManualEntry, Service } from "@/types";
+import type { Chair, ExpenseCategory, ManualEntry, Service, ShopExpense } from "@/types";
 import type { DoneSerialRow, ManualEntryRow } from "../lib/compute-income";
 import type { ManualEntryFormOutput } from "../schemas/manual-entry.schema";
 
@@ -129,5 +129,50 @@ export async function updateManualEntry(
 export async function deleteManualEntry(entryId: string): Promise<void> {
   const supabase = getBrowserClient();
   const { error } = await supabase.from("manual_entries").delete().eq("id", entryId);
+  if (error) throw error;
+}
+
+/**
+ * Expense rows for the same trailing window the income history uses, so the
+ * profit line and the monthly trend line up point for point.
+ */
+export async function getShopExpenses(shopId: string): Promise<ShopExpense[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("shop_expenses")
+    .select("*")
+    .eq("shop_id", shopId)
+    .gte("spent_on", historySince().slice(0, 10))
+    .order("spent_on", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export interface ExpenseInput {
+  category: ExpenseCategory;
+  amount: number;
+  note: string | null;
+  spent_on: string;
+}
+
+export async function createExpense(
+  shopId: string,
+  values: ExpenseInput,
+): Promise<ShopExpense> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("shop_expenses")
+    .insert({ shop_id: shopId, ...values })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteExpense(expenseId: string): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.from("shop_expenses").delete().eq("id", expenseId);
   if (error) throw error;
 }

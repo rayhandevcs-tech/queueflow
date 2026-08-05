@@ -62,6 +62,11 @@ export const accountDict = {
     bn: "পালা আসার আগে, তোমার দূরত্ব হিসাব করে কখন বের হতে হবে",
     en: "When to set out, based on how far you are from the shop",
   },
+  dailySummaryLabel: { bn: "দিনশেষের হিসাব", en: "End-of-day summary" },
+  dailySummaryHint: {
+    bn: "প্রতি রাতে আজকের কতজন, কত আয়, কখন সবচেয়ে ব্যস্ত ছিল",
+    en: "Each night: how many customers, how much came in, when you were busiest",
+  },
   newBookingLabel: { bn: "নতুন অনলাইন সিরিয়াল", en: "New online serial" },
   newBookingHint: {
     bn: "কেউ অনলাইনে সিরিয়াল নিলে বা বাতিল করলে সাথে সাথে জানানো",
