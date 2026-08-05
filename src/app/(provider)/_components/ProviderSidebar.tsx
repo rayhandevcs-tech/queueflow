@@ -119,7 +119,10 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         />
         <Switch
           checked={!!shop?.is_open}
-          disabled={!shop || update.isPending}
+          // A shop that isn't verified/active can't take serials at all, so the
+          // open/closed switch stays locked until an admin clears its status.
+          // (`?? "ACTIVE"` — a deploy landing before the migration stays usable.)
+          disabled={!shop || (shop.status ?? "ACTIVE") !== "ACTIVE" || update.isPending}
           onChange={(next) => {
             if (shop) update.mutate({ shopId: shop.id, patch: { is_open: next } });
           }}

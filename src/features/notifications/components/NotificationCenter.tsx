@@ -1,6 +1,15 @@
 "use client";
 
-import { Bell, Calendar, CheckCheck, Megaphone, PartyPopper, Radio, XCircle } from "lucide-react";
+import {
+  Bell,
+  Calendar,
+  CheckCheck,
+  Megaphone,
+  PartyPopper,
+  Radio,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatBanglaDate } from "@/lib/format-wait";
@@ -16,6 +25,7 @@ const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
   CANCELLED: <XCircle className="h-4.5 w-4.5" />,
   PROMO: <Megaphone className="h-4.5 w-4.5" />,
   REMINDER: <Radio className="h-4.5 w-4.5" />,
+  SYSTEM: <ShieldCheck className="h-4.5 w-4.5" />,
 };
 
 function dayLabel(dateStr: string): string {

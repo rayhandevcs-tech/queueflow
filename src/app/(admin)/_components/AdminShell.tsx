@@ -1,17 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, ShieldOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Spinner } from "@/components/ui/Spinner";
+import { useIsPlatformAdmin } from "@/features/admin/hooks/use-admin";
+import { adminDict } from "@/features/admin/lib/i18n";
 import { useT } from "@/lib/i18n";
-import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
-import { ShopStatusBanner } from "@/features/provider-catalog/components/ShopStatusBanner";
-import { ProviderSidebar } from "./ProviderSidebar";
+import { AdminSidebar } from "./AdminSidebar";
 
-export function ProviderShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const t = useT(providerCatalogDict);
+  const { data: isAdmin, isPending } = useIsPlatformAdmin();
+  const t = useT(adminDict);
+
+  if (isPending) {
+    return (
+      <div className="grid min-h-dvh place-items-center">
+        <Spinner className="h-6 w-6 text-muted" />
+      </div>
+    );
+  }
+
+  // Middleware already bounces non-admins on the JWT claim; this is the second
+  // gate, asked of the database itself — a stale claim never renders the panel.
+  if (!isAdmin) {
+    return (
+      <div className="grid min-h-dvh place-items-center p-6">
+        <EmptyState
+          icon={<ShieldOff className="h-6 w-6" />}
+          title={t("notAdminTitle")}
+          description={t("notAdminDesc")}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh md:flex">
@@ -45,11 +70,10 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
           open ? "translate-x-0" : "translate-x-full",
         )}
       >
-        <ProviderSidebar onNavigate={() => setOpen(false)} />
+        <AdminSidebar onNavigate={() => setOpen(false)} />
       </div>
 
       <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-5 sm:px-6 md:px-8.5 md:py-7">
-        <ShopStatusBanner />
         {children}
       </main>
     </div>

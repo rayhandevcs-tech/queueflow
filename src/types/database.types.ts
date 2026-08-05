@@ -72,6 +72,12 @@ export type Database = {
           about: string | null;
           weekly_hours: Json | null;
           accepted_payment_methods: string[];
+          /** Verification lifecycle — admin-controlled (see 20260824_admin_panel.sql). */
+          status: Database["public"]["Enums"]["shop_status"];
+          verified_at: string | null;
+          verified_by: string | null;
+          status_reason: string | null;
+          is_featured: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -91,6 +97,9 @@ export type Database = {
           weekly_hours?: Json | null;
           accepted_payment_methods?: string[];
         };
+        // status / verified_* / status_reason / is_featured are intentionally
+        // absent here and in Insert: the shops_lock_status trigger rejects any
+        // non-admin write to them, and admins go through admin_set_shop_status.
         Update: {
           name?: string;
           business_type?: Database["public"]["Enums"]["business_type"];
@@ -496,6 +505,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      admin_users: {
+        Row: {
+          user_id: string;
+          level: Database["public"]["Enums"]["admin_level"];
+          note: string | null;
+          created_at: string;
+        };
+        /** Granting admin is a SQL-editor operation — no client write path. */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      admin_audit_log: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          action: string;
+          target_type: string;
+          target_id: string | null;
+          meta: Json;
+          created_at: string;
+        };
+        /** Written only by the SECURITY DEFINER admin RPCs. */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -536,6 +572,70 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: void;
       };
+      is_platform_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      admin_level: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database["public"]["Enums"]["admin_level"] | null;
+      };
+      /** Shape is narrowed by AdminOverviewStats in features/admin/api. */
+      admin_overview_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_list_shops: {
+        Args: {
+          p_status?: Database["public"]["Enums"]["shop_status"] | null;
+          p_business_type?: Database["public"]["Enums"]["business_type"] | null;
+          p_search?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          name: string;
+          business_type: Database["public"]["Enums"]["business_type"];
+          address: string;
+          status: Database["public"]["Enums"]["shop_status"];
+          is_open: boolean;
+          is_featured: boolean;
+          logo_url: string | null;
+          phone: string | null;
+          created_at: string;
+          verified_at: string | null;
+          status_reason: string | null;
+          owner_id: string;
+          owner_name: string | null;
+          owner_phone: string | null;
+          chair_count: number;
+          service_count: number;
+          serials_30d: number;
+          revenue_30d: number;
+          avg_rating: number;
+          review_count: number;
+          last_serial_at: string | null;
+          total_count: number;
+        }[];
+      };
+      /** Shape is narrowed by AdminShopDetail in features/admin/api. */
+      admin_shop_detail: {
+        Args: { p_shop_id: string };
+        Returns: Json;
+      };
+      admin_set_shop_status: {
+        Args: {
+          p_shop_id: string;
+          p_status: Database["public"]["Enums"]["shop_status"];
+          p_reason?: string | null;
+        };
+        Returns: void;
+      };
+      admin_set_shop_featured: {
+        Args: { p_shop_id: string; p_featured: boolean };
+        Returns: void;
+      };
     };
     Enums: {
       user_role: "customer" | "provider";
@@ -548,8 +648,13 @@ export type Database = {
         | "YOUR_TURN"
         | "CANCELLED"
         | "PROMO"
-        | "REMINDER";
+        | "REMINDER"
+        | "SYSTEM";
       payment_status: "PAID" | "DUE" | "ADVANCE";
+      // shop_status / admin_level are CHECK constraints in Postgres rather than
+      // real enum types; they live here so the app has one name for the values.
+      shop_status: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";
+      admin_level: "SUPER_ADMIN" | "MODERATOR" | "SUPPORT";
     };
     CompositeTypes: { [_ in never]: never };
   };

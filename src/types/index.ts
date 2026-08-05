@@ -18,12 +18,16 @@ export type Offer = Tables<"offers">;
 export type ManualEntry = Tables<"manual_entries">;
 export type ShopRatingSummary = Tables<"shop_rating_summary">;
 export type ChairRatingSummary = Tables<"chair_rating_summary">;
+export type AdminUser = Tables<"admin_users">;
+export type AdminAuditLogRow = Tables<"admin_audit_log">;
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type SerialStatus = Database["public"]["Enums"]["serial_status"];
 export type AssignmentMode = Database["public"]["Enums"]["assignment_mode"];
 export type NotificationType = Database["public"]["Enums"]["notification_type"];
 export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
+export type ShopStatus = Database["public"]["Enums"]["shop_status"];
+export type AdminLevel = Database["public"]["Enums"]["admin_level"];
 
 export type BusinessType = Database["public"]["Enums"]["business_type"];
 export type { TablesInsert, TablesUpdate, Json } from "./database.types";
