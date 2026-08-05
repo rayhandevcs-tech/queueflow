@@ -1,7 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { PaymentMethodsView } from "@/features/provider-payment-methods/components/PaymentMethodsView";
-
+/** Payment methods moved into shop settings' "accepted payments" section (Sprint 18). */
 export default function PaymentMethodsPage() {
-  return <PaymentMethodsView />;
+  redirect("/settings");
 }

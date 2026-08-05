@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Check, Wallet } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bell, Check, MessageCircle, Wallet } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { formatBanglaDate, formatMoney } from "@/lib/format-wait";
-import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
+import { toWhatsAppLink } from "@/lib/phone";
+import { AvatarChip } from "@/components/ui/AvatarChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/lib/i18n";
 import { useDueLedger } from "../hooks/use-due-ledger";
@@ -13,6 +17,7 @@ import { providerDueLedgerDict } from "../lib/i18n";
 
 export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
   const { groups, totalDue, isPending, collect, remind } = useDueLedger(shopId);
+  const router = useRouter();
   const showToast = useToast();
   const [justReminded, setJustReminded] = useState<Set<string>>(new Set());
   const t = useT(providerDueLedgerDict);
@@ -48,28 +53,22 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
             const reminded = justReminded.has(g.key);
             const canRemind = g.remindableSerialIds.length > 0 && !reminded;
             return (
-              <div
-                key={g.key}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-card p-4"
-              >
-                <div
-                  className="grid h-11.5 w-11.5 shrink-0 place-items-center rounded-[14px] font-display text-lg font-bold text-white"
-                  style={{ background: shopAvatarColor(g.key) }}
-                >
-                  {shopInitial(g.name)}
+              <div key={g.key} className="rounded-2xl border border-line bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <AvatarChip label={g.name} avatarUrl={g.avatarUrl} shape="circle" size={46} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-display text-base font-bold text-ink">{g.name}</p>
+                    <p className="text-xs text-muted">
+                      {g.oldestDueAt ? t("dueSince", formatBanglaDate(new Date(g.oldestDueAt))) : "—"}
+                      {g.serialIds.length > 1 ? ` · ${t("timesSuffix", g.serialIds.length)}` : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-live-soft px-3 py-1 font-number text-sm font-bold text-live">
+                    ৳{formatMoney(g.totalDue)}
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-display text-base font-bold text-ink">{g.name}</p>
-                  <p className="text-xs text-muted">
-                    {g.oldestDueAt ? t("dueSince", formatBanglaDate(new Date(g.oldestDueAt))) : "—"}
-                    {g.serialIds.length > 1 ? ` · ${t("timesSuffix", g.serialIds.length)}` : ""}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-live-soft px-3 py-1 font-number text-sm font-bold text-live">
-                  ৳{formatMoney(g.totalDue)}
-                </span>
 
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="mt-3 flex items-center gap-1.5">
                   <button
                     type="button"
                     disabled={!canRemind || remind.isPending}
@@ -88,10 +87,37 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                           ),
                       });
                     }}
-                    className="grid h-9 w-9 place-items-center rounded-xl border border-line text-muted disabled:opacity-40"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-line text-muted disabled:opacity-40"
                   >
                     <Bell className="h-3.5 w-3.5" />
                   </button>
+
+                  <button
+                    type="button"
+                    disabled={!g.customerId}
+                    title={t("messageReminderTitle")}
+                    onClick={() => g.customerId && router.push(`/chat/${g.customerId}`)}
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-line text-muted disabled:opacity-40"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </button>
+
+                  <a
+                    href={g.phone ? toWhatsAppLink(g.phone, t("whatsappDueMessage", formatMoney(g.totalDue))) : "#"}
+                    target={g.phone ? "_blank" : undefined}
+                    rel="noreferrer"
+                    title={t("whatsappReminderTitle")}
+                    onClick={(e) => {
+                      if (!g.phone) e.preventDefault();
+                    }}
+                    className={cn(
+                      "grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-line",
+                      g.phone ? "text-[#25D366]" : "pointer-events-none text-muted opacity-40",
+                    )}
+                  >
+                    <WhatsAppIcon className="h-3.5 w-3.5" />
+                  </a>
+
                   <button
                     type="button"
                     disabled={collect.isPending}
@@ -101,7 +127,7 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                         onError: () => showToast(t("markFailed")),
                       });
                     }}
-                    className="flex h-9 items-center gap-1.5 rounded-xl bg-good px-3.5 text-sm font-semibold text-white disabled:opacity-50"
+                    className="ml-auto flex h-9 items-center gap-1.5 rounded-xl bg-good px-3.5 text-sm font-semibold text-white disabled:opacity-50"
                   >
                     <Check className="h-3.5 w-3.5" />
                     {t("markCollected")}

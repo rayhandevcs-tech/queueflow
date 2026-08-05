@@ -5,6 +5,7 @@ export interface VisitRow {
   customer_id: string | null;
   customer_name: string;
   customer_phone: string | null;
+  customer_avatar_url: string | null;
   completed_at: string | null;
   status: string;
 }
@@ -15,6 +16,7 @@ export interface RegularCustomer {
   customerId: string | null;
   customerPhone: string | null;
   name: string;
+  avatarUrl: string | null;
   visitCount: number;
   lastVisitAt: string;
   visitedThisMonth: boolean;
@@ -43,6 +45,7 @@ export function computeRegulars(rows: VisitRow[], now: Date): RegularCustomer[] 
         customerId: row.customer_id,
         customerPhone: row.customer_phone,
         name: row.customer_name || translate(providerRegularsDict, "customerFallback"),
+        avatarUrl: row.customer_avatar_url,
         visitCount: 1,
         lastVisitAt: row.completed_at,
         visitedThisMonth: isThisMonth,
@@ -52,6 +55,7 @@ export function computeRegulars(rows: VisitRow[], now: Date): RegularCustomer[] 
       if (new Date(row.completed_at) > new Date(existing.lastVisitAt)) {
         existing.lastVisitAt = row.completed_at;
         existing.name = row.customer_name || existing.name;
+        existing.avatarUrl = row.customer_avatar_url;
       }
       existing.visitedThisMonth = existing.visitedThisMonth || isThisMonth;
     }

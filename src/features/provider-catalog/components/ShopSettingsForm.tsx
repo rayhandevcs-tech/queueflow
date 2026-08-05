@@ -14,6 +14,7 @@ import { useShopMutations } from "../hooks/use-my-shop";
 import { shopSchema, type ShopFormValues, type ShopFormOutput } from "../schemas/shop.schema";
 import { providerCatalogDict } from "../lib/i18n";
 import { AboutHoursForm } from "./AboutHoursForm";
+import { AcceptedPaymentsSection } from "./AcceptedPaymentsSection";
 import { GalleryManager } from "./GalleryManager";
 import { ImageUploadField } from "./ImageUploadField";
 import { LocationPickerField } from "./LocationPickerField";
@@ -205,6 +206,8 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
       )}
 
       {isEdit && <AboutHoursForm shop={shop} />}
+
+      {isEdit && <AcceptedPaymentsSection shop={shop} />}
 
       <Button type="submit" size="lg" loading={busy}>
         {busy ? t("shopSaving") : isEdit ? t("shopUpdate") : t("shopCreate")}

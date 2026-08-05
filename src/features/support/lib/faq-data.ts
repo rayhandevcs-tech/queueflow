@@ -68,8 +68,8 @@ export const FAQ_ITEMS: FaqItem[] = [
       en: "Is online payment (bKash/Nagad/Rocket/Card) available?",
     },
     answer: {
-      bn: 'এখনো না — এই মুহূর্তে শুধু ক্যাশ পেমেন্ট কাজ করে। অনলাইন পেমেন্ট মেথডগুলো "শীঘ্রই আসছে", পেমেন্ট মেথড পেজে দেখতে পাবে।',
-      en: 'Not yet — only cash payment works right now. Online payment methods are "coming soon," visible on the payment methods page.',
+      bn: "ক্যাশ সব দোকানেই চলে। কিছু দোকান হাতে-হাতে কনফার্ম করে bKash/Nagad/Rocket-ও নেয় (দোকানভেদে আলাদা) — কাজ শেষের পেমেন্ট শিটে যেসব অপশন দেখাবে, সেগুলোই ওই দোকান নেয়। কার্ড এখনো কোনো দোকানেই চালু হয়নি।",
+      en: "Cash works at every shop. Some shops also accept bKash/Nagad/Rocket with manual confirmation (this varies by shop) — whatever options show up on the job-completion payment sheet are what that shop accepts. Card isn't available anywhere yet.",
     },
   },
   {

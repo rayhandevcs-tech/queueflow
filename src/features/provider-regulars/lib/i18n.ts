@@ -17,7 +17,10 @@ export const providerRegularsDict = {
   },
   visitedThisMonth: { bn: "এই মাসে এসেছে", en: "Visited this month" },
   notVisited: { bn: "আসেনি", en: "Hasn't visited" },
-  messageFeatureSoon: { bn: "মেসেজ ফিচার শীঘ্রই আসছে", en: "Messaging is coming soon" },
+  noWayToReach: {
+    bn: "এই কাস্টমারের কোনো অ্যাকাউন্ট বা ফোন নম্বর নেই — যোগাযোগ করা যাচ্ছে না",
+    en: "No account or phone number on file for this customer — can't reach them",
+  },
   sendMessage: { bn: "মেসেজ পাঠাও", en: "Send message" },
   alreadySent: { bn: "✓ পাঠানো হয়েছে", en: "✓ Sent" },
   reminderSent: { bn: "🔔 রিমাইন্ডার পাঠানো হয়েছে", en: "🔔 Reminder sent" },

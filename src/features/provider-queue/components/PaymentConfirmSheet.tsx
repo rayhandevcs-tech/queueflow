@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Banknote, CreditCard, Receipt, Smartphone, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ENABLED_PAYMENT_METHODS, type PaymentMethodValue } from "@/config/constants";
+import { type PaymentMethodValue } from "@/config/constants";
+import { keys } from "@/lib/query/keys";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
 import type { Serial } from "@/types";
+import { getShopAcceptedPaymentMethods } from "../api/queue.api";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
 
@@ -32,6 +35,12 @@ export function PaymentConfirmSheet({
   const t = useT(providerQueueDict);
   const [selected, setSelected] = useState<PaymentMethodValue | "due" | null>(null);
 
+  const acceptedQuery = useQuery({
+    queryKey: keys.shops.acceptedPaymentMethods(serial.shop_id),
+    queryFn: () => getShopAcceptedPaymentMethods(serial.shop_id),
+  });
+  const accepted = (acceptedQuery.data ?? ["cash"]) as PaymentMethodValue[];
+
   const METHOD_LABEL: Record<PaymentMethodValue, string> = {
     cash: t("cashOption"),
     bkash: t("bkashOption"),
@@ -51,7 +60,7 @@ export function PaymentConfirmSheet({
       <h2 className="font-display text-lg font-bold text-ink">{t("paymentSheetTitle")}</h2>
 
       <div className="flex flex-col gap-2">
-        {ENABLED_PAYMENT_METHODS.map((m) => {
+        {accepted.map((m) => {
           const Icon = METHOD_ICON[m];
           const active = selected === m;
           return (

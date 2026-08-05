@@ -29,17 +29,24 @@ export async function getChairNames(shopId: string): Promise<Record<string, stri
   return byId;
 }
 
-/** customer_name lives on `serials`, not `reviews` — batch lookup, one owner-scoped query. */
-export async function getSerialCustomerNames(serialIds: string[]): Promise<Record<string, string>> {
+export interface SerialCustomerInfo {
+  name: string;
+  avatarUrl: string | null;
+}
+
+/** customer_name/avatar live on `serials`, not `reviews` — batch lookup, one owner-scoped query. */
+export async function getSerialCustomerInfo(
+  serialIds: string[],
+): Promise<Record<string, SerialCustomerInfo>> {
   if (serialIds.length === 0) return {};
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("serials")
-    .select("id, customer_name")
+    .select("id, customer_name, customer_avatar_url")
     .in("id", serialIds);
 
   if (error) throw error;
-  const byId: Record<string, string> = {};
-  for (const row of data) byId[row.id] = row.customer_name;
+  const byId: Record<string, SerialCustomerInfo> = {};
+  for (const row of data) byId[row.id] = { name: row.customer_name, avatarUrl: row.customer_avatar_url };
   return byId;
 }

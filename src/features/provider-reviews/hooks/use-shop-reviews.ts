@@ -6,7 +6,7 @@ import { keys } from "@/lib/query/keys";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import type { Review } from "@/types";
 import { computeReviewSummary } from "@/lib/reviews";
-import { getChairNames, getSerialCustomerNames, getShopReviews } from "../api/reviews.api";
+import { getChairNames, getSerialCustomerInfo, getShopReviews } from "../api/reviews.api";
 
 export function useShopReviews(shopId: string | undefined) {
   const queryClient = useQueryClient();
@@ -33,9 +33,9 @@ export function useShopReviews(shopId: string | undefined) {
     [reviewsQuery.data],
   );
 
-  const namesQuery = useQuery({
-    queryKey: ["reviews", "names", serialIds.slice().sort()],
-    queryFn: () => getSerialCustomerNames(serialIds),
+  const customerInfoQuery = useQuery({
+    queryKey: ["reviews", "customer-info", serialIds.slice().sort()],
+    queryFn: () => getSerialCustomerInfo(serialIds),
     enabled: serialIds.length > 0,
   });
 
@@ -49,7 +49,7 @@ export function useShopReviews(shopId: string | undefined) {
 
   return {
     reviews: reviewsQuery.data ?? [],
-    namesBySerial: namesQuery.data ?? {},
+    customerInfoBySerial: customerInfoQuery.data ?? {},
     staffNameByChairId: chairNamesQuery.data ?? {},
     summary,
     isPending: reviewsQuery.isPending,

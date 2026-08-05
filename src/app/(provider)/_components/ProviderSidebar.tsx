@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   Armchair,
   BarChart3,
-  CreditCard,
   Eye,
   EyeOff,
   LogOut,
@@ -71,7 +70,6 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     { href: "/regulars", label: t("navRegulars"), icon: Users },
     { href: "/notifications/send", label: t("navSendNotification"), icon: Megaphone },
     { href: "/reviews", label: t("navReviews"), icon: Star },
-    { href: "/payment-methods", label: t("navPaymentMethods"), icon: CreditCard },
     { href: "/settings", label: t("navSettings"), icon: SettingsIcon },
   ];
 

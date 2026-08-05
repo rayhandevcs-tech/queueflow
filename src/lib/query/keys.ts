@@ -7,6 +7,7 @@ export const keys = {
     open: () => ["shops", "open"] as const,
     detail: (shopId: string) => ["shops", shopId] as const,
     mine: () => ["shops", "mine"] as const,
+    acceptedPaymentMethods: (shopId: string) => ["shops", shopId, "accepted-payment-methods"] as const,
   },
   chairs: {
     byShop: (shopId: string) => ["chairs", shopId] as const,

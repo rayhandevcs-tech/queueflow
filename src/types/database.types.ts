@@ -59,6 +59,7 @@ export type Database = {
           cover_image_url: string | null;
           about: string | null;
           weekly_hours: Json | null;
+          accepted_payment_methods: string[];
           created_at: string;
           updated_at: string;
         };
@@ -76,6 +77,7 @@ export type Database = {
           cover_image_url?: string | null;
           about?: string | null;
           weekly_hours?: Json | null;
+          accepted_payment_methods?: string[];
         };
         Update: {
           name?: string;
@@ -89,6 +91,7 @@ export type Database = {
           cover_image_url?: string | null;
           about?: string | null;
           weekly_hours?: Json | null;
+          accepted_payment_methods?: string[];
         };
         Relationships: [];
       };

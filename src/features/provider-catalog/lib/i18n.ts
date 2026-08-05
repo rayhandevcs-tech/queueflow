@@ -149,7 +149,6 @@ export const providerCatalogDict = {
   navRegulars: { bn: "নিয়মিত কাস্টমার", en: "Regular customers" },
   navSendNotification: { bn: "নোটিফিকেশন পাঠান", en: "Send notification" },
   navReviews: { bn: "রিভিউ", en: "Reviews" },
-  navPaymentMethods: { bn: "পেমেন্ট মেথড", en: "Payment methods" },
   navSettings: { bn: "সেটিংস", en: "Settings" },
   comingSoon: {
     bn: (label: string) => `${label} — শীঘ্রই আসছে`,
@@ -172,4 +171,22 @@ export const providerCatalogDict = {
   // ProviderShell
   openMenuAria: { bn: "মেনু খোলো", en: "Open menu" },
   closeMenuAria: { bn: "মেনু বন্ধ করো", en: "Close menu" },
+
+  // AcceptedPaymentsSection
+  acceptedPaymentsTitle: { bn: "গ্রহণযোগ্য পেমেন্ট", en: "Accepted payments" },
+  acceptedPaymentsHint: {
+    bn: "কাজ শেষে পেমেন্ট শিটে শুধু এখানে চালু করা মাধ্যমগুলোই দেখাবে",
+    en: "Only the methods you turn on here will show up on the job-completion payment sheet",
+  },
+  cashLabel: { bn: "ক্যাশ", en: "Cash" },
+  cashAlwaysOnHint: { bn: "সবসময় চালু", en: "Always on" },
+  bkashLabel: { bn: "বিকাশ", en: "bKash" },
+  nagadLabel: { bn: "নগদ", en: "Nagad" },
+  rocketLabel: { bn: "রকেট", en: "Rocket" },
+  cardLabel: { bn: "কার্ড", en: "Card" },
+  comingSoonBadge: { bn: "শীঘ্রই আসছে", en: "Coming soon" },
+  paymentMethodUpdateFailed: {
+    bn: "আপডেট করা যায়নি — আবার চেষ্টা করো",
+    en: "Couldn't update — try again",
+  },
 } satisfies Dict;

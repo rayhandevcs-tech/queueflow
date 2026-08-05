@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { BadgeCheck, ImageIcon, Star } from "lucide-react";
 import { formatBanglaDate } from "@/lib/format-wait";
-import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
+import { AvatarChip } from "@/components/ui/AvatarChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
@@ -12,7 +12,7 @@ import { providerReviewsDict } from "../lib/i18n";
 
 function Stars({ count }: { count: number }) {
   return (
-    <span className="text-brass">
+    <span className="shrink-0 text-brass">
       {"★".repeat(count)}
       <span className="opacity-25">{"★".repeat(5 - count)}</span>
     </span>
@@ -22,7 +22,7 @@ function Stars({ count }: { count: number }) {
 type Filter = "latest" | "with-images";
 
 export function ReviewsView({ shopId }: { shopId: string | undefined }) {
-  const { reviews, namesBySerial, staffNameByChairId, summary, isPending } = useShopReviews(shopId);
+  const { reviews, customerInfoBySerial, staffNameByChairId, summary, isPending } = useShopReviews(shopId);
   const [filter, setFilter] = useState<Filter>("latest");
   const t = useT(providerReviewsDict);
 
@@ -102,22 +102,18 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
           ) : (
             <div className="flex flex-col gap-3">
               {visibleReviews.map((r) => {
-                const name = namesBySerial[r.serial_id] ?? t("customerFallback");
+                const info = customerInfoBySerial[r.serial_id];
+                const name = info?.name ?? t("customerFallback");
                 return (
                   <div key={r.id} className="rounded-2xl border border-line bg-card p-4.5">
                     <div className="mb-2 flex items-center gap-3">
-                      <div
-                        className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl font-display font-bold text-white"
-                        style={{ background: shopAvatarColor(r.id) }}
-                      >
-                        {shopInitial(name)}
-                      </div>
+                      <AvatarChip label={name} avatarUrl={info?.avatarUrl} shape="circle" size={38} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <p className="truncate text-sm font-semibold text-ink">{name}</p>
                           <span
                             title={t("verifiedTitle")}
-                            className="flex items-center gap-0.5 text-[10px] font-medium text-good"
+                            className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-good"
                           >
                             <BadgeCheck className="h-3 w-3" />
                             {t("verifiedBadge")}

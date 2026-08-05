@@ -3,6 +3,7 @@ export interface DueSerialRow {
   customer_id: string | null;
   customer_name: string;
   customer_phone: string | null;
+  customer_avatar_url: string | null;
   due_amount: number;
   completed_at: string | null;
   due_reminded_at: string | null;
@@ -14,6 +15,7 @@ export interface DueCustomerGroup {
   customerId: string | null;
   name: string;
   phone: string | null;
+  avatarUrl: string | null;
   totalDue: number;
   serialIds: string[];
   /** Oldest still-unsettled visit — drives "longest overdue first" sorting. */
@@ -47,6 +49,7 @@ export function computeDueLedger(rows: DueSerialRow[], now: Date): DueCustomerGr
         customerId: r.customer_id,
         name: r.customer_name,
         phone: r.customer_phone,
+        avatarUrl: r.customer_avatar_url,
         totalDue: r.due_amount,
         serialIds: [r.id],
         oldestDueAt: r.completed_at,

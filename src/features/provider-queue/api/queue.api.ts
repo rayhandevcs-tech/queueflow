@@ -27,6 +27,25 @@ export async function getShopQueue(shopId: string): Promise<Serial[]> {
   return data;
 }
 
+/**
+ * The shop's accepted payment methods, for the payment-confirmation sheet —
+ * kept local instead of importing provider-catalog's shop hook (sibling-
+ * feature import is forbidden). Falls back to `["cash"]` both when the row
+ * predates the accepted_payment_methods migration (column absent) and while
+ * loading, so the sheet never shows zero options.
+ */
+export async function getShopAcceptedPaymentMethods(shopId: string): Promise<string[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("shops")
+    .select("accepted_payment_methods")
+    .eq("id", shopId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.accepted_payment_methods ?? ["cash"];
+}
+
 /** Sidebar badge — how many serials are currently waiting or in progress. */
 export async function getLiveQueueCount(shopId: string): Promise<number> {
   const supabase = getBrowserClient();

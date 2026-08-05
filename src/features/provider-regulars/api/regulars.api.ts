@@ -6,7 +6,7 @@ export async function getShopVisitHistory(shopId: string): Promise<VisitRow[]> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("serials")
-    .select("customer_id, customer_name, customer_phone, completed_at, status")
+    .select("customer_id, customer_name, customer_phone, customer_avatar_url, completed_at, status")
     .eq("shop_id", shopId)
     .eq("status", "DONE");
 

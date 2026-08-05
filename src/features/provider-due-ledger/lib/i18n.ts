@@ -18,11 +18,17 @@ export const providerDueLedgerDict = {
   },
   timesSuffix: { bn: (n: number) => `${n} বার`, en: (n: number) => `${n}×` },
   alreadyRemindedToday: { bn: "আজ পাঠানো হয়ে গেছে", en: "Already sent today" },
-  sendReminderTitle: { bn: "রিমাইন্ডার দাও", en: "Send a reminder" },
+  sendReminderTitle: { bn: "নোটিফিকেশনে রিমাইন্ডার দাও", en: "Send an in-app reminder" },
   reminderSent: { bn: "🔔 রিমাইন্ডার পাঠানো হয়েছে", en: "🔔 Reminder sent" },
   reminderFailedGeneric: {
     bn: "রিমাইন্ডার পাঠানো যায়নি — আবার চেষ্টা করো",
     en: "Couldn't send the reminder — try again",
+  },
+  messageReminderTitle: { bn: "মেসেজে মনে করিয়ে দাও", en: "Remind via message" },
+  whatsappReminderTitle: { bn: "হোয়াটসঅ্যাপে মনে করিয়ে দাও", en: "Remind via WhatsApp" },
+  whatsappDueMessage: {
+    bn: (amount: string) => `হ্যালো! তোমার ৳${amount} বাকি আছে — সুবিধামতো পরিশোধ করে দিও। ধন্যবাদ।`,
+    en: (amount: string) => `Hi! You have ৳${amount} due — please settle it whenever convenient. Thanks!`,
   },
   markCollected: { bn: "আদায় হয়েছে", en: "Collected" },
   markedCollected: { bn: "✓ আদায় হয়েছে হিসেবে মার্ক করা হয়েছে", en: "✓ Marked as collected" },

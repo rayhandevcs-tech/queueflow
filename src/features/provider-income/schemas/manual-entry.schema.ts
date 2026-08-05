@@ -17,8 +17,9 @@ export function manualEntrySchema(lang: Language) {
       .transform((v) => (v ? v : null)),
     amount: z.coerce.number().min(1, m("amount_min_1")).max(999999, m("rate_too_large")),
     payment_status: z.enum(["PAID", "DUE"]),
-    // Only "cash" is ever selectable today (ENABLED_PAYMENT_METHODS) — null
-    // when payment_status is DUE, same convention as serials.payment_method.
+    // The manual-entry form only offers a cash/due toggle (not the full
+    // accepted-methods list) — null when payment_status is DUE, same
+    // convention as serials.payment_method.
     payment_method: z.string().nullable().optional(),
     note: z
       .string()

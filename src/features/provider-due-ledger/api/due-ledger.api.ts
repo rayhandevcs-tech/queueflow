@@ -7,7 +7,9 @@ export async function getDueSerials(shopId: string): Promise<DueSerialRow[]> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("serials")
-    .select("id, customer_id, customer_name, customer_phone, due_amount, completed_at, due_reminded_at")
+    .select(
+      "id, customer_id, customer_name, customer_phone, customer_avatar_url, due_amount, completed_at, due_reminded_at",
+    )
     .eq("shop_id", shopId)
     .eq("status", "DONE")
     .eq("payment_status", "DUE")
