@@ -25,7 +25,7 @@ export function ChairColumn({ lane, lanes, actions }: Props) {
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-2xl border border-line bg-soft/60 p-3",
+        "flex min-w-0 flex-col gap-3 rounded-2xl border border-line bg-card p-3 shadow-sm",
         lane.chairInactive && "opacity-60",
       )}
     >
