@@ -96,3 +96,21 @@ export async function getAllChairs(shopId: string): Promise<Chair[]> {
   if (error) throw error;
   return data;
 }
+/**
+ * Every serial in one party, for the payment sheet's "settle it all" option.
+ *
+ * Has to be its own fetch rather than a filter over the board: a member who
+ * has already been served has left the board, and those are precisely the rows
+ * that can still be carrying a balance.
+ */
+export async function getPartyDues(groupId: string): Promise<Serial[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("serials")
+    .select("*")
+    .eq("group_id", groupId)
+    .order("party_seq", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}

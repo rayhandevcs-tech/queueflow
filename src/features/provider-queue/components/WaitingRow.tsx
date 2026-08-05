@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BellRing, ChevronsDown, MessageCircle, Phone, Play, UserX } from "lucide-react";
+import { BellRing, ChevronsDown, MessageCircle, Phone, Play, Users, UserX } from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtWait, formatMoney } from "@/lib/format-wait";
@@ -13,6 +13,7 @@ import { useT } from "@/lib/i18n";
 import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
+import { partyInfo } from "../lib/party";
 import { MoveSerialMenu } from "./MoveSerialMenu";
 
 /** Must match the window serial_before_update enforces (20260827_wait_reality.sql). */
@@ -22,11 +23,13 @@ export function WaitingRow({
   serial,
   canStart,
   lanes,
+  boardRows,
   actions,
 }: {
   serial: Serial;
   canStart: boolean;
   lanes: Lane[];
+  boardRows: Serial[];
   actions: ReturnType<typeof useSerialActions>;
 }) {
   const router = useRouter();
@@ -41,6 +44,7 @@ export function WaitingRow({
 
   const arrived = !!serial.arrived_at;
   const called = !!serial.called_at;
+  const party = partyInfo(serial, boardRows);
   // Mirrors the 5-minute window serial_before_update enforces — the button is
   // hidden rather than disabled until then, so nobody hunts for why it fails.
   const graceLeftMin = serial.called_at
@@ -85,8 +89,16 @@ export function WaitingRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate font-display text-base font-bold text-ink">
-              {serial.customer_name || "—"}
+              {serial.party_member_name || serial.customer_name || "—"}
             </span>
+            {/* Tells the owner not to call the next customer in yet — more of
+                this family is still on the board. */}
+            {party && (
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                <Users className="h-2.5 w-2.5" />
+                {t("partyBadge", party.index, party.size)}
+              </span>
+            )}
             {serial.is_walk_in && (
               <span className="shrink-0 rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-muted">
                 {t("walkInBadge")}

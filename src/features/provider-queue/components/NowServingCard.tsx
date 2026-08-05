@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Users, X } from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { CountdownRing } from "@/components/ui/CountdownRing";
 import { LiveDot } from "@/components/ui/LiveDot";
@@ -11,13 +11,16 @@ import { UiDbError } from "@/lib/supabase/db-errors";
 import { useT } from "@/lib/i18n";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
+import { partyInfo } from "../lib/party";
 import { PaymentConfirmSheet } from "./PaymentConfirmSheet";
 
 export function NowServingCard({
   serial,
+  boardRows,
   actions,
 }: {
   serial: Serial;
+  boardRows: Serial[];
   actions: ReturnType<typeof useSerialActions>;
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +30,7 @@ export function NowServingCard({
   const nowMs = useNowMs(1000);
   const services = parseServicesSnapshot(serial.services_snapshot);
   const t = useT(providerQueueDict);
+  const party = partyInfo(serial, boardRows);
 
   const startedMs = serial.started_at ? new Date(serial.started_at).getTime() : nowMs;
   const totalSec = serial.estimated_duration_min * 60;
@@ -88,7 +92,17 @@ export function NowServingCard({
         </CountdownRing>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-xl font-bold">{serial.customer_name || "—"}</p>
+          <div className="flex items-center gap-2">
+            <p className="truncate font-display text-xl font-bold">
+              {serial.party_member_name || serial.customer_name || "—"}
+            </p>
+            {party && (
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-ink/15 px-2 py-0.5 text-[10px] font-semibold">
+                <Users className="h-2.5 w-2.5" />
+                {t("partyBadge", party.index, party.size)}
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 truncate text-[13px] text-accent-ink/60">
             {services.map((s) => s.name).join(" + ") || "—"}
           </p>
@@ -171,7 +185,11 @@ export function NowServingCard({
       {error && <p className="mt-2 text-xs text-accent-ink">{error}</p>}
 
       {paymentOpen && (
-        <PaymentConfirmSheet serial={serial} actions={actions} onClose={() => setPaymentOpen(false)} />
+        <PaymentConfirmSheet
+          serial={serial}
+          actions={actions}
+          onClose={() => setPaymentOpen(false)}
+        />
       )}
     </div>
   );

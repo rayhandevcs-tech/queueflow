@@ -195,4 +195,52 @@ export const customerBookingDict = {
     bn: "এখনই রওনা দাও — তোমার পালা প্রায় চলে এসেছে",
     en: "Leave now — your turn is nearly here",
   },
+
+  // Party booking (Sprint 29)
+  partyTitle: { bn: "কয়জনের জন্য?", en: "How many people?" },
+  partyHint: {
+    bn: "সাথে কেউ থাকলে একসাথেই সিরিয়াল নাও",
+    en: "Bringing someone? Book for them in the same go",
+  },
+  partyAddAria: { bn: "আরেকজন যোগ করো", en: "Add another person" },
+  partyRemoveAria: { bn: "একজন বাদ দাও", en: "Remove a person" },
+  partyGuestNamePlaceholder: {
+    bn: (n: number) => `${n} নম্বর জনের নাম (ঐচ্ছিক)`,
+    en: (n: number) => `Person ${n}'s name (optional)`,
+  },
+  partyGuestNeedsService: {
+    bn: "এই জনের জন্য অন্তত একটা সার্ভিস বাছো",
+    en: "Pick at least one service for this person",
+  },
+  partyTotalLabel: {
+    bn: (people: number, mins: number) => `${people} জন · মোট ${mins} মিনিট`,
+    en: (people: number, mins: number) => `${people} people · ${mins} min total`,
+  },
+  takePartySerial: {
+    bn: (n: number) => `${n} জনের সিরিয়াল নাও`,
+    en: (n: number) => `Book for ${n}`,
+  },
+  partyConfirmedToast: {
+    bn: (n: number) => `${n} জনের সিরিয়াল কনফার্ম হয়েছে`,
+    en: (n: number) => `Booked for ${n} people`,
+  },
+
+  // Party — live tracking
+  partyLabel: {
+    bn: (n: number) => `${n} জনের দল`,
+    en: (n: number) => `Party of ${n}`,
+  },
+  partyMemberFallback: {
+    bn: (n: number) => `${n} নম্বর জন`,
+    en: (n: number) => `Person ${n}`,
+  },
+  youLabel: { bn: "তুমি", en: "You" },
+  partyLastDoneLabel: {
+    bn: "সবার শেষ হতে",
+    en: "Everyone done in",
+  },
+  cancelWholeParty: { bn: "সবার সিরিয়াল বাতিল করো", en: "Cancel for everyone" },
+  cancelJustThisOne: { bn: "শুধু এই জনেরটা বাতিল করো", en: "Cancel just this one" },
+  partyCancelledToast: { bn: "দলের সবার সিরিয়াল বাতিল হয়েছে", en: "The whole party has been cancelled" },
+  memberCancelledToast: { bn: "ওই জনের সিরিয়াল বাতিল হয়েছে", en: "That person's serial has been cancelled" },
 } satisfies Dict;

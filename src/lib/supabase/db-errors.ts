@@ -74,6 +74,10 @@ const MESSAGES = {
     bn: "পেছনে আর কেউ নেই — পিছিয়ে দেওয়ার জায়গা নেই।",
     en: "Nobody is behind them — there's no slot to bump into.",
   },
+  invalidPartySize: {
+    bn: "একসাথে সর্বোচ্চ ৫ জনের সিরিয়াল নেওয়া যায়।",
+    en: "You can book for at most 5 people at once.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -137,6 +141,12 @@ const RULES: ReadonlyArray<{
   { match: (t) => t.includes("no_show_requires_call"), key: "noShowRequiresCall", silent: false },
   { match: (t) => t.includes("no_show_grace_period"), key: "noShowGracePeriod", silent: false },
   { match: (t) => t.includes("nothing_to_bump"), key: "nothingToBump", silent: false },
+  // Sprint 29 — party rules (20260828_group_booking.sql). `party_lead_missing`
+  // means the lead was cancelled out from under a follower mid-insert; from
+  // the customer's side that reads as "you already have a booking", which the
+  // one-active-serial message says better than any wording of its own.
+  { match: (t) => t.includes("invalid_party_size"), key: "invalidPartySize", silent: false },
+  { match: (t) => t.includes("party_lead_missing"), key: "oneActiveSerial", silent: false },
 ];
 
 export function translateDbError(err: unknown): FriendlyDbError {

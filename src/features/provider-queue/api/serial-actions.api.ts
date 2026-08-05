@@ -79,6 +79,22 @@ export async function callSerial(serialId: string): Promise<void> {
 }
 
 /**
+ * Clears whatever the rest of a party still owes, in one payment. Returns how
+ * many serials were settled.
+ */
+export async function settlePartyDues(groupId: string, method: string): Promise<number> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.rpc("settle_group_dues", {
+      p_group_id: groupId,
+      p_method: method,
+    });
+    if (error) throw error;
+    return data ?? 0;
+  });
+}
+
+/**
  * "He's on his way — you go first." Swaps with the next waiting serial on the
  * same chair and re-runs the ETA formula for both, server-side.
  */

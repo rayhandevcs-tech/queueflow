@@ -345,6 +345,10 @@ export type Database = {
           called_at: string | null;
           travel_min: number | null;
           notified_leave_at: string | null;
+          /** Party booking — see 20260828_group_booking.sql. NULL group_id = solo. */
+          group_id: string | null;
+          party_seq: number | null;
+          party_member_name: string | null;
         };
         Insert: {
           id?: string;
@@ -361,6 +365,9 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"];
           /** Captured once at booking time; frozen by serial_before_update afterwards. */
           travel_min?: number | null;
+          // group_id / party_seq / party_member_name are absent on purpose:
+          // parties are created only through create_group_booking(), so a
+          // half-inserted party can't exist.
         };
         // arrived_at / called_at are set only through mark_serial_arrived() and
         // mark_serial_called() — the customer's own UPDATE policy can't reach
@@ -816,6 +823,26 @@ export type Database = {
       set_shop_break: {
         Args: { p_shop_id: string; p_minutes: number; p_reason?: string | null };
         Returns: string | null;
+      };
+      create_group_booking: {
+        Args: {
+          p_shop_id: string;
+          p_members: Json;
+          p_chair_id?: string | null;
+          p_travel_min?: number | null;
+        };
+        /** The new group_id. */
+        Returns: string;
+      };
+      cancel_my_group: {
+        Args: { p_group_id: string };
+        /** How many serials were cancelled. */
+        Returns: number;
+      };
+      settle_group_dues: {
+        Args: { p_group_id: string; p_method: string };
+        /** How many outstanding party serials were settled. */
+        Returns: number;
       };
     };
     Enums: {

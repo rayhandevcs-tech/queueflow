@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
 import type { Serial } from "@/types";
-import { getShopAcceptedPaymentMethods } from "../api/queue.api";
+import { getPartyDues, getShopAcceptedPaymentMethods } from "../api/queue.api";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
+import { partyOutstanding } from "../lib/party";
 
 const METHOD_ICON: Record<PaymentMethodValue, typeof Banknote> = {
   cash: Banknote,
@@ -34,6 +35,21 @@ export function PaymentConfirmSheet({
 }) {
   const t = useT(providerQueueDict);
   const [selected, setSelected] = useState<PaymentMethodValue | "due" | null>(null);
+  const [settleParty, setSettleParty] = useState(true);
+
+  // A family is billed as separate jobs because that's what they are —
+  // different chairs, different services, finishing at different times. But
+  // one person pays at the counter, so whatever the rest of the party still
+  // owes should be clearable in the same breath instead of being chased
+  // through the due ledger afterwards.
+  const partyQuery = useQuery({
+    queryKey: keys.serials.party(serial.group_id ?? ""),
+    queryFn: () => getPartyDues(serial.group_id!),
+    enabled: !!serial.group_id,
+  });
+
+  const outstanding = partyOutstanding(serial.id, partyQuery.data ?? []);
+  const canSettleParty = outstanding.count > 0 && selected !== null && selected !== "due";
 
   const acceptedQuery = useQuery({
     queryKey: keys.shops.acceptedPaymentMethods(serial.shop_id),
@@ -52,8 +68,20 @@ export function PaymentConfirmSheet({
   const onConfirm = () => {
     if (!selected) return;
     const payment = selected === "due" ? { due: serial.total_amount } : { method: selected };
-    actions.complete.mutate({ serialId: serial.id, payment }, { onSuccess: onClose });
+    actions.complete.mutate(
+      { serialId: serial.id, payment },
+      {
+        onSuccess: () => {
+          if (canSettleParty && settleParty && serial.group_id) {
+            actions.settleParty.mutate({ groupId: serial.group_id, method: selected });
+          }
+          onClose();
+        },
+      },
+    );
   };
+
+  const grandTotal = serial.total_amount + (canSettleParty && settleParty ? outstanding.amount : 0);
 
   return (
     <BottomSheet open onClose={onClose} maxWidthClassName="max-w-sm">
@@ -106,15 +134,34 @@ export function PaymentConfirmSheet({
         </button>
       </div>
 
+      {canSettleParty && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-accent/30 bg-accent/[0.07] p-3.5">
+          <input
+            type="checkbox"
+            checked={settleParty}
+            onChange={(e) => setSettleParty(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-accent)]"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-semibold text-ink">
+              {t("settlePartyLabel", outstanding.count)}
+            </span>
+            <span className="block text-[11px] text-muted">
+              {t("settlePartyHint", outstanding.amount)}
+            </span>
+          </span>
+        </label>
+      )}
+
       <Button
         type="button"
         size="lg"
         className="w-full"
         disabled={!selected}
-        loading={actions.complete.isPending}
+        loading={actions.complete.isPending || actions.settleParty.isPending}
         onClick={onConfirm}
       >
-        {t("confirmPaymentCta")} · ৳{formatMoney(serial.total_amount)}
+        {t("confirmPaymentCta")} · ৳{formatMoney(grandTotal)}
       </Button>
     </BottomSheet>
   );

@@ -20,7 +20,7 @@ export function QueueBoard({
   shopId: string;
   breakSlot?: React.ReactNode;
 }) {
-  const { lanes, totals, isPending, isError } = useProviderQueue(shopId);
+  const { lanes, totals, rows, isPending, isError } = useProviderQueue(shopId);
   const actions = useSerialActions(shopId);
   const [walkInOpen, setWalkInOpen] = useState(false);
   const t = useT(providerQueueDict);
@@ -66,6 +66,7 @@ export function QueueBoard({
               key={lane.chair.id}
               lane={lane}
               lanes={lanes}
+              boardRows={rows}
               actions={actions}
             />
           ))}
