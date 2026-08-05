@@ -5,9 +5,11 @@ import {
   Calendar,
   CheckCheck,
   Megaphone,
+  Navigation,
   PartyPopper,
   Radio,
   ShieldCheck,
+  UserPlus,
   XCircle,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,6 +28,8 @@ const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
   PROMO: <Megaphone className="h-4.5 w-4.5" />,
   REMINDER: <Radio className="h-4.5 w-4.5" />,
   SYSTEM: <ShieldCheck className="h-4.5 w-4.5" />,
+  NEW_BOOKING: <UserPlus className="h-4.5 w-4.5" />,
+  LEAVE_NOW: <Navigation className="h-4.5 w-4.5" />,
 };
 
 function dayLabel(dateStr: string): string {

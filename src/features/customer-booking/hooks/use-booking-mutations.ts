@@ -5,6 +5,7 @@ import { keys } from "@/lib/query/keys";
 import {
   cancelMySerial,
   createBooking,
+  markArrived,
   type AdvancePaymentInfo,
 } from "../api/booking.api";
 
@@ -16,14 +17,26 @@ export function useCreateBooking() {
       serviceIds,
       advance,
       chairId,
+      travelMin,
     }: {
       shopId: string;
       serviceIds: string[];
       advance?: AdvancePaymentInfo;
       chairId?: string | null;
-    }) => createBooking(shopId, serviceIds, { advance, chairId }),
+      travelMin?: number | null;
+    }) => createBooking(shopId, serviceIds, { advance, chairId, travelMin }),
     onSuccess: (serial) => {
       queryClient.setQueryData(keys.serials.mine(), serial);
+    },
+  });
+}
+
+export function useMarkArrived() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (serialId: string) => markArrived(serialId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.serials.mine() });
     },
   });
 }

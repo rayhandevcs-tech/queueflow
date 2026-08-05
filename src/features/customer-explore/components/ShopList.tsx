@@ -7,6 +7,7 @@ import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
+import { shopAvailability } from "@/lib/shop-availability";
 import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
@@ -58,6 +59,7 @@ export function ShopList({
         const wait = waitMin[shop.id] ?? 0;
         const waitOk = wait <= WAIT_OK_THRESHOLD_MIN;
         const distance = distanceKm?.[shop.id];
+        const availability = shopAvailability(shop);
 
         return (
           <li key={shop.id}>
@@ -113,6 +115,19 @@ export function ShopList({
                   {distance != null && (
                     <span className="rounded-full border border-line bg-soft px-2.5 py-1 text-[11px] text-ink">
                       ~<span className="font-number">{distance.toFixed(1)}</span> {t("km")}
+                    </span>
+                  )}
+                  {/* A shop that stopped taking new serials, or is on a break,
+                      is still open and still worth showing — but the customer
+                      needs to know before they tap in. */}
+                  {availability === "NOT_ACCEPTING" && (
+                    <span className="rounded-full bg-live-soft px-2.5 py-1 text-[11px] font-semibold text-live">
+                      {t("notAcceptingPill")}
+                    </span>
+                  )}
+                  {availability === "BREAK" && (
+                    <span className="rounded-full bg-brass-soft px-2.5 py-1 text-[11px] font-semibold text-brass">
+                      {t("breakPill")}
                     </span>
                   )}
                 </div>

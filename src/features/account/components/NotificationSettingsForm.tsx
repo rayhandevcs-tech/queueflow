@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellRing, Megaphone, PartyPopper, Radio, Share, XCircle } from "lucide-react";
+import {
+  Bell,
+  BellRing,
+  Megaphone,
+  Navigation,
+  PartyPopper,
+  Radio,
+  Share,
+  UserPlus,
+  XCircle,
+} from "lucide-react";
 import { Switch } from "@/components/ui/Switch";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
@@ -108,6 +118,26 @@ export function NotificationSettingsForm() {
       label: t("reminderLabel"),
       hint: t("reminderHint"),
     },
+    // Role-specific: a customer never receives NEW_BOOKING and a provider
+    // never receives LEAVE_NOW, so showing both to everyone would just be a
+    // dead switch on half the accounts.
+    ...(profile?.role === "provider"
+      ? [
+          {
+            type: "NEW_BOOKING" as NotificationType,
+            icon: <UserPlus className="h-4.5 w-4.5" />,
+            label: t("newBookingLabel"),
+            hint: t("newBookingHint"),
+          },
+        ]
+      : [
+          {
+            type: "LEAVE_NOW" as NotificationType,
+            icon: <Navigation className="h-4.5 w-4.5" />,
+            label: t("leaveNowLabel"),
+            hint: t("leaveNowHint"),
+          },
+        ]),
   ];
 
   if (isPending) {

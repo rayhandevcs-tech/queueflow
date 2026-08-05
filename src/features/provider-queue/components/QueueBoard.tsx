@@ -13,7 +13,13 @@ import { BoardHeader } from "./BoardHeader";
 import { ChairColumn } from "./ChairColumn";
 import { WalkInDialog } from "./WalkInDialog";
 
-export function QueueBoard({ shopId }: { shopId: string }) {
+export function QueueBoard({
+  shopId,
+  breakSlot,
+}: {
+  shopId: string;
+  breakSlot?: React.ReactNode;
+}) {
   const { lanes, totals, isPending, isError } = useProviderQueue(shopId);
   const actions = useSerialActions(shopId);
   const [walkInOpen, setWalkInOpen] = useState(false);
@@ -33,7 +39,11 @@ export function QueueBoard({ shopId }: { shopId: string }) {
 
   return (
     <div className="space-y-4">
-      <BoardHeader totals={totals} onWalkIn={() => setWalkInOpen(true)} />
+      <BoardHeader
+        totals={totals}
+        onWalkIn={() => setWalkInOpen(true)}
+        breakSlot={breakSlot}
+      />
 
       {lanes.length === 0 ? (
         <EmptyState

@@ -111,7 +111,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </Link>
 
-      <div className="mb-5.5 flex items-center justify-between gap-2 rounded-xl bg-soft px-3 py-2">
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-soft px-3 py-2">
         <StatusPill
           tone={shop?.is_open ? "good" : "neutral"}
           pulse={shop?.is_open}
@@ -128,6 +128,35 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           }}
         />
       </div>
+
+      {/* Closing time, not closing the shop: keep serving the queue, stop the
+          intake. Only meaningful while the shop is actually open. */}
+      {shop?.is_open && (
+        <div className="mb-5.5 rounded-xl bg-soft px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={cn(
+                "text-xs font-semibold",
+                (shop.accepting_new ?? true) ? "text-ink" : "text-live",
+              )}
+            >
+              {(shop.accepting_new ?? true)
+                ? t("acceptingNewLabel")
+                : t("notAcceptingLabel")}
+            </span>
+            <Switch
+              checked={shop.accepting_new ?? true}
+              disabled={update.isPending}
+              onChange={(next) => update.mutate({ shopId: shop.id, patch: { accepting_new: next } })}
+            />
+          </div>
+          {(shop.accepting_new ?? true) === false && (
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              {t("acceptingNewHint")}
+            </p>
+          )}
+        </div>
+      )}
 
       <nav className="flex flex-col gap-0.75">
         {NAV.map((item) => {

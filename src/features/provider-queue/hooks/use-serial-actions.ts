@@ -5,6 +5,8 @@ import { keys } from "@/lib/query/keys";
 import type { Serial } from "@/types";
 import {
   addWalkIn,
+  bumpSerialBack,
+  callSerial,
   cancelByOwner,
   completeSerial,
   extendSerialTime,
@@ -116,6 +118,18 @@ export function useSerialActions(shopId: string) {
     onSettled: reconcile,
   });
 
+  // Both are DB-side reshuffles (position swap, notification insert) with
+  // nothing meaningful to fake locally — reconcile from the server instead.
+  const call = useMutation({
+    mutationFn: (serialId: string) => callSerial(serialId),
+    onSettled: reconcile,
+  });
+
+  const bumpBack = useMutation({
+    mutationFn: (serialId: string) => bumpSerialBack(serialId),
+    onSettled: reconcile,
+  });
+
   const extendTime = useMutation({
     mutationFn: ({
       serialId,
@@ -129,5 +143,5 @@ export function useSerialActions(shopId: string) {
     onSettled: reconcile,
   });
 
-  return { start, complete, noShow, cancel, walkIn, move, extendTime };
+  return { start, complete, noShow, cancel, walkIn, move, extendTime, call, bumpBack };
 }

@@ -82,6 +82,10 @@ export type Database = {
           verified_by: string | null;
           status_reason: string | null;
           is_featured: boolean;
+          /** Three-state availability — see 20260827_wait_reality.sql. */
+          accepting_new: boolean;
+          break_until: string | null;
+          break_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -117,6 +121,9 @@ export type Database = {
           about?: string | null;
           weekly_hours?: Json | null;
           accepted_payment_methods?: string[];
+          accepting_new?: boolean;
+          // break_until / break_reason go through set_shop_break() so every
+          // chair's ETA is recomputed in the same call.
         };
         Relationships: [];
       };
@@ -333,6 +340,11 @@ export type Database = {
           payment_method: string | null;
           extended_min: number;
           customer_avatar_url: string | null;
+          /** Wait-reality columns — see 20260827_wait_reality.sql. */
+          arrived_at: string | null;
+          called_at: string | null;
+          travel_min: number | null;
+          notified_leave_at: string | null;
         };
         Insert: {
           id?: string;
@@ -347,7 +359,13 @@ export type Database = {
           advance_method?: string | null;
           advance_txn_id?: string | null;
           payment_status?: Database["public"]["Enums"]["payment_status"];
+          /** Captured once at booking time; frozen by serial_before_update afterwards. */
+          travel_min?: number | null;
         };
+        // arrived_at / called_at are set only through mark_serial_arrived() and
+        // mark_serial_called() — the customer's own UPDATE policy can't reach
+        // them, and routing the provider through the RPC is what fires the
+        // "you've been called" notification.
         Update: {
           status?: Database["public"]["Enums"]["serial_status"];
           chair_id?: string;
@@ -783,6 +801,22 @@ export type Database = {
         Args: { p_user_id: string; p_reason?: string | null };
         Returns: Json;
       };
+      mark_serial_arrived: {
+        Args: { p_serial_id: string };
+        Returns: void;
+      };
+      mark_serial_called: {
+        Args: { p_serial_id: string };
+        Returns: void;
+      };
+      bump_serial_back: {
+        Args: { p_serial_id: string };
+        Returns: void;
+      };
+      set_shop_break: {
+        Args: { p_shop_id: string; p_minutes: number; p_reason?: string | null };
+        Returns: string | null;
+      };
     };
     Enums: {
       user_role: "customer" | "provider";
@@ -796,7 +830,9 @@ export type Database = {
         | "CANCELLED"
         | "PROMO"
         | "REMINDER"
-        | "SYSTEM";
+        | "SYSTEM"
+        | "NEW_BOOKING"
+        | "LEAVE_NOW";
       payment_status: "PAID" | "DUE" | "ADVANCE";
       // shop_status / admin_level are CHECK constraints in Postgres rather than
       // real enum types; they live here so the app has one name for the values.

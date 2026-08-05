@@ -35,6 +35,31 @@ describe("translateDbError", () => {
     expect(result.message).toContain("বন্ধ");
   });
 
+  it("distinguishes 'not accepting new' from 'closed' — they are different states", () => {
+    const result = translateDbError(pgError("shop is not accepting new bookings"));
+    expect(result.silent).toBe(false);
+    expect(result.message).toContain("নতুন সিরিয়াল");
+    expect(result.message).not.toBe(translateDbError(pgError("shop is not open")).message);
+  });
+
+  it("explains that a no-show needs a call first", () => {
+    const result = translateDbError(pgError("no_show_requires_call"));
+    expect(result.silent).toBe(false);
+    expect(result.message).toContain("ডাকো");
+  });
+
+  it("explains the no-show grace window", () => {
+    const result = translateDbError(pgError("no_show_grace_period"));
+    expect(result.silent).toBe(false);
+    expect(result.message).toContain("৫ মিনিট");
+  });
+
+  it("explains that there is nobody to bump behind", () => {
+    const result = translateDbError(pgError("nothing_to_bump"));
+    expect(result.silent).toBe(false);
+    expect(result.message).toContain("পেছনে");
+  });
+
   it("maps no-chair-available to a friendly, non-silent message", () => {
     const result = translateDbError(pgError("no chair available for the requested services"));
     expect(result.silent).toBe(false);

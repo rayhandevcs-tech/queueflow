@@ -234,4 +234,41 @@ export const providerCatalogDict = {
     en: "You can't take new serials and customers can't see the shop while this lasts.",
   },
   shopStatusContactSupport: { bn: "সাপোর্টে যোগাযোগ করো", en: "Contact support" },
+
+  // ShopBreakControl + accepting-new (Sprint 28)
+  takeBreakCta: { bn: "বিরতি নাও", en: "Take a break" },
+  breakSheetTitle: { bn: "কতক্ষণের বিরতি?", en: "How long a break?" },
+  breakSheetHint: {
+    bn: "বিরতিতে দোকান বন্ধ হবে না — শুধু অপেক্ষমাণ সবার সময় ততটুকু পিছিয়ে যাবে, আর তারা কারণটা দেখতে পাবে।",
+    en: "A break doesn't close the shop — everyone waiting just has their time pushed back, and they can see why.",
+  },
+  breakHowLong: { bn: "কতক্ষণ", en: "How long" },
+  breakWhy: { bn: "কারণ (ঐচ্ছিক)", en: "Reason (optional)" },
+  breakReasonPrayer: { bn: "নামাজের বিরতি", en: "Prayer break" },
+  breakReasonMeal: { bn: "খাবারের বিরতি", en: "Meal break" },
+  breakReasonOther: { bn: "অন্য কাজে বাইরে", en: "Stepped out" },
+  minutesChip: { bn: (n: number) => `${n} মিনিট`, en: (n: number) => `${n} min` },
+  startBreakCta: { bn: "বিরতি শুরু করো", en: "Start break" },
+  breakCancelCta: { bn: "থাক", en: "Cancel" },
+  endBreakCta: { bn: "শেষ করো", en: "End it" },
+  onBreak: {
+    bn: (n: number) => `বিরতি চলছে — আর ${n} মিনিট`,
+    en: (n: number) => `On a break — ${n} min left`,
+  },
+  onBreakWithReason: {
+    bn: (n: number, reason: string) => `${reason} — আর ${n} মিনিট`,
+    en: (n: number, reason: string) => `${reason} — ${n} min left`,
+  },
+  breakStartedToast: {
+    bn: (n: number) => `${n} মিনিটের বিরতি শুরু — সবার সময় পিছিয়ে দেওয়া হয়েছে`,
+    en: (n: number) => `${n}-minute break started — everyone's time has been pushed back`,
+  },
+  breakEndedToast: { bn: "বিরতি শেষ — কিউ আবার চালু", en: "Break over — the queue is running again" },
+  breakFailedToast: { bn: "কাজটা করা যায়নি — আবার চেষ্টা করো।", en: "Couldn't do that — try again." },
+  acceptingNewLabel: { bn: "নতুন সিরিয়াল নিচ্ছি", en: "Taking new serials" },
+  notAcceptingLabel: { bn: "নতুন সিরিয়াল বন্ধ", en: "Not taking new" },
+  acceptingNewHint: {
+    bn: "বন্ধ করলে দোকান খোলাই থাকবে ও কাস্টমাররা দেখতে পাবে — শুধু নতুন কেউ সিরিয়াল নিতে পারবে না। যারা লাইনে আছে তাদের কাজ স্বাভাবিকভাবে চলবে।",
+    en: "Turning this off keeps the shop open and visible — it only stops new bookings. Everyone already in line is served as normal.",
+  },
 } satisfies Dict;
