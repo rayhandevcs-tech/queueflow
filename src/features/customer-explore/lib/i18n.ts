@@ -13,6 +13,7 @@ export const customerExploreDict = {
   },
   reset: { bn: "রিসেট", en: "Reset" },
   apply: { bn: "প্রয়োগ করো", en: "Apply" },
+  closeFilters: { bn: "ফিল্টার বন্ধ করো", en: "Close filters" },
 
   // SearchFilterBar
   searchPlaceholder: { bn: "দোকান বা সার্ভিস খুঁজো", en: "Search shop or service" },

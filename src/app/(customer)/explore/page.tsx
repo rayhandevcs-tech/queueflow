@@ -110,6 +110,13 @@ export default function ExplorePage() {
 
   return (
     <div className="animate-fade-up">
+      <SearchFilterBar
+        value={search}
+        onChange={setSearch}
+        onOpenFilters={() => setFilterSheetOpen(true)}
+        filtersActive={hasActiveFilters(filters)}
+      />
+
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-[13px] text-muted">{t("assalamu")}</p>
@@ -153,15 +160,6 @@ export default function ExplorePage() {
         onSelect={setActiveCategory}
       />
 
-      <TopRatedSection shops={shops} ratingByShopId={ratingByShopId} />
-
-      <SearchFilterBar
-        value={search}
-        onChange={setSearch}
-        onOpenFilters={() => setFilterSheetOpen(true)}
-        filtersActive={hasActiveFilters(filters)}
-      />
-
       <p className="mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
         {t("nearbyShopsHeading")}
       </p>
@@ -174,6 +172,10 @@ export default function ExplorePage() {
         userLocation={location.coords}
         isPending={shopsPending || statsPending}
       />
+
+      <div className="mt-5">
+        <TopRatedSection shops={shops} ratingByShopId={ratingByShopId} />
+      </div>
 
       <FilterSheet
         open={filterSheetOpen}

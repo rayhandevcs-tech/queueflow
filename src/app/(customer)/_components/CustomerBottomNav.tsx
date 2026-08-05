@@ -28,8 +28,12 @@ export function CustomerBottomNav({ className }: { className?: string }) {
                 active ? "font-bold text-accent" : "font-medium text-muted",
               )}
             >
-              <span className="relative text-[19px] leading-none">
-                {item.icon}
+              <span className="relative leading-none">
+                <item.icon
+                  className="h-5.5 w-5.5"
+                  strokeWidth={active ? 2.25 : 1.75}
+                  fill={active ? "currentColor" : "none"}
+                />
                 {item.href === "/my-serial" && activeSerial && (
                   <span className="absolute -right-1 -top-0.5 h-1.75 w-1.75 rounded-full bg-live" />
                 )}

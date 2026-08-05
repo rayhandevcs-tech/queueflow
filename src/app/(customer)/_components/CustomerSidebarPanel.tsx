@@ -68,8 +68,12 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
                   : "font-medium text-muted hover:bg-soft",
               )}
             >
-              <span className="relative w-4 text-center text-[15px] leading-none">
-                {item.icon}
+              <span className="relative leading-none">
+                <item.icon
+                  className="h-4.5 w-4.5"
+                  strokeWidth={active ? 2.25 : 1.75}
+                  fill={active ? "currentColor" : "none"}
+                />
                 {item.href === "/my-serial" && activeSerial && (
                   <span className="absolute -right-1 -top-1 h-1.75 w-1.75 rounded-full bg-live" />
                 )}

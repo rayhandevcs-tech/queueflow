@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { BUSINESS_TYPES, type SelectableBusinessType } from "@/config/constants";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
@@ -56,8 +58,6 @@ export function FilterSheet({
     if (open) setDraft(initial);
   }
 
-  if (!open) return null;
-
   const toggleType = (type: SelectableBusinessType) => {
     setDraft((d) => {
       const types = new Set(d.types);
@@ -68,95 +68,101 @@ export function FilterSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-30 grid place-items-end bg-ink/50 p-4 backdrop-blur-sm sm:place-items-center">
-      <div className="w-full max-w-sm space-y-5 rounded-t-3xl bg-card p-5 pb-6 shadow-lg animate-slide-up sm:rounded-2xl sm:animate-none">
-        <div className="mx-auto h-1 w-10 rounded-full bg-line sm:hidden" />
-
+    <BottomSheet open={open} onClose={onClose} maxWidthClassName="max-w-sm">
+      <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-bold text-ink">{t("filterTitle")}</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t("closeFilters")}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted hover:bg-soft"
+        >
+          <X className="h-4.5 w-4.5" />
+        </button>
+      </div>
 
-        <div>
-          <p className="mb-2 text-[13px] font-semibold text-muted">{t("typeLabel")}</p>
-          <div className="flex gap-2">
-            {BUSINESS_TYPES.map((bt) => (
-              <button
-                key={bt.value}
-                type="button"
-                onClick={() => toggleType(bt.value)}
-                className={cn(
-                  "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
-                  draft.types.has(bt.value)
-                    ? "border-accent bg-accent text-accent-ink"
-                    : "border-line bg-soft text-ink",
-                )}
-              >
-                {businessTypeT(bt.value)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-[13px] font-semibold text-muted">{t("ratingLabel")}</p>
-          <div className="flex gap-2">
-            {RATING_OPTIONS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setDraft((d) => ({ ...d, minRating: r }))}
-                className={cn(
-                  "rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
-                  draft.minRating === r
-                    ? "border-accent bg-accent text-accent-ink"
-                    : "border-line bg-soft text-ink",
-                )}
-              >
-                {r === 0 ? t("all") : `${r}+ ★`}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {hasLocation && (
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-[13px] font-semibold text-muted">{t("distanceLabel")}</p>
-              <span className="text-[13px] font-semibold text-ink">
-                {draft.maxDistanceKm == null ? t("all") : t("withinKm", draft.maxDistanceKm)}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={MAX_DISTANCE_KM}
-              step={1}
-              value={draft.maxDistanceKm ?? MAX_DISTANCE_KM}
-              onChange={(e) =>
-                setDraft((d) => ({
-                  ...d,
-                  maxDistanceKm:
-                    Number(e.target.value) >= MAX_DISTANCE_KM ? null : Number(e.target.value),
-                }))
-              }
-              className="w-full accent-(--color-accent)"
-            />
-          </div>
-        )}
-
+      <div>
+        <p className="mb-2 text-[13px] font-semibold text-muted">{t("typeLabel")}</p>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={() => setDraft(DEFAULT_FILTERS)}>
-            {t("reset")}
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => {
-              onApply(draft);
-              onClose();
-            }}
-          >
-            {t("apply")}
-          </Button>
+          {BUSINESS_TYPES.map((bt) => (
+            <button
+              key={bt.value}
+              type="button"
+              onClick={() => toggleType(bt.value)}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
+                draft.types.has(bt.value)
+                  ? "border-accent bg-accent text-accent-ink"
+                  : "border-line bg-soft text-ink",
+              )}
+            >
+              {businessTypeT(bt.value)}
+            </button>
+          ))}
         </div>
       </div>
-    </div>
+
+      <div>
+        <p className="mb-2 text-[13px] font-semibold text-muted">{t("ratingLabel")}</p>
+        <div className="flex gap-2">
+          {RATING_OPTIONS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setDraft((d) => ({ ...d, minRating: r }))}
+              className={cn(
+                "rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                draft.minRating === r
+                  ? "border-accent bg-accent text-accent-ink"
+                  : "border-line bg-soft text-ink",
+              )}
+            >
+              {r === 0 ? t("all") : `${r}+ ★`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {hasLocation && (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[13px] font-semibold text-muted">{t("distanceLabel")}</p>
+            <span className="text-[13px] font-semibold text-ink">
+              {draft.maxDistanceKm == null ? t("all") : t("withinKm", draft.maxDistanceKm)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={1}
+            max={MAX_DISTANCE_KM}
+            step={1}
+            value={draft.maxDistanceKm ?? MAX_DISTANCE_KM}
+            onChange={(e) =>
+              setDraft((d) => ({
+                ...d,
+                maxDistanceKm:
+                  Number(e.target.value) >= MAX_DISTANCE_KM ? null : Number(e.target.value),
+              }))
+            }
+            className="w-full accent-(--color-accent)"
+          />
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <Button variant="outline" className="flex-1" onClick={() => setDraft(DEFAULT_FILTERS)}>
+          {t("reset")}
+        </Button>
+        <Button
+          className="flex-1"
+          onClick={() => {
+            onApply(draft);
+            onClose();
+          }}
+        >
+          {t("apply")}
+        </Button>
+      </div>
+    </BottomSheet>
   );
 }
