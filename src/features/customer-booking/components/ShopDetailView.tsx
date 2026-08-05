@@ -168,9 +168,9 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         <ShopQuickActions shop={shop} hasHistory={hasHistory} />
 
         <div className="my-4.5 flex gap-2.5">
-          <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
-            <p className="font-number text-[22px] font-bold text-ink">{queueCount}</p>
-            <p className="text-[11px] text-muted">{t("nowSerialLabel")}</p>
+          <div className="flex-1 rounded-[14px] bg-accent p-3 text-center text-accent-ink">
+            <p className="font-number text-[22px] font-bold">{queueCount}</p>
+            <p className="text-[11px] opacity-70">{t("nowSerialLabel")}</p>
           </div>
           <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
             <p className="font-number text-[22px] font-bold text-live">
@@ -217,31 +217,31 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
               : t("bookingFailedGeneric")}
           </p>
         )}
-      </div>
 
-      {selected.size > 0 && (
-        <div className="fixed inset-x-0 bottom-24 z-10 mx-auto max-w-lg px-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-line bg-card/95 p-3.5 shadow-lg backdrop-blur">
-            <div>
-              <p className="text-[11px] text-muted">{t("totalMinutesLabel", totalMin)}</p>
-              <p className="font-number text-[22px] font-bold text-ink">৳{totalAmount}</p>
+        {selected.size > 0 && (
+          <div className="sticky bottom-24 z-10 mt-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-line bg-card/95 p-3.5 shadow-lg backdrop-blur">
+              <div>
+                <p className="text-[11px] text-muted">{t("totalMinutesLabel", totalMin)}</p>
+                <p className="font-number text-[22px] font-bold text-ink">৳{totalAmount}</p>
+              </div>
+              <Button
+                size="lg"
+                onClick={onConfirm}
+                disabled={!shop.is_open || selected.size === 0}
+                loading={createBooking.isPending}
+                className="flex-1 font-display text-[15px] shadow-glow"
+              >
+                {createBooking.isPending
+                  ? t("booking")
+                  : advance
+                    ? t("confirmWithAdvance")
+                    : t("takeSerial")}
+              </Button>
             </div>
-            <Button
-              size="lg"
-              onClick={onConfirm}
-              disabled={!shop.is_open || selected.size === 0}
-              loading={createBooking.isPending}
-              className="flex-1 font-display text-[15px] shadow-glow"
-            >
-              {createBooking.isPending
-                ? t("booking")
-                : advance
-                  ? t("confirmWithAdvance")
-                  : t("takeSerial")}
-            </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {payingWith && (
         <AdvancePaymentDialog

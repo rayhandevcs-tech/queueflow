@@ -6,6 +6,7 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import Link from "next/link";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
+import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 
@@ -82,19 +83,40 @@ export default function ShopMapInner({
             icon={pinIcon(count)}
           >
             <Popup>
-              <div className="min-w-[160px] space-y-1">
-                <p className="text-sm font-semibold text-ink">{shop.name}</p>
-                <p className="text-xs text-muted">
-                  {businessTypeT(shop.business_type)}
-                  {shop.address ? ` · ${shop.address}` : ""}
-                </p>
-                <p className="text-xs font-medium text-ink">{t("queueStatus", count, wait)}</p>
-                <Link
-                  href={`/explore/${shop.id}`}
-                  className="mt-1 inline-block text-xs font-semibold text-accent underline"
+              <div className="flex w-56 items-center gap-2.5">
+                <div
+                  className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl font-display text-sm font-bold text-white"
+                  style={
+                    shop.logo_url || shop.cover_image_url
+                      ? undefined
+                      : { background: shopAvatarColor(shop.id) }
+                  }
                 >
-                  {t("viewShop")}
-                </Link>
+                  {shop.logo_url || shop.cover_image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={shop.logo_url ?? shop.cover_image_url ?? undefined}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    shopInitial(shop.name)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="truncate text-sm font-semibold text-ink">{shop.name}</p>
+                  <p className="truncate text-xs text-muted">
+                    {businessTypeT(shop.business_type)}
+                    {shop.address ? ` · ${shop.address}` : ""}
+                  </p>
+                  <p className="text-xs font-medium text-ink">{t("queueStatus", count, wait)}</p>
+                  <Link
+                    href={`/explore/${shop.id}`}
+                    className="inline-block text-xs font-semibold text-accent underline"
+                  >
+                    {t("viewShop")}
+                  </Link>
+                </div>
               </div>
             </Popup>
           </Marker>

@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import type { Chair, Service } from "@/types";
+import type { ServiceCategory } from "@/config/constants";
+import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
 import { useT } from "@/lib/i18n";
 import { customerBookingDict } from "../lib/i18n";
 
@@ -40,6 +42,7 @@ export function ServicesTab({
           <div className="flex flex-col gap-2.25">
             {services.map((s) => {
               const on = selected.has(s.id);
+              const CategoryIcon = SERVICE_CATEGORY_ICON[(s.category as ServiceCategory) ?? "OTHER"];
               return (
                 <button
                   key={s.id}
@@ -51,6 +54,14 @@ export function ServicesTab({
                   )}
                   style={{ borderWidth: 1.5 }}
                 >
+                  <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[11px] bg-soft text-muted">
+                    {s.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.image_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <CategoryIcon className="h-4.5 w-4.5" />
+                    )}
+                  </div>
                   <span
                     className={cn(
                       "grid h-6 w-6 shrink-0 place-items-center rounded-lg border text-sm font-bold text-white",
