@@ -6,6 +6,11 @@ export interface ReviewRow {
   images: string[];
   chair_id: string | null;
   created_at: string;
+  /**
+   * Only selected on the shop-owner path: the public browse query can't see a
+   * hidden review at all (RLS), so there it is always absent.
+   */
+  hidden_at?: string | null;
 }
 
 export interface ReviewSummary {

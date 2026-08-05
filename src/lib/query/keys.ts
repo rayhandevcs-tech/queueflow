@@ -90,6 +90,14 @@ export const keys = {
       pageSize: number;
     }) => ["admin", "shops", filters] as const,
     shopDetail: (shopId: string) => ["admin", "shop", shopId] as const,
+    users: (filters: {
+      role: string | null;
+      blocked: boolean | null;
+      search: string;
+      pageSize: number;
+    }) => ["admin", "users", filters] as const,
+    userDetail: (userId: string) => ["admin", "user", userId] as const,
+    reports: (status: string | null) => ["admin", "reports", status] as const,
   },
   chatThreads: {
     mine: () => ["chat-threads", "mine"] as const,

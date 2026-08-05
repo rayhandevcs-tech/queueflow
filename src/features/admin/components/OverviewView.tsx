@@ -4,9 +4,12 @@ import Link from "next/link";
 import {
   BadgeCheck,
   CalendarClock,
+  EyeOff,
+  Flag,
   MessageSquareWarning,
   Moon,
   Radio,
+  ShieldOff,
   Star,
   Store,
   UserPlus,
@@ -63,7 +66,7 @@ export function OverviewView() {
       {/* Work queue first: the panel exists to get these two numbers to zero. */}
       <section className="space-y-2.5">
         <h2 className="text-sm font-bold text-ink">{t("needsAttention")}</h2>
-        {data.shops_pending === 0 && data.dormant_shops === 0 ? (
+        {data.shops_pending === 0 && data.open_reports === 0 && data.dormant_shops === 0 ? (
           <EmptyState
             dashed
             icon={<BadgeCheck className="h-6 w-6" />}
@@ -83,6 +86,18 @@ export function OverviewView() {
                   </span>
                   <p className="text-sm font-semibold text-ink">
                     {t("pendingShopsCta", data.shops_pending)}
+                  </p>
+                </Card>
+              </Link>
+            )}
+            {data.open_reports > 0 && (
+              <Link href="/admin/moderation" className="block">
+                <Card hover className="flex items-center gap-3 border-live/30 bg-live-soft/50 p-4">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-live-soft text-live">
+                    <Flag className="h-4.5 w-4.5" />
+                  </span>
+                  <p className="text-sm font-semibold text-ink">
+                    {t("openReportsCta", data.open_reports)}
                   </p>
                 </Card>
               </Link>
@@ -159,6 +174,26 @@ export function OverviewView() {
             icon={<Star className="h-4.5 w-4.5" />}
             label={t("statReviews")}
             value={n(data.reviews_total)}
+          />
+        </div>
+        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            icon={<Flag className="h-4.5 w-4.5" />}
+            tone="live"
+            label={t("statOpenReports")}
+            value={n(data.open_reports)}
+            href="/admin/moderation"
+          />
+          <StatCard
+            icon={<ShieldOff className="h-4.5 w-4.5" />}
+            label={t("statBlockedUsers")}
+            value={n(data.blocked_users)}
+            href="/admin/users"
+          />
+          <StatCard
+            icon={<EyeOff className="h-4.5 w-4.5" />}
+            label={t("statHiddenReviews")}
+            value={n(data.hidden_reviews)}
           />
         </div>
       </section>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BadgeCheck, ImageIcon, Star } from "lucide-react";
+import { BadgeCheck, EyeOff, ImageIcon, Star } from "lucide-react";
 import { formatBanglaDate } from "@/lib/format-wait";
+import { cn } from "@/lib/utils";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
@@ -105,7 +106,16 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
                 const info = customerInfoBySerial[r.serial_id];
                 const name = info?.name ?? t("customerFallback");
                 return (
-                  <div key={r.id} className="rounded-2xl border border-line bg-card p-4.5">
+                  <div
+                    key={r.id}
+                    className={cn(
+                      "rounded-2xl border border-line bg-card p-4.5",
+                      // Hidden reviews still reach the owner (their own RLS
+                      // policy is untouched) — dim them so it's obvious the
+                      // public no longer sees this one.
+                      r.hidden_at && "border-dashed opacity-60",
+                    )}
+                  >
                     <div className="mb-2 flex items-center gap-3">
                       <AvatarChip label={name} avatarUrl={info?.avatarUrl} shape="circle" size={38} />
                       <div className="min-w-0 flex-1">
@@ -118,6 +128,15 @@ export function ReviewsView({ shopId }: { shopId: string | undefined }) {
                             <BadgeCheck className="h-3 w-3" />
                             {t("verifiedBadge")}
                           </span>
+                          {r.hidden_at && (
+                            <span
+                              title={t("hiddenTitle")}
+                              className="flex shrink-0 items-center gap-0.5 rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-muted"
+                            >
+                              <EyeOff className="h-3 w-3" />
+                              {t("hiddenBadge")}
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-muted">
                           {formatBanglaDate(new Date(r.created_at))}

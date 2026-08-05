@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgeCheck, LayoutDashboard, LogOut, ShieldCheck, Store } from "lucide-react";
+import { BadgeCheck, Flag, LayoutDashboard, LogOut, ShieldCheck, Store, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
@@ -15,6 +15,8 @@ const NAV = [
   { href: "/admin", label: "navOverview", icon: LayoutDashboard, exact: true },
   { href: "/admin/verification", label: "navVerification", icon: BadgeCheck, exact: false },
   { href: "/admin/shops", label: "navShops", icon: Store, exact: false },
+  { href: "/admin/users", label: "navUsers", icon: Users, exact: false },
+  { href: "/admin/moderation", label: "navModeration", icon: Flag, exact: false },
 ] as const;
 
 export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -72,7 +74,12 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
           const active = item.exact
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(item.href + "/");
-          const pending = overview?.shops_pending ?? 0;
+          const badgeCount =
+            item.href === "/admin/verification"
+              ? (overview?.shops_pending ?? 0)
+              : item.href === "/admin/moderation"
+                ? (overview?.open_reports ?? 0)
+                : 0;
 
           return (
             <Link
@@ -88,9 +95,9 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
             >
               <Icon className="h-4 w-4" />
               {t(item.label)}
-              {item.href === "/admin/verification" && pending > 0 && (
+              {badgeCount > 0 && (
                 <span className="ml-auto rounded-full bg-live px-2 py-0.5 font-number text-[11px] font-bold text-white">
-                  {pending}
+                  {badgeCount}
                 </span>
               )}
             </Link>

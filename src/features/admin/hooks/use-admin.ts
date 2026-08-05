@@ -2,18 +2,31 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
-import type { ShopStatus } from "@/types";
+import type { ReportStatus, ShopStatus } from "@/types";
 import {
   amIPlatformAdmin,
   getOverviewStats,
   getShopDetail,
+  getUserDetail,
+  listReports,
   listShops,
+  listUsers,
+  resolveReport,
+  setReviewHidden,
   setShopFeatured,
   setShopStatus,
+  setUserBlocked,
   type AdminShopFilters,
+  type AdminUserFilters,
 } from "../api/admin.api";
 
-export type { AdminShopRow, AdminShopDetail } from "../api/admin.api";
+export type {
+  AdminShopRow,
+  AdminShopDetail,
+  AdminUserRow,
+  AdminUserDetail,
+  AdminReportRow,
+} from "../api/admin.api";
 
 export const SHOPS_PAGE_SIZE = 25;
 
@@ -91,4 +104,104 @@ export function useAdminShopMutations(shopId?: string) {
   });
 
   return { changeStatus, changeFeatured };
+}
+
+// ---------------------------------------------------------------------------
+// Users
+// ---------------------------------------------------------------------------
+
+interface UseAdminUsersArgs extends Omit<AdminUserFilters, "limit" | "offset"> {
+  pageSize: number;
+}
+
+export function useAdminUsers({ role, blocked, search, pageSize }: UseAdminUsersArgs) {
+  return useQuery({
+    queryKey: keys.admin.users({
+      role: role ?? null,
+      blocked: blocked ?? null,
+      search: search?.trim() ?? "",
+      pageSize,
+    }),
+    queryFn: () => listUsers({ role, blocked, search, limit: pageSize, offset: 0 }),
+    placeholderData: (previous) => previous,
+  });
+}
+
+export function useAdminUser(userId: string | undefined) {
+  return useQuery({
+    queryKey: keys.admin.userDetail(userId ?? ""),
+    queryFn: () => getUserDetail(userId!),
+    enabled: !!userId,
+  });
+}
+
+export function useAdminUserMutations(userId?: string) {
+  const queryClient = useQueryClient();
+
+  const changeBlocked = useMutation({
+    mutationFn: ({
+      blocked,
+      reason,
+      targetUserId,
+    }: {
+      blocked: boolean;
+      reason?: string | null;
+      targetUserId?: string;
+    }) => setUserBlocked(targetUserId ?? userId!, blocked, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin"] }),
+  });
+
+  return { changeBlocked };
+}
+
+// ---------------------------------------------------------------------------
+// Moderation
+// ---------------------------------------------------------------------------
+
+export function useAdminReports(status: ReportStatus | null) {
+  return useQuery({
+    queryKey: keys.admin.reports(status),
+    queryFn: () => listReports(status),
+    placeholderData: (previous) => previous,
+  });
+}
+
+export function useModerationMutations() {
+  const queryClient = useQueryClient();
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin"] });
+    // Hiding a review moves the shop's star average — customer-facing caches
+    // for reviews and rating summaries have to go too.
+    void queryClient.invalidateQueries({ queryKey: ["reviews"] });
+    void queryClient.invalidateQueries({ queryKey: ["rating-summary"] });
+  };
+
+  const resolve = useMutation({
+    mutationFn: ({
+      reportId,
+      status,
+      note,
+    }: {
+      reportId: string;
+      status: ReportStatus;
+      note?: string | null;
+    }) => resolveReport(reportId, status, note),
+    onSuccess: invalidate,
+  });
+
+  const hideReview = useMutation({
+    mutationFn: ({
+      reviewId,
+      hidden,
+      reason,
+    }: {
+      reviewId: string;
+      hidden: boolean;
+      reason?: string | null;
+    }) => setReviewHidden(reviewId, hidden, reason),
+    onSuccess: invalidate,
+  });
+
+  return { resolve, hideReview };
 }

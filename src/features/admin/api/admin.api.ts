@@ -1,10 +1,23 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import type { BusinessType, Shop, ShopStatus } from "@/types";
+import type {
+  BusinessType,
+  Profile,
+  ReportStatus,
+  Shop,
+  ShopStatus,
+  UserRole,
+} from "@/types";
 
 /** Row shape of the admin_list_shops() RPC (aggregates joined server-side). */
 export type AdminShopRow =
   Database["public"]["Functions"]["admin_list_shops"]["Returns"][number];
+
+export type AdminUserRow =
+  Database["public"]["Functions"]["admin_list_users"]["Returns"][number];
+
+export type AdminReportRow =
+  Database["public"]["Functions"]["admin_list_reports"]["Returns"][number];
 
 export interface AdminOverviewStats {
   shops_total: number;
@@ -23,8 +36,52 @@ export interface AdminOverviewStats {
   serials_30d: number;
   gmv_30d: number;
   reviews_total: number;
+  open_reports: number;
+  blocked_users: number;
+  hidden_reviews: number;
   dormant_shops: number;
   daily: Array<{ day: string; serials: number; signups: number }>;
+}
+
+export interface AdminUserDetail {
+  profile: Profile;
+  email: string | null;
+  last_sign_in_at: string | null;
+  shop: { id: string; name: string; status: ShopStatus } | null;
+  stats: {
+    serials_total: number;
+    serials_done: number;
+    cancelled: number;
+    no_shows: number;
+    spend_total: number;
+    due_total: number;
+    reviews_count: number;
+    favourites: number;
+    last_serial_at: string | null;
+  };
+  recent_serials: Array<{
+    id: string;
+    status: string;
+    total_amount: number;
+    payment_status: string;
+    created_at: string;
+    shop_name: string | null;
+  }>;
+  reports_against: Array<{
+    id: string;
+    target_type: string;
+    reason: string;
+    note: string | null;
+    status: ReportStatus;
+    created_at: string;
+  }>;
+  audit: Array<{
+    id: string;
+    action: string;
+    meta: { reason?: string | null };
+    created_at: string;
+    actor_name: string | null;
+  }>;
 }
 
 export interface AdminShopDetail {
@@ -149,6 +206,104 @@ export async function setShopFeatured(shopId: string, featured: boolean): Promis
   const { error } = await supabase.rpc("admin_set_shop_featured", {
     p_shop_id: shopId,
     p_featured: featured,
+  });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Users
+// ---------------------------------------------------------------------------
+
+export interface AdminUserFilters {
+  role?: UserRole | null;
+  blocked?: boolean | null;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listUsers(
+  filters: AdminUserFilters,
+): Promise<{ rows: AdminUserRow[]; total: number }> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_list_users", {
+    p_role: filters.role ?? null,
+    p_blocked: filters.blocked ?? null,
+    p_search: filters.search?.trim() || null,
+    p_limit: filters.limit ?? 50,
+    p_offset: filters.offset ?? 0,
+  });
+  if (error) throw error;
+
+  const rows = data ?? [];
+  return { rows, total: rows[0]?.total_count ?? 0 };
+}
+
+export async function getUserDetail(userId: string): Promise<AdminUserDetail | null> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_user_detail", { p_user_id: userId });
+  if (error) throw error;
+  return (data as unknown as AdminUserDetail | null) ?? null;
+}
+
+export async function setUserBlocked(
+  userId: string,
+  blocked: boolean,
+  reason?: string | null,
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_set_user_blocked", {
+    p_user_id: userId,
+    p_blocked: blocked,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Moderation
+// ---------------------------------------------------------------------------
+
+export async function listReports(
+  status: ReportStatus | null,
+  limit = 50,
+): Promise<{ rows: AdminReportRow[]; total: number }> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_list_reports", {
+    p_status: status,
+    p_limit: limit,
+    p_offset: 0,
+  });
+  if (error) throw error;
+
+  const rows = data ?? [];
+  return { rows, total: rows[0]?.total_count ?? 0 };
+}
+
+export async function resolveReport(
+  reportId: string,
+  status: ReportStatus,
+  note?: string | null,
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_resolve_report", {
+    p_report_id: reportId,
+    p_status: status,
+    p_note: note?.trim() || null,
+  });
+  if (error) throw error;
+}
+
+export async function setReviewHidden(
+  reviewId: string,
+  hidden: boolean,
+  reason?: string | null,
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_set_review_hidden", {
+    p_review_id: reviewId,
+    p_hidden: hidden,
+    p_reason: reason?.trim() || null,
   });
   if (error) throw error;
 }

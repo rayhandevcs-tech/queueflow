@@ -45,7 +45,13 @@ export function useShopReviews(shopId: string | undefined) {
     enabled: !!shopId,
   });
 
-  const summary = useMemo(() => computeReviewSummary(reviewsQuery.data ?? []), [reviewsQuery.data]);
+  // Hidden reviews stay in the list (with a badge) but out of the headline
+  // average, so the owner's number matches what customers actually see —
+  // shop_rating_summary filters them out on the DB side too.
+  const summary = useMemo(
+    () => computeReviewSummary((reviewsQuery.data ?? []).filter((r) => !r.hidden_at)),
+    [reviewsQuery.data],
+  );
 
   return {
     reviews: reviewsQuery.data ?? [],
