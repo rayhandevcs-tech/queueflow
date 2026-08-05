@@ -7,15 +7,13 @@ import { CircleCheck } from "lucide-react";
 import type { Profile } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
-import { AvatarUploadField } from "@/components/ui/AvatarUploadField";
 import { useT, useLanguage } from "@/lib/i18n";
-import { useUpdateMyAvatar, useUpdateMyProfile } from "../hooks/use-profile-mutations";
+import { useUpdateMyProfile } from "../hooks/use-profile-mutations";
 import { profileSchema, type ProfileFormValues } from "../schemas/profile.schema";
 import { accountDict } from "../lib/i18n";
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const update = useUpdateMyProfile();
-  const updateAvatar = useUpdateMyAvatar();
   const { language } = useLanguage();
   const t = useT(accountDict);
 
@@ -37,12 +35,6 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <AvatarUploadField
-        userId={profile.id}
-        currentUrl={profile.avatar_url}
-        onUploaded={(url) => updateAvatar.mutate(url)}
-      />
-
       <Field label={t("fullNameLabel")} error={err.fullName?.message}>
         <Input {...form.register("fullName")} invalid={!!err.fullName} />
       </Field>

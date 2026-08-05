@@ -72,37 +72,6 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
 
   return (
     <form onSubmit={onSubmit} className="max-w-xl space-y-5">
-      {/* is_open quick toggle (edit mode only) */}
-      {isEdit && (
-        <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4 shadow-sm">
-          <div>
-            <p className="text-sm font-semibold text-ink">{t("shopOpenHeading")}</p>
-            <p className="text-xs text-muted">{t("shopOpenHint")}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              update.mutate({
-                shopId: shop.id,
-                patch: { is_open: !shop.is_open },
-              })
-            }
-            className={cn(
-              "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition",
-              shop.is_open ? "bg-good-soft text-good" : "bg-soft text-muted",
-            )}
-          >
-            <span
-              className={cn(
-                "h-2 w-2 rounded-full",
-                shop.is_open ? "bg-good animate-pulse" : "bg-muted",
-              )}
-            />
-            {shop.is_open ? t("shopOpenWord") : t("shopClosedWord")}
-          </button>
-        </div>
-      )}
-
       <Field label={t("shopNameLabel")} error={err.name?.message}>
         <Input
           {...form.register("name")}
@@ -157,6 +126,7 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           form.setValue("latitude", lat, { shouldDirty: true });
           form.setValue("longitude", lng, { shouldDirty: true });
         }}
+        onAddressDetected={(address) => form.setValue("address", address, { shouldDirty: true })}
       />
 
       <Field label={t("phoneLabel")} error={err.phone?.message}>

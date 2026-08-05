@@ -5,6 +5,9 @@ import dynamic from "next/dynamic";
 import { LocateFixed, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { useCurrentLocation } from "@/hooks/use-current-location";
+import { useT } from "@/lib/i18n";
+import { providerCatalogDict } from "../lib/i18n";
 
 const LocationPickerMap = dynamic(() => import("@/components/map/LocationPickerMap"), {
   ssr: false,
@@ -19,50 +22,40 @@ interface Props {
   lat: number | null;
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
+  /** Best-effort reverse-geocoded address — only fires when "current location" actually resolves one. */
+  onAddressDetected?: (address: string) => void;
 }
 
-export function LocationPickerField({ lat, lng, onChange }: Props) {
-  const [geoError, setGeoError] = useState<string | null>(null);
-  const [geoBusy, setGeoBusy] = useState(false);
+export function LocationPickerField({ lat, lng, onChange, onAddressDetected }: Props) {
+  const { locate, busy: geoBusy, error: geoError } = useCurrentLocation();
+  const t = useT(providerCatalogDict);
   // Bumping this remounts the map centered on the freshly picked geolocation.
   const [mapKey, setMapKey] = useState(0);
 
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setGeoError("This browser doesn't support location.");
-      return;
-    }
-    setGeoBusy(true);
-    setGeoError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onChange(pos.coords.latitude, pos.coords.longitude);
-        setMapKey((k) => k + 1);
-        setGeoBusy(false);
-      },
-      () => {
-        setGeoError("Couldn't get your location — pick it on the map instead.");
-        setGeoBusy(false);
-      },
-    );
+  const handleUseCurrentLocation = async () => {
+    const result = await locate();
+    if (!result) return;
+    onChange(result.lat, result.lng);
+    if (result.address) onAddressDetected?.(result.address);
+    setMapKey((k) => k + 1);
   };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-ink">Location on map</label>
+        <label className="text-sm font-medium text-ink">{t("locationOnMapLabel")}</label>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          onClick={useCurrentLocation}
+          onClick={() => void handleUseCurrentLocation()}
           loading={geoBusy}
         >
           <LocateFixed className="h-3.5 w-3.5" />
-          {geoBusy ? "Locating…" : "Use current location"}
+          {geoBusy ? t("locatingLabel") : t("useCurrentLocationCta")}
         </Button>
       </div>
-      <p className="text-xs text-muted">Tap the map to place a pin at your shop.</p>
+      <p className="text-xs text-muted">{t("tapMapHint")}</p>
       <div className="overflow-hidden rounded-xl border border-line shadow-xs">
         <LocationPickerMap key={mapKey} lat={lat} lng={lng} onPick={onChange} />
       </div>

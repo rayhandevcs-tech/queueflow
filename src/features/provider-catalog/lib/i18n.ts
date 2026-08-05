@@ -13,11 +13,6 @@ export const providerCatalogDict = {
   serviceAdd: { bn: "যোগ করো", en: "Add" },
 
   // ShopSettingsForm
-  shopOpenHeading: { bn: "দোকান খোলা", en: "Shop open" },
-  shopOpenHint: {
-    bn: "বন্ধ থাকলে নতুন কোনো সিরিয়াল বুক করা যাবে না",
-    en: "When closed, no new serials can be booked",
-  },
   shopOpenWord: { bn: "খোলা", en: "Open" },
   shopClosedWord: { bn: "বন্ধ", en: "Closed" },
   shopNameLabel: { bn: "দোকানের নাম", en: "Shop name" },
@@ -27,6 +22,12 @@ export const providerCatalogDict = {
   addressLabel: { bn: "ঠিকানা", en: "Address" },
   addressPlaceholder: { bn: "রোড, এলাকা, শহর", en: "Road, area, city" },
   phoneLabel: { bn: "ফোন", en: "Phone" },
+
+  // LocationPickerField
+  locationOnMapLabel: { bn: "ম্যাপে লোকেশন", en: "Location on map" },
+  useCurrentLocationCta: { bn: "কারেন্ট লোকেশন", en: "Use current location" },
+  locatingLabel: { bn: "খোঁজা হচ্ছে…", en: "Locating…" },
+  tapMapHint: { bn: "দোকানের জায়গায় ম্যাপে চাপো।", en: "Tap the map to place a pin at your shop." },
   logoLabel: { bn: "লোগো", en: "Logo" },
   coverLabel: { bn: "কভার ছবি", en: "Cover photo" },
   saveBeforeUploadHint: {
@@ -68,6 +69,7 @@ export const providerCatalogDict = {
     en: "Write a few lines about your shop...",
   },
   weeklyHoursLabel: { bn: "সাপ্তাহিক সময়সূচি", en: "Weekly hours" },
+  copyToAllDays: { bn: "সব দিনে কপি করো", en: "Copy to all days" },
   dayClosedStatus: { bn: "বন্ধ", en: "Closed" },
   dayToggleOpen: { bn: "খোলা রাখো", en: "Keep open" },
   dayToggleClose: { bn: "বন্ধ রাখো", en: "Keep closed" },
