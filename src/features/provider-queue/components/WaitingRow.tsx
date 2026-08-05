@@ -126,7 +126,7 @@ export function WaitingRow({
           )}
           <button
             type="button"
-            title="No-show"
+            title={t("noShowTitle")}
             disabled={actions.noShow.isPending}
             onClick={() => run(() => actions.noShow.mutate(serial.id, { onError: surface }))}
             className="grid h-7 w-7 place-items-center rounded-lg bg-brass-soft text-brass disabled:opacity-50"

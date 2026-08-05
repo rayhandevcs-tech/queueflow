@@ -37,11 +37,13 @@ export const providerQueueDict = {
   advancePaidBadge: { bn: "✓ অ্যাডভান্স পেইড", en: "✓ Advance paid" },
   startsInLabel: { bn: "শুরু হবে", en: "Starts in" },
   startCta: { bn: "শুরু", en: "Start" },
+  noShowTitle: { bn: "নো-শো", en: "No-show" },
 
   // MoveSerialMenu
   moveCta: { bn: "সরাও", en: "Move" },
   movingCta: { bn: "সরানো হচ্ছে…", en: "Moving…" },
   noEligibleChair: { bn: "সরানোর মতো কোনো চেয়ার নেই", en: "No eligible chair to move to" },
+  closeMenuAria: { bn: "বন্ধ করো", en: "close" },
 
   // QueueBoard
   boardLoadFailed: { bn: "বোর্ড লোড করা যায়নি — পেজ রিফ্রেশ করো।", en: "Couldn't load the board — refresh the page." },

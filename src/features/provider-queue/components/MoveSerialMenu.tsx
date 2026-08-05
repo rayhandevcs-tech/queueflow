@@ -68,7 +68,7 @@ export function MoveSerialMenu({ serial, lanes, moving, onMove }: Props) {
       {open && (
         <>
           <button
-            aria-label="close"
+            aria-label={t("closeMenuAria")}
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />

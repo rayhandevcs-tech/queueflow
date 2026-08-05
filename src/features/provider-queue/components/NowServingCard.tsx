@@ -6,7 +6,7 @@ import { parseServicesSnapshot, type Serial } from "@/types";
 import { CountdownRing } from "@/components/ui/CountdownRing";
 import { LiveDot } from "@/components/ui/LiveDot";
 import { useNowMs } from "@/hooks/use-now";
-import { fmtMMSS, formatMoney } from "@/lib/format-wait";
+import { fmtMMSS, formatMoney, toBanglaDigits } from "@/lib/format-wait";
 import { UiDbError } from "@/lib/supabase/db-errors";
 import { useT } from "@/lib/i18n";
 import type { useSerialActions } from "../hooks/use-serial-actions";
@@ -104,14 +104,14 @@ export function NowServingCard({
               onClick={() => extend(5)}
               className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
             >
-              +৫
+              +{toBanglaDigits(5)}
             </button>
             <button
               type="button"
               onClick={() => extend(10)}
               className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
             >
-              +১০
+              +{toBanglaDigits(10)}
             </button>
             <button
               type="button"
