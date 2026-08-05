@@ -38,6 +38,22 @@ export const providerQueueDict = {
   startsInLabel: { bn: "শুরু হবে", en: "Starts in" },
   startCta: { bn: "শুরু", en: "Start" },
   noShowTitle: { bn: "নো-শো", en: "No-show" },
+  arrivedBadge: { bn: "পৌঁছেছে", en: "Here" },
+  arrivedTitle: { bn: "কাস্টমার দোকানে পৌঁছে গেছে", en: "Customer has arrived at the shop" },
+  callCta: { bn: "ডাকলাম", en: "Call" },
+  callTitle: {
+    bn: "কাস্টমারকে ডাকা হয়েছে — ৫ মিনিট পর নো-শো দেওয়া যাবে",
+    en: "Mark the customer as called — no-show unlocks 5 minutes later",
+  },
+  calledBadge: { bn: "ডাকা হয়েছে", en: "Called" },
+  calledCountdown: {
+    bn: (n: number) => `ডাকা হয়েছে · ${n} মিনিট`,
+    en: (n: number) => `Called · ${n} min`,
+  },
+  bumpBackTitle: {
+    bn: "একধাপ পিছিয়ে দাও — পরের জন আগে বসবে",
+    en: "Bump one step back — the next person goes first",
+  },
 
   // MoveSerialMenu
   moveCta: { bn: "সরাও", en: "Move" },

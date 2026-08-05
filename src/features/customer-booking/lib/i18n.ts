@@ -54,6 +54,21 @@ export const customerBookingDict = {
     bn: "দোকান এখন বন্ধ — এই মুহূর্তে বুকিং করা যাচ্ছে না",
     en: "Shop is currently closed — booking isn't possible right now",
   },
+  notAcceptingNotice: {
+    bn: "এই দোকান এখন নতুন সিরিয়াল নিচ্ছে না — চলমান কিউ শেষ করছে",
+    en: "This shop has stopped taking new serials — it's finishing the current queue",
+  },
+  breakNotice: {
+    bn: (n: number) => `দোকান এখন বিরতিতে — আর প্রায় ${n} মিনিট। সিরিয়াল নিতে পারো, ওয়েট একটু বেশি হবে।`,
+    en: (n: number) =>
+      `The shop is on a break — about ${n} more minutes. You can still book; the wait will be longer.`,
+  },
+  breakNoticeWithReason: {
+    bn: (n: number, reason: string) =>
+      `${reason} — আর প্রায় ${n} মিনিট। সিরিয়াল নিতে পারো, ওয়েট একটু বেশি হবে।`,
+    en: (n: number, reason: string) =>
+      `${reason} — about ${n} more minutes. You can still book; the wait will be longer.`,
+  },
   bookingFailedGeneric: {
     bn: "বুক করা যায়নি — আবার চেষ্টা করো।",
     en: "Couldn't book — try again.",
@@ -159,4 +174,25 @@ export const customerBookingDict = {
   doneReviewCta: { bn: "কাজ শেষ? রিভিউ দাও ★", en: "Done? Leave a review ★" },
   cancelling: { bn: "ক্যানসেল হচ্ছে…", en: "Cancelling…" },
   cancelSerial: { bn: "সিরিয়াল ক্যানসেল করো", en: "Cancel serial" },
+
+  imHere: { bn: "আমি এসে গেছি", en: "I've arrived" },
+  imHereHint: {
+    bn: "দোকানে পৌঁছে গেলে জানিয়ে দাও — দোকানদার দেখতে পাবে",
+    en: "Tell the shop once you're there — they'll see it on their board",
+  },
+  arrivedBadge: { bn: "পৌঁছে গেছো ✓", en: "You're here ✓" },
+  arrivedToast: { bn: "দোকানকে জানানো হয়েছে", en: "The shop has been told" },
+  arrivedFailed: { bn: "জানানো যায়নি — আবার চেষ্টা করো।", en: "Couldn't tell them — try again." },
+  calledNotice: {
+    bn: "দোকান থেকে তোমাকে ডাকা হয়েছে — এখনই যাও।",
+    en: "The shop has called you — head over now.",
+  },
+  leaveInMinutes: {
+    bn: (n: number) => `আর প্রায় ${n} মিনিট পর রওনা দাও`,
+    en: (n: number) => `Set out in about ${n} minutes`,
+  },
+  leaveNowBanner: {
+    bn: "এখনই রওনা দাও — তোমার পালা প্রায় চলে এসেছে",
+    en: "Leave now — your turn is nearly here",
+  },
 } satisfies Dict;

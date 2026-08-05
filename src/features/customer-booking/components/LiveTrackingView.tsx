@@ -1,19 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, Loader2, Ticket } from "lucide-react";
-import { parseServicesSnapshot } from "@/types";
+import { BellRing, ChevronLeft, Loader2, MapPinCheck, Navigation, Ticket } from "lucide-react";
+import { parseServicesSnapshot, type Serial } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { LiveDot } from "@/components/ui/LiveDot";
 import { CountdownRing } from "@/components/ui/CountdownRing";
+import { useToast } from "@/components/ui/Toast";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useShopDetail } from "../hooks/use-shop-detail";
-import { useCancelMySerial } from "../hooks/use-booking-mutations";
+import { useCancelMySerial, useMarkArrived } from "../hooks/use-booking-mutations";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtMMSS, fmtWait } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
 import { customerBookingDict } from "../lib/i18n";
+
+/**
+ * The two things a waiting customer actually needs, and neither of which the
+ * countdown ring could tell them: when to start walking, and a way to say
+ * they've arrived so the shop stops guessing.
+ */
+function ArrivalCard({ serial, nowMs }: { serial: Serial; nowMs: number }) {
+  const t = useT(customerBookingDict);
+  const showToast = useToast();
+  const markArrived = useMarkArrived();
+
+  if (serial.status !== "WAITING") return null;
+
+  if (serial.called_at) {
+    return (
+      <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-live-soft px-4 py-3.5 text-sm font-semibold text-live">
+        <BellRing className="h-4.5 w-4.5 shrink-0" />
+        {t("calledNotice")}
+      </div>
+    );
+  }
+
+  if (serial.arrived_at) {
+    return (
+      <div className="mt-4 flex items-center gap-2.5 rounded-2xl bg-good-soft px-4 py-3.5 text-sm font-semibold text-good">
+        <MapPinCheck className="h-4.5 w-4.5 shrink-0" />
+        {t("arrivedBadge")}
+      </div>
+    );
+  }
+
+  // travel_min is null whenever we never knew where they were — then there is
+  // no honest leave-time to show, and the card is just the check-in button.
+  const startMs = serial.estimated_start_at ? new Date(serial.estimated_start_at).getTime() : null;
+  const minutesUntilLeave =
+    serial.travel_min != null && startMs != null
+      ? Math.round((startMs - nowMs) / 60_000) - serial.travel_min
+      : null;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+      {minutesUntilLeave != null &&
+        (minutesUntilLeave <= 0 ? (
+          <p className="mb-3 flex items-center gap-2 text-sm font-bold text-live">
+            <Navigation className="h-4.5 w-4.5 shrink-0" />
+            {t("leaveNowBanner")}
+          </p>
+        ) : (
+          <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
+            <Navigation className="h-4.5 w-4.5 shrink-0 text-muted" />
+            {t("leaveInMinutes", minutesUntilLeave)}
+          </p>
+        ))}
+
+      <Button
+        variant="outline"
+        className="w-full"
+        loading={markArrived.isPending}
+        onClick={() =>
+          markArrived.mutate(serial.id, {
+            onSuccess: () => showToast(t("arrivedToast")),
+            onError: () => showToast(t("arrivedFailed")),
+          })
+        }
+      >
+        <MapPinCheck className="h-4 w-4" />
+        {t("imHere")}
+      </Button>
+      <p className="mt-2 text-center text-xs text-muted">{t("imHereHint")}</p>
+    </div>
+  );
+}
 
 export function LiveTrackingView() {
   const { data: serial, isPending } = useMyActiveSerial();
@@ -138,6 +211,8 @@ export function LiveTrackingView() {
           </span>
         </div>
       </div>
+
+      <ArrivalCard serial={serial} nowMs={nowMs} />
 
       <p className="mt-5.5 mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
         {t("aheadOfYou", aheadRows.length)}

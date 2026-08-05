@@ -61,8 +61,34 @@ export const extendSerialTime = (serialId: string, newDuration: number, newExten
     extended_min: newExtended,
   });
 
+/**
+ * Only reachable once the customer has been called and the grace window has
+ * expired — serial_before_update rejects it otherwise (no_show_requires_call /
+ * no_show_grace_period). "I know they aren't coming" is a cancel, not a no-show.
+ */
 export const markNoShow = (serialId: string) =>
   patchSerial(serialId, { status: "NO_SHOW" });
+
+/** Starts the grace window and pushes a "you've been called" notification. */
+export async function callSerial(serialId: string): Promise<void> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.rpc("mark_serial_called", { p_serial_id: serialId });
+    if (error) throw error;
+  });
+}
+
+/**
+ * "He's on his way — you go first." Swaps with the next waiting serial on the
+ * same chair and re-runs the ETA formula for both, server-side.
+ */
+export async function bumpSerialBack(serialId: string): Promise<void> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.rpc("bump_serial_back", { p_serial_id: serialId });
+    if (error) throw error;
+  });
+}
 
 export const cancelByOwner = (serialId: string) =>
   patchSerial(serialId, { status: "CANCELLED" });

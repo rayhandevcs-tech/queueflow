@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Phone, Play, UserX } from "lucide-react";
+import { BellRing, ChevronsDown, MessageCircle, Phone, Play, UserX } from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtWait, formatMoney } from "@/lib/format-wait";
@@ -14,6 +14,9 @@ import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
 import { MoveSerialMenu } from "./MoveSerialMenu";
+
+/** Must match the window serial_before_update enforces (20260827_wait_reality.sql). */
+const GRACE_MS = 5 * 60_000;
 
 export function WaitingRow({
   serial,
@@ -35,6 +38,18 @@ export function WaitingRow({
   const startsInSec = serial.estimated_start_at
     ? (new Date(serial.estimated_start_at).getTime() - nowMs) / 1000
     : 0;
+
+  const arrived = !!serial.arrived_at;
+  const called = !!serial.called_at;
+  // Mirrors the 5-minute window serial_before_update enforces — the button is
+  // hidden rather than disabled until then, so nobody hunts for why it fails.
+  const graceLeftMin = serial.called_at
+    ? Math.max(
+        0,
+        Math.ceil((new Date(serial.called_at).getTime() + GRACE_MS - nowMs) / 60_000),
+      )
+    : GRACE_MS / 60_000;
+  const canNoShow = called && graceLeftMin === 0;
 
   const surface = (err: unknown) => {
     if (err instanceof UiDbError && err.silent) return;
@@ -58,6 +73,14 @@ export function WaitingRow({
           <span className="absolute -right-1 -bottom-1 grid h-5 w-5 place-items-center rounded-full border-2 border-card bg-ink font-number text-[10px] font-bold text-white">
             {serial.position}
           </span>
+          {/* The whole point of check-in: at a glance, is this person here or
+              still at home? Everything else on this card was already known. */}
+          {arrived && (
+            <span
+              title={t("arrivedTitle")}
+              className="absolute -top-0.5 -left-0.5 h-3 w-3 rounded-full border-2 border-card bg-good"
+            />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -72,6 +95,16 @@ export function WaitingRow({
             {serial.advance_paid && (
               <span className="shrink-0 rounded-full bg-good-soft px-2 py-0.5 text-[10px] font-semibold text-good">
                 {t("advancePaidBadge")}
+              </span>
+            )}
+            {arrived && (
+              <span className="shrink-0 rounded-full bg-good-soft px-2 py-0.5 text-[10px] font-semibold text-good">
+                {t("arrivedBadge")}
+              </span>
+            )}
+            {called && (
+              <span className="shrink-0 rounded-full bg-brass-soft px-2 py-0.5 text-[10px] font-semibold text-brass">
+                {graceLeftMin > 0 ? t("calledCountdown", graceLeftMin) : t("calledBadge")}
               </span>
             )}
           </div>
@@ -124,15 +157,40 @@ export function WaitingRow({
               {t("startCta")}
             </button>
           )}
+          {!called && (
+            <button
+              type="button"
+              title={t("callTitle")}
+              disabled={actions.call.isPending}
+              onClick={() => run(() => actions.call.mutate(serial.id, { onError: surface }))}
+              className="flex h-7 items-center gap-1 rounded-lg bg-brass-soft px-2.5 text-xs font-semibold text-brass disabled:opacity-50"
+            >
+              <BellRing className="h-3 w-3" />
+              {t("callCta")}
+            </button>
+          )}
+          {/* The kind option, and the one a real shop reaches for first:
+              push them one place back instead of ending their booking. */}
           <button
             type="button"
-            title={t("noShowTitle")}
-            disabled={actions.noShow.isPending}
-            onClick={() => run(() => actions.noShow.mutate(serial.id, { onError: surface }))}
-            className="grid h-7 w-7 place-items-center rounded-lg bg-brass-soft text-brass disabled:opacity-50"
+            title={t("bumpBackTitle")}
+            disabled={actions.bumpBack.isPending}
+            onClick={() => run(() => actions.bumpBack.mutate(serial.id, { onError: surface }))}
+            className="grid h-7 w-7 place-items-center rounded-lg bg-soft text-muted hover:text-ink disabled:opacity-50"
           >
-            <UserX className="h-3.5 w-3.5" />
+            <ChevronsDown className="h-3.5 w-3.5" />
           </button>
+          {canNoShow && (
+            <button
+              type="button"
+              title={t("noShowTitle")}
+              disabled={actions.noShow.isPending}
+              onClick={() => run(() => actions.noShow.mutate(serial.id, { onError: surface }))}
+              className="grid h-7 w-7 place-items-center rounded-lg bg-live-soft text-live disabled:opacity-50"
+            >
+              <UserX className="h-3.5 w-3.5" />
+            </button>
+          )}
           <MoveSerialMenu
             serial={serial}
             lanes={lanes}

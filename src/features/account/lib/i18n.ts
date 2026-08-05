@@ -57,6 +57,16 @@ export const accountDict = {
   promoHint: { bn: "দোকান থেকে অফার/ঘোষণা", en: "Offers and announcements from shops" },
   reminderLabel: { bn: "রিমাইন্ডার", en: "Reminders" },
   reminderHint: { bn: "বাকি টাকা ও আবার আসার রিমাইন্ডার", en: "Due-balance and come-back reminders" },
+  leaveNowLabel: { bn: "রওনা দেওয়ার সময়", en: "Time to leave" },
+  leaveNowHint: {
+    bn: "পালা আসার আগে, তোমার দূরত্ব হিসাব করে কখন বের হতে হবে",
+    en: "When to set out, based on how far you are from the shop",
+  },
+  newBookingLabel: { bn: "নতুন অনলাইন সিরিয়াল", en: "New online serial" },
+  newBookingHint: {
+    bn: "কেউ অনলাইনে সিরিয়াল নিলে বা বাতিল করলে সাথে সাথে জানানো",
+    en: "Told the moment someone books or cancels online",
+  },
 
   pushSectionTitle: { bn: "পুশ নোটিফিকেশন", en: "Push notifications" },
   pushSectionHint: {

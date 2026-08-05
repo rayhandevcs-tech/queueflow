@@ -29,6 +29,8 @@ import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { useAdminUser, useAdminUserMutations } from "../hooks/use-admin";
 import { adminDict } from "../lib/i18n";
+import { AccountRepairCard } from "./AccountRepairCard";
+import { DeleteAccountCard } from "./DeleteAccountCard";
 
 export function UserDetailView({ userId }: { userId: string }) {
   const { data, isPending } = useAdminUser(userId);
@@ -126,6 +128,8 @@ export function UserDetailView({ userId }: { userId: string }) {
           <BlockAction userId={profile.id} blocked={blocked} />
         </div>
       </Card>
+
+      <AccountRepairCard detail={data} />
 
       {shop && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -244,6 +248,8 @@ export function UserDetailView({ userId }: { userId: string }) {
           </ul>
         )}
       </Card>
+
+      <DeleteAccountCard detail={data} />
     </div>
   );
 }

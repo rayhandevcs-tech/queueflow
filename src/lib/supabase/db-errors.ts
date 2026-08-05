@@ -58,6 +58,22 @@ const MESSAGES = {
     bn: "তোমার অ্যাকাউন্ট আপাতত সীমিত — নতুন সিরিয়াল, রিভিউ বা মেসেজ পাঠানো যাচ্ছে না। বিস্তারিত জানতে সাপোর্টে যোগাযোগ করো।",
     en: "Your account is restricted — you can't book, review or message right now. Contact support for details.",
   },
+  notAcceptingNew: {
+    bn: "এই দোকান এখন নতুন সিরিয়াল নিচ্ছে না — চলমান কিউ শেষ করছে।",
+    en: "This shop has stopped taking new serials — it's finishing the current queue.",
+  },
+  noShowRequiresCall: {
+    bn: "আগে কাস্টমারকে ডাকো — না ডেকে নো-শো দেওয়া যায় না। আসবে না জানলে বাতিল করো।",
+    en: "Call the customer first — you can't mark a no-show without calling. If you know they aren't coming, cancel instead.",
+  },
+  noShowGracePeriod: {
+    bn: "ডাকার পর ৫ মিনিট অপেক্ষা করতে হবে — তারপর নো-শো দেওয়া যাবে।",
+    en: "Wait 5 minutes after calling — then you can mark a no-show.",
+  },
+  nothingToBump: {
+    bn: "পেছনে আর কেউ নেই — পিছিয়ে দেওয়ার জায়গা নেই।",
+    en: "Nobody is behind them — there's no slot to bump into.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -116,6 +132,11 @@ const RULES: ReadonlyArray<{
     key: "accountBlocked",
     silent: false,
   },
+  // Sprint 28 — keep these strings in sync with 20260827_wait_reality.sql.
+  { match: (t) => t.includes("shop is not accepting new bookings"), key: "notAcceptingNew", silent: false },
+  { match: (t) => t.includes("no_show_requires_call"), key: "noShowRequiresCall", silent: false },
+  { match: (t) => t.includes("no_show_grace_period"), key: "noShowGracePeriod", silent: false },
+  { match: (t) => t.includes("nothing_to_bump"), key: "nothingToBump", silent: false },
 ];
 
 export function translateDbError(err: unknown): FriendlyDbError {

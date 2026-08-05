@@ -48,6 +48,8 @@ export const customerExploreDict = {
   serialSuffix: { bn: "সিরিয়াল", en: "serial(s)" },
   minWait: { bn: "মিন ওয়েট", en: "min wait" },
   km: { bn: "কিমি", en: "km" },
+  notAcceptingPill: { bn: "নতুন সিরিয়াল বন্ধ", en: "Not taking new" },
+  breakPill: { bn: "বিরতিতে", en: "On break" },
 
   // ExploreView
   mapView: { bn: "ম্যাপ", en: "Map" },

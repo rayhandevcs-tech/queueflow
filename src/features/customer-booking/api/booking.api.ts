@@ -75,6 +75,12 @@ export interface CreateBookingOptions {
   advance?: AdvancePaymentInfo;
   /** Customer's optional preferred staff/chair — null/omitted → DB assign_best_chair auto-picks. */
   chairId?: string | null;
+  /**
+   * Minutes from the customer to the shop, from the location Explore already
+   * obtained. null → no "leave now" nudge for this booking, which is the right
+   * outcome when we don't actually know where they are.
+   */
+  travelMin?: number | null;
 }
 
 /**
@@ -107,6 +113,7 @@ export async function createBooking(
         service_ids: serviceIds,
         is_walk_in: false,
         chair_id: opts?.chairId ?? null,
+        travel_min: opts?.travelMin ?? null,
         ...(opts?.advance
           ? {
               advance_paid: true,
@@ -227,6 +234,19 @@ export async function cancelMySerial(serialId: string): Promise<void> {
       .update({ status: "CANCELLED" })
       .eq("id", serialId);
 
+    if (error) throw error;
+  });
+}
+
+/**
+ * "I'm here." Goes through an RPC because the customer's own UPDATE policy on
+ * `serials` only permits a write that lands on status = 'CANCELLED' — there is
+ * deliberately no route for them to set columns directly.
+ */
+export async function markArrived(serialId: string): Promise<void> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.rpc("mark_serial_arrived", { p_serial_id: serialId });
     if (error) throw error;
   });
 }

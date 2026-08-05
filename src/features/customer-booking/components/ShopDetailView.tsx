@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle, Ticket } from "lucide-react";
 import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
+import { readRememberedLocation } from "@/lib/last-location";
+import { estimateTravelMin } from "@/lib/travel";
+import { breakMinutesLeft, canBookNow, shopAvailability } from "@/lib/shop-availability";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { TabBar } from "@/components/ui/TabBar";
@@ -136,13 +139,28 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
     });
   };
 
+  const availability = shopAvailability(shop);
+  const breakLeft = breakMinutesLeft(shop);
+  const bookable = canBookNow(shop);
+
   const selectedServices = services?.filter((s) => selected.has(s.id)) ?? [];
   const totalMin = selectedServices.reduce((a, s) => a + s.default_duration_min, 0);
   const totalAmount = selectedServices.reduce((a, s) => a + s.rate, 0);
 
   const bookNow = (advanceInfo?: AdvancePaymentInfo) => {
+    // Read (never re-request) the location Explore already obtained — this is
+    // the wrong moment to raise a permission dialog. Missing/stale → null,
+    // and the booking simply gets no leave-now nudge.
+    const travelMin = estimateTravelMin(readRememberedLocation(), shop);
+
     createBooking.mutate(
-      { shopId, serviceIds: [...selected], advance: advanceInfo, chairId: effectivePreferredChairId },
+      {
+        shopId,
+        serviceIds: [...selected],
+        advance: advanceInfo,
+        chairId: effectivePreferredChairId,
+        travelMin,
+      },
       {
         onSuccess: () => {
           showToast(advanceInfo ? t("advancePaidToast") : t("confirmedToast"));
@@ -185,9 +203,21 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
           </div>
         </div>
 
-        {!shop.is_open && (
+        {availability === "CLOSED" && (
           <div className="mb-4 rounded-xl bg-live-soft px-4 py-3 text-sm font-medium text-live">
             {t("shopClosedNotice")}
+          </div>
+        )}
+        {availability === "NOT_ACCEPTING" && (
+          <div className="mb-4 rounded-xl bg-live-soft px-4 py-3 text-sm font-medium text-live">
+            {t("notAcceptingNotice")}
+          </div>
+        )}
+        {availability === "BREAK" && (
+          <div className="mb-4 rounded-xl bg-brass-soft px-4 py-3 text-sm font-medium text-brass">
+            {shop.break_reason
+              ? t("breakNoticeWithReason", breakLeft, shop.break_reason)
+              : t("breakNotice", breakLeft)}
           </div>
         )}
 
@@ -228,7 +258,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
               <Button
                 size="lg"
                 onClick={onConfirm}
-                disabled={!shop.is_open || selected.size === 0}
+                disabled={!bookable || selected.size === 0}
                 loading={createBooking.isPending}
                 className="flex-1 font-display text-[15px] shadow-glow"
               >

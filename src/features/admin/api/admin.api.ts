@@ -46,6 +46,7 @@ export interface AdminOverviewStats {
 export interface AdminUserDetail {
   profile: Profile;
   email: string | null;
+  email_confirmed: boolean;
   last_sign_in_at: string | null;
   shop: { id: string; name: string; status: ShopStatus } | null;
   stats: {
@@ -59,6 +60,14 @@ export interface AdminUserDetail {
     favourites: number;
     last_serial_at: string | null;
   };
+  /** WAITING/IN_PROGRESS — what blocks the customer from booking again. */
+  active_serials: Array<{
+    id: string;
+    status: string;
+    position: number;
+    created_at: string;
+    shop_name: string | null;
+  }>;
   recent_serials: Array<{
     id: string;
     status: string;
@@ -258,6 +267,87 @@ export async function setUserBlocked(
     p_reason: reason?.trim() || null,
   });
   if (error) throw error;
+}
+
+export interface AdminProfilePatch {
+  full_name?: string;
+  phone?: string;
+  gender?: string;
+  date_of_birth?: string | null;
+  address?: string;
+}
+
+/** Field-level repair of a user's own data. Undefined = leave that field alone. */
+export async function updateUserProfile(
+  userId: string,
+  patch: AdminProfilePatch,
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_update_user_profile", {
+    p_user_id: userId,
+    p_full_name: patch.full_name ?? null,
+    p_phone: patch.phone ?? null,
+    p_gender: patch.gender ?? null,
+    p_date_of_birth: patch.date_of_birth ?? null,
+    p_address: patch.address ?? null,
+  });
+  if (error) throw error;
+}
+
+/** Clears a stuck WAITING/IN_PROGRESS serial that blocks re-booking. */
+export async function forceCancelSerial(
+  serialId: string,
+  reason?: string | null,
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_force_cancel_serial", {
+    p_serial_id: serialId,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) throw error;
+}
+
+export interface DeleteUserResult {
+  email: string | null;
+  shop_deleted: boolean;
+  shop_serials_deleted: number;
+  serials_anonymised: number;
+}
+
+export async function deleteUser(
+  userId: string,
+  reason?: string | null,
+): Promise<DeleteUserResult> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_delete_user", {
+    p_user_id: userId,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) throw error;
+  return data as unknown as DeleteUserResult;
+}
+
+export type AdminAccountAction = "confirm_email" | "change_email" | "send_password_reset";
+
+/**
+ * Auth-schema repairs — routed through /api/admin/account, which re-checks
+ * admin membership server-side and uses Supabase's Admin API (see the route
+ * for why these can't be SQL functions).
+ */
+export async function runAccountAction(input: {
+  action: AdminAccountAction;
+  userId: string;
+  email?: string;
+}): Promise<void> {
+  const response = await fetch("/api/admin/account", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "failed");
+  }
 }
 
 // ---------------------------------------------------------------------------

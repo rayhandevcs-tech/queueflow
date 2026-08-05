@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import type { Shop, TablesUpdate } from "@/types";
-import { createShop, getMyShop, updateShop } from "../api/shop.api";
+import { createShop, getMyShop, setShopBreak, updateShop } from "../api/shop.api";
 import type { ShopFormOutput } from "../schemas/shop.schema";
 
 export function useMyShop() {
@@ -38,5 +38,23 @@ export function useShopMutations() {
     onSuccess: invalidate,
   });
 
-  return { create, update };
+  const setBreak = useMutation({
+    mutationFn: ({
+      shopId,
+      minutes,
+      reason,
+    }: {
+      shopId: string;
+      minutes: number;
+      reason?: string | null;
+    }) => setShopBreak(shopId, minutes, reason),
+    // The RPC returns only the new end time, and it also moved every waiting
+    // customer's ETA — refetch rather than patch a partial shape in.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.shops.mine() });
+      void queryClient.invalidateQueries({ queryKey: ["serials"] });
+    },
+  });
+
+  return { create, update, setBreak };
 }

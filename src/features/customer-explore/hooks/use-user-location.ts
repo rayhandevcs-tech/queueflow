@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { rememberLocation } from "@/lib/last-location";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 
@@ -35,7 +36,11 @@ export function useUserLocation(): UserLocationState {
     setError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCoords(next);
+        // Shared with the booking flow so it can estimate travel time without
+        // raising a second permission prompt (src/lib/last-location.ts).
+        rememberLocation(next);
         setStatus("granted");
       },
       () => {
@@ -47,6 +52,7 @@ export function useUserLocation(): UserLocationState {
 
   const setManualLocation = useCallback((lat: number, lng: number) => {
     setCoords({ lat, lng });
+    rememberLocation({ lat, lng });
     setStatus("granted");
     setError(null);
   }, []);

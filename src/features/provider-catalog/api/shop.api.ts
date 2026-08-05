@@ -1,4 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { withDbErrors } from "@/lib/supabase/db-errors";
 import type { Shop, TablesUpdate } from "@/types";
 import type { ShopFormOutput } from "../schemas/shop.schema";
 
@@ -35,6 +36,32 @@ export async function createShop(values: ShopFormOutput): Promise<Shop> {
 
   if (error) throw error;
   return data;
+}
+
+/**
+ * Start (or, with 0 minutes, end) a shop-wide break.
+ *
+ * Not a plain `shops` update: the owner could write break_until himself, but
+ * nothing would recompute the queue until the next serial event, so every
+ * waiting customer would sit on an ETA that silently ignores the break. The
+ * RPC sets the column and re-runs the ETA formula for every chair in the same
+ * call. Returns the new break end, or null when the break was ended.
+ */
+export async function setShopBreak(
+  shopId: string,
+  minutes: number,
+  reason?: string | null,
+): Promise<string | null> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.rpc("set_shop_break", {
+      p_shop_id: shopId,
+      p_minutes: minutes,
+      p_reason: reason ?? null,
+    });
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function updateShop(
