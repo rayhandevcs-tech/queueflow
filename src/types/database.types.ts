@@ -560,8 +560,18 @@ export type Database = {
           meta: Json;
           created_at: string;
         };
-        /** Written only by the SECURITY DEFINER admin RPCs. */
-        Insert: never;
+        /**
+         * No client can write this: there is no INSERT policy, so an anon-key
+         * insert is rejected by RLS. The SQL RPCs write it through admin_log(),
+         * and /api/admin/account writes it with the service role.
+         */
+        Insert: {
+          actor_id: string;
+          action: string;
+          target_type: string;
+          target_id: string;
+          meta?: Json;
+        };
         Update: never;
         Relationships: [];
       };
@@ -752,6 +762,26 @@ export type Database = {
       admin_set_review_hidden: {
         Args: { p_review_id: string; p_hidden: boolean; p_reason?: string | null };
         Returns: void;
+      };
+      admin_update_user_profile: {
+        Args: {
+          p_user_id: string;
+          p_full_name?: string | null;
+          p_phone?: string | null;
+          p_gender?: string | null;
+          p_date_of_birth?: string | null;
+          p_address?: string | null;
+        };
+        Returns: void;
+      };
+      admin_force_cancel_serial: {
+        Args: { p_serial_id: string; p_reason?: string | null };
+        Returns: void;
+      };
+      /** Returns a summary of what the teardown touched. */
+      admin_delete_user: {
+        Args: { p_user_id: string; p_reason?: string | null };
+        Returns: Json;
       };
     };
     Enums: {

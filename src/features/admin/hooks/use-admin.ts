@@ -5,6 +5,8 @@ import { keys } from "@/lib/query/keys";
 import type { ReportStatus, ShopStatus } from "@/types";
 import {
   amIPlatformAdmin,
+  deleteUser,
+  forceCancelSerial,
   getOverviewStats,
   getShopDetail,
   getUserDetail,
@@ -12,10 +14,14 @@ import {
   listShops,
   listUsers,
   resolveReport,
+  runAccountAction,
   setReviewHidden,
   setShopFeatured,
   setShopStatus,
   setUserBlocked,
+  updateUserProfile,
+  type AdminAccountAction,
+  type AdminProfilePatch,
   type AdminShopFilters,
   type AdminUserFilters,
 } from "../api/admin.api";
@@ -151,7 +157,40 @@ export function useAdminUserMutations(userId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin"] }),
   });
 
-  return { changeBlocked };
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin"] });
+
+  const editProfile = useMutation({
+    mutationFn: (patch: AdminProfilePatch) => updateUserProfile(userId!, patch),
+    onSuccess: invalidate,
+  });
+
+  const accountAction = useMutation({
+    mutationFn: (input: { action: AdminAccountAction; email?: string }) =>
+      runAccountAction({ ...input, userId: userId! }),
+    onSuccess: invalidate,
+  });
+
+  const cancelSerial = useMutation({
+    mutationFn: ({ serialId, reason }: { serialId: string; reason?: string | null }) =>
+      forceCancelSerial(serialId, reason),
+    onSuccess: () => {
+      void invalidate();
+      // The shop's live board and the customer's tracking screen both change.
+      void queryClient.invalidateQueries({ queryKey: ["serials"] });
+      void queryClient.invalidateQueries({ queryKey: ["queue-public"] });
+    },
+  });
+
+  const removeAccount = useMutation({
+    mutationFn: (reason?: string | null) => deleteUser(userId!, reason),
+    onSuccess: () => {
+      void invalidate();
+      // A deleted provider takes their shop (and its serials) with them.
+      void queryClient.invalidateQueries({ queryKey: keys.shops.all });
+    },
+  });
+
+  return { changeBlocked, editProfile, accountAction, cancelSerial, removeAccount };
 }
 
 // ---------------------------------------------------------------------------

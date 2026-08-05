@@ -338,4 +338,103 @@ export const adminDict = {
     bn: "কী সিদ্ধান্ত নিলে, নিজেদের রেকর্ডের জন্য",
     en: "What you decided, for your own record",
   },
+
+  // ---- account repair ----
+  repairTitle: { bn: "অ্যাকাউন্ট ঠিক করো", en: "Fix this account" },
+  repairSubtitle: {
+    bn: "ইউজারের সমস্যা এখান থেকেই সমাধান করা যাবে — প্রতিটা পরিবর্তন অডিট লগে থাকবে",
+    en: "Resolve the user's problem from here — every change is written to the audit log",
+  },
+  editProfileTitle: { bn: "তথ্য সংশোধন", en: "Correct their details" },
+  fieldFullName: { bn: "নাম", en: "Full name" },
+  fieldPhone: { bn: "মোবাইল নম্বর", en: "Phone number" },
+  fieldAddress: { bn: "ঠিকানা", en: "Address" },
+  saveChanges: { bn: "সেভ করো", en: "Save changes" },
+  profileSaved: { bn: "✓ তথ্য আপডেট হয়েছে", en: "✓ Details updated" },
+  profileSaveFailed: { bn: "সেভ করা যায়নি — আবার চেষ্টা করো", en: "Couldn't save — try again" },
+  nameRequired: { bn: "নাম খালি রাখা যাবে না", en: "Name can't be empty" },
+
+  loginHelpTitle: { bn: "লগইন সমস্যা", en: "Login problems" },
+  emailConfirmed: { bn: "ইমেইল ভেরিফায়েড", en: "Email verified" },
+  emailNotConfirmed: { bn: "ইমেইল ভেরিফাই হয়নি", en: "Email not verified" },
+  confirmEmailAction: { bn: "ইমেইল ভেরিফাই করে দাও", en: "Mark email verified" },
+  confirmEmailHint: {
+    bn: "সাইনআপের কোড না পেলে বা মেইল হারিয়ে গেলে — নিজেই ভেরিফাই করে দাও, ইউজার সাথে সাথে লগইন করতে পারবে।",
+    en: "If the signup code never arrived — verify it yourself and they can sign in immediately.",
+  },
+  sendResetAction: { bn: "পাসওয়ার্ড রিসেট মেইল পাঠাও", en: "Send password reset email" },
+  sendResetHint: {
+    bn: "ইউজারের ইমেইলে স্ট্যান্ডার্ড রিসেট লিংক যাবে — তুমি কখনো তার পাসওয়ার্ড দেখতে বা বসাতে পারবে না।",
+    en: "Sends the standard reset link to their inbox — you never see or set their password.",
+  },
+  changeEmailAction: { bn: "ইমেইল বদলাও", en: "Change email" },
+  changeEmailHint: {
+    bn: "সাইনআপে ইমেইল ভুল লিখলে এখানে ঠিক করে দাও — নতুন ঠিকানাটা ভেরিফায়েড ধরে নেওয়া হবে।",
+    en: "Fix a typo made at signup — the new address is marked verified.",
+  },
+  newEmailLabel: { bn: "নতুন ইমেইল", en: "New email" },
+  invalidEmail: { bn: "ইমেইল ঠিকানাটা ঠিক নয়", en: "That isn't a valid email" },
+  emailConfirmedToast: { bn: "✓ ইমেইল ভেরিফায়েড করা হয়েছে", en: "✓ Email marked verified" },
+  emailChangedToast: { bn: "✓ ইমেইল বদলে গেছে", en: "✓ Email changed" },
+  resetSentToast: { bn: "✓ রিসেট মেইল পাঠানো হয়েছে", en: "✓ Reset email sent" },
+  accountActionFailed: {
+    bn: "কাজটা করা যায়নি — আবার চেষ্টা করো",
+    en: "That didn't work — try again",
+  },
+
+  stuckSerialTitle: { bn: "আটকে থাকা সিরিয়াল", en: "Stuck serial" },
+  stuckSerialHint: {
+    bn: "একসাথে একটাই সিরিয়াল রাখা যায় — পুরনো সিরিয়াল শেষ না হলে ইউজার নতুন সিরিয়াল নিতে পারে না। এখান থেকে বাতিল করে দিলেই সমস্যা মিটে যাবে।",
+    en: "Only one active serial is allowed — an unfinished one blocks all new bookings. Cancelling it here unblocks them.",
+  },
+  noStuckSerial: {
+    bn: "কোনো চলমান সিরিয়াল নেই — বুকিং আটকানোর কিছু নেই",
+    en: "No active serial — nothing is blocking their bookings",
+  },
+  cancelSerialAction: { bn: "সিরিয়াল বাতিল করো", en: "Cancel this serial" },
+  serialCancelled: { bn: "✓ সিরিয়াল বাতিল করা হয়েছে", en: "✓ Serial cancelled" },
+  serialCancelFailed: {
+    bn: "বাতিল করা যায়নি — আবার চেষ্টা করো",
+    en: "Couldn't cancel it — try again",
+  },
+  serialAtShop: { bn: (shop: string) => `${shop}-এ`, en: (shop: string) => `at ${shop}` },
+
+  // ---- delete account ----
+  dangerZone: { bn: "ডেঞ্জার জোন", en: "Danger zone" },
+  deleteAccount: { bn: "অ্যাকাউন্ট ডিলিট করো", en: "Delete account" },
+  deleteConfirmTitle: { bn: "অ্যাকাউন্টটি স্থায়ীভাবে মুছে ফেলবে?", en: "Permanently delete this account?" },
+  deleteWhatHappensTitle: { bn: "যা হবে:", en: "What happens:" },
+  deleteFreesEmail: {
+    bn: (email: string) => `${email} আবার খালি হয়ে যাবে — এই ইমেইল ও ফোন নম্বর দিয়ে নতুন করে রেজিস্ট্রেশন করা যাবে।`,
+    en: (email: string) => `${email} is released — they can register again with the same email and phone.`,
+  },
+  deleteKeepsShopHistory: {
+    bn: "যে দোকানে সে সিরিয়াল নিয়েছিল, সেই দোকানের আয়ের হিসাব ঠিক থাকবে (সিরিয়াল থাকবে, শুধু অ্যাকাউন্টের সংযোগ কাটা যাবে)।",
+    en: "Shops keep their income history — those serials stay, just unlinked from the account.",
+  },
+  deleteLosesOwnData: {
+    bn: "তার রিভিউ, প্রিয় দোকান, চ্যাট ও নোটিফিকেশন মুছে যাবে।",
+    en: "Their reviews, favourites, chats and notifications are erased.",
+  },
+  deleteLosesShop: {
+    bn: (shop: string) => `⚠️ ${shop} দোকানটিও মুছে যাবে — চেয়ার, সার্ভিস, অফার, গ্যালারি, ওই দোকানের সব সিরিয়াল ও রিভিউসহ। অন্য কাস্টমাররাও ওই দোকানের হিসাব হারাবে।`,
+    en: (shop: string) => `⚠️ The shop ${shop} goes too — chairs, services, offers, gallery, every serial ever taken there and every review. Other customers lose their history at that shop as well.`,
+  },
+  deleteIrreversible: {
+    bn: "এটা ফেরানো যাবে না। শুধু অডিট লগে রেকর্ডটুকু থাকবে।",
+    en: "This can't be undone. Only the audit-log record survives.",
+  },
+  deleteTypeToConfirm: {
+    bn: (word: string) => `নিশ্চিত হতে নিচে "${word}" লেখো`,
+    en: (word: string) => `Type "${word}" below to confirm`,
+  },
+  deleteConfirmWord: { bn: "মুছে ফেলো", en: "DELETE" },
+  deleteMismatch: { bn: "লেখাটা মিলছে না", en: "That doesn't match" },
+  deleteReasonLabel: { bn: "কারণ (অডিট লগের জন্য)", en: "Reason (for the audit log)" },
+  deletedToast: { bn: "✓ অ্যাকাউন্ট মুছে ফেলা হয়েছে", en: "✓ Account deleted" },
+  deleteFailed: { bn: "মোছা যায়নি — আবার চেষ্টা করো", en: "Couldn't delete — try again" },
+  cannotDeleteAdmin: {
+    bn: "এডমিন অ্যাকাউন্ট মোছা যায় না — আগে admin_users থেকে সরাও",
+    en: "A platform admin can't be deleted — remove them from admin_users first",
+  },
 } satisfies Dict;
