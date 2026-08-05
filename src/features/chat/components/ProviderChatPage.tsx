@@ -34,12 +34,6 @@ export function ProviderChatPage({ customerId }: { customerId: string }) {
   const name = nameQuery.data || t("customerFallback");
 
   return (
-    <ChatThreadView
-      shopId={shopId}
-      customerId={customerId}
-      backHref="/chat"
-      otherPartyName={name}
-      otherPartyInitial={name.trim().charAt(0).toUpperCase() || "?"}
-    />
+    <ChatThreadView shopId={shopId} customerId={customerId} backHref="/chat" otherPartyName={name} />
   );
 }

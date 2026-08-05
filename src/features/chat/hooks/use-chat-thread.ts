@@ -62,7 +62,7 @@ export function useChatThread(shopId: string | undefined, customerId: string | u
   }, [enabled, shopId, customerId, myId, messagesQuery.data]);
 
   const send = useMutation({
-    mutationFn: (params: { content?: string; imageUrl?: string }) => {
+    mutationFn: (params: { content?: string; imageUrls?: string[] }) => {
       if (!shopId || !customerId || !myId) throw new Error(translate(chatDict, "chatNotReady"));
       return sendMessage({ shopId, customerId, senderId: myId, ...params });
     },

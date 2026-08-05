@@ -84,8 +84,8 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "account",
     question: { bn: "অ্যাকাউন্ট ডিলিট করলে কী হবে?", en: "What happens if I delete my account?" },
     answer: {
-      bn: "তোমার প্রোফাইল, রিভিউ, চ্যাট, ফেভারিট আর নোটিফিকেশন স্থায়ীভাবে মুছে যাবে — এটা ফেরানো যায় না। দোকান থাকলে আগে সাপোর্টে যোগাযোগ করতে হবে।",
-      en: "Your profile, reviews, chats, favorites, and notifications are permanently deleted — this can't be undone. If you own a shop, you'll need to contact support first.",
+      bn: "তোমার প্রোফাইল, রিভিউ, মেসেজ, ফেভারিট আর নোটিফিকেশন স্থায়ীভাবে মুছে যাবে — এটা ফেরানো যায় না। দোকান থাকলে আগে সাপোর্টে যোগাযোগ করতে হবে।",
+      en: "Your profile, reviews, messages, favorites, and notifications are permanently deleted — this can't be undone. If you own a shop, you'll need to contact support first.",
     },
   },
   {

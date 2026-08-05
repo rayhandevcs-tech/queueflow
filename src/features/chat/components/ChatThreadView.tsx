@@ -2,16 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ImagePlus, MessageCircle, Send } from "lucide-react";
+import { Camera, ChevronLeft, ImagePlus, MessageCircle, Send } from "lucide-react";
 import { toBanglaDigits } from "@/lib/format-wait";
 import type { Message } from "@/types";
+import { AvatarChip } from "@/components/ui/AvatarChip";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
 import { getStoredLanguage, translate, useT } from "@/lib/i18n";
-import { uploadChatImage } from "../api/storage.api";
+import { uploadChatImages } from "../api/storage.api";
+import { getMessageImageUrls } from "../lib/message-images";
 import { useChatPresence } from "../hooks/use-chat-presence";
 import { useChatThread } from "../hooks/use-chat-thread";
 import { chatDict } from "../lib/i18n";
+import { MessageImageGrid } from "./MessageImageGrid";
 
 function dateLabel(dateStr: string): string {
   const date = new Date(dateStr);
@@ -41,21 +44,20 @@ export function ChatThreadView({
   customerId,
   backHref,
   otherPartyName,
-  otherPartyInitial,
-  otherPartyAvatarBg = "var(--color-accent)",
+  otherPartyAvatarUrl = null,
 }: {
   shopId: string | undefined;
   customerId: string | undefined;
   backHref: string;
   otherPartyName: string;
-  otherPartyInitial: string;
-  otherPartyAvatarBg?: string;
+  otherPartyAvatarUrl?: string | null;
 }) {
   const { myId, messages, isPending, send } = useChatThread(shopId, customerId);
   const [content, setContent] = useState("");
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const showToast = useToast();
   const t = useT(chatDict);
 
@@ -89,13 +91,13 @@ export function ChatThreadView({
     );
   };
 
-  const onPickImage = async (file: File | undefined) => {
-    if (!file || !shopId || !customerId) return;
-    setUploadingImage(true);
+  const onPickImages = async (files: File[]) => {
+    if (files.length === 0 || !shopId || !customerId) return;
+    setUploadingImages(true);
     try {
-      const url = await uploadChatImage(shopId, customerId, file);
+      const urls = await uploadChatImages(shopId, customerId, files);
       send.mutate(
-        { imageUrl: url },
+        { imageUrls: urls },
         {
           onError: (err) => {
             showToast(err instanceof Error ? err.message : t("imageSendFailed"));
@@ -105,8 +107,9 @@ export function ChatThreadView({
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("imageUploadFailed"));
     } finally {
-      setUploadingImage(false);
-      if (imageInputRef.current) imageInputRef.current.value = "";
+      setUploadingImages(false);
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
   };
 
@@ -122,7 +125,7 @@ export function ChatThreadView({
   }, [messages]);
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-5.5rem)] max-w-lg flex-col md:h-[calc(100dvh-2.5rem)]">
+    <div className="flex h-full min-h-0 w-full flex-col">
       <div className="flex shrink-0 items-center gap-2.5 border-b border-line pb-3.5">
         <Link
           href={backHref}
@@ -130,12 +133,7 @@ export function ChatThreadView({
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <div
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl font-display font-bold text-white"
-          style={{ background: otherPartyAvatarBg }}
-        >
-          {otherPartyInitial}
-        </div>
+        <AvatarChip label={otherPartyName} avatarUrl={otherPartyAvatarUrl} shape="circle" size={40} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-[15px] font-bold text-ink">{otherPartyName}</p>
           {otherOnline ? (
@@ -183,14 +181,7 @@ export function ChatThreadView({
                           : "rounded-bl-sm border border-line bg-card text-ink"
                       }`}
                     >
-                      {m.image_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={m.image_url}
-                          alt=""
-                          className="mb-1.5 max-h-64 w-full rounded-xl object-cover"
-                        />
-                      )}
+                      <MessageImageGrid urls={getMessageImageUrls(m)} />
                       {m.content && <p className="leading-relaxed wrap-break-word">{m.content}</p>}
                       <p
                         className={`mt-1 text-right text-[10px] ${mine ? "text-accent-ink/70" : "text-muted"}`}
@@ -210,20 +201,38 @@ export function ChatThreadView({
       <div className="shrink-0 border-t border-line pt-3">
         <div className="flex items-center gap-2">
           <input
-            ref={imageInputRef}
+            ref={galleryInputRef}
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
-            onChange={(e) => void onPickImage(e.target.files?.[0])}
+            onChange={(e) => void onPickImages(Array.from(e.target.files ?? []))}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => void onPickImages(Array.from(e.target.files ?? []))}
           />
           <button
             type="button"
-            onClick={() => imageInputRef.current?.click()}
-            disabled={uploadingImage}
-            title={t("sendImageTitle")}
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={uploadingImages}
+            title={t("attachImageTitle")}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-soft disabled:opacity-40"
           >
-            {uploadingImage ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
+            {uploadingImages ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={uploadingImages}
+            title={t("cameraTitle")}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-soft disabled:opacity-40"
+          >
+            <Camera className="h-5 w-5" />
           </button>
           <input
             value={content}

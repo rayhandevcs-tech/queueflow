@@ -23,6 +23,7 @@ export interface ChatThreadSummary {
   avatarUrl: string | null;
   lastMessage: Message;
   unread: boolean;
+  unreadCount: number;
 }
 
 function useCurrentUserId() {
@@ -61,17 +62,19 @@ export function useMyChatThreads() {
     for (const m of messagesQuery.data) {
       const shop = shopsQuery.data?.[m.shop_id];
       const existing = byShop.get(m.shop_id);
-      const unread = m.sender_id !== myId && !m.is_read;
+      const isUnread = m.sender_id !== myId && !m.is_read;
       if (!existing) {
         byShop.set(m.shop_id, {
           key: m.shop_id,
           name: shop?.name ?? translate(chatDict, "shopFallback"),
           avatarUrl: shop?.logo_url ?? null,
           lastMessage: m,
-          unread,
+          unread: isUnread,
+          unreadCount: isUnread ? 1 : 0,
         });
-      } else if (unread) {
+      } else if (isUnread) {
         existing.unread = true;
+        existing.unreadCount += 1;
       }
     }
     return [...byShop.values()];
@@ -102,17 +105,19 @@ export function useShopChatThreads(shopId: string | undefined) {
     for (const m of messagesQuery.data) {
       const name = namesQuery.data?.[m.customer_id] ?? translate(chatDict, "customerFallback");
       const existing = byCustomer.get(m.customer_id);
-      const unread = m.sender_id === m.customer_id && !m.is_read;
+      const isUnread = m.sender_id === m.customer_id && !m.is_read;
       if (!existing) {
         byCustomer.set(m.customer_id, {
           key: m.customer_id,
           name,
           avatarUrl: null,
           lastMessage: m,
-          unread,
+          unread: isUnread,
+          unreadCount: isUnread ? 1 : 0,
         });
-      } else if (unread) {
+      } else if (isUnread) {
         existing.unread = true;
+        existing.unreadCount += 1;
       }
     }
     return [...byCustomer.values()];

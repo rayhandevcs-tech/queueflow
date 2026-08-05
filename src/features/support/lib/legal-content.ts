@@ -7,8 +7,8 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     heading: { bn: "আমরা কী তথ্য রাখি", en: "What information we keep" },
     body: {
-      bn: "নাম, ফোন নম্বর, ইমেইল, প্রোফাইল ছবি, বুকিং হিস্ট্রি, চ্যাট মেসেজ আর রিভিউ — এই অ্যাপ ব্যবহার করার সময় যা যা তুমি নিজে দাও, শুধু সেটুকুই রাখা হয়।",
-      en: "Name, phone number, email, profile photo, booking history, chat messages, and reviews — only what you provide yourself while using the app is kept.",
+      bn: "নাম, ফোন নম্বর, ইমেইল, প্রোফাইল ছবি, বুকিং হিস্ট্রি, মেসেজ আর রিভিউ — এই অ্যাপ ব্যবহার করার সময় যা যা তুমি নিজে দাও, শুধু সেটুকুই রাখা হয়।",
+      en: "Name, phone number, email, profile photo, booking history, messages, and reviews — only what you provide yourself while using the app is kept.",
     },
   },
   {
@@ -35,8 +35,8 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     heading: { bn: "তথ্য মুছে ফেলা", en: "Deleting your data" },
     body: {
-      bn: "অ্যাকাউন্ট ডিলিট করলে তোমার প্রোফাইল, চ্যাট, রিভিউ, ফেভারিট আর নোটিফিকেশন স্থায়ীভাবে মুছে যায়। বুকিং হিস্ট্রি দোকানের আয়ের হিসাবের অংশ হওয়ায় শুধু সংক্ষিপ্ত আকারে (নাম-ফোন ছাড়া) থেকে যেতে পারে।",
-      en: "Deleting your account permanently removes your profile, chats, reviews, favorites, and notifications. Since booking history is part of a shop's income records, a stripped-down version (without your name/phone) may remain.",
+      bn: "অ্যাকাউন্ট ডিলিট করলে তোমার প্রোফাইল, মেসেজ, রিভিউ, ফেভারিট আর নোটিফিকেশন স্থায়ীভাবে মুছে যায়। বুকিং হিস্ট্রি দোকানের আয়ের হিসাবের অংশ হওয়ায় শুধু সংক্ষিপ্ত আকারে (নাম-ফোন ছাড়া) থেকে যেতে পারে।",
+      en: "Deleting your account permanently removes your profile, messages, reviews, favorites, and notifications. Since booking history is part of a shop's income records, a stripped-down version (without your name/phone) may remain.",
     },
   },
 ];

@@ -410,6 +410,7 @@ export type Database = {
           sender_id: string;
           content: string | null;
           image_url: string | null;
+          image_urls: string[] | null;
           is_read: boolean;
           created_at: string;
         };
@@ -420,6 +421,7 @@ export type Database = {
           sender_id: string;
           content?: string | null;
           image_url?: string | null;
+          image_urls?: string[] | null;
           is_read?: boolean;
         };
         Update: {

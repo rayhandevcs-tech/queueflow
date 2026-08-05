@@ -20,8 +20,8 @@ export const accountDict = {
   deleteAccountCta: { bn: "অ্যাকাউন্ট মুছে ফেলো", en: "Delete account" },
   deleteAccountTitle: { bn: "অ্যাকাউন্ট মুছে ফেলবে?", en: "Delete your account?" },
   deleteAccountDescription: {
-    bn: "প্রোফাইল, চ্যাট, রিভিউ, ফেভারিট আর নোটিফিকেশন স্থায়ীভাবে মুছে যাবে — এটা ফেরানো যায় না।",
-    en: "Your profile, chats, reviews, favorites, and notifications will be permanently deleted — this can't be undone.",
+    bn: "প্রোফাইল, মেসেজ, রিভিউ, ফেভারিট আর নোটিফিকেশন স্থায়ীভাবে মুছে যাবে — এটা ফেরানো যায় না।",
+    en: "Your profile, messages, reviews, favorites, and notifications will be permanently deleted — this can't be undone.",
   },
   deleteConfirm: { bn: "মুছে ফেলো", en: "Delete" },
   keepAccount: { bn: "থাক", en: "Keep it" },

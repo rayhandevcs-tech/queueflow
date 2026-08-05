@@ -19,7 +19,7 @@ export async function sendMessage(params: {
   customerId: string;
   senderId: string;
   content?: string;
-  imageUrl?: string;
+  imageUrls?: string[];
 }): Promise<Message> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase
@@ -29,7 +29,11 @@ export async function sendMessage(params: {
       customer_id: params.customerId,
       sender_id: params.senderId,
       content: params.content?.trim() || null,
-      image_url: params.imageUrl ?? null,
+      // Only present in the payload when there are actual images — a key
+      // that's always sent (even as null) would break every send once this
+      // column doesn't exist yet on a not-migrated project (see Sprint 15's
+      // services.image_url fix for the same bug class).
+      ...(params.imageUrls?.length ? { image_urls: params.imageUrls } : {}),
     })
     .select()
     .single();

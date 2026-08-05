@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
@@ -10,8 +11,15 @@ import { CustomerBottomNav } from "./CustomerBottomNav";
 import { CustomerSidebarPanel } from "./CustomerSidebarPanel";
 import { customerShellDict } from "./i18n";
 
+// The messages split-panel (list + thread side by side) needs real desktop
+// width — every other customer page is intentionally capped at max-w-md.
+function isChatRoute(pathname: string): boolean {
+  return pathname === "/chats" || /^\/explore\/[^/]+\/chat$/.test(pathname);
+}
+
 export function CustomerShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const t = useT(customerShellDict);
 
   return (
@@ -49,7 +57,14 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
         <CustomerSidebarPanel onNavigate={() => setOpen(false)} />
       </div>
 
-      <main className="mx-auto min-w-0 max-w-md flex-1 px-4 pt-6 pb-28 lg:pb-10">{children}</main>
+      <main
+        className={cn(
+          "mx-auto min-w-0 flex-1 px-4 pt-6 pb-28 lg:pb-10",
+          isChatRoute(pathname) ? "max-w-4xl" : "max-w-md",
+        )}
+      >
+        {children}
+      </main>
 
       <CustomerBottomNav />
     </div>

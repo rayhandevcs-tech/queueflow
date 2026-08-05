@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getBrowserClient } from "@/lib/supabase/client";
-import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
 import { useShopBasics } from "../hooks/use-chat-shop";
@@ -37,8 +36,6 @@ export function CustomerChatPage({ shopId }: { shopId: string }) {
       customerId={myId}
       backHref={`/explore/${shopId}`}
       otherPartyName={shop.name}
-      otherPartyInitial={shopInitial(shop.name)}
-      otherPartyAvatarBg={shopAvatarColor(shop.id)}
     />
   );
 }
