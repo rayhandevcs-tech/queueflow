@@ -22,6 +22,12 @@ export async function sendMessage(params: {
   imageUrls?: string[];
 }): Promise<Message> {
   const supabase = getBrowserClient();
+  // A single image keeps using the legacy `image_url` column (already live,
+  // no migration needed) — only 2+ images need the new `image_urls` array,
+  // which doesn't exist until 20260816_chat_multi_image.sql is applied.
+  // Neither key is present in the payload unless actually needed, same
+  // "safe optional column" discipline as Sprint 15's services.image_url fix.
+  const urls = params.imageUrls ?? [];
   const { data, error } = await supabase
     .from("messages")
     .insert({
@@ -29,11 +35,8 @@ export async function sendMessage(params: {
       customer_id: params.customerId,
       sender_id: params.senderId,
       content: params.content?.trim() || null,
-      // Only present in the payload when there are actual images — a key
-      // that's always sent (even as null) would break every send once this
-      // column doesn't exist yet on a not-migrated project (see Sprint 15's
-      // services.image_url fix for the same bug class).
-      ...(params.imageUrls?.length ? { image_urls: params.imageUrls } : {}),
+      ...(urls.length === 1 ? { image_url: urls[0] } : {}),
+      ...(urls.length > 1 ? { image_urls: urls } : {}),
     })
     .select()
     .single();
