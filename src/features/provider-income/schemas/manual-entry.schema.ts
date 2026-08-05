@@ -21,10 +21,10 @@ export function manualEntrySchema(lang: Language) {
     // accepted-methods list) — null when payment_status is DUE, same
     // convention as serials.payment_method.
     payment_method: z.string().nullable().optional(),
-    note: z
+    customer_name: z
       .string()
       .trim()
-      .max(200, m("max_chars", 200))
+      .max(80, m("max_chars", 80))
       .nullable()
       .optional()
       .transform((v) => (v && v.length > 0 ? v : null)),

@@ -3,8 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BUSINESS_TYPES, type SelectableBusinessType } from "@/config/constants";
-import { cn } from "@/lib/utils";
+import type { SelectableBusinessType } from "@/config/constants";
 import type { Shop } from "@/types";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
@@ -25,12 +24,6 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
   const busy = create.isPending || update.isPending;
   const { language } = useLanguage();
   const t = useT(providerCatalogDict);
-  const businessTypeT = useT(
-    Object.fromEntries(BUSINESS_TYPES.map((bt) => [bt.value, bt.label])) as Record<
-      SelectableBusinessType,
-      { bn: string; en: string }
-    >,
-  );
 
   const schema = useMemo(() => shopSchema(language), [language]);
   const form = useForm<ShopFormValues, unknown, ShopFormOutput>({
@@ -79,37 +72,6 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           invalid={!!err.name}
         />
       </Field>
-
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">{t("businessTypeLabel")}</label>
-        <div className="flex gap-2">
-          {BUSINESS_TYPES.map((bt) => {
-            const selected = form.watch("business_type") === bt.value;
-            return (
-              <button
-                key={bt.value}
-                type="button"
-                onClick={() =>
-                  form.setValue("business_type", bt.value, {
-                    shouldDirty: true,
-                  })
-                }
-                className={cn(
-                  "rounded-full border px-4 py-1.5 text-sm font-medium transition-all",
-                  selected
-                    ? "border-accent bg-accent text-accent-ink shadow-sm"
-                    : "border-line bg-card text-muted hover:border-accent/40",
-                )}
-              >
-                {businessTypeT(bt.value)}
-              </button>
-            );
-          })}
-        </div>
-        {err.business_type && (
-          <p className="text-xs font-medium text-live">{t("businessTypeRequired")}</p>
-        )}
-      </div>
 
       <Field label={t("addressLabel")} error={err.address?.message}>
         <Input

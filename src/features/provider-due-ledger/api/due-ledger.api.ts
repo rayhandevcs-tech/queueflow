@@ -5,7 +5,7 @@ import type { DueSerialRow } from "../lib/compute-due-ledger";
 export interface DueManualEntryRow {
   id: string;
   service_name: string;
-  note: string | null;
+  customer_name: string | null;
   amount: number;
   created_at: string;
 }
@@ -55,7 +55,7 @@ export async function getDueManualEntries(shopId: string): Promise<DueManualEntr
   const [entriesRes, servicesRes] = await Promise.all([
     supabase
       .from("manual_entries")
-      .select("id, service_id, note, amount, created_at")
+      .select("id, service_id, customer_name, amount, created_at")
       .eq("shop_id", shopId)
       .eq("payment_status", "DUE")
       .order("created_at", { ascending: true }),
@@ -68,7 +68,7 @@ export async function getDueManualEntries(shopId: string): Promise<DueManualEntr
   const nameById = new Map(servicesRes.data.map((s) => [s.id, s.name]));
   return entriesRes.data.map((row) => ({
     id: row.id,
-    note: row.note,
+    customer_name: row.customer_name,
     amount: row.amount,
     created_at: row.created_at,
     service_name: nameById.get(row.service_id) ?? "",

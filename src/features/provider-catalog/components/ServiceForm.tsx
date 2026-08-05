@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Service } from "@/types";
-import { SERVICE_CATEGORIES, SERVICE_CATEGORY_LABEL } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { useLanguage, useT } from "@/lib/i18n";
@@ -27,7 +26,6 @@ interface Props {
 export function ServiceForm({ shopId, initial, busy, onSubmit, onCancel }: Props) {
   const { language } = useLanguage();
   const t = useT(providerCatalogDict);
-  const categoryT = useT(SERVICE_CATEGORY_LABEL);
 
   const schema = useMemo(() => serviceSchema(language), [language]);
   const form = useForm<ServiceFormValues, unknown, ServiceFormOutput>({
@@ -37,6 +35,9 @@ export function ServiceForm({ shopId, initial, busy, onSubmit, onCancel }: Props
       rate: initial?.rate ?? 0,
       default_duration_min: initial?.default_duration_min ?? 30,
       category: (initial?.category as ServiceFormValues["category"]) ?? "OTHER",
+      // category has no picker in the form (removed — the provider doesn't
+      // need to manage it), so every service silently keeps its "OTHER"
+      // default; only used elsewhere as the fallback category icon.
       // undefined (not null) unless a photo already exists — see schema
       // comment: keeps image_url out of the payload for untouched forms.
       image_url: initial?.image_url ?? undefined,
@@ -77,20 +78,6 @@ export function ServiceForm({ shopId, initial, busy, onSubmit, onCancel }: Props
           invalid={!!err.default_duration_min}
         />
       </Field>
-      <div className="sm:col-span-2">
-        <Field error={err.category?.message}>
-          <select
-            {...form.register("category")}
-            className="h-11 w-full rounded-xl border border-line bg-card px-3 text-sm text-ink"
-          >
-            {SERVICE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {categoryT(c)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
       <div className="sm:col-span-4">
         <ImageUploadField
           shopId={shopId}

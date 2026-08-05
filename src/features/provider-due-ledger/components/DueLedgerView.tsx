@@ -155,11 +155,11 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-display text-base font-bold text-ink">
-                        {e.service_name || t("manualEntryFallbackName")}
+                        {e.customer_name || t("manualEntryFallbackName")}
                       </p>
                       <p className="truncate text-xs text-muted">
                         {t("dueSince", formatBanglaDate(new Date(e.created_at)))}
-                        {e.note ? ` · ${e.note}` : ""}
+                        {e.service_name ? ` · ${e.service_name}` : ""}
                       </p>
                     </div>
                     <span className="shrink-0 rounded-full bg-live-soft px-3 py-1 font-number text-sm font-bold text-live">

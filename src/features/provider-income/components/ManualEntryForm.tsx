@@ -37,7 +37,7 @@ export function ManualEntryForm({ services, chairs, initial, busy, onSubmit, onC
       amount: initial?.amount ?? ("" as unknown as number),
       payment_status: initial?.payment_status ?? "PAID",
       payment_method: initial?.payment_method ?? "cash",
-      note: initial?.note ?? "",
+      customer_name: initial?.customer_name ?? "",
     },
   });
 
@@ -122,8 +122,11 @@ export function ManualEntryForm({ services, chairs, initial, busy, onSubmit, onC
       </div>
 
       <div className="sm:col-span-2">
-        <Field error={err.note?.message} label={t("manualEntryNoteLabel")}>
-          <Input {...form.register("note")} placeholder={t("manualEntryNotePlaceholder")} />
+        <Field error={err.customer_name?.message} label={t("manualEntryCustomerNameLabel")}>
+          <Input
+            {...form.register("customer_name")}
+            placeholder={t("manualEntryCustomerNamePlaceholder")}
+          />
         </Field>
       </div>
 

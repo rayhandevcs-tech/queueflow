@@ -17,8 +17,6 @@ export const providerCatalogDict = {
   shopClosedWord: { bn: "বন্ধ", en: "Closed" },
   shopNameLabel: { bn: "দোকানের নাম", en: "Shop name" },
   shopNamePlaceholder: { bn: "যেমন: নিউ স্টার সেলুন", en: "e.g. New Star Salon" },
-  businessTypeLabel: { bn: "ধরন", en: "Type" },
-  businessTypeRequired: { bn: "একটা ধরন বেছে নাও", en: "Choose a type" },
   addressLabel: { bn: "ঠিকানা", en: "Address" },
   addressPlaceholder: { bn: "রোড, এলাকা, শহর", en: "Road, area, city" },
   phoneLabel: { bn: "ফোন", en: "Phone" },

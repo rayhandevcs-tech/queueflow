@@ -86,7 +86,10 @@ export function ManualEntrySection({ shopId }: { shopId: string }) {
               className="flex items-center gap-2.5 rounded-2xl border border-line bg-soft/60 p-3.5"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-ink">{serviceName(e.service_id)}</p>
+                <p className="truncate text-sm font-semibold text-ink">
+                  {serviceName(e.service_id)}
+                  {e.customer_name ? ` · ${e.customer_name}` : ""}
+                </p>
                 <p className="text-xs text-muted">
                   {formatBanglaDate(new Date(e.created_at))} · {formatBanglaTime(new Date(e.created_at))}
                   {staffName(e.chair_id) ? ` · ${staffName(e.chair_id)}` : ""}

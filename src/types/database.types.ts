@@ -359,6 +359,7 @@ export type Database = {
           payment_method: string | null;
           payment_status: "PAID" | "DUE";
           note: string | null;
+          customer_name: string | null;
           created_at: string;
         };
         Insert: {
@@ -370,6 +371,7 @@ export type Database = {
           payment_method?: string | null;
           payment_status?: "PAID" | "DUE";
           note?: string | null;
+          customer_name?: string | null;
         };
         Update: {
           service_id?: string;
@@ -378,6 +380,7 @@ export type Database = {
           payment_method?: string | null;
           payment_status?: "PAID" | "DUE";
           note?: string | null;
+          customer_name?: string | null;
         };
         Relationships: [];
       };
