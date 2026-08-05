@@ -41,3 +41,9 @@ create policy "manual_entries: owner delete"
   on public.manual_entries for delete
   to authenticated
   using (public.is_shop_owner(shop_id));
+
+-- So the income page updates live (no page refresh) when an entry is
+-- added/edited/deleted from another tab or device — explicit here instead of
+-- relying on the Database → Replication dashboard toggle, so this one
+-- migration is the whole hand-off.
+alter publication supabase_realtime add table public.manual_entries;

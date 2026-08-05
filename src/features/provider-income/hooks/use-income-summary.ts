@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import { useNowMs } from "@/hooks/use-now";
-import type { Serial } from "@/types";
+import type { ManualEntry, Serial } from "@/types";
 import { useLanguage } from "@/lib/i18n";
 import { getIncomeHistory, getManualEntries, getShopServicesForEntries, toManualEntryRows } from "../api/income.api";
 import { computeIncomeSummary, type IncomeSummary } from "../lib/compute-income";
@@ -38,8 +38,6 @@ export function useIncomeSummary(shopId: string | undefined): {
     enabled: !!shopId,
   });
 
-  // Manual entries only ever change from this page's own form — no realtime
-  // channel needed, mutation success invalidates this key directly.
   const manualQuery = useQuery({
     queryKey: manualKey,
     queryFn: () => getManualEntries(shopId!),
@@ -62,6 +60,20 @@ export function useIncomeSummary(shopId: string | undefined): {
     enabled: !!shopId,
     onChange: () => {
       void queryClient.invalidateQueries({ queryKey: serialsKey });
+    },
+  });
+
+  // Manual entries added/edited/deleted from another tab or device (or by a
+  // co-owner) should show up here without a page refresh too — invalidating
+  // `manualKey` here also refreshes ManualEntrySection's list, since it reads
+  // the exact same query key.
+  useRealtimeChannel<ManualEntry>({
+    channelKey: `provider:${shopId ?? "none"}:manual-entries`,
+    table: "manual_entries",
+    filter: shopId ? `shop_id=eq.${shopId}` : undefined,
+    enabled: !!shopId,
+    onChange: () => {
+      void queryClient.invalidateQueries({ queryKey: manualKey });
     },
   });
 

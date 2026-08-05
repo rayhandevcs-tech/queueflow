@@ -18,7 +18,8 @@ type RealtimeTable =
   | "reviews"
   | "regular_reminders"
   | "messages"
-  | "notifications";
+  | "notifications"
+  | "manual_entries";
 
 type RealtimeEvent = "*" | "INSERT" | "UPDATE" | "DELETE";
 
