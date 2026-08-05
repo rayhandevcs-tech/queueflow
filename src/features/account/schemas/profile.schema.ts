@@ -16,6 +16,16 @@ export function profileSchema(lang: Language) {
       .or(z.literal(""))
       .nullable()
       .transform((v) => (v === "" || v === null ? null : v)),
+    gender: z.enum(["male", "female", "other"]).nullable().optional(),
+    dateOfBirth: z.string().nullable().optional(),
+    address: z
+      .string()
+      .trim()
+      .max(300, m("max_chars", 300))
+      .nullable()
+      .optional(),
+    addressLat: z.number().nullable().optional(),
+    addressLng: z.number().nullable().optional(),
   });
 }
 

@@ -25,7 +25,7 @@ export function ProfileHeaderCard({
   const editable = !!onAvatarFileSelected;
 
   return (
-    <div className="flex items-center gap-3.75 rounded-[22px] bg-accent p-5 text-accent-ink">
+    <div className="flex items-start gap-3.75 rounded-[22px] bg-accent p-5 text-accent-ink">
       <button
         type="button"
         disabled={!editable || avatarUploading}
@@ -68,8 +68,8 @@ export function ProfileHeaderCard({
       <div className="min-w-0 flex-1">
         <p className="truncate font-display text-lg font-bold">{name || "—"}</p>
         <p className="truncate text-xs text-accent-ink/60">{subtitle || "—"}</p>
+        {right && <div className="mt-2 inline-flex">{right}</div>}
       </div>
-      {right && <div className="shrink-0">{right}</div>}
     </div>
   );
 }

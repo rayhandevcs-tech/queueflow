@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronRight, Heart, ShieldAlert, ShieldCheck, Settings, Sparkles, Store } from "lucide-react";
+import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatMoney } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
@@ -23,6 +24,7 @@ export function ProfileView({
   const { shopsById, trust, spending, isPending } = useProfileHistory();
   const { shops: favoriteShops } = useMyFavoriteShops();
   const t = useT(customerProfileDict);
+  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
 
   if (isPending) {
     return (
@@ -175,10 +177,25 @@ export function ProfileView({
               return (
                 <div key={s.shopId} className="flex items-center gap-2.5">
                   <div
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[11px] font-bold text-white"
-                    style={{ background: shop ? shopAvatarColor(shop.id) : "var(--color-muted)" }}
+                    className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg text-[11px] font-bold text-white"
+                    style={
+                      shop?.logo_url || shop?.cover_image_url
+                        ? undefined
+                        : { background: shop ? shopAvatarColor(shop.id) : "var(--color-muted)" }
+                    }
                   >
-                    {shop ? shopInitial(shop.name) : <Store className="h-3.5 w-3.5" />}
+                    {shop?.logo_url || shop?.cover_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={shop.logo_url ?? shop.cover_image_url ?? undefined}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : shop ? (
+                      shopInitial(shop.name)
+                    ) : (
+                      <Store className="h-3.5 w-3.5" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between text-[13px] text-ink">
@@ -221,20 +238,34 @@ export function ProfileView({
           {t("noFavoritesYet")}
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           {favoriteShops.map((shop) => (
             <Link
               key={shop.id}
               href={`/explore/${shop.id}`}
-              className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-2 text-[13px] font-medium text-ink hover:border-accent"
+              className="flex items-center gap-2.5 rounded-2xl border border-line bg-card p-2.5 shadow-xs transition-transform hover:-translate-y-0.5"
             >
-              <span
-                className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[9px] font-bold text-white"
-                style={{ background: shopAvatarColor(shop.id) }}
-              >
-                {shopInitial(shop.name)}
-              </span>
-              {shop.name}
+              <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-sm font-bold text-white">
+                {shop.logo_url || shop.cover_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={shop.logo_url ?? shop.cover_image_url ?? undefined}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="grid h-full w-full place-items-center"
+                    style={{ background: shopAvatarColor(shop.id) }}
+                  >
+                    {shopInitial(shop.name)}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-ink">{shop.name}</p>
+                <p className="truncate text-[11px] text-muted">{businessTypeT(shop.business_type)}</p>
+              </div>
             </Link>
           ))}
         </div>

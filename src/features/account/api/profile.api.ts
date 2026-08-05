@@ -1,6 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { NotificationPrefs, Profile } from "@/types";
-import type { ProfileFormOutput } from "../schemas/profile.schema";
+import type { NotificationPrefs, Profile, TablesUpdate } from "@/types";
 import { translate } from "@/lib/i18n";
 import { accountDict } from "../lib/i18n";
 
@@ -21,7 +20,16 @@ export async function getMyProfile(): Promise<Profile | null> {
   return data;
 }
 
-export async function updateMyProfile(values: ProfileFormOutput): Promise<Profile> {
+/**
+ * Takes a raw DB patch (not the form's zod output) so the caller decides
+ * exactly which keys to include — date_of_birth/address/address_lat/
+ * address_lng are new columns (Sprint 22), so ProfileForm only spreads them
+ * in when the user actually touched those fields (dirtyFields), the same
+ * "safe optional column" discipline as every other new-column rollout in
+ * this project. Untouched-field edits (e.g. just changing the name) must
+ * never send those keys, or they'd 400 until the migration is live.
+ */
+export async function updateMyProfile(patch: TablesUpdate<"profiles">): Promise<Profile> {
   const supabase = getBrowserClient();
   const {
     data: { user },
@@ -30,7 +38,7 @@ export async function updateMyProfile(values: ProfileFormOutput): Promise<Profil
 
   const { data, error } = await supabase
     .from("profiles")
-    .update({ full_name: values.fullName, phone: values.phone })
+    .update(patch)
     .eq("id", user.id)
     .select()
     .single();

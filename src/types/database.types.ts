@@ -17,6 +17,10 @@ export type Database = {
           phone: string | null;
           gender: string | null;
           avatar_url: string | null;
+          date_of_birth: string | null;
+          address: string | null;
+          address_lat: number | null;
+          address_lng: number | null;
           onboarding_completed_at: string | null;
           notification_prefs: Json;
           created_at: string;
@@ -29,6 +33,10 @@ export type Database = {
           phone?: string | null;
           gender?: string | null;
           avatar_url?: string | null;
+          date_of_birth?: string | null;
+          address?: string | null;
+          address_lat?: number | null;
+          address_lng?: number | null;
           onboarding_completed_at?: string | null;
           notification_prefs?: Json;
           created_at?: string;
@@ -39,6 +47,10 @@ export type Database = {
           phone?: string | null;
           gender?: string | null;
           avatar_url?: string | null;
+          date_of_birth?: string | null;
+          address?: string | null;
+          address_lat?: number | null;
+          address_lng?: number | null;
           onboarding_completed_at?: string | null;
           notification_prefs?: Json;
         };

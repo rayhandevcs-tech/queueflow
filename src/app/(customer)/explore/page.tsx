@@ -44,25 +44,34 @@ export default function ExplorePage() {
   const [filters, setFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
+  // Live GPS wins when granted; otherwise fall back to the customer's saved
+  // profile address (Sprint 22) so distance-sort/badges still work without
+  // asking for location every visit. Cheap comparison, no memo needed.
+  const effectiveLocation =
+    location.coords ??
+    (profile?.address_lat != null && profile?.address_lng != null
+      ? { lat: profile.address_lat, lng: profile.address_lng }
+      : null);
+
   const distanceKm = useMemo(() => {
-    if (!shops || !location.coords) return {};
-    const { lat, lng } = location.coords;
+    if (!shops || !effectiveLocation) return {};
+    const { lat, lng } = effectiveLocation;
     const result: Record<string, number> = {};
     for (const shop of shops) {
       if (shop.latitude == null || shop.longitude == null) continue;
       result[shop.id] = computeDistanceKm(lat, lng, shop.latitude, shop.longitude);
     }
     return result;
-  }, [shops, location.coords]);
+  }, [shops, effectiveLocation]);
 
   const sortedShops = useMemo(() => {
-    if (!shops || !location.coords) return shops;
+    if (!shops || !effectiveLocation) return shops;
     return [...shops].sort((a, b) => {
       const da = distanceKm[a.id] ?? Infinity;
       const db = distanceKm[b.id] ?? Infinity;
       return da - db;
     });
-  }, [shops, distanceKm, location.coords]);
+  }, [shops, distanceKm, effectiveLocation]);
 
   const filteredShops = useMemo(() => {
     let list = sortedShops ?? [];
@@ -169,7 +178,7 @@ export default function ExplorePage() {
         counts={counts}
         waitMin={waitMin}
         distanceKm={distanceKm}
-        userLocation={location.coords}
+        userLocation={effectiveLocation}
         isPending={shopsPending || statsPending}
       />
 
