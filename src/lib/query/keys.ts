@@ -80,6 +80,25 @@ export const keys = {
     customerName: (shopId: string, customerId: string) =>
       ["messages", "customer-name", shopId, customerId] as const,
   },
+  admin: {
+    isAdmin: () => ["admin", "is-admin"] as const,
+    overview: () => ["admin", "overview"] as const,
+    shops: (filters: {
+      status: string | null;
+      businessType: string | null;
+      search: string;
+      pageSize: number;
+    }) => ["admin", "shops", filters] as const,
+    shopDetail: (shopId: string) => ["admin", "shop", shopId] as const,
+    users: (filters: {
+      role: string | null;
+      blocked: boolean | null;
+      search: string;
+      pageSize: number;
+    }) => ["admin", "users", filters] as const,
+    userDetail: (userId: string) => ["admin", "user", userId] as const,
+    reports: (status: string | null) => ["admin", "reports", status] as const,
+  },
   chatThreads: {
     mine: () => ["chat-threads", "mine"] as const,
     byShop: (shopId: string) => ["chat-threads", "shop", shopId] as const,

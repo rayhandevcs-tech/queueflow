@@ -1,4 +1,4 @@
-import type { BusinessType, SerialStatus, UserRole } from "@/types";
+import type { BusinessType, SerialStatus, ShopStatus, UserRole } from "@/types";
 
 export const ROLES = {
   CUSTOMER: "customer",
@@ -27,6 +27,28 @@ export const ROLE_HOME: Record<UserRole, string> = {
   customer: "/explore",
   provider: "/dashboard",
 };
+
+/**
+ * Platform admins keep their underlying customer/provider role — admin is a
+ * separate membership (admin_users), not a third user_role — so their landing
+ * page is resolved before ROLE_HOME, never from it.
+ */
+export const ADMIN_HOME = "/admin";
+
+export const SHOP_STATUS = {
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  REJECTED: "REJECTED",
+} as const satisfies Record<string, ShopStatus>;
+
+/** Only these can be picked in the admin filter bar, in this order. */
+export const SHOP_STATUSES: readonly ShopStatus[] = [
+  SHOP_STATUS.PENDING,
+  SHOP_STATUS.ACTIVE,
+  SHOP_STATUS.SUSPENDED,
+  SHOP_STATUS.REJECTED,
+];
 
 /**
  * Product policy: only these two are selectable / bookable.

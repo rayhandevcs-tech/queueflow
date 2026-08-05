@@ -4,13 +4,20 @@ import type { LoginFormValues } from "../schemas/login.schema";
 import type { RegisterFormValues } from "../schemas/register.schema";
 import type { ForgotPasswordFormValues } from "../schemas/forgot-password.schema";
 
-export async function signIn(values: LoginFormValues): Promise<{ role: UserRole }> {
+export async function signIn(
+  values: LoginFormValues,
+): Promise<{ role: UserRole; isAdmin: boolean }> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase.auth.signInWithPassword(values);
   if (error) throw error;
 
   const role = (data.user.user_metadata?.role as UserRole | undefined) ?? "customer";
-  return { role };
+  // app_metadata, never user_metadata: the latter is writable by the user
+  // themselves via auth.updateUser(), so an admin flag there would be
+  // self-serve privilege escalation. This claim only decides where to land —
+  // RLS and the admin RPCs re-check membership in admin_users server-side.
+  const isAdmin = data.user.app_metadata?.is_admin === true;
+  return { role, isAdmin };
 }
 
 /**

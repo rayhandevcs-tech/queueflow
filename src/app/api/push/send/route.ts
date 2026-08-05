@@ -18,7 +18,11 @@ interface NotificationWebhookPayload {
 }
 
 function deepLinkFor(type: string): string {
-  return type === "PROMO" || type === "REMINDER" ? "/notifications" : "/my-serial";
+  // SYSTEM = platform → user (shop approved/suspended); it belongs in the
+  // notification centre, not on the customer's live-serial screen.
+  return type === "PROMO" || type === "REMINDER" || type === "SYSTEM"
+    ? "/notifications"
+    : "/my-serial";
 }
 
 /** Called by a Postgres AFTER INSERT trigger on `notifications` (see the

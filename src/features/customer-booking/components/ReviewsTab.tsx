@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { BadgeCheck, ImageIcon, Star } from "lucide-react";
 import { formatBanglaDate } from "@/lib/format-wait";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
 import { useShopChairs } from "../hooks/use-shop-detail";
@@ -133,6 +134,7 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
                   </p>
                 </div>
                 <Stars count={r.rating} />
+                <ReportButton targetType="REVIEW" targetId={r.id} />
               </div>
               {r.comment && <p className="text-[13px] leading-relaxed text-ink">{r.comment}</p>}
               {r.images.length > 0 && (

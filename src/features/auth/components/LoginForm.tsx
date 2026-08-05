@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
-import { ROLE_HOME } from "@/config/constants";
+import { ADMIN_HOME, ROLE_HOME } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -34,8 +34,9 @@ export function LoginForm() {
 
   const onSubmit = form.handleSubmit((values) => {
     login.mutate(values, {
-      onSuccess: ({ role }) => {
-        router.replace(next?.startsWith("/") ? next : ROLE_HOME[role]);
+      onSuccess: ({ role, isAdmin }) => {
+        const home = isAdmin ? ADMIN_HOME : ROLE_HOME[role];
+        router.replace(next?.startsWith("/") ? next : home);
         router.refresh();
       },
     });

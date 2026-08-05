@@ -54,6 +54,10 @@ const MESSAGES = {
     bn: "তোমার নামে দোকান আছে — অ্যাকাউন্ট মুছার আগে সাপোর্টে যোগাযোগ করো।",
     en: "You own a shop — contact support before deleting your account.",
   },
+  accountBlocked: {
+    bn: "তোমার অ্যাকাউন্ট আপাতত সীমিত — নতুন সিরিয়াল, রিভিউ বা মেসেজ পাঠানো যাচ্ছে না। বিস্তারিত জানতে সাপোর্টে যোগাযোগ করো।",
+    en: "Your account is restricted — you can't book, review or message right now. Contact support for details.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -104,6 +108,14 @@ const RULES: ReadonlyArray<{
   { match: (t) => t.includes("এই সিরিয়ালে বাকি নেই"), key: null, silent: true },
   { match: (t) => t.includes("রিমাইন্ডার নোটিফিকেশন বন্ধ রেখেছে"), key: "reminderMuted", silent: false },
   { match: (t) => t.includes("তোমার নামে দোকান আছে"), key: "ownsShop", silent: false },
+  {
+    // Raised by reject_blocked_customer/reject_blocked_author (Sprint 26) on
+    // booking, review and chat inserts — keep the string in sync with the
+    // triggers in 20260825_admin_users_moderation.sql.
+    match: (t) => t.includes("account_blocked"),
+    key: "accountBlocked",
+    silent: false,
+  },
 ];
 
 export function translateDbError(err: unknown): FriendlyDbError {

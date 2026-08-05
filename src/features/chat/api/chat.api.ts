@@ -1,4 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { withDbErrors } from "@/lib/supabase/db-errors";
 import type { Message } from "@/types";
 
 export async function getThreadMessages(shopId: string, customerId: string): Promise<Message[]> {
@@ -14,6 +15,11 @@ export async function getThreadMessages(shopId: string, customerId: string): Pro
   return data;
 }
 
+/**
+ * Wrapped in withDbErrors because ChatThreadView toasts `err.message` raw: a
+ * DB-level rejection (today that's the blocked-account trigger from Sprint 26)
+ * has to arrive already translated, not as a Postgres string.
+ */
 export async function sendMessage(params: {
   shopId: string;
   customerId: string;
@@ -21,28 +27,30 @@ export async function sendMessage(params: {
   content?: string;
   imageUrls?: string[];
 }): Promise<Message> {
-  const supabase = getBrowserClient();
-  // A single image keeps using the legacy `image_url` column (already live,
-  // no migration needed) — only 2+ images need the new `image_urls` array,
-  // which doesn't exist until 20260816_chat_multi_image.sql is applied.
-  // Neither key is present in the payload unless actually needed, same
-  // "safe optional column" discipline as Sprint 15's services.image_url fix.
-  const urls = params.imageUrls ?? [];
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({
-      shop_id: params.shopId,
-      customer_id: params.customerId,
-      sender_id: params.senderId,
-      content: params.content?.trim() || null,
-      ...(urls.length === 1 ? { image_url: urls[0] } : {}),
-      ...(urls.length > 1 ? { image_urls: urls } : {}),
-    })
-    .select()
-    .single();
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    // A single image keeps using the legacy `image_url` column (already live,
+    // no migration needed) — only 2+ images need the new `image_urls` array,
+    // which doesn't exist until 20260816_chat_multi_image.sql is applied.
+    // Neither key is present in the payload unless actually needed, same
+    // "safe optional column" discipline as Sprint 15's services.image_url fix.
+    const urls = params.imageUrls ?? [];
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        shop_id: params.shopId,
+        customer_id: params.customerId,
+        sender_id: params.senderId,
+        content: params.content?.trim() || null,
+        ...(urls.length === 1 ? { image_url: urls[0] } : {}),
+        ...(urls.length > 1 ? { image_urls: urls } : {}),
+      })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    return data;
+  });
 }
 
 /** Marks every message the given reader didn't send as read (best-effort). */

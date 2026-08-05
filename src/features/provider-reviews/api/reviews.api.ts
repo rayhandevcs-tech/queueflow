@@ -5,7 +5,7 @@ export async function getShopReviews(shopId: string): Promise<ReviewRow[]> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, serial_id, rating, comment, images, chair_id, created_at")
+    .select("id, serial_id, rating, comment, images, chair_id, created_at, hidden_at")
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
 

@@ -216,4 +216,22 @@ export const providerCatalogDict = {
     bn: "আপডেট করা যায়নি — আবার চেষ্টা করো",
     en: "Couldn't update — try again",
   },
+
+  // ShopStatusBanner — verification lifecycle (Sprint 25)
+  shopPendingTitle: { bn: "দোকান যাচাইয়ের অপেক্ষায়", en: "Shop is awaiting verification" },
+  shopPendingBody: {
+    bn: "অনুমোদন না হওয়া পর্যন্ত কাস্টমাররা তোমার দোকান খুঁজে পাবে না। ততক্ষণে চেয়ার, সার্ভিস, ম্যাপে লোকেশন আর ছবি দিয়ে সেটআপ সম্পূর্ণ করে রাখো — এগুলো দেখেই অনুমোদন দেওয়া হয়।",
+    en: "Customers can't find your shop until it's approved. Meanwhile, finish your setup — chairs, services, map location and photos are exactly what the approval is based on.",
+  },
+  shopRejectedTitle: { bn: "দোকানের আবেদন গ্রহণ করা হয়নি", en: "Shop application wasn't accepted" },
+  shopRejectedBody: {
+    bn: "নিচের কারণটা ঠিক করে সাপোর্টে জানাও — যাচাই করে আবার চালু করা হবে।",
+    en: "Fix the reason below and let support know — it will be reviewed again.",
+  },
+  shopSuspendedTitle: { bn: "দোকান সাময়িকভাবে বন্ধ রাখা হয়েছে", en: "Shop is temporarily suspended" },
+  shopSuspendedBody: {
+    bn: "এই অবস্থায় নতুন সিরিয়াল নেওয়া যাবে না এবং কাস্টমাররা দোকান দেখতে পাবে না।",
+    en: "You can't take new serials and customers can't see the shop while this lasts.",
+  },
+  shopStatusContactSupport: { bn: "সাপোর্টে যোগাযোগ করো", en: "Contact support" },
 } satisfies Dict;

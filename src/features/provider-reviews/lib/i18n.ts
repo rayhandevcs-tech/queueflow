@@ -21,4 +21,9 @@ export const providerReviewsDict = {
     en: "Verified review from a customer who used the service",
   },
   verifiedBadge: { bn: "যাচাইকৃত", en: "Verified" },
+  hiddenBadge: { bn: "লুকানো", en: "Hidden" },
+  hiddenTitle: {
+    bn: "মডারেশনে লুকানো — কাস্টমাররা এটি দেখতে পাচ্ছে না, রেটিং গড়েও ধরা হয়নি",
+    en: "Hidden by moderation — customers can't see it and it's out of the rating average",
+  },
 } satisfies Dict;
