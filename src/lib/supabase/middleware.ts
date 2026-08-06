@@ -85,16 +85,20 @@ export async function updateSession(request: NextRequest) {
 
   const isAdminLogin = path === ADMIN_LOGIN;
   const needsProvider = startsWithAny(path, PROVIDER_PREFIXES);
-  // /explore/[shopId] is the URL printed on every shop's QR poster, so it has
-  // to open for someone with no account — that is the whole point of the
-  // poster. Nothing else under /explore is public: the browse home needs an
-  // account, and /explore/[shopId]/chat needs one to be worth showing at all,
-  // since you cannot message a shop as nobody.
-  const isPublicShopPage = /^\/explore\/[^/]+$/.test(path);
+  // Browsing the catalogue needs no account (Sprint 38): `/`, `/about`,
+  // `/explore` and `/explore/[shopId]` are all open. Authentication is decided
+  // per ACTION now, not per page — the login dialog appears when someone tries
+  // to book, favourite or message, and until then there is nothing to protect.
+  //
+  // What stays gated is everything that IS an account: serials, chats,
+  // transactions, the profile, the notification inbox. /explore/[shopId]/chat
+  // is in that group even though its parent is public — you cannot message a
+  // shop as nobody.
+  const isChatUnderExplore = /^\/explore\/[^/]+\/chat/.test(path);
   const needsCustomer =
     startsWithAny(path, CUSTOMER_PREFIXES) ||
     CUSTOMER_EXACT.includes(path) ||
-    (startsWithAny(path, ["/explore"]) && !isPublicShopPage);
+    isChatUnderExplore;
   // /admin/login is under /admin but must be reachable without a session —
   // it is where you go to *get* one.
   const needsAdmin = startsWithAny(path, ADMIN_PREFIXES) && !isAdminLogin;

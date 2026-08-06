@@ -6,6 +6,7 @@ import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
+import { useAuthGate } from "@/components/auth/AuthGate";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { shopAvailability } from "@/lib/shop-availability";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function ShopList({
 }) {
   const { data: favoriteIds } = useMyFavoriteShopIds();
   const toggleFavorite = useToggleFavorite();
+  const { guard } = useAuthGate();
   const t = useT(customerExploreDict);
   const businessTypeT = useT(BUSINESS_TYPE_LABEL);
 
@@ -163,12 +165,12 @@ export function ShopList({
               <FavoriteButton
                 isFavorited={favoriteIds?.has(shop.id) ?? false}
                 pending={toggleFavorite.isPending}
-                onToggle={() =>
+                onToggle={guard(() =>
                   toggleFavorite.mutate({
                     shopId: shop.id,
                     isFavorited: favoriteIds?.has(shop.id) ?? false,
-                  })
-                }
+                  }),
+                )}
               />
             </div>
           </li>

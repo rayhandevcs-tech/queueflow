@@ -4,6 +4,7 @@ import { ChevronLeft, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
+import { useAuthGate } from "@/components/auth/AuthGate";
 import type { Shop } from "@/types";
 import type { ReviewSummary } from "@/lib/reviews";
 import { useT } from "@/lib/i18n";
@@ -20,6 +21,11 @@ export function ShopHero({ shop, summary }: Props) {
   const toggleFavorite = useToggleFavorite();
   const isFavorited = favoriteIds?.has(shop.id) ?? false;
   const businessTypeT = useT(BUSINESS_TYPE_LABEL);
+  // The shop page is public (it is what a QR poster opens), so this button is
+  // reachable without an account. Guarded rather than hidden: a guest should
+  // see that favouriting exists and be told what it costs, not find a feature
+  // silently missing.
+  const { guard } = useAuthGate();
 
   return (
     <div
@@ -51,7 +57,7 @@ export function ShopHero({ shop, summary }: Props) {
       <FavoriteButton
         isFavorited={isFavorited}
         pending={toggleFavorite.isPending}
-        onToggle={() => toggleFavorite.mutate({ shopId: shop.id, isFavorited })}
+        onToggle={guard(() => toggleFavorite.mutate({ shopId: shop.id, isFavorited }))}
         className="absolute right-4 top-3.5 bg-white/85 shadow-sm backdrop-blur-sm"
       />
 

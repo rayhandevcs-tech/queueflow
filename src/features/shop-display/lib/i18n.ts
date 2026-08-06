@@ -4,6 +4,8 @@ export const shopDisplayDict = {
   nowServing: { bn: "এখন চলছে", en: "Now serving" },
   nextUp: { bn: "পরবর্তী", en: "Next" },
   freeNow: { bn: "খালি", en: "Free" },
+  laneFree: { bn: "খালি আছে", en: "Free" },
+  laneBusy: { bn: "চলছে", en: "Busy" },
   noneWaiting: { bn: "—", en: "—" },
   waitingCount: {
     bn: (n: number) => `${n} জন অপেক্ষায়`,

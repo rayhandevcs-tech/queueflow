@@ -15,10 +15,15 @@ import { site } from "@/config/site";
  * `tone="onAccent"` is for the coloured auth panel, where ink-on-white would
  * disappear.
  */
+/**
+ * One step up at every size (Sprint 38). The name was still reading as a label
+ * beside the mark rather than as the product's name — on the nav bars and on
+ * the auth screens especially, where it is the only branding on the page.
+ */
 const SIZES = {
-  sm: { mark: "h-8 w-8 rounded-xl", icon: "h-4 w-4", name: "text-[15px]", gap: "gap-2.5" },
-  md: { mark: "h-10 w-10 rounded-[14px]", icon: "h-5 w-5", name: "text-[19px]", gap: "gap-2.75" },
-  lg: { mark: "h-12 w-12 rounded-2xl", icon: "h-6 w-6", name: "text-[23px]", gap: "gap-3" },
+  sm: { mark: "h-9 w-9 rounded-[14px]", icon: "h-4.5 w-4.5", name: "text-[18px]", gap: "gap-2.5" },
+  md: { mark: "h-11 w-11 rounded-2xl", icon: "h-5.5 w-5.5", name: "text-[23px]", gap: "gap-2.75" },
+  lg: { mark: "h-14 w-14 rounded-2xl", icon: "h-7 w-7", name: "text-[30px]", gap: "gap-3.25" },
 } as const;
 
 export function Wordmark({

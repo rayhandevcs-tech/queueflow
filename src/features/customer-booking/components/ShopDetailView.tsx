@@ -22,6 +22,7 @@ import {
   useShopServices,
 } from "../hooks/use-shop-detail";
 import { useShopReviewsPublic } from "../hooks/use-shop-reviews-public";
+import { useAuthGate } from "@/components/auth/AuthGate";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useCreateBooking, useCreateGroupBooking } from "../hooks/use-booking-mutations";
 import { AdvancePaymentDialog } from "./AdvancePaymentDialog";
@@ -55,6 +56,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   ];
   const { data: services, isPending: servicesPending } = useShopServices(shopId);
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
+  const { guard } = useAuthGate();
   const { data: queueRows } = useShopQueuePublic(shopId);
   const { data: hasHistory } = useHasShopHistory(shopId);
   const { summary: reviewSummary } = useShopReviewsPublic(shopId);
@@ -214,13 +216,17 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
     );
   };
 
-  const onConfirm = () => {
+  // This page is public — a QR poster opens it — so the booking button is
+  // reachable without an account. A guest gets the login dialog here, at the
+  // moment they ask for something that needs one, rather than a failed RPC or
+  // a login wall in front of the whole page.
+  const onConfirm = guard(() => {
     if (advance && !isParty) {
       setPayingWith(true);
       return;
     }
     bookNow();
-  };
+  });
 
   const booking = isParty ? createGroupBooking : createBooking;
 

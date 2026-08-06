@@ -87,6 +87,12 @@ export const customerExploreDict = {
 
   // explore/page.tsx
   assalamu: { bn: "আসসালামু আলাইকুম 👋", en: "Assalamu Alaikum 👋" },
+  guestBadge: { bn: "তুমি অতিথি হিসেবে দেখছো", en: "You're browsing as a guest" },
+  guestBannerBody: {
+    bn: "দোকান, সার্ভিস আর লাইভ সিরিয়াল সবই দেখতে পারবে। সিরিয়াল নিতে বা ফেভারিট করতে অ্যাকাউন্ট লাগবে।",
+    en: "Browse shops, services and live queues freely. Taking a serial or favouriting needs an account.",
+  },
+  guestBannerCta: { bn: "অ্যাকাউন্ট খোলো", en: "Create an account" },
   openShopsLabel: { bn: "খোলা দোকান", en: "Open shops" },
   minUnit: { bn: "মিন", en: "min" },
   lowestWaitLabel: { bn: "সবচেয়ে কম ওয়েট", en: "Lowest wait" },

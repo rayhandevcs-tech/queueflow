@@ -1,9 +1,9 @@
 "use client";
 
 import { Coffee, MonitorOff, WifiOff } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/Spinner";
 import { LiveDot } from "@/components/ui/LiveDot";
+import { StatusPill } from "@/components/ui/StatusPill";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { toBanglaDigits } from "@/lib/format-wait";
 import { useNowMs } from "@/hooks/use-now";
@@ -127,32 +127,44 @@ function LaneCard({
 
   return (
     <section className="rounded-3xl border border-line bg-card p-5 shadow-sm sm:p-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 border-b border-line pb-4">
         <AvatarChip label={lane.staff_name} avatarUrl={lane.avatar_url} shape="circle" size={40} />
         <p className="min-w-0 flex-1 truncate font-display text-lg font-bold sm:text-2xl">
           {lane.staff_name}
         </p>
+        {/* The lane's own state, said once and quietly. The big number below
+            is a serial, not a status — reading a status off it took a moment. */}
+        <StatusPill
+          tone={busy ? "live" : "good"}
+          label={busy ? t("laneBusy") : t("laneFree")}
+          dot={busy}
+        />
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs text-muted sm:text-sm">{t("nowServing")}</p>
-          <p
-            className={cn(
-              "font-number text-5xl leading-none font-extrabold sm:text-7xl",
-              // "খালি" was a washed-out grey on the dark board, which had it
-              // backwards: a free chair is the most useful thing a passer-by
-              // can see, so it gets the good tone rather than being faded out.
-              // Only one of the two ever shows in a lane, so they never clash.
-              busy ? "text-accent" : "text-good",
-            )}
-          >
-            {busy ? `#${num(lane.now_serving!)}` : t("freeNow")}
+          <p className="text-[11px] font-semibold tracking-wide text-muted uppercase sm:text-xs">
+            {t("nowServing")}
           </p>
+          {/* A serial number is a number and gets the number face at full size.
+              "খালি" is a word, and setting a word at the same size made it
+              shout across the room — it is set smaller, in muted ink, so the
+              eye still lands on whichever lane is actually serving. */}
+          {busy ? (
+            <p className="font-number text-5xl leading-none font-extrabold text-accent tabular-nums sm:text-7xl">
+              #{num(lane.now_serving!)}
+            </p>
+          ) : (
+            <p className="font-display text-3xl leading-tight font-bold text-muted sm:text-4xl">
+              {t("freeNow")}
+            </p>
+          )}
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-xs text-muted sm:text-sm">{t("nextUp")}</p>
-          <p className="font-number text-2xl font-bold text-ink sm:text-4xl">
+          <p className="text-[11px] font-semibold tracking-wide text-muted uppercase sm:text-xs">
+            {t("nextUp")}
+          </p>
+          <p className="font-number text-2xl font-bold text-ink tabular-nums sm:text-4xl">
             {lane.next_up != null ? `#${num(lane.next_up)}` : t("noneWaiting")}
           </p>
         </div>
