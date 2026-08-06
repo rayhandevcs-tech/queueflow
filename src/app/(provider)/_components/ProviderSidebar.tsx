@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Armchair,
   BarChart3,
+  LifeBuoy,
   LogOut,
   Megaphone,
   MessageCircle,
@@ -27,11 +28,13 @@ import { useDueCount } from "@/features/provider-due-ledger/hooks/use-due-ledger
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useToast } from "@/components/ui/Toast";
 import { AvatarChip } from "@/components/ui/AvatarChip";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Switch } from "@/components/ui/Switch";
 import { useT, useLanguage } from "@/lib/i18n";
 import { useTerms } from "@/lib/business-terms";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
+import { supportDict } from "@/features/support/lib/i18n";
 
 interface NavItem {
   href: string;
@@ -54,6 +57,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { language, setLanguage } = useLanguage();
   const t = useT(providerCatalogDict);
   const tt = useTerms(shop?.business_type, language);
+  const supportT = useT(supportDict);
 
   const NAV: NavItem[] = [
     { href: "/dashboard", label: t("navLiveQueue"), icon: Radio, live: true },
@@ -106,7 +110,18 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2.75 px-2 pb-3">
+      {/* Brand above the shop identity: the sidebar used to open with the
+          shop's own logo, which told the owner nothing about which product
+          they were in. */}
+      <Link href="/dashboard" onClick={onNavigate} className="block px-2 pb-4">
+        <Wordmark size="md" />
+      </Link>
+
+      <Link
+        href="/dashboard"
+        onClick={onNavigate}
+        className="flex items-center gap-2.75 border-t border-line px-2 pt-4 pb-3"
+      >
         <AvatarChip label={shop?.name} avatarUrl={shop?.logo_url} size={42} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-[15px] font-bold">{shop?.name ?? "…"}</p>
@@ -217,7 +232,16 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="mt-auto flex items-center gap-1 px-1">
+      <Link
+        href="/help"
+        onClick={onNavigate}
+        className="mt-auto flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm font-medium text-muted transition-colors hover:bg-soft hover:text-ink"
+      >
+        <LifeBuoy className="h-4.5 w-4.5" />
+        {supportT("supportTitle")}
+      </Link>
+
+      <div className="flex items-center gap-1 px-1">
         <Link
           href="/account"
           onClick={onNavigate}

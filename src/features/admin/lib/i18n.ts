@@ -8,6 +8,8 @@ export const adminDict = {
   navShops: { bn: "দোকান", en: "Shops" },
   navUsers: { bn: "ইউজার", en: "Users" },
   navModeration: { bn: "মডারেশন", en: "Moderation" },
+  navSupport: { bn: "সাপোর্ট সেন্টার", en: "Support Center" },
+  navTeam: { bn: "টিম", en: "Team" },
   backToUsers: { bn: "ইউজার তালিকায় ফিরে যাও", en: "Back to users" },
   backToShops: { bn: "দোকানের তালিকায় ফিরে যাও", en: "Back to shops" },
   openMenuAria: { bn: "মেনু খোলো", en: "Open menu" },
@@ -437,4 +439,81 @@ export const adminDict = {
     bn: "এডমিন অ্যাকাউন্ট মোছা যায় না — আগে admin_users থেকে সরাও",
     en: "A platform admin can't be deleted — remove them from admin_users first",
   },
+
+  // ---- team ----
+  teamTitle: { bn: "এডমিন টিম", en: "Admin team" },
+  teamSubtitle: {
+    bn: "প্যানেলে কার কী অনুমতি আছে",
+    en: "Who has access to the panel, and what they can do",
+  },
+  addAdmin: { bn: "নতুন এডমিন", en: "New admin" },
+  addAdminTitle: { bn: "নতুন এডমিন অ্যাকাউন্ট", en: "New admin account" },
+  addAdminHint: {
+    bn: "এডমিন অ্যাকাউন্ট আলাদা — এটি গ্রাহক বা দোকানদার অ্যাকাউন্ট নয়, এবং এডমিন লগইন পেজ থেকে ঢুকতে হবে।",
+    en: "An admin account is separate — it is not a customer or shop-owner account, and it signs in at the admin login page.",
+  },
+  adminNameLabel: { bn: "নাম", en: "Name" },
+  adminEmailLabel: { bn: "ইমেইল", en: "Email" },
+  adminPasswordLabel: { bn: "পাসওয়ার্ড", en: "Password" },
+  adminPasswordHint: {
+    bn: "কমপক্ষে ৮ অক্ষর। প্রথম লগইনের পর নিজে বদলে নিতে বলো।",
+    en: "At least 8 characters. Ask them to change it after the first login.",
+  },
+  adminRoleLabel: { bn: "রোল", en: "Role" },
+  createAdminCta: { bn: "অ্যাকাউন্ট তৈরি করো", en: "Create account" },
+  creatingAdmin: { bn: "তৈরি হচ্ছে…", en: "Creating…" },
+  adminCreated: { bn: "এডমিন যোগ হয়েছে", en: "Admin added" },
+  noAdminsTitle: { bn: "কোনো এডমিন নেই", en: "No admins yet" },
+  onlySuperAdmin: {
+    bn: "শুধু সুপার এডমিন নতুন এডমিন যোগ বা বাদ দিতে পারে।",
+    en: "Only a super admin can add or remove admins.",
+  },
+  youBadge: { bn: "তুমি", en: "You" },
+  disableAdmin: { bn: "বন্ধ করো", en: "Disable" },
+  enableAdmin: { bn: "চালু করো", en: "Enable" },
+  revokeAdmin: { bn: "এডমিন থেকে সরাও", en: "Remove admin" },
+  revokeAdminConfirm: {
+    bn: "এই অ্যাকাউন্টটি আর এডমিন প্যানেলে ঢুকতে পারবে না। লগইনটি থাকবে, কিন্তু কোনো অনুমতি থাকবে না।",
+    en: "This account will no longer reach the admin panel. The login remains, but with no access.",
+  },
+
+  // ---- support center ----
+  supportTitle: { bn: "সাপোর্ট সেন্টার", en: "Support Center" },
+  supportSubtitle: {
+    bn: "গ্রাহক ও দোকানদারের পাঠানো সব অভিযোগ",
+    en: "Everything customers and shop owners have reported",
+  },
+  ticketSearchPlaceholder: {
+    bn: "বিষয়, নাম বা ইমেইল দিয়ে খোঁজো",
+    en: "Search by subject, name or email",
+  },
+  allTickets: { bn: "সব", en: "All" },
+  backToTickets: { bn: "তালিকায় ফিরে যাও", en: "Back to the list" },
+  noTicketsTitle: { bn: "কোনো অভিযোগ নেই", en: "No tickets" },
+  noTicketsDesc: {
+    bn: "এই অবস্থায় এখন কিছু নেই।",
+    en: "Nothing in this state right now.",
+  },
+  needsReply: { bn: "উত্তর বাকি", en: "Needs reply" },
+  selectTicketTitle: { bn: "একটা অভিযোগ বেছে নাও", en: "Select a ticket" },
+  selectTicketDesc: {
+    bn: "বাঁ পাশের তালিকা থেকে একটা খুললে পুরো কথোপকথন এখানে দেখাবে।",
+    en: "Open one from the list and the whole conversation shows up here.",
+  },
+  ticketFrom: { bn: "পাঠিয়েছে", en: "From" },
+  replyLabel: { bn: "উত্তর", en: "Reply" },
+  replyPlaceholder: {
+    bn: "গ্রাহক যা দেখবে তা লেখো…",
+    en: "Write what the customer will see…",
+  },
+  internalNoteLabel: { bn: "অভ্যন্তরীণ নোট", en: "Internal note" },
+  internalNotePlaceholder: {
+    bn: "শুধু এডমিনরা দেখবে — গ্রাহক কখনো দেখবে না।",
+    en: "Admins only — the customer never sees this.",
+  },
+  internalNoteBadge: { bn: "শুধু এডমিন", en: "Admins only" },
+  sendReply: { bn: "পাঠাও", en: "Send" },
+  saveNote: { bn: "নোট রাখো", en: "Save note" },
+  changeStatusLabel: { bn: "অবস্থা", en: "Status" },
+  staffLabel: { bn: "সাপোর্ট", en: "Support" },
 } satisfies Dict;

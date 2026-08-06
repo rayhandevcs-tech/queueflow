@@ -4,20 +4,60 @@ import type { LoginFormValues } from "../schemas/login.schema";
 import type { RegisterFormValues } from "../schemas/register.schema";
 import type { ForgotPasswordFormValues } from "../schemas/forgot-password.schema";
 
-export async function signIn(
-  values: LoginFormValues,
-): Promise<{ role: UserRole; isAdmin: boolean }> {
+/**
+ * Whether the signed-in session belongs to a platform admin, asked of the
+ * database rather than of the token.
+ *
+ * app_metadata carries an is_admin claim for middleware's benefit, but a claim
+ * is a snapshot: it survives a revoked membership until the next refresh. Both
+ * login paths below branch on this instead, so revoking an admin takes effect
+ * on their very next sign-in.
+ */
+async function isActiveAdmin(supabase: ReturnType<typeof getBrowserClient>) {
+  const { data } = await supabase.rpc("my_admin_identity");
+  return (data?.length ?? 0) > 0;
+}
+
+/**
+ * The customer / shop-owner login.
+ *
+ * An admin account is refused here on purpose. Since Sprint 36 an admin is a
+ * separate identity — no profile, no shop, no customer history — so signing one
+ * in through this door would land it in an app that has nothing to show it.
+ * The session is torn down again before throwing, so a rejected attempt leaves
+ * no half-authenticated state behind.
+ */
+export async function signIn(values: LoginFormValues): Promise<{ role: UserRole }> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase.auth.signInWithPassword(values);
   if (error) throw error;
 
+  if (await isActiveAdmin(supabase)) {
+    await supabase.auth.signOut();
+    throw new Error("ADMIN_ACCOUNT");
+  }
+
   const role = (data.user.user_metadata?.role as UserRole | undefined) ?? "customer";
-  // app_metadata, never user_metadata: the latter is writable by the user
-  // themselves via auth.updateUser(), so an admin flag there would be
-  // self-serve privilege escalation. This claim only decides where to land —
-  // RLS and the admin RPCs re-check membership in admin_users server-side.
-  const isAdmin = data.user.app_metadata?.is_admin === true;
-  return { role, isAdmin };
+  return { role };
+}
+
+/**
+ * The admin login, served at /admin/login.
+ *
+ * Same credential store, different door: anything that is not an active admin
+ * is signed straight back out, so this screen cannot be used to log into the
+ * customer app and cannot be probed to find out which addresses are admins —
+ * a disabled admin and an ordinary customer get the identical message.
+ */
+export async function signInAdmin(values: LoginFormValues): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.auth.signInWithPassword(values);
+  if (error) throw error;
+
+  if (!(await isActiveAdmin(supabase))) {
+    await supabase.auth.signOut();
+    throw new Error("NOT_ADMIN");
+  }
 }
 
 /**
@@ -37,6 +77,20 @@ async function applyPendingPhone(
   }
 }
 
+/**
+ * Where a confirmation or recovery link should come back to.
+ *
+ * Supabase falls back to the project's Site URL when this isn't given, which
+ * is how a production signup ends up mailing a link to http://localhost:3000.
+ * Passing the live origin explicitly means the link always points at the site
+ * the person actually signed up on. /auth/callback is what turns that link
+ * into a session — see the route's own comment.
+ */
+function authCallbackUrl(next?: string): string {
+  const base = `${window.location.origin}/auth/callback`;
+  return next ? `${base}?next=${encodeURIComponent(next)}` : base;
+}
+
 export async function signUp(
   values: RegisterFormValues,
 ): Promise<{ role: UserRole; needsEmailConfirmation: boolean }> {
@@ -45,6 +99,7 @@ export async function signUp(
     email: values.email,
     password: values.password,
     options: {
+      emailRedirectTo: authCallbackUrl(),
       // Read by the DB trigger that provisions the (role-immutable) profile row.
       // phone/business_type aren't consumed by that trigger yet — they're carried
       // in user_metadata and applied below (or after verify-email, see verifyEmailCode).
@@ -87,7 +142,11 @@ export async function verifyEmailCode({
 
 export async function resendVerificationCode(email: string): Promise<void> {
   const supabase = getBrowserClient();
-  const { error } = await supabase.auth.resend({ type: "signup", email });
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: authCallbackUrl() },
+  });
   if (error) throw error;
 }
 
@@ -101,8 +160,11 @@ export async function requestPasswordReset({
   email,
 }: ForgotPasswordFormValues): Promise<void> {
   const supabase = getBrowserClient();
+  // Through the callback, not straight at /reset-password: under PKCE the
+  // recovery link arrives as a `code` that has to be exchanged server-side,
+  // and /reset-password only knows how to use a session that already exists.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: authCallbackUrl("/reset-password"),
   });
   if (error) throw error;
 }

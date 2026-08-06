@@ -1,67 +1,362 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import Link from "next/link";
-import { ChevronRight, Star } from "lucide-react";
+import { ArrowUpRight, LocateFixed, Minus, Navigation, Plus, Star } from "lucide-react";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { shopAvailability } from "@/lib/shop-availability";
+import { toBanglaDigits } from "@/lib/format-wait";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
+/** Brand red, and the two availability tones, as literals the SVG can use. */
+const PIN_ACCENT = "#b8323c";
+const PIN_FREE = "#2e7d5b";
+const PIN_BUSY = "#db4a4a";
+const PIN_CLOSED = "#8b8178";
+
 /**
- * The blue "you are here" dot, with a soft halo so it reads as a live
- * position rather than another pin.
+ * "You are here."
+ *
+ * A breathing halo under a solid dot, in a blue that appears nowhere else on
+ * the map — the shop pins are all brand red and availability green/amber, so
+ * hue alone separates "me" from "a place". The halo animation lives in
+ * globals.css because Leaflet builds this markup as an HTML string, outside
+ * React's className pipeline.
  */
 const userIcon = L.divIcon({
   className: "",
   html: `
-    <div style="position:relative;width:22px;height:22px">
-      <div style="position:absolute;inset:0;border-radius:50%;background:rgba(46,125,214,.22)"></div>
-      <div style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#2e7dd6;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(27,24,18,.35)"></div>
+    <div style="position:relative;width:26px;height:26px">
+      <div class="ss-locate-halo" style="position:absolute;inset:0;border-radius:50%;background:rgba(46,125,214,.35)"></div>
+      <div style="position:absolute;top:6px;left:6px;width:14px;height:14px;border-radius:50%;background:#2e7dd6;border:3px solid #fff;box-shadow:0 2px 8px rgba(27,24,18,.4)"></div>
     </div>`,
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
+  iconSize: [26, 26],
+  iconAnchor: [13, 13],
 });
 
 /**
- * A shop pin.
+ * A shop pin: the shop's own photo (or its initial) held inside a teardrop.
  *
- * The queue count lives *inside* the pin rather than on a badge stuck to its
- * corner — the old version's floating black bubble collided with neighbouring
- * pins and read as a separate object. Colour carries availability: green when
- * nobody is waiting, brand red when there's a queue, amber when the shop
- * can't take anyone right now.
+ * The previous pin was a plain coloured drop with the queue count printed on
+ * it — legible, but every shop looked identical from a distance, so the map
+ * read as a scatter of dots rather than a set of places. Identity now carries
+ * the pin (photo first), availability rides on a small dot at the shoulder,
+ * and the queue count sits in a badge beside it. Nothing was dropped; the
+ * three facts are just no longer competing for the same 38 pixels.
  */
-function pinIcon(count: number, state: "free" | "busy" | "unavailable") {
-  const fill =
-    state === "unavailable" ? "#b5852f" : state === "free" ? "#2e7d5b" : "#db4a4a";
-  const label = state === "unavailable" ? "—" : String(count);
+function shopPinIcon({
+  photoUrl,
+  initial,
+  fallbackColor,
+  count,
+  state,
+}: {
+  photoUrl: string | null;
+  initial: string;
+  fallbackColor: string;
+  count: number;
+  state: "free" | "busy" | "unavailable";
+}) {
+  const dot = state === "unavailable" ? PIN_CLOSED : state === "free" ? PIN_FREE : PIN_BUSY;
+
+  const inner = photoUrl
+    ? `<image href="${photoUrl}" x="8" y="7" width="30" height="30" clip-path="url(#ss-pin-clip)" preserveAspectRatio="xMidYMid slice" />`
+    : `<circle cx="23" cy="22" r="15" fill="${fallbackColor}" />
+       <text x="23" y="28" text-anchor="middle" font-size="16" font-weight="800"
+             fill="#fff" font-family="system-ui,sans-serif">${initial}</text>`;
+
+  // The count badge is only drawn when there is a queue — an empty shop gets a
+  // clean pin rather than a "0" the eye has to read and discard.
+  const badge =
+    state !== "unavailable" && count > 0
+      ? `<g>
+           <circle cx="38" cy="9" r="9" fill="${dot}" stroke="#fff" stroke-width="2"/>
+           <text x="38" y="13" text-anchor="middle" font-size="10" font-weight="800"
+                 fill="#fff" font-family="system-ui,sans-serif">${count > 9 ? "9+" : count}</text>
+         </g>`
+      : `<circle cx="38" cy="9" r="6" fill="${dot}" stroke="#fff" stroke-width="2"/>`;
 
   return L.divIcon({
     className: "",
     html: `
-      <div style="position:relative;width:38px;height:46px;filter:drop-shadow(0 3px 6px rgba(27,24,18,.32))">
-        <svg width="38" height="46" viewBox="0 0 38 46" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 1C10.16 1 3 8.16 3 17c0 11.5 16 28 16 28s16-16.5 16-28c0-8.84-7.16-16-16-16z" fill="${fill}" stroke="#fff" stroke-width="2.5"/>
+      <div class="ss-pin" style="width:48px;height:58px;filter:drop-shadow(0 4px 8px rgba(27,24,18,.34))">
+        <svg width="48" height="58" viewBox="0 0 48 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="ss-pin-clip"><circle cx="23" cy="22" r="15" /></clipPath>
+          </defs>
+          <path d="M23 1C11.4 1 2 10.4 2 22c0 14.6 21 34 21 34s21-19.4 21-34C44 10.4 34.6 1 23 1z"
+                fill="${PIN_ACCENT}" stroke="#fff" stroke-width="2.5"/>
+          ${inner}
+          ${badge}
         </svg>
-        <span style="position:absolute;top:8px;left:0;width:38px;text-align:center;color:#fff;font-size:13px;font-weight:800;font-family:var(--font-number),sans-serif">${label}</span>
       </div>`,
-    iconSize: [38, 46],
-    iconAnchor: [19, 45],
-    popupAnchor: [0, -42],
+    iconSize: [48, 58],
+    iconAnchor: [23, 56],
+    popupAnchor: [0, -52],
   });
+}
+
+/**
+ * Zoom and recenter, stacked in one column.
+ *
+ * Leaflet's own zoom control is disabled in favour of this: the library places
+ * it top-left, away from the thumb on a phone, and it can't sit in the same
+ * stack as a locate button. One column bottom-right keeps every map action in
+ * one reachable place.
+ */
+function MapControls({ userLocation }: { userLocation?: { lat: number; lng: number } | null }) {
+  const map = useMap();
+  const t = useT(customerExploreDict);
+  const stackRef = useRef<HTMLDivElement>(null);
+
+  // Without this, a press on a button also reaches the map underneath: the
+  // click starts a drag and a double-tap on "+" zooms twice. Leaflet's own
+  // controls get this treatment from the library; ours has to ask for it.
+  useEffect(() => {
+    const el = stackRef.current;
+    if (!el) return;
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+  }, []);
+
+  const buttonClass = cn(
+    "grid h-11 w-11 place-items-center bg-card text-ink",
+    "transition-colors duration-150 hover:bg-soft hover:text-accent",
+    "focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:outline-none",
+  );
+
+  return (
+    // z-[1000] clears Leaflet's tile and marker panes; the outer layer stays
+    // click-through so only the buttons themselves capture input.
+    <div className="pointer-events-none absolute inset-0 z-[1000]">
+      <div
+        ref={stackRef}
+        className="pointer-events-auto absolute right-3 bottom-6 flex flex-col items-end gap-2.5"
+      >
+        <div className="flex flex-col overflow-hidden rounded-2xl border border-line shadow-md">
+          <button
+            type="button"
+            aria-label={t("zoomInAria")}
+            onClick={() => map.zoomIn()}
+            className={cn(buttonClass, "border-b border-line")}
+          >
+            <Plus className="h-4.5 w-4.5" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("zoomOutAria")}
+            onClick={() => map.zoomOut()}
+            className={buttonClass}
+          >
+            <Minus className="h-4.5 w-4.5" />
+          </button>
+        </div>
+
+        {/* Brand-coloured and round, because it is the one control that does
+            something rather than adjusting the view. Hidden entirely when
+            there is no location to fly to — a dead button is worse than none. */}
+        {userLocation && (
+          <button
+            type="button"
+            aria-label={t("recenterAria")}
+            title={t("recenterAria")}
+            onClick={() => map.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 0.8 })}
+            className={cn(
+              "grid h-13 w-13 place-items-center rounded-full text-accent-ink",
+              "bg-gradient-to-br from-accent to-[#c03d47] shadow-md ring-4 ring-card/70",
+              "transition-[box-shadow,transform] duration-150 hover:shadow-glow active:scale-95",
+              "focus-visible:ring-4 focus-visible:ring-accent/40 focus-visible:outline-none",
+            )}
+          >
+            <LocateFixed className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 interface LocatedShop extends Shop {
   latitude: number;
   longitude: number;
+}
+
+/** The popup card, lifted out so the marker loop stays readable. */
+function ShopPopupCard({
+  shop,
+  count,
+  wait,
+  distance,
+  rating,
+}: {
+  shop: LocatedShop;
+  count: number;
+  wait: number;
+  distance?: number;
+  rating?: { avg_rating: number; review_count: number };
+}) {
+  const t = useT(customerExploreDict);
+  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
+  const availability = shopAvailability(shop);
+  const available = availability === "OPEN" || availability === "BREAK";
+  const photo = shop.cover_image_url ?? shop.logo_url;
+
+  return (
+    <div className="w-72 overflow-hidden">
+      {/* A photo band when the shop has one: it is the fastest way to know
+          whether this is the place you meant. */}
+      {photo ? (
+        <div className="relative h-28 w-full bg-soft">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo} alt="" className="h-full w-full object-cover" />
+          <span className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-ink/55 to-transparent" />
+          <span
+            className={cn(
+              "absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold backdrop-blur-sm",
+              available ? "bg-good-soft/90 text-good" : "bg-live-soft/90 text-live",
+            )}
+          >
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                available ? "animate-pulse-live bg-good" : "bg-live",
+              )}
+            />
+            {available ? t("openBadge") : t("closedBadge")}
+          </span>
+        </div>
+      ) : null}
+
+      <div className="p-3.5">
+        <div className="flex items-start gap-3">
+          {!photo && (
+            <div
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl font-display text-lg font-extrabold text-white"
+              style={{ background: shopAvatarColor(shop.id) }}
+            >
+              {shopInitial(shop.name)}
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-[16px] leading-tight font-bold text-ink">
+              {shop.name}
+            </p>
+            <p className="mt-0.5 truncate text-[12px] text-muted">
+              {businessTypeT(shop.business_type)}
+              {shop.address ? ` · ${shop.address}` : ""}
+            </p>
+          </div>
+
+          {rating && rating.review_count > 0 && (
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-brass-soft px-2 py-1 text-[11px] font-bold text-brass">
+              <Star className="h-3 w-3 fill-current" />
+              <span className="font-number">{rating.avg_rating}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Three facts, one row, each labelled — the old version stacked them
+            as unlabelled pills that read as tags rather than measurements. */}
+        <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-2xl bg-soft p-2.5">
+          <div className="text-center">
+            <p className="font-number text-[15px] leading-none font-bold text-ink">
+              {toBanglaDigits(wait)}
+            </p>
+            <p className="mt-1 text-[10px] text-muted">{t("minUnit")}</p>
+          </div>
+          <div className="border-x border-line text-center">
+            <p className="font-number text-[15px] leading-none font-bold text-ink">
+              {toBanglaDigits(count)}
+            </p>
+            <p className="mt-1 text-[10px] text-muted">{t("inQueueShort")}</p>
+          </div>
+          <div className="text-center">
+            <p className="font-number text-[15px] leading-none font-bold text-ink">
+              {distance != null ? distance.toFixed(1) : "—"}
+            </p>
+            <p className="mt-1 text-[10px] text-muted">{t("km")}</p>
+          </div>
+        </div>
+
+        {!photo && (
+          <span
+            className={cn(
+              "mt-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold",
+              available ? "bg-good-soft text-good" : "bg-live-soft text-live",
+            )}
+          >
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                available ? "animate-pulse-live bg-good" : "bg-live",
+              )}
+            />
+            {available ? t("openBadge") : t("closedBadge")}
+          </span>
+        )}
+      </div>
+
+      <div className="flex gap-2 border-t border-line px-3.5 py-3">
+        <Link
+          href={`/explore/${shop.id}`}
+          className={cn(
+            "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[14px]",
+            "bg-accent text-[13px] font-bold text-accent-ink shadow-sm",
+            "transition-shadow hover:shadow-glow active:shadow-xs",
+          )}
+        >
+          {t("viewShop")}
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={t("directionsAria")}
+          title={t("directionsAria")}
+          className={cn(
+            "grid h-10 w-10 shrink-0 place-items-center rounded-[14px] border border-line bg-card text-muted",
+            "transition-colors hover:border-accent/40 hover:text-accent",
+          )}
+        >
+          <Navigation className="h-4 w-4" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Follows the user's location when it arrives or changes.
+ *
+ * MapContainer reads `center` only on first mount, so granting location
+ * permission after the map had rendered used to leave it looking at the old
+ * centre until you panned by hand. Deliberately keyed on the user's position
+ * and nothing else: recentering on the shop-average would yank the view back
+ * every time a refetch nudged the average by a few metres, undoing whatever
+ * the person was looking at.
+ */
+function FollowUserLocation({ location }: { location?: { lat: number; lng: number } | null }) {
+  const map = useMap();
+  const lat = location?.lat;
+  const lng = location?.lng;
+
+  useEffect(() => {
+    if (lat == null || lng == null) return;
+    map.setView([lat, lng], map.getZoom(), { animate: true });
+  }, [map, lat, lng]);
+
+  return null;
 }
 
 export default function ShopMapInner({
@@ -79,9 +374,6 @@ export default function ShopMapInner({
   ratingByShopId?: Map<string, { avg_rating: number; review_count: number }>;
   userLocation?: { lat: number; lng: number } | null;
 }) {
-  const t = useT(customerExploreDict);
-  const businessTypeT = useT(BUSINESS_TYPE_LABEL);
-
   const avgLat = shops.reduce((a, s) => a + s.latitude, 0) / shops.length;
   const avgLng = shops.reduce((a, s) => a + s.longitude, 0) / shops.length;
   const center: [number, number] = userLocation
@@ -93,102 +385,54 @@ export default function ShopMapInner({
   return (
     <MapContainer
       center={center}
-      zoom={13}
-      style={{ height: 460, width: "100%" }}
+      zoom={14}
+      // Our own stack, bottom-right — see MapControls.
+      zoomControl={false}
+      className="h-[26rem] w-full sm:h-[30rem]"
       scrollWheelZoom={false}
     >
+      {/* CARTO's Voyager basemap instead of raw OSM: fewer competing colours
+          and lighter road fills, so the pins sit on top of the map rather than
+          inside a busy one. Same OSM data underneath, same free tier. */}
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+        maxZoom={20}
       />
+
+      <FollowUserLocation location={userLocation} />
+      <MapControls userLocation={userLocation} />
+
       {userLocation && <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />}
+
       {shops.map((shop) => {
         const count = counts[shop.id] ?? 0;
-        const wait = waitMin[shop.id] ?? 0;
         const availability = shopAvailability(shop);
-        const available = availability === "OPEN" || availability === "BREAK";
-        const rating = ratingByShopId?.get(shop.id);
-        const distance = distanceKm?.[shop.id];
         return (
           <Marker
             key={shop.id}
             position={[shop.latitude, shop.longitude]}
-            icon={pinIcon(
+            icon={shopPinIcon({
+              photoUrl: shop.logo_url ?? shop.cover_image_url ?? null,
+              initial: shopInitial(shop.name),
+              fallbackColor: shopAvatarColor(shop.id),
               count,
-              availability === "NOT_ACCEPTING" || availability === "CLOSED"
-                ? "unavailable"
-                : count === 0
-                  ? "free"
-                  : "busy",
-            )}
+              state:
+                availability === "NOT_ACCEPTING" || availability === "CLOSED"
+                  ? "unavailable"
+                  : count === 0
+                    ? "free"
+                    : "busy",
+            })}
           >
-            {/* A business card, not a tooltip: photo, name, rating, the wait,
-                the distance, whether they can take you, and one action. */}
             <Popup>
-              <div className="w-64 overflow-hidden">
-                <div className="flex gap-3 p-3.5">
-                  <div
-                    className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl font-display text-lg font-extrabold text-white"
-                    style={{ background: shopAvatarColor(shop.id) }}
-                  >
-                    {shop.logo_url || shop.cover_image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={shop.logo_url ?? shop.cover_image_url ?? undefined}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      shopInitial(shop.name)
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start gap-1.5">
-                      <p className="min-w-0 flex-1 truncate font-display text-[15px] leading-tight font-bold text-ink">
-                        {shop.name}
-                      </p>
-                      {rating && rating.review_count > 0 && (
-                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-brass-soft px-1.5 py-0.5 text-[10px] font-bold text-brass">
-                          <Star className="h-2.5 w-2.5 fill-current" />
-                          {rating.avg_rating}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 truncate text-[11px] text-muted">
-                      {businessTypeT(shop.business_type)}
-                      {shop.address ? ` · ${shop.address}` : ""}
-                    </p>
-
-                    <div className="mt-2 flex flex-wrap items-center gap-1">
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                          available ? "bg-good-soft text-good" : "bg-live-soft text-live",
-                        )}
-                      >
-                        {available ? t("openBadge") : t("closedBadge")}
-                      </span>
-                      <span className="rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-ink">
-                        ~<span className="font-number">{wait}</span> {t("minUnit")}
-                      </span>
-                      {distance != null && (
-                        <span className="rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-ink">
-                          <span className="font-number">{distance.toFixed(1)}</span> {t("km")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <Link
-                  href={`/explore/${shop.id}`}
-                  className="flex items-center justify-center gap-1 border-t border-line bg-soft/60 py-2.5 text-[13px] font-bold text-accent transition-colors hover:bg-soft"
-                >
-                  {t("viewShop")}
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
+              <ShopPopupCard
+                shop={shop}
+                count={count}
+                wait={waitMin[shop.id] ?? 0}
+                distance={distanceKm?.[shop.id]}
+                rating={ratingByShopId?.get(shop.id)}
+              />
             </Popup>
           </Marker>
         );

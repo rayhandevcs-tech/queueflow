@@ -13,6 +13,10 @@ export const authDict = {
     bn: (siteName: string) => `${siteName}-এ লগইন করো`,
     en: (siteName: string) => `Log in to ${siteName}`,
   },
+  linkInvalid: {
+    bn: "লিংকটি মেয়াদোত্তীর্ণ বা আগেই ব্যবহার হয়ে গেছে — আবার চেষ্টা করো।",
+    en: "That link has expired or was already used — please try again.",
+  },
   resetSuccess: {
     bn: "পাসওয়ার্ড বদলানো হয়েছে — নতুন পাসওয়ার্ড দিয়ে লগইন করো।",
     en: "Password changed — log in with your new password.",
@@ -24,6 +28,18 @@ export const authDict = {
   login: { bn: "লগইন", en: "Log in" },
   noAccount: { bn: "অ্যাকাউন্ট নেই?", en: "Don't have an account?" },
   signUp: { bn: "সাইন আপ করো", en: "Sign up" },
+
+  // Admin login — a separate identity, so a separate door (Sprint 36)
+  adminLoginTitle: { bn: "এডমিন লগইন", en: "Admin login" },
+  adminLoginSubtitle: {
+    bn: (siteName: string) => `${siteName} প্ল্যাটফর্ম প্যানেল`,
+    en: (siteName: string) => `${siteName} platform panel`,
+  },
+  adminLoginNotice: {
+    bn: "এটি শুধু প্ল্যাটফর্ম এডমিনদের জন্য। গ্রাহক ও দোকানদার অ্যাকাউন্ট এখানে কাজ করবে না।",
+    en: "Platform admins only. Customer and shop-owner accounts will not work here.",
+  },
+  backToAppLogin: { bn: "সাধারণ লগইনে ফিরে যাও", en: "Back to the main login" },
 
   // Register
   registerTitle: { bn: "অ্যাকাউন্ট তৈরি করো", en: "Create an account" },
@@ -64,6 +80,10 @@ export const authDict = {
     en: (s: number) => `Resend available in ${s}s`,
   },
   codeResent: { bn: "নতুন কোড পাঠানো হয়েছে", en: "A new code has been sent" },
+  verifyLinkAlternative: {
+    bn: "মেইলে কোডের বদলে লিংক পেলে সেটাতে ক্লিক করলেও চলবে — একই কাজ হবে।",
+    en: "If the mail has a link instead of a code, clicking it works too — same result.",
+  },
   wrongEmailGoBack: { bn: "ইমেইল ভুল? আবার সাইন আপ করো", en: "Wrong email? Sign up again" },
   emailNotConfirmedVerifyLink: {
     bn: "এখনো ভেরিফাই করোনি? কোড দিয়ে ভেরিফাই করো",

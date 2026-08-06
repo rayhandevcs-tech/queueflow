@@ -86,6 +86,13 @@ export function VerifyEmailForm({ email }: { email: string }) {
         )}
       </div>
 
+      {/* Both doors work: the 6-digit code typed here, and the link in the
+          mail, which lands on /auth/callback. Saying so keeps people from
+          getting stuck when the mail template ships one and not the other. */}
+      <p className="text-center text-xs leading-relaxed text-muted">
+        {t("verifyLinkAlternative")}
+      </p>
+
       <p className="text-center text-sm text-muted">
         <Link href="/register" className="font-semibold text-accent hover:underline">
           {t("wrongEmailGoBack")}

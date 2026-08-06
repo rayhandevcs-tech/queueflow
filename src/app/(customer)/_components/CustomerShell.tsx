@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/ui/Logo";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useT } from "@/lib/i18n";
 import { CustomerBottomNav } from "./CustomerBottomNav";
@@ -25,7 +25,7 @@ export function CustomerShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh lg:flex">
       <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3 lg:hidden">
-        <Logo />
+        <Wordmark size="sm" />
         <div className="flex items-center gap-1">
           <NotificationBell className="text-ink hover:bg-soft" />
           <button

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, ShieldOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/ui/Logo";
+import { ADMIN_LOGIN } from "@/config/constants";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { useIsPlatformAdmin } from "@/features/admin/hooks/use-admin";
@@ -13,8 +15,14 @@ import { AdminSidebar } from "./AdminSidebar";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const { data: isAdmin, isPending } = useIsPlatformAdmin();
   const t = useT(adminDict);
+
+  // The login screen lives under /admin so the whole panel sits behind one
+  // path, but it is the one page that must render without an admin session —
+  // it renders bare, with none of the panel's chrome around it.
+  if (pathname === ADMIN_LOGIN) return <>{children}</>;
 
   if (isPending) {
     return (
@@ -44,7 +52,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <Logo />
+        <Wordmark size="sm" sub={t("panelName")} />
         <button
           type="button"
           onClick={() => setOpen(true)}

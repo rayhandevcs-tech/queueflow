@@ -47,6 +47,11 @@ export const customerExploreDict = {
   serialSuffix: { bn: "সিরিয়াল", en: "serial(s)" },
   minWait: { bn: "মিন ওয়েট", en: "min wait" },
   km: { bn: "কিমি", en: "km" },
+  inQueueShort: { bn: "জন আছে", en: "in queue" },
+  zoomInAria: { bn: "ম্যাপ বড় করো", en: "Zoom in" },
+  zoomOutAria: { bn: "ম্যাপ ছোট করো", en: "Zoom out" },
+  recenterAria: { bn: "আমার অবস্থানে যাও", en: "Go to my location" },
+  directionsAria: { bn: "পথ দেখাও", en: "Get directions" },
   notAcceptingPill: { bn: "নতুন সিরিয়াল বন্ধ", en: "Not taking new" },
   breakPill: { bn: "বিরতিতে", en: "On break" },
 

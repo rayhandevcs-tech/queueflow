@@ -38,6 +38,10 @@ const AUTH_ERROR_DICT = {
     bn: "পাসওয়ার্ড দুর্বল — কমপক্ষে ৬ অক্ষর দিয়ে চেষ্টা করো।",
     en: "Password is too weak — use at least 6 characters.",
   },
+  admin_account: {
+    bn: "এটি একটি এডমিন অ্যাকাউন্ট — এডমিন লগইন পেজ থেকে ঢুকতে হবে।",
+    en: "This is an admin account — sign in from the admin login page.",
+  },
   generic: {
     bn: "কিছু একটা সমস্যা হয়েছে — আবার চেষ্টা করো।",
     en: "Something went wrong — try again.",
@@ -50,6 +54,15 @@ export function translateAuthError(err: unknown): string {
   const code = e?.code ?? "";
   const text = (e?.message ?? "").toLowerCase();
 
+  // Thrown by signIn() itself, not by Supabase: an admin used the wrong door.
+  if (e?.message === "ADMIN_ACCOUNT") {
+    return translate(AUTH_ERROR_DICT, "admin_account");
+  }
+  // /admin/login refusing a non-admin deliberately reuses the wrong-password
+  // wording, so the screen can't be used to discover which addresses are admins.
+  if (e?.message === "NOT_ADMIN") {
+    return translate(AUTH_ERROR_DICT, "invalid_credentials");
+  }
   if (code === "user_already_exists" || text.includes("already registered")) {
     return translate(AUTH_ERROR_DICT, "already_registered");
   }

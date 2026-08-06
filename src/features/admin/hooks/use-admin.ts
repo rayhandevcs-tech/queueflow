@@ -2,9 +2,27 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
-import type { ReportStatus, ShopStatus } from "@/types";
+import type {
+  AdminLevel,
+  AdminStatus,
+  ReportStatus,
+  ShopStatus,
+  SupportStatus,
+} from "@/types";
 import {
   amIPlatformAdmin,
+  createAdmin,
+  getMyAdminIdentity,
+  getTicketCounts,
+  listAdmins,
+  listTicketMessages,
+  listTickets,
+  markTicketReadByAdmin,
+  replyToTicket,
+  revokeAdmin,
+  setAdminLevel,
+  setAdminStatus,
+  setTicketStatus,
   deleteUser,
   forceCancelSerial,
   getOverviewStats,
@@ -243,4 +261,102 @@ export function useModerationMutations() {
   });
 
   return { resolve, hideReview };
+}
+
+// ---------------------------------------------------------------------------
+// Admin identity and the admin team
+// ---------------------------------------------------------------------------
+
+export type { AdminIdentity, AdminTeamRow, AdminTicketRow } from "../api/admin.api";
+
+/** The panel's stand-in for useMyProfile() — see getMyAdminIdentity(). */
+export function useMyAdminIdentity() {
+  return useQuery({
+    queryKey: keys.admin.identity(),
+    queryFn: getMyAdminIdentity,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useAdminTeam() {
+  return useQuery({ queryKey: keys.admin.admins(), queryFn: listAdmins });
+}
+
+export function useAdminTeamMutations() {
+  const queryClient = useQueryClient();
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: keys.admin.admins() });
+  };
+
+  const create = useMutation({ mutationFn: createAdmin, onSuccess: invalidate });
+
+  const changeStatus = useMutation({
+    mutationFn: ({ userId, status }: { userId: string; status: AdminStatus }) =>
+      setAdminStatus(userId, status),
+    onSuccess: invalidate,
+  });
+
+  const changeLevel = useMutation({
+    mutationFn: ({ userId, level }: { userId: string; level: AdminLevel }) =>
+      setAdminLevel(userId, level),
+    onSuccess: invalidate,
+  });
+
+  const revoke = useMutation({ mutationFn: revokeAdmin, onSuccess: invalidate });
+
+  return { create, changeStatus, changeLevel, revoke };
+}
+
+// ---------------------------------------------------------------------------
+// Support Center
+// ---------------------------------------------------------------------------
+
+export function useAdminTickets(status: SupportStatus | null, search: string) {
+  return useQuery({
+    queryKey: keys.admin.tickets({ status, search }),
+    queryFn: () => listTickets(status, search),
+    placeholderData: (previous) => previous,
+  });
+}
+
+export function useAdminTicketMessages(ticketId: string | undefined) {
+  return useQuery({
+    queryKey: keys.support.messages(ticketId ?? ""),
+    queryFn: () => listTicketMessages(ticketId!),
+    enabled: !!ticketId,
+    // A customer can reply while the thread is open on screen.
+    refetchInterval: 30_000,
+  });
+}
+
+export function useAdminTicketCounts() {
+  return useQuery({
+    queryKey: keys.admin.ticketCounts(),
+    queryFn: getTicketCounts,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useAdminTicketMutations(ticketId?: string) {
+  const queryClient = useQueryClient();
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "tickets"] });
+    void queryClient.invalidateQueries({ queryKey: keys.admin.ticketCounts() });
+    if (ticketId) {
+      void queryClient.invalidateQueries({ queryKey: keys.support.messages(ticketId) });
+    }
+  };
+
+  const reply = useMutation({ mutationFn: replyToTicket, onSuccess: invalidate });
+
+  const changeStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: SupportStatus }) =>
+      setTicketStatus(id, status),
+    onSuccess: invalidate,
+  });
+
+  const markRead = useMutation({ mutationFn: markTicketReadByAdmin, onSuccess: invalidate });
+
+  return { reply, changeStatus, markRead };
 }

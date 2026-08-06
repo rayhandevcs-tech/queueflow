@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, UserRound } from "lucide-react";
+import { LifeBuoy, LogOut, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
 import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useLanguage, useT } from "@/lib/i18n";
+import { supportDict } from "@/features/support/lib/i18n";
 import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
 import { customerShellDict } from "./i18n";
 
@@ -26,10 +28,17 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const logout = useLogout();
   const { language } = useLanguage();
   const t = useT(customerShellDict);
+  const supportT = useT(supportDict);
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
-      <div className="flex items-center gap-2.75 px-2 pb-5.5">
+      {/* The desktop sidebar led with the user's own avatar, so the product
+          name never appeared on screen once you were signed in. */}
+      <Link href="/explore" onClick={onNavigate} className="block px-2 pb-4">
+        <Wordmark size="md" />
+      </Link>
+
+      <div className="flex items-center gap-2.75 border-t border-line px-2 pt-4 pb-5.5">
         <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">
           <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[14px] bg-accent font-display text-xl font-extrabold text-accent-ink">
             {profile?.avatar_url ? (
@@ -88,6 +97,14 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
       </nav>
 
       <div className="mt-auto flex flex-col gap-0.75 border-t border-line pt-3 lg:mt-3">
+        <Link
+          href="/help"
+          onClick={onNavigate}
+          className="flex items-center gap-2.75 rounded-xl px-3.25 py-2.75 text-sm font-medium text-muted hover:bg-soft"
+        >
+          <LifeBuoy className="h-4 w-4" />
+          {supportT("supportTitle")}
+        </Link>
         <Link
           href="/account"
           onClick={onNavigate}

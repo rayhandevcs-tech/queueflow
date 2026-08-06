@@ -110,6 +110,16 @@ export const keys = {
     }) => ["admin", "users", filters] as const,
     userDetail: (userId: string) => ["admin", "user", userId] as const,
     reports: (status: string | null) => ["admin", "reports", status] as const,
+    identity: () => ["admin", "identity"] as const,
+    admins: () => ["admin", "admins"] as const,
+    tickets: (filters: { status: string | null; search: string }) =>
+      ["admin", "tickets", filters] as const,
+    ticketCounts: () => ["admin", "ticket-counts"] as const,
+  },
+  support: {
+    myTickets: () => ["support", "my-tickets"] as const,
+    ticket: (ticketId: string) => ["support", "ticket", ticketId] as const,
+    messages: (ticketId: string) => ["support", "messages", ticketId] as const,
   },
   chatThreads: {
     mine: () => ["chat-threads", "mine"] as const,

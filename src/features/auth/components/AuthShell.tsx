@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3, MapPin, Sparkles, Users } from "lucide-react";
+import { Clock3, MapPin, Users } from "lucide-react";
 import { site } from "@/config/site";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { useT } from "@/lib/i18n";
 import { authDict } from "../lib/i18n";
 
@@ -46,16 +47,8 @@ export function AuthShell({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(120,25,30,0.28)_100%)]" />
 
         <div className="relative flex h-full flex-col justify-center px-14 py-16 xl:px-20">
-          <Link
-            href="/"
-            className="absolute top-14 left-14 flex items-center gap-2.5 xl:left-20"
-          >
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent-ink/15 text-accent-ink ring-1 ring-accent-ink/20">
-              <Sparkles className="h-4.5 w-4.5" />
-            </span>
-            <span className="font-display text-lg font-extrabold tracking-tight text-accent-ink">
-              {site.name}
-            </span>
+          <Link href="/" className="absolute top-14 left-14 xl:left-20">
+            <Wordmark size="lg" tone="onAccent" />
           </Link>
 
           <div className="max-w-lg space-y-8">
@@ -92,16 +85,8 @@ export function AuthShell({
       <div className="flex items-center justify-center bg-paper px-5 py-12 sm:px-10">
         <div className="w-full max-w-[26rem]">
           {/* Brand mark on mobile only — on desktop the left panel carries it. */}
-          <Link
-            href="/"
-            className="mb-9 inline-flex items-center gap-2.5 lg:hidden"
-          >
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-accent-ink shadow-sm">
-              <Sparkles className="h-4.5 w-4.5" />
-            </span>
-            <span className="font-display text-lg font-extrabold tracking-tight text-ink">
-              {site.name}
-            </span>
+          <Link href="/" className="mb-9 inline-block lg:hidden">
+            <Wordmark size="lg" />
           </Link>
 
           <header className="mb-8">

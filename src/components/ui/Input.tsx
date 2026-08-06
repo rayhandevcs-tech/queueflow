@@ -68,6 +68,32 @@ export const Input = forwardRef<HTMLInputElement, Props>(
 );
 Input.displayName = "Input";
 
+/**
+ * The multi-line twin of Input.
+ *
+ * Every long-text field in the app had been hand-rolling
+ * `rounded-[14px] border-line bg-soft …`, which is how a focus ring ends up on
+ * some fields and not others. Sharing FIELD_BASE means a textarea now focuses,
+ * hovers and reports invalidity exactly like a single-line field.
+ */
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  React.ComponentProps<"textarea"> & { invalid?: boolean }
+>(({ invalid, className, ...props }, ref) => (
+  <textarea
+    ref={ref}
+    aria-invalid={invalid || undefined}
+    className={cn(
+      FIELD_BASE,
+      invalid ? FIELD_TONE.invalid : FIELD_TONE.normal,
+      "resize-none px-3.5 py-3 leading-relaxed",
+      className,
+    )}
+    {...props}
+  />
+));
+Textarea.displayName = "Textarea";
+
 export function Field({
   label,
   error,

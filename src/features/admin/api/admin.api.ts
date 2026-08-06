@@ -1,11 +1,14 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import type {
+  AdminLevel,
+  AdminStatus,
   BusinessType,
   Profile,
   ReportStatus,
   Shop,
   ShopStatus,
+  SupportStatus,
   UserRole,
 } from "@/types";
 
@@ -396,4 +399,174 @@ export async function setReviewHidden(
     p_reason: reason?.trim() || null,
   });
   if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// The admin's own identity
+// ---------------------------------------------------------------------------
+
+export type AdminIdentity =
+  Database["public"]["Functions"]["my_admin_identity"]["Returns"][number];
+
+export type AdminTeamRow =
+  Database["public"]["Functions"]["admin_list_admins"]["Returns"][number];
+
+/**
+ * Who the signed-in admin is, read from admin_users rather than profiles.
+ * An admin provisioned from the panel has no profiles row at all — that
+ * absence is what makes it "not a customer" — so the panel shell cannot use
+ * useMyProfile() the way the customer and provider shells do.
+ *
+ * Returns null for anyone who is not an active admin, which is also how
+ * /admin/login tells "wrong password" apart from "not an admin".
+ */
+export async function getMyAdminIdentity(): Promise<AdminIdentity | null> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("my_admin_identity");
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
+export async function listAdmins(): Promise<AdminTeamRow[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_list_admins");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function setAdminStatus(userId: string, status: AdminStatus): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_set_admin_status", {
+    p_user_id: userId,
+    p_status: status,
+  });
+  if (error) throw error;
+}
+
+export async function setAdminLevel(userId: string, level: AdminLevel): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_set_admin_level", {
+    p_user_id: userId,
+    p_level: level,
+  });
+  if (error) throw error;
+}
+
+export async function revokeAdmin(userId: string): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_revoke_admin", { p_user_id: userId });
+  if (error) throw error;
+}
+
+/**
+ * Creating the login itself needs Supabase's Admin API, which needs the
+ * service-role key — so this one write goes through a server route instead of
+ * an RPC. The route re-checks that the caller is a SUPER_ADMIN before it
+ * touches anything.
+ */
+export async function createAdmin(input: {
+  fullName: string;
+  email: string;
+  password: string;
+  level: AdminLevel;
+}): Promise<void> {
+  const res = await fetch("/api/admin/admins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error ?? "failed");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Support Center
+// ---------------------------------------------------------------------------
+
+export type AdminTicketRow =
+  Database["public"]["Functions"]["admin_list_tickets"]["Returns"][number];
+
+export type AdminTicketCounts =
+  Database["public"]["Functions"]["admin_ticket_counts"]["Returns"][number];
+
+export async function listTickets(
+  status: SupportStatus | null,
+  search: string,
+): Promise<{ rows: AdminTicketRow[]; total: number }> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_list_tickets", {
+    p_status: status,
+    p_search: search.trim() || null,
+    p_limit: 100,
+    p_offset: 0,
+  });
+  if (error) throw error;
+
+  const rows = data ?? [];
+  return { rows, total: rows[0]?.total_count ?? 0 };
+}
+
+export async function getTicketCounts(): Promise<AdminTicketCounts> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_ticket_counts");
+  if (error) throw error;
+  return data?.[0] ?? { pending: 0, in_progress: 0, solved: 0, closed: 0 };
+}
+
+export async function replyToTicket(input: {
+  ticketId: string;
+  body: string;
+  images?: string[];
+  internal?: boolean;
+}): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_reply_ticket", {
+    p_ticket_id: input.ticketId,
+    p_body: input.body.trim(),
+    p_images: input.images ?? [],
+    p_internal: input.internal ?? false,
+  });
+  if (error) throw error;
+}
+
+export async function setTicketStatus(
+  ticketId: string,
+  status: SupportStatus,
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_set_ticket_status", {
+    p_ticket_id: ticketId,
+    p_status: status,
+  });
+  if (error) throw error;
+}
+
+export async function markTicketReadByAdmin(ticketId: string): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.rpc("admin_mark_ticket_read", { p_ticket_id: ticketId });
+  if (error) throw error;
+}
+
+export type AdminTicketMessage =
+  Database["public"]["Tables"]["support_ticket_messages"]["Row"];
+
+/**
+ * Every message on a ticket, including internal notes.
+ *
+ * Read straight from the table rather than through an RPC: the "admin read"
+ * RLS policy already admits exactly this set, and the customer-side policy
+ * excludes internal notes, so the same query returns a different — correct —
+ * set of rows depending on who runs it.
+ */
+export async function listTicketMessages(ticketId: string): Promise<AdminTicketMessage[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("support_ticket_messages")
+    .select("*")
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
 }

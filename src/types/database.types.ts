@@ -611,8 +611,54 @@ export type Database = {
           level: Database["public"]["Enums"]["admin_level"];
           note: string | null;
           created_at: string;
+          /**
+           * Name and email live here, not on profiles: an admin provisioned
+           * from the panel has no profiles row at all (see
+           * 20260901_admin_identity.sql), which is what keeps it from being a
+           * customer or a shop owner.
+           */
+          full_name: string | null;
+          email: string | null;
+          status: Database["public"]["Enums"]["admin_status"];
+          created_by: string | null;
+          updated_at: string;
         };
-        /** Granting admin is a SQL-editor operation — no client write path. */
+        /** Provisioning goes through admin_provision_admin() — no client write path. */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      support_tickets: {
+        Row: {
+          id: string;
+          user_id: string;
+          category: Database["public"]["Enums"]["support_category"];
+          subject: string;
+          status: Database["public"]["Enums"]["support_status"];
+          assigned_to: string | null;
+          last_message_at: string;
+          admin_read_at: string | null;
+          user_read_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        /** Opened by create_support_ticket() so the first message lands with it. */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      support_ticket_messages: {
+        Row: {
+          id: string;
+          ticket_id: string;
+          sender_id: string | null;
+          is_staff: boolean;
+          is_internal: boolean;
+          body: string;
+          images: string[];
+          created_at: string;
+        };
+        /** Written by add_support_message() / admin_reply_ticket(). */
         Insert: never;
         Update: never;
         Relationships: [];
@@ -938,6 +984,151 @@ export type Database = {
         /** How many summaries were sent. */
         Returns: number;
       };
+      /** Capability check; levels map to capabilities inside the function. */
+      admin_can: {
+        Args: { p_permission: string };
+        Returns: boolean;
+      };
+      my_admin_identity: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          user_id: string;
+          full_name: string | null;
+          email: string | null;
+          level: Database["public"]["Enums"]["admin_level"];
+          status: Database["public"]["Enums"]["admin_status"];
+        }[];
+      };
+      admin_list_admins: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          user_id: string;
+          full_name: string | null;
+          email: string | null;
+          level: Database["public"]["Enums"]["admin_level"];
+          status: Database["public"]["Enums"]["admin_status"];
+          created_at: string;
+          created_by: string | null;
+          last_sign_in: string | null;
+        }[];
+      };
+      admin_set_admin_status: {
+        Args: {
+          p_user_id: string;
+          p_status: Database["public"]["Enums"]["admin_status"];
+        };
+        Returns: void;
+      };
+      admin_set_admin_level: {
+        Args: {
+          p_user_id: string;
+          p_level: Database["public"]["Enums"]["admin_level"];
+        };
+        Returns: void;
+      };
+      admin_revoke_admin: {
+        Args: { p_user_id: string };
+        Returns: void;
+      };
+      /**
+       * service_role only — creating the auth.users row is the Admin API's
+       * job, so this is called from /api/admin/admins, never from a browser.
+       */
+      admin_provision_admin: {
+        Args: {
+          p_actor: string;
+          p_user_id: string;
+          p_full_name: string;
+          p_email: string;
+          p_level: Database["public"]["Enums"]["admin_level"];
+        };
+        Returns: void;
+      };
+      create_support_ticket: {
+        Args: {
+          p_category: Database["public"]["Enums"]["support_category"];
+          p_subject: string;
+          p_body: string;
+          p_images?: string[];
+        };
+        /** The new ticket's id. */
+        Returns: string;
+      };
+      add_support_message: {
+        Args: { p_ticket_id: string; p_body: string; p_images?: string[] };
+        Returns: string;
+      };
+      mark_support_ticket_read: {
+        Args: { p_ticket_id: string };
+        Returns: void;
+      };
+      my_support_tickets: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          category: Database["public"]["Enums"]["support_category"];
+          subject: string;
+          status: Database["public"]["Enums"]["support_status"];
+          created_at: string;
+          last_message_at: string;
+          message_count: number;
+          last_preview: string | null;
+          has_unread: boolean;
+        }[];
+      };
+      admin_list_tickets: {
+        Args: {
+          p_status?: Database["public"]["Enums"]["support_status"] | null;
+          p_search?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: {
+          id: string;
+          user_id: string;
+          user_name: string | null;
+          user_email: string | null;
+          user_role: Database["public"]["Enums"]["user_role"] | null;
+          category: Database["public"]["Enums"]["support_category"];
+          subject: string;
+          status: Database["public"]["Enums"]["support_status"];
+          created_at: string;
+          last_message_at: string;
+          message_count: number;
+          last_preview: string | null;
+          needs_reply: boolean;
+          total_count: number;
+        }[];
+      };
+      admin_ticket_counts: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          pending: number;
+          in_progress: number;
+          solved: number;
+          closed: number;
+        }[];
+      };
+      admin_reply_ticket: {
+        Args: {
+          p_ticket_id: string;
+          p_body: string;
+          p_images?: string[];
+          p_internal?: boolean;
+        };
+        Returns: string;
+      };
+      admin_set_ticket_status: {
+        Args: {
+          p_ticket_id: string;
+          p_status: Database["public"]["Enums"]["support_status"];
+        };
+        Returns: void;
+      };
+      admin_mark_ticket_read: {
+        Args: { p_ticket_id: string };
+        Returns: void;
+      };
     };
     Enums: {
       user_role: "customer" | "provider";
@@ -962,6 +1153,15 @@ export type Database = {
       // real enum types; they live here so the app has one name for the values.
       shop_status: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";
       admin_level: "SUPER_ADMIN" | "MODERATOR" | "SUPPORT";
+      admin_status: "ACTIVE" | "DISABLED";
+      support_category:
+        | "BOOKING"
+        | "PAYMENT"
+        | "ACCOUNT"
+        | "SHOP"
+        | "TECHNICAL"
+        | "OTHER";
+      support_status: "PENDING" | "IN_PROGRESS" | "SOLVED" | "CLOSED";
       report_target_type: "REVIEW" | "SHOP" | "MESSAGE" | "USER";
       report_reason: "SPAM" | "ABUSE" | "FAKE" | "INAPPROPRIATE" | "OTHER";
       report_status: "OPEN" | "RESOLVED" | "DISMISSED";

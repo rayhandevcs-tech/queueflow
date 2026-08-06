@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/ui/Logo";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { useT } from "@/lib/i18n";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { ShopStatusBanner } from "@/features/provider-catalog/components/ShopStatusBanner";
@@ -19,7 +19,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
         className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <Logo />
+        <Wordmark size="sm" />
         <button
           type="button"
           onClick={() => setOpen(true)}

@@ -5,7 +5,7 @@ import { CompleteProfileForm } from "@/features/onboarding/components/CompletePr
 import { onboardingDict } from "@/features/onboarding/lib/i18n";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
-import { site } from "@/config/site";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 export default function CompleteProfilePage() {
   const { data: profile, isPending } = useMyProfile();
@@ -23,7 +23,7 @@ export default function CompleteProfilePage() {
     <main className="flex min-h-dvh items-center justify-center px-4 py-12 sm:px-6">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <span className="font-display text-lg font-bold text-ink">{site.name}</span>
+          <Wordmark size="md" className="justify-center" />
           <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink">
             {t("pageTitle")}
           </h1>

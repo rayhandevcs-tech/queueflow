@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
-import { ADMIN_HOME, ROLE_HOME } from "@/config/constants";
+import { ROLE_HOME } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -34,9 +34,8 @@ export function LoginForm() {
 
   const onSubmit = form.handleSubmit((values) => {
     login.mutate(values, {
-      onSuccess: ({ role, isAdmin }) => {
-        const home = isAdmin ? ADMIN_HOME : ROLE_HOME[role];
-        router.replace(next?.startsWith("/") ? next : home);
+      onSuccess: ({ role }) => {
+        router.replace(next?.startsWith("/") ? next : ROLE_HOME[role]);
         router.refresh();
       },
     });
@@ -50,6 +49,17 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
+      {/* /auth/callback sends people here when a confirmation or recovery link
+          has already been used, or has expired. */}
+      {searchParams.get("error") === "link_invalid" && (
+        <p
+          role="alert"
+          className="rounded-[14px] border border-live/25 bg-live-soft px-3.5 py-2.5 text-center text-sm font-medium text-live"
+        >
+          {t("linkInvalid")}
+        </p>
+      )}
+
       {resetSuccess && (
         <p className="rounded-[14px] border border-good/25 bg-good-soft px-3.5 py-2.5 text-center text-sm font-medium text-good">
           {t("resetSuccess")}

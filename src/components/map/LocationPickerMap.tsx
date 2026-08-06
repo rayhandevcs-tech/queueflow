@@ -40,9 +40,12 @@ export default function LocationPickerMap({
       style={{ height: 260, width: "100%" }}
       className="rounded-xl"
     >
+      {/* Same basemap as the Explore map — two different-looking maps in one
+          product is the kind of drift the design system exists to prevent. */}
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+        maxZoom={20}
       />
       <ClickHandler onPick={onPick} />
       {lat != null && lng != null && <Marker position={[lat, lng]} icon={pinIcon} />}
