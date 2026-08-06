@@ -60,12 +60,12 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4.5 sm:flex-row">
-        <div className="shrink-0 rounded-[20px] bg-accent px-7.5 py-6 text-center text-accent-ink sm:w-44">
+        <div className="shrink-0 rounded-[18px] bg-accent px-7.5 py-6 text-center text-accent-ink sm:w-44">
           <p className="font-number text-5xl font-bold">{summary.average}</p>
           <p className="mt-1 text-lg">★★★★★</p>
           <p className="mt-1.5 text-xs opacity-50">{t("reviewCountSuffix", summary.count)}</p>
         </div>
-        <div className="flex flex-1 flex-col justify-center gap-2 rounded-[20px] border border-line bg-card p-5">
+        <div className="flex flex-1 flex-col justify-center gap-2 rounded-[18px] border border-line bg-card p-5">
           {summary.distribution.map((d) => (
             <div key={d.stars} className="flex items-center gap-2.5 text-xs">
               <span className="w-6 shrink-0">{d.stars}★</span>

@@ -267,7 +267,7 @@ export function LiveTrackingView() {
         </span>
       </div>
 
-      <div className="relative mt-4.5 overflow-hidden rounded-[26px] bg-accent px-5.5 py-7 text-center">
+      <div className="relative mt-4.5 overflow-hidden rounded-[24px] bg-accent px-5.5 py-7 text-center">
         <div className="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
         <div className="pointer-events-none absolute -right-10 -bottom-20 h-64 w-64 rounded-full bg-brass/15 blur-3xl" />
 

@@ -123,11 +123,73 @@ body {
 .leaflet-popup-content-wrapper {
   background: var(--color-card);
   color: var(--color-ink);
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow-md);
+  border-radius: 1.125rem;
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+}
+/* The popup is a card of our own — Leaflet's default padding fights it. */
+.leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
 }
 .leaflet-popup-tip {
   background: var(--color-card);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-sm);
+}
+.leaflet-popup-close-button {
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  color: var(--color-muted) !important;
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  font-size: 1.125rem !important;
+  line-height: 1.5rem !important;
+  border-radius: 9999px;
+  transition: background 0.15s ease;
+}
+.leaflet-popup-close-button:hover {
+  background: var(--color-soft);
+}
+
+/* Zoom control restyled as a pair of app buttons rather than Leaflet's
+   grey 1990s chrome. */
+.leaflet-control-zoom {
+  border: none !important;
+  border-radius: 0.875rem !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-md) !important;
+}
+.leaflet-control-zoom a {
+  background: var(--color-card) !important;
+  color: var(--color-ink) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--color-line) !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  line-height: 2.25rem !important;
+  font-size: 1.125rem !important;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.leaflet-control-zoom a:last-child {
+  border-bottom: none !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--color-soft) !important;
+  color: var(--color-accent) !important;
+}
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-card) 85%, transparent) !important;
+  color: var(--color-muted) !important;
+  font-size: 10px !important;
+  border-radius: 0.5rem 0 0 0;
+}
+
+/* Markers get a gentle entrance instead of appearing all at once. */
+.leaflet-marker-icon {
+  animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .leaflet-container {
   font-family: var(--font-sans);

@@ -4,34 +4,58 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import Link from "next/link";
+import { ChevronRight, Star } from "lucide-react";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { shopAvailability } from "@/lib/shop-availability";
+import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
+/**
+ * The blue "you are here" dot, with a soft halo so it reads as a live
+ * position rather than another pin.
+ */
 const userIcon = L.divIcon({
   className: "",
-  html: `<div style="width:16px;height:16px;border-radius:50%;background:#2e7dd6;border:3px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
+  html: `
+    <div style="position:relative;width:22px;height:22px">
+      <div style="position:absolute;inset:0;border-radius:50%;background:rgba(46,125,214,.22)"></div>
+      <div style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#2e7dd6;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(27,24,18,.35)"></div>
+    </div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
 });
 
-function pinIcon(count: number) {
-  const color = count === 0 ? "#2e7d5b" : "#db4a4a";
+/**
+ * A shop pin.
+ *
+ * The queue count lives *inside* the pin rather than on a badge stuck to its
+ * corner — the old version's floating black bubble collided with neighbouring
+ * pins and read as a separate object. Colour carries availability: green when
+ * nobody is waiting, brand red when there's a queue, amber when the shop
+ * can't take anyone right now.
+ */
+function pinIcon(count: number, state: "free" | "busy" | "unavailable") {
+  const fill =
+    state === "unavailable" ? "#b5852f" : state === "free" ? "#2e7d5b" : "#db4a4a";
+  const label = state === "unavailable" ? "—" : String(count);
+
   return L.divIcon({
     className: "",
     html: `
-      <div style="position:relative;width:34px;height:34px">
-        <div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:${color};border:2px solid #ffffff;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>
-        <div style="position:absolute;top:-6px;left:16px;min-width:16px;padding:0 4px;height:16px;border-radius:8px;background:#1b1812;color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center">${count}</div>
+      <div style="position:relative;width:38px;height:46px;filter:drop-shadow(0 3px 6px rgba(27,24,18,.32))">
+        <svg width="38" height="46" viewBox="0 0 38 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 1C10.16 1 3 8.16 3 17c0 11.5 16 28 16 28s16-16.5 16-28c0-8.84-7.16-16-16-16z" fill="${fill}" stroke="#fff" stroke-width="2.5"/>
+        </svg>
+        <span style="position:absolute;top:8px;left:0;width:38px;text-align:center;color:#fff;font-size:13px;font-weight:800;font-family:var(--font-number),sans-serif">${label}</span>
       </div>`,
-    iconSize: [34, 34],
-    iconAnchor: [11, 26],
-    popupAnchor: [0, -22],
+    iconSize: [38, 46],
+    iconAnchor: [19, 45],
+    popupAnchor: [0, -42],
   });
 }
 
@@ -44,11 +68,15 @@ export default function ShopMapInner({
   shops,
   counts,
   waitMin,
+  distanceKm,
+  ratingByShopId,
   userLocation,
 }: {
   shops: LocatedShop[];
   counts: Record<string, number>;
   waitMin: Record<string, number>;
+  distanceKm?: Record<string, number>;
+  ratingByShopId?: Map<string, { avg_rating: number; review_count: number }>;
   userLocation?: { lat: number; lng: number } | null;
 }) {
   const t = useT(customerExploreDict);
@@ -66,8 +94,8 @@ export default function ShopMapInner({
     <MapContainer
       center={center}
       zoom={13}
-      style={{ height: 440, width: "100%" }}
-      className="rounded-xl"
+      style={{ height: 460, width: "100%" }}
+      scrollWheelZoom={false}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -78,55 +106,88 @@ export default function ShopMapInner({
         const count = counts[shop.id] ?? 0;
         const wait = waitMin[shop.id] ?? 0;
         const availability = shopAvailability(shop);
+        const available = availability === "OPEN" || availability === "BREAK";
+        const rating = ratingByShopId?.get(shop.id);
+        const distance = distanceKm?.[shop.id];
         return (
           <Marker
             key={shop.id}
             position={[shop.latitude, shop.longitude]}
-            icon={pinIcon(count)}
+            icon={pinIcon(
+              count,
+              availability === "NOT_ACCEPTING" || availability === "CLOSED"
+                ? "unavailable"
+                : count === 0
+                  ? "free"
+                  : "busy",
+            )}
           >
+            {/* A business card, not a tooltip: photo, name, rating, the wait,
+                the distance, whether they can take you, and one action. */}
             <Popup>
-              <div className="flex w-56 items-center gap-2.5">
-                <div
-                  className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl font-display text-sm font-bold text-white"
-                  style={
-                    shop.logo_url || shop.cover_image_url
-                      ? undefined
-                      : { background: shopAvatarColor(shop.id) }
-                  }
-                >
-                  {shop.logo_url || shop.cover_image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={shop.logo_url ?? shop.cover_image_url ?? undefined}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    shopInitial(shop.name)
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="truncate text-sm font-semibold text-ink">{shop.name}</p>
-                  <p className="truncate text-xs text-muted">
-                    {businessTypeT(shop.business_type)}
-                    {shop.address ? ` · ${shop.address}` : ""}
-                  </p>
-                  <p className="text-xs font-medium text-ink">{t("queueStatus", count, wait)}</p>
-                  {/* Same three states the list card shows — a pin that looks
-                      bookable but isn't wastes a trip. */}
-                  {availability === "NOT_ACCEPTING" && (
-                    <p className="text-[11px] font-semibold text-live">{t("notAcceptingPill")}</p>
-                  )}
-                  {availability === "BREAK" && (
-                    <p className="text-[11px] font-semibold text-brass">{t("breakPill")}</p>
-                  )}
-                  <Link
-                    href={`/explore/${shop.id}`}
-                    className="inline-block text-xs font-semibold text-accent underline"
+              <div className="w-64 overflow-hidden">
+                <div className="flex gap-3 p-3.5">
+                  <div
+                    className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl font-display text-lg font-extrabold text-white"
+                    style={{ background: shopAvatarColor(shop.id) }}
                   >
-                    {t("viewShop")}
-                  </Link>
+                    {shop.logo_url || shop.cover_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={shop.logo_url ?? shop.cover_image_url ?? undefined}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      shopInitial(shop.name)
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start gap-1.5">
+                      <p className="min-w-0 flex-1 truncate font-display text-[15px] leading-tight font-bold text-ink">
+                        {shop.name}
+                      </p>
+                      {rating && rating.review_count > 0 && (
+                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-brass-soft px-1.5 py-0.5 text-[10px] font-bold text-brass">
+                          <Star className="h-2.5 w-2.5 fill-current" />
+                          {rating.avg_rating}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] text-muted">
+                      {businessTypeT(shop.business_type)}
+                      {shop.address ? ` · ${shop.address}` : ""}
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                          available ? "bg-good-soft text-good" : "bg-live-soft text-live",
+                        )}
+                      >
+                        {available ? t("openBadge") : t("closedBadge")}
+                      </span>
+                      <span className="rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-ink">
+                        ~<span className="font-number">{wait}</span> {t("minUnit")}
+                      </span>
+                      {distance != null && (
+                        <span className="rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-ink">
+                          <span className="font-number">{distance.toFixed(1)}</span> {t("km")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
+
+                <Link
+                  href={`/explore/${shop.id}`}
+                  className="flex items-center justify-center gap-1 border-t border-line bg-soft/60 py-2.5 text-[13px] font-bold text-accent transition-colors hover:bg-soft"
+                >
+                  {t("viewShop")}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             </Popup>
           </Marker>

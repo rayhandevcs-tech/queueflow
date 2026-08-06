@@ -31,7 +31,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
       <div className="flex items-center gap-2.75 px-2 pb-5.5">
         <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">
-          <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-accent font-display text-xl font-extrabold text-accent-ink">
+          <div className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[14px] bg-accent font-display text-xl font-extrabold text-accent-ink">
             {profile?.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

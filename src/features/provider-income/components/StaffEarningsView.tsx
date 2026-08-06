@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Percent, Users } from "lucide-react";
+import { Clock3, Percent, Store, Users } from "lucide-react";
 import { AvatarChip } from "@/components/ui/AvatarChip";
+import { Card } from "@/components/ui/Card";
+import { StatTile } from "@/components/ui/StatTile";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatMoney } from "@/lib/format-wait";
@@ -77,24 +79,25 @@ export function StaffEarningsView({ shopId }: { shopId: string | undefined }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-[18px] border border-line bg-card p-4">
-          <p className="text-[11px] text-muted">{t("staffShareTotal")}</p>
-          <p className="mt-1 font-number text-2xl font-bold text-ink">
-            ৳{formatMoney(totalStaffShare)}
-          </p>
-        </div>
-        <div className="rounded-[18px] border border-line bg-card p-4">
-          <p className="text-[11px] text-muted">{t("shopShareTotal")}</p>
-          <p className="mt-1 font-number text-2xl font-bold text-accent">
-            ৳{formatMoney(totalShopShare)}
-          </p>
-        </div>
-        <div className="rounded-[18px] border border-line bg-card p-4">
-          <p className="text-[11px] text-muted">{t("pendingShareTotal")}</p>
-          <p className="mt-1 font-number text-2xl font-bold text-brass">
-            ৳{formatMoney(totalPendingShare)}
-          </p>
-        </div>
+        <StatTile
+          value={`৳${formatMoney(totalStaffShare)}`}
+          label={t("staffShareTotal")}
+          icon={<Users className="h-4 w-4" />}
+        />
+        <StatTile
+          value={`৳${formatMoney(totalShopShare)}`}
+          label={t("shopShareTotal")}
+          accentValue="accent"
+          tone="accent"
+          icon={<Store className="h-4 w-4" />}
+        />
+        <StatTile
+          value={`৳${formatMoney(totalPendingShare)}`}
+          label={t("pendingShareTotal")}
+          accentValue="brass"
+          tone={totalPendingShare > 0 ? "brass" : "plain"}
+          icon={<Clock3 className="h-4 w-4" />}
+        />
       </div>
 
       {/* Not an error state — just the one thing that makes this page useful. */}
@@ -113,7 +116,8 @@ export function StaffEarningsView({ shopId }: { shopId: string | undefined }) {
           const chair = chairs.find((c) => c.id === e.chairId);
           const name = chair?.staff_name || chair?.label || "—";
           return (
-            <li key={e.chairId} className="rounded-[18px] border border-line bg-card p-4">
+            <li key={e.chairId}>
+              <Card className="p-4">
               <div className="flex items-center gap-3">
                 <AvatarChip
                   label={name}
@@ -160,6 +164,7 @@ export function StaffEarningsView({ shopId }: { shopId: string | undefined }) {
                   </p>
                 </div>
               </div>
+              </Card>
             </li>
           );
         })}

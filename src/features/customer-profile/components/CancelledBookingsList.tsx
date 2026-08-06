@@ -64,7 +64,7 @@ export function CancelledBookingsList({
               <button
                 type="button"
                 onClick={() => router.push(`/explore/${s.shop_id}?services=${s.service_ids.join(",")}`)}
-                className="mt-3 w-full rounded-[12px] bg-accent py-2.5 text-[13px] font-bold text-accent-ink"
+                className="mt-3 w-full rounded-[14px] bg-accent py-2.5 text-[13px] font-bold text-accent-ink"
               >
                 {t("bookAgain")}
               </button>

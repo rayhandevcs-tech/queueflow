@@ -39,7 +39,7 @@ export function ActiveBookingBanner() {
     <Link
       href="/my-serial"
       className={cn(
-        "mb-4.5 flex animate-pop items-center gap-3.5 rounded-[20px] px-4.5 py-4",
+        "mb-4.5 flex animate-pop items-center gap-3.5 rounded-[18px] px-4.5 py-4",
         // Being called is urgent enough to break the usual accent colour.
         called ? "bg-live text-white" : "bg-accent text-accent-ink",
       )}

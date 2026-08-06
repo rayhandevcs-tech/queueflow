@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Plus, Receipt, Trash2 } from "lucide-react";
 import type { ExpenseCategory } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { StatTile } from "@/components/ui/StatTile";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Input } from "@/components/ui/Input";
@@ -90,28 +92,18 @@ export function ExpensesView({ shopId }: { shopId: string | undefined }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-[18px] border border-line bg-card p-4">
-          <p className="text-[11px] text-muted">{t("expenseToday")}</p>
-          <p className="mt-1 font-number text-2xl font-bold text-ink">
-            ৳{formatMoney(summary.today)}
-          </p>
-        </div>
-        <div className="rounded-[18px] border border-line bg-card p-4">
-          <p className="text-[11px] text-muted">{t("expenseThisMonth")}</p>
-          <p className="mt-1 font-number text-2xl font-bold text-live">
-            ৳{formatMoney(summary.month)}
-          </p>
-        </div>
-        <div className="rounded-[18px] border border-line bg-card p-4">
-          <p className="text-[11px] text-muted">{t("expenseThisYear")}</p>
-          <p className="mt-1 font-number text-2xl font-bold text-ink">
-            ৳{formatMoney(summary.year)}
-          </p>
-        </div>
+        <StatTile value={`৳${formatMoney(summary.today)}`} label={t("expenseToday")} />
+        <StatTile
+          value={`৳${formatMoney(summary.month)}`}
+          label={t("expenseThisMonth")}
+          accentValue="live"
+          tone={summary.month > 0 ? "live" : "plain"}
+        />
+        <StatTile value={`৳${formatMoney(summary.year)}`} label={t("expenseThisYear")} />
       </div>
 
       {summary.byCategory.length > 0 && (
-        <div className="rounded-[18px] border border-line bg-card p-4">
+        <Card className="p-4">
           <p className="mb-2.5 text-xs font-semibold text-muted uppercase">
             {t("expenseByCategory")}
           </p>
@@ -125,7 +117,7 @@ export function ExpensesView({ shopId }: { shopId: string | undefined }) {
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
 
       <Button onClick={() => setOpen(true)}>
@@ -134,7 +126,7 @@ export function ExpensesView({ shopId }: { shopId: string | undefined }) {
       </Button>
 
       {open && (
-        <div className="space-y-3 rounded-[18px] border border-line bg-card p-4">
+        <Card className="space-y-3 p-4">
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
               <button
@@ -198,7 +190,7 @@ export function ExpensesView({ shopId }: { shopId: string | undefined }) {
               {t("expenseSaveCta")}
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {expenses.length === 0 ? (

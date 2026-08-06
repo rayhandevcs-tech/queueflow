@@ -8,6 +8,7 @@ import type { Message } from "@/types";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/lib/utils";
 import { getStoredLanguage, translate, useT } from "@/lib/i18n";
 import { uploadChatImages } from "../api/storage.api";
 import { getMessageImageUrls } from "../lib/message-images";
@@ -147,7 +148,9 @@ export function ChatThreadView({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-3.5">
+      {/* A tinted thread behind the bubbles: with a white page and a white
+          incoming bubble, the two used to melt into each other. */}
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-soft/50 to-paper px-3 py-4">
         {isPending ? (
           <div className="grid h-full place-items-center">
             <Spinner className="h-6 w-6 text-muted" />
@@ -168,23 +171,29 @@ export function ChatThreadView({
                 <div key={m.id}>
                   {showLabel && (
                     <div className="my-3 flex justify-center">
-                      <span className="rounded-full bg-soft px-3 py-1 text-[11px] text-muted">
+                      <span className="rounded-full border border-line bg-card px-3 py-1 text-[11px] font-medium text-muted shadow-xs">
                         {label}
                       </span>
                     </div>
                   )}
-                  <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                  <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
                     <div
-                      className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm ${
+                      className={cn(
+                        "max-w-[78%] px-3.5 py-2.5 text-[14px] shadow-xs",
+                        // The tail corner marks the speaker; everything else
+                        // is symmetric so neither side looks like an error.
                         mine
-                          ? "rounded-br-sm bg-accent text-accent-ink"
-                          : "rounded-bl-sm border border-line bg-card text-ink"
-                      }`}
+                          ? "rounded-[18px] rounded-br-md bg-accent text-accent-ink"
+                          : "rounded-[18px] rounded-bl-md border border-line bg-card text-ink",
+                      )}
                     >
                       <MessageImageGrid urls={getMessageImageUrls(m)} />
                       {m.content && <p className="leading-relaxed wrap-break-word">{m.content}</p>}
                       <p
-                        className={`mt-1 text-right text-[10px] ${mine ? "text-accent-ink/70" : "text-muted"}`}
+                        className={cn(
+                          "mt-1 text-right text-[10px] tabular-nums",
+                          mine ? "text-accent-ink/65" : "text-muted",
+                        )}
                       >
                         {timeLabel(m.created_at)}
                       </p>
@@ -244,13 +253,13 @@ export function ChatThreadView({
               }
             }}
             placeholder={t("messagePlaceholder")}
-            className="flex-1 rounded-full border border-line bg-soft px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-accent"
+            className="min-h-11 flex-1 rounded-full border border-line bg-soft px-4 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent focus:bg-card"
           />
           <button
             type="button"
             onClick={onSend}
             disabled={send.isPending || !content.trim()}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-accent-ink disabled:opacity-40"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-sm transition-all hover:shadow-glow active:scale-95 disabled:opacity-40 disabled:shadow-none"
           >
             <Send className="h-4 w-4" />
           </button>

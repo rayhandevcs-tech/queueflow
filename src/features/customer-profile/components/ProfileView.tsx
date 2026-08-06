@@ -5,6 +5,7 @@ import { ChevronRight, Heart, ShieldAlert, ShieldCheck, Settings, Sparkles, Stor
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatMoney } from "@/lib/format-wait";
+import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
 import { AvatarChip } from "@/components/ui/AvatarChip";
@@ -75,37 +76,47 @@ export function ProfileView({
         </Link>
       </div>
 
-      {/* One dark identity card carrying the trust score and the three counts
-          that explain it, instead of a pale header followed by three separate
-          boxes saying numbers with no relationship to each other. */}
-      <div className="relative overflow-hidden rounded-[24px] bg-ink px-5 py-5 text-white">
-        <div className="pointer-events-none absolute -top-20 -right-16 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
+      {/* Identity, trust score and the three counts that explain it, on one
+          light surface — they belong together, and three loose boxes stated
+          numbers with no relationship between them. */}
+      <div className="relative overflow-hidden rounded-[24px] border border-line bg-gradient-to-br from-accent/[0.08] via-card to-brass/[0.06] px-5 py-5 shadow-sm">
+        <div className="pointer-events-none absolute -top-16 -right-12 h-44 w-44 rounded-full bg-accent/10 blur-3xl" />
 
         <div className="relative flex items-center gap-3.5">
           <AvatarChip label={fullName} avatarUrl={avatarUrl} shape="circle" size={60} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-xl font-bold">
+            <p className="truncate font-display text-xl font-bold text-ink">
               {fullName || t("customerFallback")}
             </p>
-            <p className="truncate text-xs text-white/50">{phone || "—"}</p>
+            <p className="truncate text-xs text-muted">{phone || "—"}</p>
           </div>
-          <div className="shrink-0 rounded-2xl bg-white/10 px-3.5 py-2 text-center">
-            <p className="font-number text-2xl leading-none font-extrabold text-good">
+          <div className="shrink-0 rounded-2xl border border-good/20 bg-card px-3.5 py-2 text-center shadow-xs">
+            <p className="font-number text-2xl leading-none font-extrabold tabular-nums text-good">
               {trust.score ?? "—"}
             </p>
-            <p className="mt-1 text-[10px] text-white/50">{t("trustScoreLabel")}</p>
+            <p className="mt-1 text-[10px] text-muted">{t("trustScoreLabel")}</p>
           </div>
         </div>
 
-        <div className="relative mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-white/10">
+        <div className="relative mt-4 grid grid-cols-3 overflow-hidden rounded-2xl border border-line bg-card/80">
           {[
             { value: trust.visitCount, label: t("totalVisits") },
-            { value: trust.noShowCount, label: t("noShows") },
+            { value: trust.noShowCount, label: t("noShows"), alert: trust.noShowCount > 0 },
             { value: trust.regularShopCount, label: t("regularShops") },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-ink px-2 py-3 text-center">
-              <p className="font-number text-lg leading-none font-bold">{stat.value}</p>
-              <p className="mt-1 text-[10px] text-white/50">{stat.label}</p>
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className={cn("px-2 py-3 text-center", i > 0 && "border-l border-line")}
+            >
+              <p
+                className={cn(
+                  "font-number text-lg leading-none font-bold tabular-nums",
+                  stat.alert ? "text-live" : "text-ink",
+                )}
+              >
+                {stat.value}
+              </p>
+              <p className="mt-1 text-[10px] text-muted">{stat.label}</p>
             </div>
           ))}
         </div>

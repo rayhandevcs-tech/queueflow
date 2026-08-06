@@ -3,8 +3,10 @@
 import { BN_MONTHS, EN_MONTHS, formatMoney, toBanglaDigits } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
 import { AvatarChip } from "@/components/ui/AvatarChip";
+import { Card } from "@/components/ui/Card";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Trophy } from "lucide-react";
+import { BarChart3, CalendarDays, TrendingUp, Trophy, Wallet } from "lucide-react";
 import { useState } from "react";
 import { TabBar } from "@/components/ui/TabBar";
 import { useLanguage, useT } from "@/lib/i18n";
@@ -50,36 +52,59 @@ function IncomeSummaryTab({ shopId }: { shopId: string | undefined }) {
   return (
     <div className="space-y-4.5">
       {/* The line the owner is actually after. Income alone never answered
-          "did the shop make money this month" — this does. */}
-      <div className="flex flex-wrap items-end justify-between gap-3 rounded-[20px] bg-ink px-5.5 py-5 text-white">
-        <div>
-          <p className="text-[13px] text-white/60">{t("profitThisMonth", monthName)}</p>
-          <p
-            className="mt-1 font-number text-[34px] leading-none font-extrabold"
-            style={{ color: monthProfit >= 0 ? "var(--color-good)" : "var(--color-live)" }}
-          >
-            ৳{formatMoney(monthProfit)}
-          </p>
+          "did the shop make money this month" — this does. Tone follows the
+          answer, so a loss is visible without the card shouting. */}
+      <Card tone={monthProfit >= 0 ? "good" : "live"} className="p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+              <Wallet className="h-3.5 w-3.5" />
+              {t("profitThisMonth", monthName)}
+            </p>
+            <p
+              className={cn(
+                "mt-1.5 font-number text-[34px] leading-none font-extrabold tabular-nums",
+                monthProfit >= 0 ? "text-good" : "text-live",
+              )}
+            >
+              ৳{formatMoney(monthProfit)}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="rounded-full border border-line bg-card px-2.5 py-1 font-medium text-muted">
+              {t("incomeWord")}{" "}
+              <b className="font-number text-ink">৳{formatMoney(summary.month.amount)}</b>
+            </span>
+            <span className="text-muted">−</span>
+            <span className="rounded-full border border-line bg-card px-2.5 py-1 font-medium text-muted">
+              {t("expenseWord")}{" "}
+              <b className="font-number text-ink">৳{formatMoney(expenses.month)}</b>
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-white/60">
-          {t("profitFormula", formatMoney(summary.month.amount), formatMoney(expenses.month))}
-        </p>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-[20px] bg-accent/10 p-5.5 text-ink">
-          <p className="text-[13px] text-muted">{t("today")}</p>
-          <p className="mt-1.5 font-number text-[32px] font-bold text-accent">
+        <Card tone="accent" className="p-5">
+          <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {t("today")}
+          </p>
+          <p className="mt-1.5 font-number text-[32px] leading-none font-extrabold tabular-nums text-accent">
             ৳{formatMoney(summary.today.amount)}
           </p>
-          <p className="mt-1 text-xs text-muted">{t("jobsCountSuffix", summary.today.doneCount)}</p>
-          <p className="mt-2 text-xs font-medium text-ink/80">
+          <p className="mt-2 text-xs text-muted">{t("jobsCountSuffix", summary.today.doneCount)}</p>
+          <p className="mt-1 text-xs font-medium text-ink/80">
             {t("cashDueBreakdown", formatMoney(summary.today.cash), formatMoney(summary.today.due))}
           </p>
-        </div>
-        <div className="rounded-[20px] border border-line bg-card p-5.5">
-          <p className="text-[13px] text-muted">{t("thisMonth", monthName)}</p>
-          <p className="mt-1.5 font-number text-[32px] font-bold text-ink">
+        </Card>
+        <Card className="p-5">
+          <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+            <TrendingUp className="h-3.5 w-3.5" />
+            {t("thisMonth", monthName)}
+          </p>
+          <p className="mt-1.5 font-number text-[32px] leading-none font-extrabold tabular-nums text-ink">
             ৳{formatMoney(summary.month.amount)}
           </p>
           <p className="mt-1 text-xs text-good">
@@ -92,21 +117,24 @@ function IncomeSummaryTab({ shopId }: { shopId: string | undefined }) {
           <p className="mt-2 text-xs text-muted">
             {t("cashDueBreakdown", formatMoney(summary.month.cash), formatMoney(summary.month.due))}
           </p>
-        </div>
-        <div className="rounded-[20px] border border-line bg-card p-5.5">
-          <p className="text-[13px] text-muted">{t("thisYear", yearLabel)}</p>
-          <p className="mt-1.5 font-number text-[32px] font-bold text-ink">
+        </Card>
+        <Card className="p-5">
+          <p className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+            <BarChart3 className="h-3.5 w-3.5" />
+            {t("thisYear", yearLabel)}
+          </p>
+          <p className="mt-1.5 font-number text-[32px] leading-none font-extrabold tabular-nums text-ink">
             ৳{formatMoney(summary.year.amount)}
           </p>
           <p className="mt-2 text-xs text-muted">
             {t("cashDueBreakdown", formatMoney(summary.year.cash), formatMoney(summary.year.due))}
           </p>
-        </div>
+        </Card>
       </div>
 
-      <div className="rounded-[20px] border border-line bg-card p-5.5">
+      <Card className="p-5">
         <div className="mb-4.5 flex items-center justify-between">
-          <p className="font-semibold text-ink">{t("last12MonthsIncome")}</p>
+          <p className="text-sm font-semibold text-ink">{t("last12MonthsIncome")}</p>
           <p className="text-xs text-muted">{t("inThousands")}</p>
         </div>
         <div className="flex h-42.5 items-end gap-1.5 sm:gap-2.5">
@@ -128,10 +156,10 @@ function IncomeSummaryTab({ shopId }: { shopId: string | undefined }) {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-[20px] border border-line bg-card p-5.5">
-        <p className="mb-3.5 font-semibold text-ink">{t("incomeByService")}</p>
+      <Card className="p-5">
+        <p className="mb-3.5 text-sm font-semibold text-ink">{t("incomeByService")}</p>
         {summary.byService.length === 0 ? (
           <p className="text-sm text-muted">{t("noServicesDoneThisMonth")}</p>
         ) : (
@@ -152,10 +180,10 @@ function IncomeSummaryTab({ shopId }: { shopId: string | undefined }) {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="rounded-[20px] border border-line bg-card p-5.5">
-        <p className="mb-3.5 font-semibold text-ink">{t("incomeByStaff")}</p>
+      <Card className="p-5">
+        <p className="mb-3.5 text-sm font-semibold text-ink">{t("incomeByStaff")}</p>
         {summary.byStaff.length === 0 ? (
           <EmptyState
             icon={<Trophy className="h-6 w-6" />}
@@ -186,7 +214,7 @@ function IncomeSummaryTab({ shopId }: { shopId: string | undefined }) {
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

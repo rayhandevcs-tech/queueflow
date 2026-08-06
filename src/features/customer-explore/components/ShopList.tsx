@@ -39,7 +39,7 @@ export function ShopList({
     return (
       <div className="flex flex-col gap-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-28 animate-pulse rounded-[20px] border border-line bg-card" />
+          <div key={i} className="h-28 animate-pulse rounded-[18px] border border-line bg-card" />
         ))}
       </div>
     );
@@ -69,7 +69,7 @@ export function ShopList({
           <li key={shop.id} className="relative">
             <Link
               href={`/explore/${shop.id}`}
-              className="group block overflow-hidden rounded-[20px] border border-line bg-card transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
+              className="group block overflow-hidden rounded-[18px] border border-line bg-card transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
             >
               <div className="flex gap-3.5 p-3.5">
                 <div

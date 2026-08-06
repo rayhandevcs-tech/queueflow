@@ -3,7 +3,6 @@ import type { Dict } from "@/lib/i18n";
 export const customerExploreDict = {
   // FilterSheet
   filterTitle: { bn: "ফিল্টার", en: "Filter" },
-  typeLabel: { bn: "ধরন", en: "Type" },
   ratingLabel: { bn: "রেটিং", en: "Rating" },
   all: { bn: "সব", en: "All" },
   distanceLabel: { bn: "দূরত্ব", en: "Distance" },
@@ -83,7 +82,6 @@ export const customerExploreDict = {
 
   // explore/page.tsx
   assalamu: { bn: "আসসালামু আলাইকুম 👋", en: "Assalamu Alaikum 👋" },
-  nearbySalonsHeading: { bn: "কাছের সেলুন", en: "Nearby salons" },
   openShopsLabel: { bn: "খোলা দোকান", en: "Open shops" },
   minUnit: { bn: "মিন", en: "min" },
   lowestWaitLabel: { bn: "সবচেয়ে কম ওয়েট", en: "Lowest wait" },
@@ -113,4 +111,27 @@ export const customerExploreDict = {
     en: (name: string) => `Hello, ${name} 👋`,
   },
   openProfileAria: { bn: "প্রোফাইল খোলো", en: "Open profile" },
+
+  heroHeadline: { bn: "আজ কোথায় বুকিং করবে?", en: "Where are you booking today?" },
+  heroSubtitle: {
+    bn: "কাছের সেরা দোকানগুলো অপেক্ষা করছে — লাইভ সিরিয়াল দেখে বেছে নাও।",
+    en: "The best shops near you are ready — pick one from their live queues.",
+  },
+  favouriteShopsHeading: { bn: "প্রিয় দোকান", en: "Favourite shops" },
+  noFavouritesTitle: { bn: "এখনো কোনো প্রিয় দোকান নেই", en: "No favourites yet" },
+  noFavouritesDesc: {
+    bn: "পছন্দের দোকানে ♥ চাপলে এখানে জমা থাকবে — পরে এক ট্যাপেই পৌঁছে যাবে।",
+    en: "Tap ♥ on a shop you like and it'll live here for one-tap access.",
+  },
+
+  openBadge: { bn: "খোলা", en: "Open" },
+  closedBadge: { bn: "নিচ্ছে না", en: "Not taking" },
+
+  retryLocation: { bn: "আবার চেষ্টা করো", en: "Try again" },
+  dismissLocationAria: { bn: "বন্ধ করো", en: "Dismiss" },
+
+  reviewsCount: {
+    bn: (n: number) => `${n} রিভিউ`,
+    en: (n: number) => `${n} reviews`,
+  },
 } satisfies Dict;

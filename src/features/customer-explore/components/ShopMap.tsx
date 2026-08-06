@@ -21,12 +21,16 @@ export function ShopMap({
   shops,
   counts,
   waitMin,
+  distanceKm,
+  ratingByShopId,
   userLocation,
   isPending,
 }: {
   shops: Shop[] | undefined;
   counts: Record<string, number>;
   waitMin: Record<string, number>;
+  distanceKm?: Record<string, number>;
+  ratingByShopId?: Map<string, { avg_rating: number; review_count: number }>;
   userLocation?: { lat: number; lng: number } | null;
   isPending: boolean;
 }) {
@@ -61,6 +65,8 @@ export function ShopMap({
         shops={located}
         counts={counts}
         waitMin={waitMin}
+        distanceKm={distanceKm}
+        ratingByShopId={ratingByShopId}
         userLocation={userLocation}
       />
     </div>

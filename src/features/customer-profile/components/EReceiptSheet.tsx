@@ -201,7 +201,7 @@ export function EReceiptSheet({
           href={receiptUrl ?? undefined}
           download={receiptUrl ? `receipt-${code}.png` : undefined}
           aria-disabled={!receiptUrl}
-          className="mt-4.5 flex w-full items-center justify-center gap-2 rounded-[15px] bg-accent py-3.5 font-display text-[15px] font-bold text-accent-ink aria-disabled:pointer-events-none aria-disabled:opacity-50"
+          className="mt-4.5 flex w-full items-center justify-center gap-2 rounded-[14px] bg-accent py-3.5 font-display text-[15px] font-bold text-accent-ink aria-disabled:pointer-events-none aria-disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
           {t("download")}

@@ -151,4 +151,7 @@ export const providerIncomeDict = {
     en: "It'll come out of your accounts and can't be undone.",
   },
   deleteExpenseConfirm: { bn: "মুছে ফেলো", en: "Delete" },
+
+  incomeWord: { bn: "আয়", en: "In" },
+  expenseWord: { bn: "খরচ", en: "Out" },
 } satisfies Dict;

@@ -68,6 +68,8 @@ export function ExploreView({
           shops={shops}
           counts={counts}
           waitMin={waitMin}
+          distanceKm={distanceKm}
+          ratingByShopId={ratingByShopId}
           userLocation={userLocation}
           isPending={isPending}
         />

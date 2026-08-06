@@ -89,7 +89,7 @@ export function ReviewDialog({
 
         <div className="text-center">
           <div
-            className="mx-auto grid h-16 w-16 place-items-center rounded-[20px] font-display text-2xl font-extrabold text-white"
+            className="mx-auto grid h-16 w-16 place-items-center rounded-[18px] font-display text-2xl font-extrabold text-white"
             style={{ background: shopAvatarBg }}
           >
             {shopInitial}
@@ -168,7 +168,7 @@ export function ReviewDialog({
           type="button"
           disabled={rating === 0 || submit.isPending}
           onClick={() => submit.mutate({ shopId, serialId, rating, comment, images })}
-          className="mt-3.5 w-full rounded-[15px] bg-accent py-3.75 font-display text-[15px] font-bold text-accent-ink disabled:opacity-50"
+          className="mt-3.5 w-full rounded-[14px] bg-accent py-3.75 font-display text-[15px] font-bold text-accent-ink disabled:opacity-50"
         >
           {submit.isPending ? t("submitting") : t("submitReview")}
         </button>

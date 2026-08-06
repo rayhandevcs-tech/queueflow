@@ -5,24 +5,26 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { BUSINESS_TYPES, type SelectableBusinessType } from "@/config/constants";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 
+/**
+ * Business type is deliberately absent: it decides which product a shop runs,
+ * not something a customer browsing nearby shops wants to slice by. It stays
+ * on the shop record and in the card's subtitle.
+ */
 export interface ShopFilters {
-  types: Set<SelectableBusinessType>;
   minRating: number;
   maxDistanceKm: number | null;
 }
 
 export const DEFAULT_FILTERS: ShopFilters = {
-  types: new Set(),
   minRating: 0,
   maxDistanceKm: null,
 };
 
 export function hasActiveFilters(filters: ShopFilters): boolean {
-  return filters.types.size > 0 || filters.minRating > 0 || filters.maxDistanceKm != null;
+  return filters.minRating > 0 || filters.maxDistanceKm != null;
 }
 
 const RATING_OPTIONS = [0, 3, 4, 4.5];
@@ -44,12 +46,6 @@ export function FilterSheet({
   const [draft, setDraft] = useState(initial);
   const [prevOpen, setPrevOpen] = useState(open);
   const t = useT(customerExploreDict);
-  const businessTypeT = useT(
-    Object.fromEntries(BUSINESS_TYPES.map((bt) => [bt.value, bt.label])) as Record<
-      SelectableBusinessType,
-      { bn: string; en: string }
-    >,
-  );
 
   // Reset the draft to the latest applied filters whenever the sheet opens —
   // adjusted during render (not an effect) per React's recommended pattern.
@@ -57,15 +53,6 @@ export function FilterSheet({
     setPrevOpen(open);
     if (open) setDraft(initial);
   }
-
-  const toggleType = (type: SelectableBusinessType) => {
-    setDraft((d) => {
-      const types = new Set(d.types);
-      if (types.has(type)) types.delete(type);
-      else types.add(type);
-      return { ...d, types };
-    });
-  };
 
   return (
     <BottomSheet open={open} onClose={onClose} maxWidthClassName="max-w-sm">
@@ -79,27 +66,6 @@ export function FilterSheet({
         >
           <X className="h-4.5 w-4.5" />
         </button>
-      </div>
-
-      <div>
-        <p className="mb-2 text-[13px] font-semibold text-muted">{t("typeLabel")}</p>
-        <div className="flex gap-2">
-          {BUSINESS_TYPES.map((bt) => (
-            <button
-              key={bt.value}
-              type="button"
-              onClick={() => toggleType(bt.value)}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
-                draft.types.has(bt.value)
-                  ? "border-accent bg-accent text-accent-ink"
-                  : "border-line bg-soft text-ink",
-              )}
-            >
-              {businessTypeT(bt.value)}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div>
