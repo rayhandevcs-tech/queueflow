@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/ui/Wordmark";
-import { ADMIN_LEVEL_LABEL } from "@/config/constants";
+import { ADMIN_LEVEL_LABEL, ADMIN_LOGIN } from "@/config/constants";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import {
   useAdminOverview,
@@ -39,7 +39,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data: identity } = useMyAdminIdentity();
   const { data: overview } = useAdminOverview();
   const { data: ticketCounts } = useAdminTicketCounts();
-  const logout = useLogout();
+  const logout = useLogout(ADMIN_LOGIN);
   const { language, setLanguage } = useLanguage();
   const t = useT(adminDict);
   const levelT = useT(ADMIN_LEVEL_LABEL);
