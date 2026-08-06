@@ -12,6 +12,7 @@ import type {
 import {
   amIPlatformAdmin,
   createAdmin,
+  setAdminPassword,
   getMyAdminIdentity,
   getTicketCounts,
   listAdmins,
@@ -304,7 +305,10 @@ export function useAdminTeamMutations() {
 
   const revoke = useMutation({ mutationFn: revokeAdmin, onSuccess: invalidate });
 
-  return { create, changeStatus, changeLevel, revoke };
+  // No invalidate: a password change alters nothing the roster shows.
+  const setPassword = useMutation({ mutationFn: setAdminPassword });
+
+  return { create, changeStatus, changeLevel, revoke, setPassword };
 }
 
 // ---------------------------------------------------------------------------

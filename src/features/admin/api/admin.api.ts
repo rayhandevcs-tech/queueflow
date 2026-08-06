@@ -500,6 +500,28 @@ export async function createAdmin(input: {
   }
 }
 
+/**
+ * Sets another admin's password outright, rather than mailing them a reset
+ * link — panel access must not depend on inbox delivery, and a locked-out
+ * admin is exactly whose mail you cannot count on. Same route, same
+ * SUPER_ADMIN check; the server refuses any target that is not already an
+ * admin.
+ */
+export async function setAdminPassword(input: {
+  userId: string;
+  password: string;
+}): Promise<void> {
+  const res = await fetch("/api/admin/admins", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error ?? "failed");
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Support Center
 // ---------------------------------------------------------------------------

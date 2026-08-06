@@ -472,6 +472,15 @@ export const adminDict = {
   disableAdmin: { bn: "বন্ধ করো", en: "Disable" },
   enableAdmin: { bn: "চালু করো", en: "Enable" },
   revokeAdmin: { bn: "এডমিন থেকে সরাও", en: "Remove admin" },
+  setAdminPassword: { bn: "পাসওয়ার্ড বদলাও", en: "Change password" },
+  newAdminPasswordLabel: { bn: "নতুন পাসওয়ার্ড", en: "New password" },
+  setAdminPasswordHint: {
+    bn: "কমপক্ষে ৮ অক্ষর। নতুন পাসওয়ার্ডটা তুমি নিজে ওকে জানিয়ে দাও — কোনো মেইল যাবে না।",
+    en: "At least 8 characters. Tell them the new password yourself — no mail is sent.",
+  },
+  savePassword: { bn: "সংরক্ষণ করো", en: "Save" },
+  savingPassword: { bn: "সংরক্ষণ হচ্ছে…", en: "Saving…" },
+  adminPasswordChanged: { bn: "পাসওয়ার্ড বদলানো হয়েছে", en: "Password changed" },
   revokeAdminConfirm: {
     bn: "এই অ্যাকাউন্টটি আর এডমিন প্যানেলে ঢুকতে পারবে না। লগইনটি থাকবে, কিন্তু কোনো অনুমতি থাকবে না।",
     en: "This account will no longer reach the admin panel. The login remains, but with no access.",

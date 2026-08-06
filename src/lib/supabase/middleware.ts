@@ -102,9 +102,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 2) Logged in on an auth page → wherever this identity belongs.
+  //
+  // Only the admin door sends anyone to the panel. Routing on the is_admin
+  // claim alone was wrong in both directions: the claim outlives the
+  // membership that granted it, so a shop owner who was ever seeded as an
+  // admin was redirected into the panel every time they signed in, and could
+  // never reach their own dashboard again. The claim is now used for one thing
+  // only — denying /admin in rule 3 — and never to take an app away from
+  // someone.
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = isAdmin ? ADMIN_HOME : ROLE_HOME[role];
+    url.pathname = isAdminLogin && isAdmin ? ADMIN_HOME : ROLE_HOME[role];
     url.search = "";
     return NextResponse.redirect(url);
   }
@@ -118,20 +126,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 4) An admin anywhere in the customer or provider app → back to the panel.
-  //
-  // This is the routing half of "an admin is not a customer and not a shop
-  // owner": the account has no profile row, so those screens would render
-  // empty or half-broken. Sending it home is kinder than showing it a
-  // dashboard with nothing in it.
-  if (user && isAdmin && (needsProvider || needsCustomer)) {
-    const url = request.nextUrl.clone();
-    url.pathname = ADMIN_HOME;
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
+  // (Sprint 37) A rule bouncing every is_admin account out of the customer and
+  // provider apps used to sit here. It was cosmetic — an admin has no profile,
+  // so those screens would look empty — and its failure mode was not: any
+  // account carrying a stale is_admin claim was thrown out of its own
+  // dashboard on every single request, with no way back short of editing the
+  // database. An empty screen is a much smaller problem than a locked door.
 
-  // 5) Wrong role for the group → own home.
+  // 4) Wrong role for the group → own home.
   if (user && needsProvider && role !== "provider") {
     const url = request.nextUrl.clone();
     url.pathname = ROLE_HOME.customer;

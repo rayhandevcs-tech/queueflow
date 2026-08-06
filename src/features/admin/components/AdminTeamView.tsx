@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, ShieldCheck, UserRoundX } from "lucide-react";
+import { KeyRound, Plus, ShieldCheck, UserRoundX } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
@@ -137,6 +137,63 @@ function NewAdminForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+/**
+ * Sets another admin's password in place. It stays closed until asked for, so
+ * a row that is only being read never shows a password field.
+ */
+function PasswordRow({ userId, onDone }: { userId: string; onDone: () => void }) {
+  const t = useT(adminDict);
+  const showToast = useToast();
+  const { setPassword } = useAdminTeamMutations();
+  const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setPassword.mutate(
+      { userId, password: value },
+      {
+        onSuccess: () => {
+          showToast(t("adminPasswordChanged"));
+          onDone();
+        },
+        onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+      },
+    );
+  };
+
+  return (
+    <form onSubmit={submit} className="mt-3.5 space-y-3 border-t border-line pt-3.5">
+      <Field label={t("newAdminPasswordLabel")} hint={t("setAdminPasswordHint")}>
+        <PasswordInput
+          autoComplete="new-password"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </Field>
+
+      {error && (
+        <p
+          role="alert"
+          className="rounded-[14px] border border-live/25 bg-live-soft px-3.5 py-2.5 text-sm font-medium text-live"
+        >
+          {error}
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" loading={setPassword.isPending}>
+          {setPassword.isPending ? t("savingPassword") : t("savePassword")}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onDone}>
+          {t("cancelLabel")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function AdminTeamView() {
   const t = useT(adminDict);
   const levelT = useT(ADMIN_LEVEL_LABEL);
@@ -145,6 +202,7 @@ export function AdminTeamView() {
   const { changeStatus, changeLevel, revoke } = useAdminTeamMutations();
   const [adding, setAdding] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [passwordFor, setPasswordFor] = useState<string | null>(null);
 
   const isSuper = identity?.level === "SUPER_ADMIN";
 
@@ -207,9 +265,26 @@ export function AdminTeamView() {
                     </p>
                   </div>
 
-                  {/* Nothing is offered against your own row: disabling or
-                      demoting yourself is how a panel loses its last super
-                      admin, and the RPCs reject it anyway. */}
+                  {/* Role, status and revoke are never offered against your
+                      own row: disabling or demoting yourself is how a panel
+                      loses its last super admin, and the RPCs reject it
+                      anyway. Changing a password is the exception — your own
+                      is the one you are most entitled to change. */}
+                  {isSuper && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setPasswordFor(passwordFor === row.user_id ? null : row.user_id)
+                        }
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                        {t("setAdminPassword")}
+                      </Button>
+                    </div>
+                  )}
+
                   {isSuper && !isMe && (
                     <div className="flex flex-wrap items-center gap-2">
                       <select
@@ -255,6 +330,10 @@ export function AdminTeamView() {
                     </div>
                   )}
                 </div>
+
+                {passwordFor === row.user_id && (
+                  <PasswordRow userId={row.user_id} onDone={() => setPasswordFor(null)} />
+                )}
               </Card>
             );
           })}
