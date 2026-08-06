@@ -12,6 +12,7 @@ import {
   extendSerialTime,
   markNoShow,
   moveSerial,
+  settlePartyDues,
   startSerial,
   type WalkInPayload,
 } from "../api/serial-actions.api";
@@ -130,6 +131,18 @@ export function useSerialActions(shopId: string) {
     onSettled: reconcile,
   });
 
+  // Touches the due ledger and income as well as the board, so refresh wider
+  // than the board key alone.
+  const settleParty = useMutation({
+    mutationFn: ({ groupId, method }: { groupId: string; method: string }) =>
+      settlePartyDues(groupId, method),
+    onSettled: () => {
+      reconcile();
+      void queryClient.invalidateQueries({ queryKey: ["due-ledger"] });
+      void queryClient.invalidateQueries({ queryKey: ["serials"] });
+    },
+  });
+
   const extendTime = useMutation({
     mutationFn: ({
       serialId,
@@ -143,5 +156,16 @@ export function useSerialActions(shopId: string) {
     onSettled: reconcile,
   });
 
-  return { start, complete, noShow, cancel, walkIn, move, extendTime, call, bumpBack };
+  return {
+    start,
+    complete,
+    noShow,
+    cancel,
+    walkIn,
+    move,
+    extendTime,
+    call,
+    bumpBack,
+    settleParty,
+  };
 }

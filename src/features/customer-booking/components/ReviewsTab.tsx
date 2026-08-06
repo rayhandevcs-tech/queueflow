@@ -151,6 +151,14 @@ export function ReviewsTab({ shopId }: { shopId: string }) {
                   ))}
                 </div>
               )}
+              {/* The shop's answer, right under the review it answers — a
+                  complaint and its resolution belong in the same glance. */}
+              {r.owner_reply && (
+                <div className="mt-2.5 rounded-xl border-l-2 border-accent bg-soft px-3 py-2.5">
+                  <p className="text-[11px] font-semibold text-accent">{t("ownerReplyLabel")}</p>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">{r.owner_reply}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>

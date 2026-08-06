@@ -22,8 +22,9 @@ import {
 } from "../hooks/use-shop-detail";
 import { useShopReviewsPublic } from "../hooks/use-shop-reviews-public";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
-import { useCreateBooking } from "../hooks/use-booking-mutations";
+import { useCreateBooking, useCreateGroupBooking } from "../hooks/use-booking-mutations";
 import { AdvancePaymentDialog } from "./AdvancePaymentDialog";
+import { PartySection, type PartyGuest } from "./PartySection";
 import { ShopHero } from "./ShopHero";
 import { ShopQuickActions } from "./ShopQuickActions";
 import { ServicesTab } from "./ServicesTab";
@@ -53,15 +54,21 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const { summary: reviewSummary } = useShopReviewsPublic(shopId);
   const { data: chairs } = useShopChairs(shopId);
   const createBooking = useCreateBooking();
+  const createGroupBooking = useCreateGroupBooking();
   const showToast = useToast();
   const [tab, setTab] = useState("services");
   const [selected, setSelected] = useState<Set<string>>(() => {
     const raw = searchParams.get("services");
     return raw ? new Set(raw.split(",").filter(Boolean)) : new Set();
   });
-  const [preferredChairId, setPreferredChairId] = useState<string | null>(null);
+  // Prefilled by "book again" — the staff member matters as much as the
+  // services when someone is repeating a visit they liked.
+  const [preferredChairId, setPreferredChairId] = useState<string | null>(
+    () => searchParams.get("chair"),
+  );
   const [advance, setAdvance] = useState(false);
   const [payingWith, setPayingWith] = useState(false);
+  const [guests, setGuests] = useState<PartyGuest[]>([]);
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -144,14 +151,50 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const bookable = canBookNow(shop);
 
   const selectedServices = services?.filter((s) => selected.has(s.id)) ?? [];
-  const totalMin = selectedServices.reduce((a, s) => a + s.default_duration_min, 0);
-  const totalAmount = selectedServices.reduce((a, s) => a + s.rate, 0);
+  const rateOf = (id: string) => services?.find((s) => s.id === id)?.rate ?? 0;
+  const durationOf = (id: string) => services?.find((s) => s.id === id)?.default_duration_min ?? 0;
+
+  // The party's numbers, not just the booker's: the sticky bar has to show
+  // what will actually be paid at the counter.
+  const totalMin =
+    selectedServices.reduce((a, s) => a + s.default_duration_min, 0) +
+    guests.reduce((a, g) => a + g.serviceIds.reduce((b, id) => b + durationOf(id), 0), 0);
+  const totalAmount =
+    selectedServices.reduce((a, s) => a + s.rate, 0) +
+    guests.reduce((a, g) => a + g.serviceIds.reduce((b, id) => b + rateOf(id), 0), 0);
+
+  const isParty = guests.length > 0;
+  // A guest with nothing selected can't be booked, and silently dropping them
+  // would be worse than blocking — the customer chose to add that person.
+  const partyIncomplete = guests.some((g) => g.serviceIds.length === 0);
 
   const bookNow = (advanceInfo?: AdvancePaymentInfo) => {
     // Read (never re-request) the location Explore already obtained — this is
     // the wrong moment to raise a permission dialog. Missing/stale → null,
     // and the booking simply gets no leave-now nudge.
     const travelMin = estimateTravelMin(readRememberedLocation(), shop);
+    const onSuccess = (toast: string) => () => {
+      showToast(toast);
+      router.push("/my-serial");
+    };
+
+    if (isParty) {
+      // A party goes through one RPC so it can't end up half-created; advance
+      // payment stays a solo-only option (it locks a single serial).
+      createGroupBooking.mutate(
+        {
+          shopId,
+          members: [
+            { name: "", serviceIds: [...selected] },
+            ...guests.map((g) => ({ name: g.name, serviceIds: g.serviceIds })),
+          ],
+          chairId: effectivePreferredChairId,
+          travelMin,
+        },
+        { onSuccess: onSuccess(t("partyConfirmedToast", guests.length + 1)) },
+      );
+      return;
+    }
 
     createBooking.mutate(
       {
@@ -161,22 +204,19 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         chairId: effectivePreferredChairId,
         travelMin,
       },
-      {
-        onSuccess: () => {
-          showToast(advanceInfo ? t("advancePaidToast") : t("confirmedToast"));
-          router.push("/my-serial");
-        },
-      },
+      { onSuccess: onSuccess(advanceInfo ? t("advancePaidToast") : t("confirmedToast")) },
     );
   };
 
   const onConfirm = () => {
-    if (advance) {
+    if (advance && !isParty) {
       setPayingWith(true);
       return;
     }
     bookNow();
   };
+
+  const booking = isParty ? createGroupBooking : createBooking;
 
   return (
     <div className="-mx-4 -mt-6 pb-32 sm:mx-0 sm:mt-0">
@@ -235,16 +275,25 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
             onAdvanceChange={setAdvance}
           />
         )}
+        {tab === "services" && selected.size > 0 && (
+          <div className="mt-4">
+            <PartySection
+              services={services}
+              ownServiceIds={selectedServiceIds}
+              guests={guests}
+              onGuestsChange={setGuests}
+            />
+          </div>
+        )}
+
         {tab === "staff" && <StaffTab shopId={shopId} services={services} />}
         {tab === "gallery" && <GalleryTab shopId={shopId} />}
         {tab === "reviews" && <ReviewsTab shopId={shopId} />}
         {tab === "details" && <DetailsTab shop={shop} />}
 
-        {createBooking.isError && (
+        {booking.isError && (
           <p className="mt-4 text-sm text-live">
-            {createBooking.error instanceof Error
-              ? createBooking.error.message
-              : t("bookingFailedGeneric")}
+            {booking.error instanceof Error ? booking.error.message : t("bookingFailedGeneric")}
           </p>
         )}
 
@@ -252,21 +301,27 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
           <div className="sticky bottom-24 z-10 mt-4">
             <div className="flex items-center gap-3 rounded-2xl border border-line bg-card/95 p-3.5 shadow-lg backdrop-blur">
               <div>
-                <p className="text-[11px] text-muted">{t("totalMinutesLabel", totalMin)}</p>
+                <p className="text-[11px] text-muted">
+                  {isParty
+                    ? t("partyTotalLabel", guests.length + 1, totalMin)
+                    : t("totalMinutesLabel", totalMin)}
+                </p>
                 <p className="font-number text-[22px] font-bold text-ink">৳{totalAmount}</p>
               </div>
               <Button
                 size="lg"
                 onClick={onConfirm}
-                disabled={!bookable || selected.size === 0}
-                loading={createBooking.isPending}
+                disabled={!bookable || selected.size === 0 || partyIncomplete}
+                loading={booking.isPending}
                 className="flex-1 font-display text-[15px] shadow-glow"
               >
-                {createBooking.isPending
+                {booking.isPending
                   ? t("booking")
-                  : advance
-                    ? t("confirmWithAdvance")
-                    : t("takeSerial")}
+                  : isParty
+                    ? t("takePartySerial", guests.length + 1)
+                    : advance
+                      ? t("confirmWithAdvance")
+                      : t("takeSerial")}
               </Button>
             </div>
           </div>

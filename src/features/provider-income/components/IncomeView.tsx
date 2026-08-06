@@ -5,13 +5,19 @@ import { Spinner } from "@/components/ui/Spinner";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Trophy } from "lucide-react";
+import { useState } from "react";
+import { TabBar } from "@/components/ui/TabBar";
 import { useLanguage, useT } from "@/lib/i18n";
 import { useIncomeSummary } from "../hooks/use-income-summary";
+import { useExpenses } from "../hooks/use-expenses";
+import { StaffEarningsView } from "./StaffEarningsView";
+import { ExpensesView } from "./ExpensesView";
 import { useManualEntryPickers } from "../hooks/use-manual-entries";
 import { providerIncomeDict } from "../lib/i18n";
 
-export function IncomeView({ shopId }: { shopId: string | undefined }) {
+function IncomeSummaryTab({ shopId }: { shopId: string | undefined }) {
   const { summary, isPending } = useIncomeSummary(shopId);
+  const { summary: expenses } = useExpenses(shopId);
   const { chairs } = useManualEntryPickers(shopId);
   const { language } = useLanguage();
   const t = useT(providerIncomeDict);
@@ -39,11 +45,25 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
     };
   };
 
+  const monthProfit = summary.month.amount - expenses.month;
+
   return (
     <div className="space-y-4.5">
-      <div>
-        <h1 className="font-display text-[27px] font-bold text-ink">{t("incomeTrackingTitle")}</h1>
-        <p className="mt-1 text-sm text-muted">{t("incomeSubtitle")}</p>
+      {/* The line the owner is actually after. Income alone never answered
+          "did the shop make money this month" — this does. */}
+      <div className="flex flex-wrap items-end justify-between gap-3 rounded-[20px] bg-ink px-5.5 py-5 text-white">
+        <div>
+          <p className="text-[13px] text-white/60">{t("profitThisMonth", monthName)}</p>
+          <p
+            className="mt-1 font-number text-[34px] leading-none font-extrabold"
+            style={{ color: monthProfit >= 0 ? "var(--color-good)" : "var(--color-live)" }}
+          >
+            ৳{formatMoney(monthProfit)}
+          </p>
+        </div>
+        <p className="text-xs text-white/60">
+          {t("profitFormula", formatMoney(summary.month.amount), formatMoney(expenses.month))}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -167,6 +187,39 @@ export function IncomeView({ shopId }: { shopId: string | undefined }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+type IncomeTab = "summary" | "staff" | "expenses";
+
+/**
+ * Three views of the same money: what came in, who brought it, and what went
+ * out. Tabs rather than three sidebar entries — they're one conversation, and
+ * the sidebar is already thirteen items long.
+ */
+export function IncomeView({ shopId }: { shopId: string | undefined }) {
+  const [tab, setTab] = useState<IncomeTab>("summary");
+  const t = useT(providerIncomeDict);
+
+  const TABS = [
+    { id: "summary", label: t("tabSummary") },
+    { id: "staff", label: t("tabStaff") },
+    { id: "expenses", label: t("tabExpenses") },
+  ];
+
+  return (
+    <div className="space-y-4.5">
+      <div>
+        <h1 className="font-display text-[27px] font-bold text-ink">{t("incomeTrackingTitle")}</h1>
+        <p className="mt-1 text-sm text-muted">{t("incomeSubtitle")}</p>
+      </div>
+
+      <TabBar tabs={TABS} active={tab} onChange={(id) => setTab(id as IncomeTab)} />
+
+      {tab === "summary" && <IncomeSummaryTab shopId={shopId} />}
+      {tab === "staff" && <StaffEarningsView shopId={shopId} />}
+      {tab === "expenses" && <ExpensesView shopId={shopId} />}
     </div>
   );
 }

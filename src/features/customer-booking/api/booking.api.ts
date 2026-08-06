@@ -47,20 +47,26 @@ export async function getShopServices(shopId: string): Promise<Service[]> {
   return data;
 }
 
-/** The signed-in customer's own active serial, anywhere — at most one (DB-enforced). */
-export async function getMyActiveSerial(): Promise<Serial | null> {
+/**
+ * The signed-in customer's own active serials.
+ *
+ * At most one *booking*, but a booking can be a party of up to five, so this
+ * returns rows ordered by party position — index 0 is the solo serial or the
+ * party lead. `maybeSingle()` would now throw on a legitimate family booking.
+ */
+export async function getMyActiveSerials(): Promise<Serial[]> {
   const supabase = getBrowserClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return [];
 
   const { data, error } = await supabase
     .from("serials")
     .select("*")
     .eq("customer_id", user.id)
     .in("status", [...ACTIVE_STATUSES])
-    .maybeSingle();
+    .order("party_seq", { ascending: true, nullsFirst: true });
 
   if (error) throw error;
   return data;
@@ -152,7 +158,9 @@ export async function getShopReviewsPublic(shopId: string): Promise<ReviewRow[]>
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, serial_id, rating, comment, images, chair_id, created_at")
+    .select(
+      "id, serial_id, rating, comment, images, chair_id, created_at, owner_reply, owner_replied_at",
+    )
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
 
@@ -235,6 +243,52 @@ export async function cancelMySerial(serialId: string): Promise<void> {
       .eq("id", serialId);
 
     if (error) throw error;
+  });
+}
+
+/** One person in a party booking. `serviceIds` is per-member — they rarely all want the same thing. */
+export interface PartyMember {
+  name: string;
+  serviceIds: string[];
+}
+
+/**
+ * Book for two to five people at once.
+ *
+ * A single RPC rather than N inserts from here: a party half-created by a
+ * dropped connection would leave the customer holding an active booking they
+ * never asked for, and the one-active-booking rule would then block them from
+ * fixing it. Returns the new group_id.
+ */
+export async function createGroupBooking(
+  shopId: string,
+  members: PartyMember[],
+  opts?: { chairId?: string | null; travelMin?: number | null },
+): Promise<string> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.rpc("create_group_booking", {
+      p_shop_id: shopId,
+      p_members: members.map((m) => ({
+        name: m.name.trim(),
+        service_ids: m.serviceIds,
+      })),
+      p_chair_id: opts?.chairId ?? null,
+      p_travel_min: opts?.travelMin ?? null,
+    });
+
+    if (error) throw error;
+    return data;
+  });
+}
+
+/** Cancels every still-waiting member of a party — "we're not coming at all". */
+export async function cancelMyGroup(groupId: string): Promise<number> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.rpc("cancel_my_group", { p_group_id: groupId });
+    if (error) throw error;
+    return data ?? 0;
   });
 }
 

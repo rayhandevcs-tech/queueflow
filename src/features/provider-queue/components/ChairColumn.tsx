@@ -1,6 +1,7 @@
 "use client";
 
 import { Pause } from "lucide-react";
+import type { Serial } from "@/types";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { AvatarChip } from "@/components/ui/AvatarChip";
@@ -14,10 +15,12 @@ import { EmptyLane } from "./EmptyLane";
 interface Props {
   lane: Lane;
   lanes: Lane[];
+  /** Every row on the board — party badges have to look across lanes. */
+  boardRows: Serial[];
   actions: ReturnType<typeof useSerialActions>;
 }
 
-export function ChairColumn({ lane, lanes, actions }: Props) {
+export function ChairColumn({ lane, lanes, boardRows, actions }: Props) {
   const { chair } = lane;
   const count = lane.waiting.length + (lane.inProgress ? 1 : 0);
   const t = useT(providerQueueDict);
@@ -54,7 +57,9 @@ export function ChairColumn({ lane, lanes, actions }: Props) {
         </span>
       </header>
 
-      {lane.inProgress && <NowServingCard serial={lane.inProgress} actions={actions} />}
+      {lane.inProgress && (
+        <NowServingCard serial={lane.inProgress} boardRows={boardRows} actions={actions} />
+      )}
 
       {lane.waiting.map((serial, index) => (
         <WaitingRow
@@ -62,6 +67,7 @@ export function ChairColumn({ lane, lanes, actions }: Props) {
           serial={serial}
           canStart={lane.canStart && index === 0}
           lanes={lanes}
+          boardRows={boardRows}
           actions={actions}
         />
       ))}

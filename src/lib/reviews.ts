@@ -11,6 +11,9 @@ export interface ReviewRow {
    * hidden review at all (RLS), so there it is always absent.
    */
   hidden_at?: string | null;
+  /** The shop's answer — shown on both the owner's list and the public tab. */
+  owner_reply?: string | null;
+  owner_replied_at?: string | null;
 }
 
 export interface ReviewSummary {

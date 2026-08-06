@@ -16,9 +16,18 @@ import { buildLanes, boardTotals, type Lane } from "../lib/lanes";
 export interface ProviderQueue {
   lanes: Lane[];
   totals: { waiting: number; inProgress: number };
+  /**
+   * The flat board rows, before lane grouping. Party badges need to see across
+   * lanes — a family is deliberately spread over several chairs, so a lane on
+   * its own can't tell you how many of them are still waiting.
+   */
+  rows: Serial[];
   isPending: boolean;
   isError: boolean;
 }
+
+/** Stable identity so an empty board doesn't re-render every consumer. */
+const EMPTY_ROWS: Serial[] = [];
 
 export function useProviderQueue(shopId: string): ProviderQueue {
   const queryClient = useQueryClient();
@@ -84,6 +93,7 @@ export function useProviderQueue(shopId: string): ProviderQueue {
   return {
     lanes,
     totals,
+    rows: serialsQuery.data ?? EMPTY_ROWS,
     isPending: serialsQuery.isPending || chairsQuery.isPending,
     isError: serialsQuery.isError || chairsQuery.isError,
   };

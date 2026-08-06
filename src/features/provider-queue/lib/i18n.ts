@@ -55,6 +55,20 @@ export const providerQueueDict = {
     en: "Bump one step back — the next person goes first",
   },
 
+  // Party booking (Sprint 29)
+  partyBadge: {
+    bn: (index: number, size: number) => `দল ${index}/${size}`,
+    en: (index: number, size: number) => `Party ${index}/${size}`,
+  },
+  settlePartyLabel: {
+    bn: (n: number) => `দলের আরও ${n} জনের বিলও একসাথে নিচ্ছি`,
+    en: (n: number) => `Also settling ${n} more from this party`,
+  },
+  settlePartyHint: {
+    bn: (amount: number) => `তাদের বাকি ৳${amount} — এখনই আদায় ধরা হবে, বাকির খাতায় যাবে না।`,
+    en: (amount: number) => `They still owe ৳${amount} — counted as collected now, not sent to the due ledger.`,
+  },
+
   // MoveSerialMenu
   moveCta: { bn: "সরাও", en: "Move" },
   movingCta: { bn: "সরানো হচ্ছে…", en: "Moving…" },

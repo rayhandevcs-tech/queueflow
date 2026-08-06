@@ -10,6 +10,8 @@ import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { useT } from "@/lib/i18n";
 import { useProfileHistory } from "../hooks/use-profile-history";
 import { useMyFavoriteShops } from "../hooks/use-favorites";
+import { HabitsCard } from "./HabitsCard";
+import { FavoriteAlertsCard } from "./FavoriteAlertsCard";
 import { customerProfileDict } from "../lib/i18n";
 
 export function ProfileView({
@@ -21,7 +23,7 @@ export function ProfileView({
   phone: string | null;
   avatarUrl?: string | null;
 }) {
-  const { shopsById, trust, spending, isPending } = useProfileHistory();
+  const { history, shopsById, trust, spending, isPending } = useProfileHistory();
   const { shops: favoriteShops } = useMyFavoriteShops();
   const t = useT(customerProfileDict);
   const businessTypeT = useT(BUSINESS_TYPE_LABEL);
@@ -219,6 +221,12 @@ export function ProfileView({
         </div>
       )}
 
+      {/* Their own rhythm, and the offer to be reminded of it — placed above
+          favourites because it's the thing that brings them back. */}
+      <div className="mt-5">
+        <HabitsCard serials={history} shopsById={shopsById} />
+      </div>
+
       <div className="mt-5 mb-2.75 flex items-center justify-between">
         <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">{t("favoriteShopsHeading")}</p>
         {favoriteShops.length > 0 && (
@@ -270,6 +278,8 @@ export function ProfileView({
           ))}
         </div>
       )}
+
+      <FavoriteAlertsCard shopsById={shopsById} />
     </div>
   );
 }

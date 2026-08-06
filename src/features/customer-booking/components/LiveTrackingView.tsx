@@ -1,16 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { BellRing, ChevronLeft, Loader2, MapPinCheck, Navigation, Ticket } from "lucide-react";
+import {
+  BellRing,
+  ChevronLeft,
+  Loader2,
+  MapPinCheck,
+  Navigation,
+  Ticket,
+  Users,
+} from "lucide-react";
 import { parseServicesSnapshot, type Serial } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { LiveDot } from "@/components/ui/LiveDot";
 import { CountdownRing } from "@/components/ui/CountdownRing";
 import { useToast } from "@/components/ui/Toast";
-import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
+import { useMyActiveSerials, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useShopDetail } from "../hooks/use-shop-detail";
-import { useCancelMySerial, useMarkArrived } from "../hooks/use-booking-mutations";
+import {
+  useCancelMyGroup,
+  useCancelMySerial,
+  useMarkArrived,
+} from "../hooks/use-booking-mutations";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtMMSS, fmtWait } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
@@ -88,9 +100,84 @@ function ArrivalCard({ serial, nowMs }: { serial: Serial; nowMs: number }) {
   );
 }
 
+/**
+ * Everyone the customer brought, with their own times.
+ *
+ * The ring above tracks the booker; a party is usually split across chairs, so
+ * the person who finishes last is what the family actually plans around — that
+ * is the number this card leads with.
+ */
+function PartyCard({ party, nowMs }: { party: Serial[]; nowMs: number }) {
+  const t = useT(customerBookingDict);
+
+  const finishAt = (s: Serial) => {
+    const startMs = s.estimated_start_at
+      ? new Date(s.estimated_start_at).getTime()
+      : s.started_at
+        ? new Date(s.started_at).getTime()
+        : nowMs;
+    return startMs + s.estimated_duration_min * 60_000;
+  };
+  const lastFinish = Math.max(...party.map(finishAt));
+
+  return (
+    <div className="mt-4 rounded-2xl border border-line bg-card p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-sm font-bold text-ink">
+          <Users className="h-4 w-4 text-muted" />
+          {t("partyLabel", party.length)}
+        </span>
+        <span className="text-right">
+          <span className="block text-[10px] text-muted">{t("partyLastDoneLabel")}</span>
+          <span className="font-number text-sm font-bold text-live">
+            {fmtWait((lastFinish - nowMs) / 1000).label}
+          </span>
+        </span>
+      </div>
+
+      <ul className="space-y-2">
+        {party.map((member, i) => {
+          const running = member.status === "IN_PROGRESS";
+          const startMs = member.estimated_start_at
+            ? new Date(member.estimated_start_at).getTime()
+            : nowMs;
+          return (
+            <li
+              key={member.id}
+              className="flex items-center gap-3 rounded-[14px] px-3 py-2.5"
+              style={{ background: running ? "var(--color-live-soft)" : "var(--color-soft)" }}
+            >
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[10px] bg-card font-number text-xs font-bold text-muted">
+                #{member.position}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">
+                {i === 0
+                  ? t("youLabel")
+                  : (member.party_member_name ?? t("partyMemberFallback", i + 1))}
+              </span>
+              <span
+                className="font-number text-[13px] font-semibold"
+                style={{ color: running ? "var(--color-live)" : "var(--color-ink)" }}
+              >
+                {running ? t("running") : fmtWait((startMs - nowMs) / 1000).label}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function LiveTrackingView() {
-  const { data: serial, isPending } = useMyActiveSerial();
+  // A booking may be a party, so this is a list. Index 0 is the customer's own
+  // serial (the lead); the rest are whoever they brought.
+  const { data: rows, isPending } = useMyActiveSerials();
+  const serial = rows?.[0] ?? null;
+  const party = rows ?? [];
   const cancel = useCancelMySerial();
+  const cancelParty = useCancelMyGroup();
+  const showToast = useToast();
   const shopQuery = useShopDetail(serial?.shop_id ?? "");
   const queuePublic = useShopQueuePublic(serial?.shop_id);
   const nowMs = useNowMs(1000);
@@ -214,6 +301,8 @@ export function LiveTrackingView() {
 
       <ArrivalCard serial={serial} nowMs={nowMs} />
 
+      {party.length > 1 && <PartyCard party={party} nowMs={nowMs} />}
+
       <p className="mt-5.5 mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
         {t("aheadOfYou", aheadRows.length)}
       </p>
@@ -305,20 +394,52 @@ export function LiveTrackingView() {
       </Link>
 
       {serial.status === "WAITING" && (
-        <button
-          type="button"
-          onClick={() => cancel.mutate(serial.id)}
-          disabled={cancel.isPending}
-          className="mt-3 w-full py-2 text-center text-sm font-medium text-live disabled:opacity-50"
-        >
-          {cancel.isPending ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("cancelling")}
-            </span>
-          ) : (
-            t("cancelSerial")
+        <>
+          <button
+            type="button"
+            onClick={() =>
+              cancel.mutate(serial.id, {
+                onSuccess: () =>
+                  party.length > 1 ? showToast(t("memberCancelledToast")) : undefined,
+              })
+            }
+            disabled={cancel.isPending || cancelParty.isPending}
+            className="mt-3 w-full py-2 text-center text-sm font-medium text-live disabled:opacity-50"
+          >
+            {cancel.isPending ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("cancelling")}
+              </span>
+            ) : party.length > 1 ? (
+              t("cancelJustThisOne")
+            ) : (
+              t("cancelSerial")
+            )}
+          </button>
+
+          {/* One decision ("we're not coming"), one tap — rather than
+              cancelling three people one at a time. */}
+          {party.length > 1 && serial.group_id && (
+            <button
+              type="button"
+              onClick={() =>
+                cancelParty.mutate(serial.group_id!, {
+                  onSuccess: () => showToast(t("partyCancelledToast")),
+                })
+              }
+              disabled={cancel.isPending || cancelParty.isPending}
+              className="w-full py-2 text-center text-sm font-semibold text-live disabled:opacity-50"
+            >
+              {cancelParty.isPending ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("cancelling")}
+                </span>
+              ) : (
+                t("cancelWholeParty")
+              )}
+            </button>
           )}
-        </button>
+        </>
       )}
     </div>
   );

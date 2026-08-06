@@ -25,6 +25,9 @@ export const keys = {
   shopGallery: {
     byShop: (shopId: string) => ["shop-gallery", shopId] as const,
   },
+  display: {
+    board: (shopId: string) => ["display", shopId] as const,
+  },
   queuePublic: {
     byShop: (shopId: string) => ["queue-public", shopId] as const,
     counts: () => ["queue-public", "counts"] as const,
@@ -37,6 +40,7 @@ export const keys = {
     liveCount: (shopId: string) => ["serials", "live-count", shopId] as const,
     incomeHistory: (shopId: string) => ["serials", "income-history", shopId] as const,
     analyticsHistory: (shopId: string) => ["serials", "analytics-history", shopId] as const,
+    party: (groupId: string) => ["serials", "party", groupId] as const,
   },
   dueLedger: {
     byShop: (shopId: string) => ["due-ledger", "shop", shopId] as const,
@@ -57,6 +61,11 @@ export const keys = {
   },
   favorites: {
     mine: () => ["favorites", "mine"] as const,
+    /** Full rows (with each one's wait-alert threshold), not just the id set. */
+    rows: () => ["favorites", "rows"] as const,
+  },
+  reminder: {
+    mine: () => ["customer-reminder", "mine"] as const,
   },
   pushSubscription: {
     mine: () => ["push-subscription", "mine"] as const,
@@ -67,6 +76,9 @@ export const keys = {
   },
   manualEntries: {
     byShop: (shopId: string) => ["manual-entries", shopId] as const,
+  },
+  expenses: {
+    byShop: (shopId: string) => ["shop-expenses", shopId] as const,
   },
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,

@@ -10,6 +10,7 @@ import {
   Radio,
   Share,
   UserPlus,
+  Wallet,
   XCircle,
 } from "lucide-react";
 import { Switch } from "@/components/ui/Switch";
@@ -128,6 +129,12 @@ export function NotificationSettingsForm() {
             icon: <UserPlus className="h-4.5 w-4.5" />,
             label: t("newBookingLabel"),
             hint: t("newBookingHint"),
+          },
+          {
+            type: "DAILY_SUMMARY" as NotificationType,
+            icon: <Wallet className="h-4.5 w-4.5" />,
+            label: t("dailySummaryLabel"),
+            hint: t("dailySummaryHint"),
           },
         ]
       : [

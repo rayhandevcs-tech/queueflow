@@ -35,6 +35,7 @@ export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
       label: initial?.label ?? "",
       staff_name: initial?.staff_name ?? "",
       color: initial?.color ?? CHAIR_COLORS[0],
+      commission_pct: initial?.commission_pct ?? 0,
     },
   });
 
@@ -62,6 +63,17 @@ export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
           />
         </Field>
       </div>
+
+      {/* 0 means salaried, which is why it stays the default — no existing
+          shop should suddenly look like it owes anyone a cut. */}
+      <Field label={t("commissionLabel")} hint={t("commissionHint")} error={err.commission_pct?.message}>
+        <Input
+          {...form.register("commission_pct")}
+          inputMode="numeric"
+          placeholder="0"
+          invalid={!!err.commission_pct}
+        />
+      </Field>
 
       <div>
         <span className="mb-1.5 block text-xs font-medium text-muted">{t("laneColorLabel")}</span>
