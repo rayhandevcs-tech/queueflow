@@ -281,14 +281,21 @@ export type Database = {
           id: string;
           customer_id: string;
           shop_id: string;
+          /** Standing wait alert — NULL is an ordinary bookmark (20260831_retention.sql). */
+          wait_alert_min: number | null;
+          alerted_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           customer_id: string;
           shop_id: string;
+          wait_alert_min?: number | null;
         };
-        Update: never;
+        // alerted_at is the rate-limit stamp, written only by notify_shop_wait_drop().
+        Update: {
+          wait_alert_min?: number | null;
+        };
         Relationships: [];
       };
       push_subscriptions: {
@@ -423,6 +430,32 @@ export type Database = {
           payment_status?: "PAID" | "DUE";
           note?: string | null;
           customer_name?: string | null;
+        };
+        Relationships: [];
+      };
+      customer_reminders: {
+        Row: {
+          id: string;
+          customer_id: string;
+          shop_id: string | null;
+          interval_days: number;
+          next_at: string;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          shop_id?: string | null;
+          interval_days: number;
+          next_at: string;
+          active?: boolean;
+        };
+        Update: {
+          shop_id?: string | null;
+          interval_days?: number;
+          next_at?: string;
+          active?: boolean;
         };
         Relationships: [];
       };
@@ -891,6 +924,15 @@ export type Database = {
        * Service-role only (not granted to `authenticated`) — it walks every
        * shop on the platform. Called by the nightly cron route.
        */
+      shop_current_wait: {
+        Args: { p_shop_id: string };
+        Returns: number;
+      };
+      /** Service-role only — walks every customer. Called by the nightly cron route. */
+      send_customer_reminders: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       send_daily_summaries: {
         Args: { p_day?: string | null };
         /** How many summaries were sent. */
@@ -913,7 +955,8 @@ export type Database = {
         | "SYSTEM"
         | "NEW_BOOKING"
         | "LEAVE_NOW"
-        | "DAILY_SUMMARY";
+        | "DAILY_SUMMARY"
+        | "WAIT_ALERT";
       payment_status: "PAID" | "DUE" | "ADVANCE";
       // shop_status / admin_level are CHECK constraints in Postgres rather than
       // real enum types; they live here so the app has one name for the values.

@@ -8,6 +8,7 @@ import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 import { ShopList } from "./ShopList";
 import { ShopMap } from "./ShopMap";
+import { FirstRunSheet } from "./FirstRunSheet";
 
 export function ExploreView({
   shops,
@@ -29,6 +30,8 @@ export function ExploreView({
 
   return (
     <div className="space-y-4">
+      <FirstRunSheet />
+
       <div className="inline-flex gap-1 rounded-xl border border-line bg-card p-1 shadow-xs">
         <button
           type="button"

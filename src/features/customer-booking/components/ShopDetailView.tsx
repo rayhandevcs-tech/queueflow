@@ -61,7 +61,11 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
     const raw = searchParams.get("services");
     return raw ? new Set(raw.split(",").filter(Boolean)) : new Set();
   });
-  const [preferredChairId, setPreferredChairId] = useState<string | null>(null);
+  // Prefilled by "book again" — the staff member matters as much as the
+  // services when someone is repeating a visit they liked.
+  const [preferredChairId, setPreferredChairId] = useState<string | null>(
+    () => searchParams.get("chair"),
+  );
   const [advance, setAdvance] = useState(false);
   const [payingWith, setPayingWith] = useState(false);
   const [guests, setGuests] = useState<PartyGuest[]>([]);

@@ -112,4 +112,56 @@ export const customerProfileDict = {
     en: "Upload failed — try again",
   },
   notLoggedIn: { bn: "লগইন করা নেই", en: "Not logged in" },
+
+  // Habits + self-reminder (Sprint 32)
+  habitsHeading: { bn: "তোমার অভ্যাস", en: "Your habits" },
+  habitCadenceLabel: { bn: "সাধারণত যাও", en: "You usually go" },
+  habitLastVisitLabel: { bn: "শেষ গিয়েছিলে", en: "Last visit" },
+  habitEveryDays: {
+    bn: (n: number) => `প্রতি ${n} দিনে`,
+    en: (n: number) => `every ${n} days`,
+  },
+  habitDaysAgo: {
+    bn: (n: number) => (n === 0 ? "আজই" : `${n} দিন আগে`),
+    en: (n: number) => (n === 0 ? "today" : `${n} days ago`),
+  },
+  habitUnknown: { bn: "—", en: "—" },
+  habitFavouriteShop: {
+    bn: (shop: string, visits: number) => `সবচেয়ে বেশি যাও ${shop}-এ · মোট ${visits} বার`,
+    en: (shop: string, visits: number) => `Most visits at ${shop} · ${visits} in total`,
+  },
+  reminderPrompt: { bn: "মনে করিয়ে দেবো?", en: "Want a reminder?" },
+  everyWeeks: {
+    bn: (n: number) => `${n} সপ্তাহ`,
+    en: (n: number) => `${n} weeks`,
+  },
+  reminderSetCta: { bn: "সেট করো", en: "Set it" },
+  reminderActive: {
+    bn: (n: number) => `প্রতি ${n} সপ্তাহে মনে করিয়ে দেবো`,
+    en: (n: number) => `We'll remind you every ${n} weeks`,
+  },
+  reminderStopCta: { bn: "বন্ধ করো", en: "Turn off" },
+  reminderSavedToast: {
+    bn: (n: number) => `প্রতি ${n} সপ্তাহে মনে করিয়ে দেবো`,
+    en: (n: number) => `Reminder set for every ${n} weeks`,
+  },
+  reminderRemovedToast: { bn: "রিমাইন্ডার বন্ধ হয়েছে", en: "Reminder turned off" },
+  reminderFailedToast: { bn: "সেট করা যায়নি — আবার চেষ্টা করো।", en: "Couldn't set it — try again." },
+  bookAgainShort: { bn: "আবার", en: "Again" },
+
+  // Favourite wait alerts
+  waitAlertHeading: { bn: "কখন খবর দেবো", en: "When to ping you" },
+  waitAlertHint: {
+    bn: "প্রিয় দোকানের অপেক্ষা এর নিচে নামলে জানিয়ে দেবো — দিনে সর্বোচ্চ একবার।",
+    en: "We'll tell you when a favourite's wait drops below this — at most once a day.",
+  },
+  waitAlertOff: { bn: "বন্ধ", en: "Off" },
+  waitAlertUnder: {
+    bn: (n: number) => `${n} মিনিটের কম`,
+    en: (n: number) => `under ${n} min`,
+  },
+  waitAlertSetToast: {
+    bn: (n: number) => `${n} মিনিটের কম হলে জানিয়ে দেবো`,
+    en: (n: number) => `We'll ping you under ${n} min`,
+  },
 } satisfies Dict;

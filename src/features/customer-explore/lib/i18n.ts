@@ -88,4 +88,23 @@ export const customerExploreDict = {
   minUnit: { bn: "মিন", en: "min" },
   lowestWaitLabel: { bn: "সবচেয়ে কম ওয়েট", en: "Lowest wait" },
   nearbyShopsHeading: { bn: "আশেপাশের দোকান", en: "Nearby shops" },
+
+  // First-run intro (Sprint 32)
+  introTitle: { bn: "কীভাবে কাজ করে", en: "How it works" },
+  introStep1Title: { bn: "আশেপাশের দোকান দেখো", en: "Find shops near you" },
+  introStep1Body: {
+    bn: "কোন দোকানে এখন কতজন আছে আর কত অপেক্ষা, সব লাইভ দেখা যায়।",
+    en: "See how many are in each queue right now, and how long the wait is.",
+  },
+  introStep2Title: { bn: "ফোন থেকেই সিরিয়াল নাও", en: "Take a serial from your phone" },
+  introStep2Body: {
+    bn: "সার্ভিস বেছে সিরিয়াল নাও — চাইলে সাথের লোকজনের জন্যও একসাথে।",
+    en: "Pick your services and book — for the people with you too, if you like.",
+  },
+  introStep3Title: { bn: "সময় হলে খবর পাবে", en: "We'll tell you when to go" },
+  introStep3Body: {
+    bn: "দোকানে বসে থাকার দরকার নেই — পালা কাছে এলে কখন রওনা দিতে হবে জানিয়ে দেবো।",
+    en: "No sitting around at the shop — we'll tell you when to set out.",
+  },
+  introStartCta: { bn: "শুরু করি", en: "Let's go" },
 } satisfies Dict;

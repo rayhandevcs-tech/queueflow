@@ -4,6 +4,7 @@ import {
   Bell,
   Calendar,
   CheckCheck,
+  Heart,
   Megaphone,
   Navigation,
   PartyPopper,
@@ -32,6 +33,7 @@ const TYPE_ICON: Record<NotificationType, React.ReactNode> = {
   NEW_BOOKING: <UserPlus className="h-4.5 w-4.5" />,
   LEAVE_NOW: <Navigation className="h-4.5 w-4.5" />,
   DAILY_SUMMARY: <Wallet className="h-4.5 w-4.5" />,
+  WAIT_ALERT: <Heart className="h-4.5 w-4.5" />,
 };
 
 function dayLabel(dateStr: string): string {

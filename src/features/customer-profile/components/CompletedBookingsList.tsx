@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Star, Store } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Repeat, Star, Store } from "lucide-react";
 import type { Serial, Shop } from "@/types";
 import { parseServicesSnapshot } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
@@ -12,6 +13,13 @@ import { customerProfileDict } from "../lib/i18n";
 import { ReviewDialog } from "./ReviewDialog";
 import { EReceiptSheet } from "./EReceiptSheet";
 
+/** Same shop, same services, same staff — the shop page reads all three. */
+function rebookHref(s: Serial): string {
+  const params = new URLSearchParams({ services: s.service_ids.join(",") });
+  if (s.chair_id) params.set("chair", s.chair_id);
+  return `/explore/${s.shop_id}?${params.toString()}`;
+}
+
 export function CompletedBookingsList({
   bookings,
   shopsById,
@@ -21,6 +29,7 @@ export function CompletedBookingsList({
   shopsById: Record<string, Shop>;
   ratingsBySerial: Record<string, number>;
 }) {
+  const router = useRouter();
   const [reviewing, setReviewing] = useState<Serial | null>(null);
   const [receiptFor, setReceiptFor] = useState<Serial | null>(null);
   const t = useT(customerProfileDict);
@@ -89,6 +98,20 @@ export function CompletedBookingsList({
                   {t("giveReview")}
                 </button>
               )}
+              {/* Repeat business lives here, not on the cancelled tab where
+                  the only rebook button used to be. Carries the same staff
+                  through too — "the usual, with the usual person". */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(rebookHref(s));
+                }}
+                className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-muted hover:text-accent"
+              >
+                <Repeat className="h-2.5 w-2.5" />
+                {t("bookAgainShort")}
+              </button>
             </div>
           </div>
         );

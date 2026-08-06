@@ -61,6 +61,11 @@ export const keys = {
   },
   favorites: {
     mine: () => ["favorites", "mine"] as const,
+    /** Full rows (with each one's wait-alert threshold), not just the id set. */
+    rows: () => ["favorites", "rows"] as const,
+  },
+  reminder: {
+    mine: () => ["customer-reminder", "mine"] as const,
   },
   pushSubscription: {
     mine: () => ["push-subscription", "mine"] as const,
