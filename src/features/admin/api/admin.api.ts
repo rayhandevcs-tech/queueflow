@@ -317,17 +317,36 @@ export interface DeleteUserResult {
   serials_anonymised: number;
 }
 
+/**
+ * Routed through /api/admin/account rather than calling admin_delete_user()
+ * directly. The RPC tears down the public schema, but the auth.users row — and
+ * the identity row that actually holds the email address — can only be removed
+ * through Supabase's Admin API. Deleting it in SQL freed the user row and
+ * stranded the identity, which is why a deleted account's email could never be
+ * registered again.
+ */
 export async function deleteUser(
   userId: string,
   reason?: string | null,
 ): Promise<DeleteUserResult> {
-  const supabase = getBrowserClient();
-  const { data, error } = await supabase.rpc("admin_delete_user", {
-    p_user_id: userId,
-    p_reason: reason?.trim() || null,
+  const response = await fetch("/api/admin/account", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "delete_account", userId, reason: reason?.trim() || null }),
   });
-  if (error) throw error;
-  return data as unknown as DeleteUserResult;
+
+  const payload = (await response.json().catch(() => null)) as
+    | (Partial<DeleteUserResult> & { error?: string })
+    | null;
+
+  if (!response.ok) throw new Error(payload?.error ?? "মোছা যায়নি");
+
+  return {
+    email: payload?.email ?? null,
+    shop_deleted: payload?.shop_deleted ?? false,
+    shop_serials_deleted: payload?.shop_serials_deleted ?? 0,
+    serials_anonymised: payload?.serials_anonymised ?? 0,
+  };
 }
 
 export type AdminAccountAction = "confirm_email" | "change_email" | "send_password_reset";

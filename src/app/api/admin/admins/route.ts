@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { getServiceRoleClient } from "@/lib/supabase/service-role";
+import { requireAdmin } from "../_guard";
 import type { AdminLevel } from "@/types";
 
 /**
@@ -11,14 +10,13 @@ import type { AdminLevel } from "@/types";
  * Supabase's Admin API's job — hand-writing into the auth schema is how
  * accounts end up unable to sign in (see the note in /api/admin/account).
  *
- * Authorisation is two-step and never trusts the caller's own claim: the
- * session cookie says who is asking, then admin_users is read with the service
- * role to confirm they are an ACTIVE SUPER_ADMIN. admin_provision_admin()
- * re-checks the same thing in SQL, so neither layer is load-bearing alone.
+ * Authorisation is two-step and never trusts the caller's own claim (see
+ * requireAdmin). admin_provision_admin() re-checks the same thing in SQL, so
+ * neither layer is load-bearing alone.
  *
  * email_confirm: true is deliberate. An admin is vouched for by another admin,
  * not by a confirmation mail — and making the panel's access depend on inbox
- * delivery is exactly the failure this sprint is fixing elsewhere.
+ * delivery is exactly the failure this fixes elsewhere.
  */
 
 const LEVELS: readonly AdminLevel[] = ["SUPER_ADMIN", "MODERATOR", "SUPPORT"];
@@ -31,26 +29,9 @@ interface Body {
 }
 
 export async function POST(req: Request) {
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
-  const admin = getServiceRoleClient();
-
-  const { data: actor } = await admin
-    .from("admin_users")
-    .select("user_id, level, status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!actor || actor.level !== "SUPER_ADMIN" || actor.status !== "ACTIVE") {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  }
+  const guard = await requireAdmin("SUPER_ADMIN");
+  if ("response" in guard) return guard.response;
+  const { ctx } = guard;
 
   let body: Body;
   try {
@@ -77,14 +58,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "রোল বেছে নাও" }, { status: 400 });
   }
 
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
+  const { data: created, error: createError } = await ctx.service.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    // No `role` key: the signup trigger reads that to decide customer vs
-    // provider, and this account is neither. Whatever profile row the trigger
-    // still creates is removed by admin_provision_admin() below.
-    user_metadata: { full_name: fullName, is_admin_account: true },
+    user_metadata: {
+      full_name: fullName,
+      is_admin_account: true,
+      // `role` is here only to satisfy the baseline signup trigger, which reads
+      // it and writes a NOT NULL profiles.role. Omitting it aborted the whole
+      // createUser call with "Database error creating new user" — the account
+      // was never created, so the panel could not add admins at all. The row
+      // the trigger writes is deleted a few lines below by
+      // admin_provision_admin(); that deletion, not this value, is what makes
+      // the account "not a customer".
+      role: "customer",
+    },
     app_metadata: { is_admin: true },
   });
 
@@ -97,8 +86,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: friendly }, { status: 400 });
   }
 
-  const { error: provisionError } = await admin.rpc("admin_provision_admin", {
-    p_actor: user.id,
+  const { error: provisionError } = await ctx.service.rpc("admin_provision_admin", {
+    p_actor: ctx.userId,
     p_user_id: created.user.id,
     p_full_name: fullName,
     p_email: email,
@@ -108,8 +97,18 @@ export async function POST(req: Request) {
   if (provisionError) {
     // The login exists but is not an admin and has no profile — an account
     // that can do nothing at all. Roll it back rather than leave that behind.
-    await admin.auth.admin.deleteUser(created.user.id);
-    return NextResponse.json({ error: provisionError.message }, { status: 400 });
+    await ctx.service.auth.admin.deleteUser(created.user.id);
+    const missing = /admin_provision_admin|schema cache|does not exist/i.test(
+      provisionError.message,
+    );
+    return NextResponse.json(
+      {
+        error: missing
+          ? "ডেটাবেস মাইগ্রেশন বাকি আছে — 20260901_admin_identity.sql চালাও"
+          : provisionError.message,
+      },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json({ ok: true });
