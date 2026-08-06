@@ -1,6 +1,7 @@
 "use client";
 
 import { Coffee, MonitorOff, WifiOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/Spinner";
 import { LiveDot } from "@/components/ui/LiveDot";
 import { AvatarChip } from "@/components/ui/AvatarChip";
@@ -19,6 +20,12 @@ import type { DisplayLane } from "../api/display.api";
  * is oversized and there is nothing to tap — no nav, no auth, no interaction
  * at all. The point isn't only to inform the people already waiting: it is the
  * cheapest advertising the shop has, because every one of them asks what it is.
+ *
+ * It was built dark, on the theory that a wall screen wants contrast. That was
+ * wrong for the one job it does best: it is the only piece of the product a
+ * stranger sees before they know the product exists, and it looked like a
+ * different app. It now uses the same paper, cards and hairlines as everything
+ * else — the size does the reading-from-a-distance work, not the darkness.
  */
 export function DisplayBoardView({ shopId }: { shopId: string }) {
   const { data: board, isPending, isError } = useDisplayBoard(shopId);
@@ -31,21 +38,21 @@ export function DisplayBoardView({ shopId }: { shopId: string }) {
 
   if (isPending) {
     return (
-      <div className="grid min-h-dvh place-items-center bg-ink">
-        <Spinner className="h-10 w-10 text-white/50" />
+      <div className="grid min-h-dvh place-items-center bg-paper">
+        <Spinner className="h-10 w-10 text-muted" />
       </div>
     );
   }
 
   if (isError || !board) {
     return (
-      <div className="grid min-h-dvh place-items-center bg-ink px-6 text-center">
+      <div className="grid min-h-dvh place-items-center bg-paper px-6 text-center">
         <div>
-          <MonitorOff className="mx-auto h-12 w-12 text-white/30" />
-          <p className="mt-4 font-display text-2xl font-bold text-white">
+          <MonitorOff className="mx-auto h-12 w-12 text-muted" />
+          <p className="mt-4 font-display text-2xl font-bold text-ink">
             {isError ? t("connectionLost") : t("notFoundTitle")}
           </p>
-          {!isError && <p className="mt-2 text-white/50">{t("notFoundBody")}</p>}
+          {!isError && <p className="mt-2 text-muted">{t("notFoundBody")}</p>}
         </div>
       </div>
     );
@@ -63,19 +70,19 @@ export function DisplayBoardView({ shopId }: { shopId: string }) {
         : null;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-ink px-5 py-6 text-white sm:px-8 lg:px-12">
+    <div className="flex min-h-dvh flex-col bg-paper px-5 py-6 text-ink sm:px-8 lg:px-12">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-extrabold sm:text-3xl lg:text-4xl">
           {board.shop.name}
         </h1>
-        <span className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold sm:text-sm">
+        <span className="flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 text-xs font-semibold text-muted shadow-xs sm:text-sm">
           <LiveDot />
           {t("waitingCount", board.waiting_total)}
         </span>
       </header>
 
       {notice && (
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-brass/20 px-5 py-3.5 text-base font-bold text-brass sm:text-xl">
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-brass/25 bg-brass-soft px-5 py-3.5 text-base font-bold text-brass sm:text-xl">
           {breakLeft > 0 ? (
             <Coffee className="h-5 w-5 shrink-0" />
           ) : (
@@ -91,13 +98,13 @@ export function DisplayBoardView({ shopId }: { shopId: string }) {
         ))}
       </div>
 
-      <footer className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-white/10 pt-5">
+      <footer className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-line pt-5">
         <div>
           <p className="font-display text-xl font-extrabold sm:text-3xl">{t("ctaHeadline")}</p>
-          <p className="mt-1 text-sm text-white/60 sm:text-lg">{t("ctaBody")}</p>
+          <p className="mt-1 text-sm text-muted sm:text-lg">{t("ctaBody")}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-white/50 sm:text-sm">{t("estWait")}</p>
+          <p className="text-xs text-muted sm:text-sm">{t("estWait")}</p>
           <p className="font-number text-4xl font-extrabold text-accent sm:text-6xl">
             {num(board.wait_min)}
             <span className="ml-1.5 text-base font-bold sm:text-2xl">{t("minutes")}</span>
@@ -119,7 +126,7 @@ function LaneCard({
   const busy = lane.now_serving != null;
 
   return (
-    <section className="rounded-3xl bg-white/[0.07] p-5 sm:p-6">
+    <section className="rounded-3xl border border-line bg-card p-5 shadow-sm sm:p-6">
       <div className="flex items-center gap-3">
         <AvatarChip label={lane.staff_name} avatarUrl={lane.avatar_url} shape="circle" size={40} />
         <p className="min-w-0 flex-1 truncate font-display text-lg font-bold sm:text-2xl">
@@ -129,17 +136,23 @@ function LaneCard({
 
       <div className="mt-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs text-white/50 sm:text-sm">{t("nowServing")}</p>
+          <p className="text-xs text-muted sm:text-sm">{t("nowServing")}</p>
           <p
-            className="font-number text-5xl leading-none font-extrabold sm:text-7xl"
-            style={{ color: busy ? "var(--color-accent)" : "rgba(255,255,255,0.35)" }}
+            className={cn(
+              "font-number text-5xl leading-none font-extrabold sm:text-7xl",
+              // "খালি" was a washed-out grey on the dark board, which had it
+              // backwards: a free chair is the most useful thing a passer-by
+              // can see, so it gets the good tone rather than being faded out.
+              // Only one of the two ever shows in a lane, so they never clash.
+              busy ? "text-accent" : "text-good",
+            )}
           >
             {busy ? `#${num(lane.now_serving!)}` : t("freeNow")}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-xs text-white/50 sm:text-sm">{t("nextUp")}</p>
-          <p className="font-number text-2xl font-bold text-white/80 sm:text-4xl">
+          <p className="text-xs text-muted sm:text-sm">{t("nextUp")}</p>
+          <p className="font-number text-2xl font-bold text-ink sm:text-4xl">
             {lane.next_up != null ? `#${num(lane.next_up)}` : t("noneWaiting")}
           </p>
         </div>
