@@ -15,7 +15,13 @@ const PROVIDER_PREFIXES = [
   "/regulars",
   "/reviews",
 ];
-const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile"];
+const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile", "/chats", "/transactions"];
+/**
+ * Customer pages that are one exact path, because a child of theirs belongs to
+ * someone else: /notifications is the customer's inbox, while
+ * /notifications/send is the provider's broadcast screen.
+ */
+const CUSTOMER_EXACT = ["/notifications"];
 const ADMIN_PREFIXES = ["/admin"];
 const AUTH_PAGES = [
   "/login",
@@ -79,7 +85,16 @@ export async function updateSession(request: NextRequest) {
 
   const isAdminLogin = path === ADMIN_LOGIN;
   const needsProvider = startsWithAny(path, PROVIDER_PREFIXES);
-  const needsCustomer = startsWithAny(path, CUSTOMER_PREFIXES);
+  // /explore/[shopId] is the URL printed on every shop's QR poster, so it has
+  // to open for someone with no account — that is the whole point of the
+  // poster. Nothing else under /explore is public: the browse home needs an
+  // account, and /explore/[shopId]/chat needs one to be worth showing at all,
+  // since you cannot message a shop as nobody.
+  const isPublicShopPage = /^\/explore\/[^/]+$/.test(path);
+  const needsCustomer =
+    startsWithAny(path, CUSTOMER_PREFIXES) ||
+    CUSTOMER_EXACT.includes(path) ||
+    (startsWithAny(path, ["/explore"]) && !isPublicShopPage);
   // /admin/login is under /admin but must be reachable without a session —
   // it is where you go to *get* one.
   const needsAdmin = startsWithAny(path, ADMIN_PREFIXES) && !isAdminLogin;

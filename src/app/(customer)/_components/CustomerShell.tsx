@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,10 +18,60 @@ function isChatRoute(pathname: string): boolean {
   return pathname === "/chats" || /^\/explore\/[^/]+\/chat$/.test(pathname);
 }
 
-export function CustomerShell({ children }: { children: React.ReactNode }) {
+/**
+ * What a visitor with no account sees on the one page that welcomes them —
+ * a shop opened from its QR poster. The signed-in chrome would be a lie here:
+ * a profile, a notification bell and a log-out button belong to an account
+ * this person does not have. They get the brand and a way in instead.
+ */
+function GuestShell({ children }: { children: React.ReactNode }) {
+  const t = useT(customerShellDict);
+
+  return (
+    <div className="min-h-dvh">
+      <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3">
+        <Link href="/login">
+          <Wordmark size="sm" />
+        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/login"
+            className="rounded-[14px] px-3 py-2 text-[13px] font-semibold text-muted hover:bg-soft"
+          >
+            {t("guestLogin")}
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-[14px] bg-accent px-3.5 py-2 text-[13px] font-bold text-accent-ink hover:opacity-90"
+          >
+            {t("guestSignUp")}
+          </Link>
+        </div>
+      </div>
+
+      <main className="mx-auto min-w-0 max-w-md px-4 pt-6 pb-10">{children}</main>
+    </div>
+  );
+}
+
+/**
+ * @param signedIn defaults to true because every other caller
+ *   (SharedPageShell, /account) sits behind a route middleware already
+ *   requires a session for. Only the (customer) layout, which serves the one
+ *   publicly reachable page, passes it.
+ */
+export function CustomerShell({
+  signedIn = true,
+  children,
+}: {
+  signedIn?: boolean;
+  children: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const t = useT(customerShellDict);
+
+  if (!signedIn) return <GuestShell>{children}</GuestShell>;
 
   return (
     <div className="min-h-dvh lg:flex">

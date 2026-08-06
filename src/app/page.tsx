@@ -9,7 +9,12 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/explore");
+  // No session → the login screen. This used to drop people straight into
+  // /explore, which read as a signed-in app: the sidebar showed a profile, a
+  // notification bell and a log-out button to someone who had never signed in.
+  // The one public entry point is /explore/[shopId], reached from a shop's QR
+  // poster — that one is deliberate, and middleware still lets it through.
+  if (!user) redirect("/login");
 
   if (user.app_metadata?.is_admin === true) redirect(ADMIN_HOME);
 

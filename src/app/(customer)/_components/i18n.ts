@@ -6,4 +6,6 @@ export const customerShellDict = {
   logout: { bn: "লগ-আউট", en: "Log out" },
   openMenu: { bn: "মেনু খোলো", en: "Open menu" },
   closeMenu: { bn: "মেনু বন্ধ করো", en: "Close menu" },
+  guestLogin: { bn: "লগইন", en: "Log in" },
+  guestSignUp: { bn: "সাইন আপ", en: "Sign up" },
 } satisfies Dict;
