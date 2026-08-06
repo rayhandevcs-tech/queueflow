@@ -245,4 +245,9 @@ export const customerBookingDict = {
   memberCancelledToast: { bn: "ওই জনের সিরিয়াল বাতিল হয়েছে", en: "That person's serial has been cancelled" },
 
   ownerReplyLabel: { bn: "দোকানের উত্তর", en: "Shop's reply" },
+
+  partyAtShop: {
+    bn: (n: number, shop: string) => `${n} জনের সিরিয়াল চলছে · ${shop}`,
+    en: (n: number, shop: string) => `${n} serials running · ${shop}`,
+  },
 } satisfies Dict;

@@ -15,6 +15,7 @@ export function ExploreView({
   counts,
   waitMin,
   distanceKm,
+  ratingByShopId,
   userLocation,
   isPending,
 }: {
@@ -22,6 +23,7 @@ export function ExploreView({
   counts: Record<string, number>;
   waitMin: Record<string, number>;
   distanceKm?: Record<string, number>;
+  ratingByShopId?: Map<string, { avg_rating: number; review_count: number }>;
   userLocation?: { lat: number; lng: number } | null;
   isPending: boolean;
 }) {
@@ -75,6 +77,7 @@ export function ExploreView({
           counts={counts}
           waitMin={waitMin}
           distanceKm={distanceKm}
+          ratingByShopId={ratingByShopId}
           isPending={isPending}
         />
       )}

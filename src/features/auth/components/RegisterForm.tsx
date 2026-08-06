@@ -78,8 +78,15 @@ export function RegisterForm() {
         />
       </div>
 
+      {/* This is not a label on the shop — it decides which dashboard the
+          owner gets and what everything is called in it, so say so here
+          rather than letting them discover it afterwards. */}
       {isProvider && (
-        <Field label={t("businessTypeLabel")} error={err.businessType?.message}>
+        <Field
+          label={t("businessTypeLabel")}
+          hint={t("businessTypeHint")}
+          error={err.businessType?.message}
+        >
           <ChipGroup
             options={BUSINESS_TYPE_OPTIONS}
             value={form.watch("businessType")}

@@ -92,4 +92,22 @@ export const authDict = {
   confirmLabel: { bn: "কনফার্ম করো", en: "Confirm" },
   changingPassword: { bn: "সংরক্ষণ হচ্ছে…", en: "Saving…" },
   changePasswordCta: { bn: "পাসওয়ার্ড বদলাও", en: "Change password" },
+
+  businessTypeHint: {
+    bn: "এটাই ঠিক করবে তোমার ড্যাশবোর্ড কেমন হবে — সেলুনে \"চেয়ার ও স্টাফ\", পার্লারে \"সিট ও বিউটিশিয়ান\"। পরে সেটিংস থেকে বদলানো যাবে।",
+    en: "This decides your dashboard — a salon gets \"Chairs & Staff\", a parlour gets \"Seats & Beauticians\". You can change it later in settings.",
+  },
+
+  authPointNearby: {
+    bn: "আশেপাশের দোকানের লাইভ সিরিয়াল এক নজরে",
+    en: "Live queues at nearby shops, at a glance",
+  },
+  authPointLeaveOnTime: {
+    bn: "কখন রওনা দিতে হবে, জানিয়ে দেবো",
+    en: "We'll tell you exactly when to set out",
+  },
+  authPointNoQueue: {
+    bn: "পরিবারের সবার সিরিয়াল একসাথে",
+    en: "Book for the whole family in one go",
+  },
 } satisfies Dict;

@@ -6,8 +6,8 @@ import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { formatMoney } from "@/lib/format-wait";
 import { Spinner } from "@/components/ui/Spinner";
-import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { useT } from "@/lib/i18n";
+import { AvatarChip } from "@/components/ui/AvatarChip";
 import { useProfileHistory } from "../hooks/use-profile-history";
 import { useMyFavoriteShops } from "../hooks/use-favorites";
 import { HabitsCard } from "./HabitsCard";
@@ -75,17 +75,41 @@ export function ProfileView({
         </Link>
       </div>
 
-      <ProfileHeaderCard
-        name={fullName || t("customerFallback")}
-        subtitle={phone || "—"}
-        avatarUrl={avatarUrl}
-        right={
-          <div className="rounded-[14px] bg-white px-3 py-2 text-center shadow-xs">
-            <p className="font-number text-xl font-bold text-good">{trust.score ?? "—"}</p>
-            <p className="text-[10px] text-muted">{t("trustScoreLabel")}</p>
+      {/* One dark identity card carrying the trust score and the three counts
+          that explain it, instead of a pale header followed by three separate
+          boxes saying numbers with no relationship to each other. */}
+      <div className="relative overflow-hidden rounded-[24px] bg-ink px-5 py-5 text-white">
+        <div className="pointer-events-none absolute -top-20 -right-16 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
+
+        <div className="relative flex items-center gap-3.5">
+          <AvatarChip label={fullName} avatarUrl={avatarUrl} shape="circle" size={60} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-xl font-bold">
+              {fullName || t("customerFallback")}
+            </p>
+            <p className="truncate text-xs text-white/50">{phone || "—"}</p>
           </div>
-        }
-      />
+          <div className="shrink-0 rounded-2xl bg-white/10 px-3.5 py-2 text-center">
+            <p className="font-number text-2xl leading-none font-extrabold text-good">
+              {trust.score ?? "—"}
+            </p>
+            <p className="mt-1 text-[10px] text-white/50">{t("trustScoreLabel")}</p>
+          </div>
+        </div>
+
+        <div className="relative mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-white/10">
+          {[
+            { value: trust.visitCount, label: t("totalVisits") },
+            { value: trust.noShowCount, label: t("noShows") },
+            { value: trust.regularShopCount, label: t("regularShops") },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-ink px-2 py-3 text-center">
+              <p className="font-number text-lg leading-none font-bold">{stat.value}</p>
+              <p className="mt-1 text-[10px] text-white/50">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div
         className="mt-3.25 flex items-center gap-2.75 rounded-2xl p-3.5"
@@ -93,21 +117,6 @@ export function ProfileView({
       >
         {callout.icon}
         <p className="text-xs leading-relaxed text-ink">{callout.text}</p>
-      </div>
-
-      <div className="mt-3.25 flex gap-2.25">
-        <div className="flex-1 rounded-[14px] border border-line bg-soft p-3.25 text-center">
-          <p className="font-number text-xl font-bold text-ink">{trust.visitCount}</p>
-          <p className="text-[11px] text-muted">{t("totalVisits")}</p>
-        </div>
-        <div className="flex-1 rounded-[14px] border border-line bg-soft p-3.25 text-center">
-          <p className="font-number text-xl font-bold text-ink">{trust.noShowCount}</p>
-          <p className="text-[11px] text-muted">{t("noShows")}</p>
-        </div>
-        <div className="flex-1 rounded-[14px] border border-line bg-soft p-3.25 text-center">
-          <p className="font-number text-xl font-bold text-ink">{trust.regularShopCount}</p>
-          <p className="text-[11px] text-muted">{t("regularShops")}</p>
-        </div>
       </div>
 
       <div className="mt-5 mb-2.75 flex items-center justify-between">

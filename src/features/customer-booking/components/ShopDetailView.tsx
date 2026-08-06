@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { TabBar } from "@/components/ui/TabBar";
 import { useToast } from "@/components/ui/Toast";
-import { useT } from "@/lib/i18n";
+import { useLanguage, useT } from "@/lib/i18n";
+import { useTerms } from "@/lib/business-terms";
 import { customerBookingDict } from "../lib/i18n";
 import {
   useChairCapabilities,
@@ -38,15 +39,20 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT(customerBookingDict);
+  const { language } = useLanguage();
+
+  const { data: shop, isPending: shopPending } = useShopDetail(shopId);
+  // Salon → "স্টাফ", parlour → "বিউটিশিয়ান". Defined after the shop query
+  // because the tab label depends on what kind of business this is.
+  const tt = useTerms(shop?.business_type, language);
 
   const TABS = [
     { id: "services", label: t("tabServices") },
-    { id: "staff", label: t("tabStaff") },
+    { id: "staff", label: tt("staff") },
     { id: "gallery", label: t("tabGallery") },
     { id: "reviews", label: t("tabReviews") },
     { id: "details", label: t("tabDetails") },
   ];
-  const { data: shop, isPending: shopPending } = useShopDetail(shopId);
   const { data: services, isPending: servicesPending } = useShopServices(shopId);
   const { data: activeSerial, isPending: activePending } = useMyActiveSerial();
   const { data: queueRows } = useShopQueuePublic(shopId);

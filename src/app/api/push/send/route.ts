@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import webpush from "web-push";
 import { getServiceRoleClient } from "@/lib/supabase/service-role";
+import { site } from "@/config/site";
 
 webpush.setVapidDetails(
-  "mailto:support@queueflow.app",
+  `mailto:${site.supportEmail}`,
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!,
 );

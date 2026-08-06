@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import {
   useOpenShops,
@@ -117,40 +118,52 @@ export default function ExplorePage() {
   const waits = Object.values(waitMin);
   const minWait = waits.length ? Math.min(...waits) : 0;
 
+  const firstName = (profile?.full_name ?? "").trim().split(" ")[0] || null;
+
   return (
     <div className="animate-fade-up">
+      {/* Greeting first, search second: the header establishes who this is and
+          what the screen is for before offering a tool to narrow it down. */}
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[13px] text-muted">
+            {firstName ? t("greetingNamed", firstName) : t("assalamu")}
+          </p>
+          <h1 className="mt-0.5 font-display text-[26px] leading-tight font-bold tracking-tight text-ink">
+            {t("nearbySalonsHeading")}
+          </h1>
+        </div>
+        <Link href="/profile" className="shrink-0" aria-label={t("openProfileAria")}>
+          <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} size={44} />
+        </Link>
+      </header>
+
+      <ActiveBookingBanner />
+
+      {/* One dark stat block instead of two pale boxes: the two numbers that
+          decide whether it's worth going out belong together, and the contrast
+          makes them the first thing read on the page. */}
+      <div className="mb-4 flex items-stretch gap-px overflow-hidden rounded-[18px] bg-ink text-white">
+        <div className="flex-1 px-4 py-3.5">
+          <p className="font-number text-[26px] leading-none font-extrabold">{openShopCount}</p>
+          <p className="mt-1.5 text-[11px] text-white/55">{t("openShopsLabel")}</p>
+        </div>
+        <div className="w-px bg-white/10" />
+        <div className="flex-1 px-4 py-3.5">
+          <p className="font-number text-[26px] leading-none font-extrabold text-brass">
+            ~{minWait}
+            <span className="ml-0.5 text-sm font-bold">{t("minUnit")}</span>
+          </p>
+          <p className="mt-1.5 text-[11px] text-white/55">{t("lowestWaitLabel")}</p>
+        </div>
+      </div>
+
       <SearchFilterBar
         value={search}
         onChange={setSearch}
         onOpenFilters={() => setFilterSheetOpen(true)}
         filtersActive={hasActiveFilters(filters)}
       />
-
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[13px] text-muted">{t("assalamu")}</p>
-          <h1 className="mt-0.5 font-display text-[25px] font-bold leading-tight text-ink">
-            {t("nearbySalonsHeading")}
-          </h1>
-        </div>
-        <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} />
-      </div>
-
-      <ActiveBookingBanner />
-
-      <div className="mb-4 flex gap-2.5">
-        <div className="flex-1 rounded-[13px] border border-line bg-soft p-3">
-          <p className="font-number text-[19px] font-bold text-ink">{openShopCount}</p>
-          <p className="text-[11px] text-muted">{t("openShopsLabel")}</p>
-        </div>
-        <div className="flex-1 rounded-[13px] border border-line bg-soft p-3">
-          <p className="font-number text-[19px] font-bold text-ink">
-            ~{minWait}
-            <span className="text-xs">{t("minUnit")}</span>
-          </p>
-          <p className="text-[11px] text-muted">{t("lowestWaitLabel")}</p>
-        </div>
-      </div>
 
       <div className="mb-4">
         <LocationPrompt
@@ -178,6 +191,7 @@ export default function ExplorePage() {
         counts={counts}
         waitMin={waitMin}
         distanceKm={distanceKm}
+        ratingByShopId={ratingByShopId}
         userLocation={effectiveLocation}
         isPending={shopsPending || statsPending}
       />

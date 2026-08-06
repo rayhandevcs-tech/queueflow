@@ -1,6 +1,6 @@
 import { CHAIR_COLORS } from "@/config/constants";
 
-/** Deterministic tile color + initial for a shop without a photo, Palaa-style. */
+/** Deterministic tile color + initial for a shop without a photo, brand-tinted. */
 export function shopAvatarColor(shopId: string): string {
   let hash = 0;
   for (let i = 0; i < shopId.length; i++) {

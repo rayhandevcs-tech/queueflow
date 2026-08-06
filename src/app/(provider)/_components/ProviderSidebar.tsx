@@ -30,6 +30,7 @@ import { AvatarChip } from "@/components/ui/AvatarChip";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Switch } from "@/components/ui/Switch";
 import { useT, useLanguage } from "@/lib/i18n";
+import { useTerms } from "@/lib/business-terms";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 interface NavItem {
@@ -52,10 +53,12 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const logout = useLogout();
   const { language, setLanguage } = useLanguage();
   const t = useT(providerCatalogDict);
+  const tt = useTerms(shop?.business_type, language);
 
   const NAV: NavItem[] = [
     { href: "/dashboard", label: t("navLiveQueue"), icon: Radio, live: true },
-    { href: "/chairs", label: t("navChairs"), icon: Armchair },
+    // Salon says "চেয়ার", parlour says "সিট" — decided once, at registration.
+    { href: "/chairs", label: tt("chair"), icon: Armchair },
     { href: "/services", label: t("navServices"), icon: Scissors },
     { href: "/offers", label: t("navOffers"), icon: Percent },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },

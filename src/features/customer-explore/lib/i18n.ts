@@ -107,4 +107,10 @@ export const customerExploreDict = {
     en: "No sitting around at the shop — we'll tell you when to set out.",
   },
   introStartCta: { bn: "শুরু করি", en: "Let's go" },
+
+  greetingNamed: {
+    bn: (name: string) => `আসসালামু আলাইকুম, ${name} 👋`,
+    en: (name: string) => `Hello, ${name} 👋`,
+  },
+  openProfileAria: { bn: "প্রোফাইল খোলো", en: "Open profile" },
 } satisfies Dict;

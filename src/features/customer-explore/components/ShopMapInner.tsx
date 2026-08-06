@@ -7,6 +7,7 @@ import Link from "next/link";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
+import { shopAvailability } from "@/lib/shop-availability";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
 
@@ -76,6 +77,7 @@ export default function ShopMapInner({
       {shops.map((shop) => {
         const count = counts[shop.id] ?? 0;
         const wait = waitMin[shop.id] ?? 0;
+        const availability = shopAvailability(shop);
         return (
           <Marker
             key={shop.id}
@@ -110,6 +112,14 @@ export default function ShopMapInner({
                     {shop.address ? ` · ${shop.address}` : ""}
                   </p>
                   <p className="text-xs font-medium text-ink">{t("queueStatus", count, wait)}</p>
+                  {/* Same three states the list card shows — a pin that looks
+                      bookable but isn't wastes a trip. */}
+                  {availability === "NOT_ACCEPTING" && (
+                    <p className="text-[11px] font-semibold text-live">{t("notAcceptingPill")}</p>
+                  )}
+                  {availability === "BREAK" && (
+                    <p className="text-[11px] font-semibold text-brass">{t("breakPill")}</p>
+                  )}
                   <Link
                     href={`/explore/${shop.id}`}
                     className="inline-block text-xs font-semibold text-accent underline"

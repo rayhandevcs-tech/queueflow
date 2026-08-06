@@ -7,12 +7,15 @@ import { ChairsManager } from "@/features/provider-catalog/components/ChairsMana
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { useT } from "@/lib/i18n";
+import { useLanguage, useT } from "@/lib/i18n";
+import { useTerms } from "@/lib/business-terms";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 export default function ChairsPage() {
   const { data: shop, isPending } = useMyShop();
   const t = useT(providerCatalogDict);
+  const { language } = useLanguage();
+  const tt = useTerms(shop?.business_type, language);
 
   if (isPending) {
     return (
@@ -39,7 +42,7 @@ export default function ChairsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("chairsPageTitle")}
+        title={tt("chairs")}
         description={t("chairsPageDesc")}
       />
       <ChairsManager shopId={shop.id} />
