@@ -7,6 +7,7 @@ import { toBanglaDigits } from "@/lib/format-wait";
 import type { Message } from "@/types";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { useToast } from "@/components/ui/Toast";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
 import { getStoredLanguage, translate, useT } from "@/lib/i18n";
@@ -16,6 +17,11 @@ import { useChatPresence } from "../hooks/use-chat-presence";
 import { useChatThread } from "../hooks/use-chat-thread";
 import { chatDict } from "../lib/i18n";
 import { MessageImageGrid } from "./MessageImageGrid";
+
+/** A barely-there dot weave: enough tooth that white bubbles sit *on* the
+ *  thread rather than dissolving into it, not enough to read as a pattern. */
+const THREAD_TEXTURE =
+  "bg-[radial-gradient(circle_at_1px_1px,rgba(27,24,18,0.055)_1px,transparent_0)] bg-[length:22px_22px]";
 
 function dateLabel(dateStr: string): string {
   const date = new Date(dateStr);
@@ -38,6 +44,32 @@ function timeLabel(dateStr: string): string {
   const hh = toBanglaDigits(d.getHours()).padStart(2, "০");
   const mm = toBanglaDigits(d.getMinutes()).padStart(2, "০");
   return `${hh}:${mm}`;
+}
+
+/** Alternating bubble stubs so the loading thread has the shape of a thread. */
+function ThreadSkeleton() {
+  const rows = [
+    { mine: false, w: "w-40" },
+    { mine: true, w: "w-32" },
+    { mine: false, w: "w-52" },
+    { mine: true, w: "w-44" },
+    { mine: false, w: "w-36" },
+  ];
+  return (
+    <div className="flex flex-col gap-3" aria-hidden>
+      {rows.map((row, i) => (
+        <div key={i} className={cn("flex", row.mine ? "justify-end" : "justify-start")}>
+          <Skeleton
+            className={cn(
+              "h-10 rounded-[20px]",
+              row.w,
+              row.mine ? "rounded-br-md" : "rounded-bl-md",
+            )}
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ChatThreadView({
@@ -114,85 +146,122 @@ export function ChatThreadView({
     }
   };
 
+  /* Consecutive messages from one sender read as one turn: they sit closer
+     together and only the last of the run gets the tail corner. */
   const grouped = useMemo(() => {
-    const rows: { message: Message; label: string; showLabel: boolean }[] = [];
+    const rows: {
+      message: Message;
+      label: string;
+      showLabel: boolean;
+      lastOfRun: boolean;
+    }[] = [];
     let last = "";
-    for (const message of messages) {
+    messages.forEach((message, i) => {
       const label = dateLabel(message.created_at);
-      rows.push({ message, label, showLabel: label !== last });
+      const next = messages[i + 1];
+      const lastOfRun =
+        !next ||
+        next.sender_id !== message.sender_id ||
+        dateLabel(next.created_at) !== label;
+      rows.push({ message, label, showLabel: label !== last, lastOfRun });
       last = label;
-    }
+    });
     return rows;
   }, [messages]);
 
+  const canSend = !!content.trim() && !send.isPending;
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-line pb-3.5">
+      <header className="flex shrink-0 items-center gap-2.5 border-b border-line bg-card px-3 py-2.5 shadow-xs">
         <Link
           href={backHref}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-soft"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-soft hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none"
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <AvatarChip label={otherPartyName} avatarUrl={otherPartyAvatarUrl} shape="circle" size={40} />
+        <div className="relative shrink-0">
+          <AvatarChip
+            label={otherPartyName}
+            avatarUrl={otherPartyAvatarUrl}
+            shape="circle"
+            size={42}
+            className="shadow-xs"
+          />
+          {otherOnline && (
+            <span
+              aria-hidden
+              className="absolute right-0 bottom-0 h-3 w-3 rounded-full bg-good ring-2 ring-card"
+            />
+          )}
+        </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-[15px] font-bold text-ink">{otherPartyName}</p>
+          <p className="truncate font-display text-[15.5px] font-bold text-ink">{otherPartyName}</p>
           {otherOnline ? (
-            <p className="flex items-center gap-1 text-[11px] text-good">
-              <span className="h-1.5 w-1.5 rounded-full bg-good" />
+            <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-good">
+              <span className="h-1.5 w-1.5 animate-pulse-live rounded-full bg-good" />
               {t("onlineStatus")}
             </p>
           ) : (
-            lastActiveLabel && <p className="truncate text-[11px] text-muted">{lastActiveLabel}</p>
+            lastActiveLabel && <p className="truncate text-[11.5px] text-muted">{lastActiveLabel}</p>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* A tinted thread behind the bubbles: with a white page and a white
-          incoming bubble, the two used to melt into each other. */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-soft/50 to-paper px-3 py-4">
+      <div className={cn("flex-1 overflow-y-auto bg-paper px-3 py-4 sm:px-5", THREAD_TEXTURE)}>
         {isPending ? (
-          <div className="grid h-full place-items-center">
-            <Spinner className="h-6 w-6 text-muted" />
-          </div>
+          <ThreadSkeleton />
         ) : messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-            <div className="grid h-13 w-13 place-items-center rounded-full bg-accent/10 text-accent">
-              <MessageCircle className="h-6 w-6" />
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-full bg-accent/[0.07] ring-1 ring-accent/10">
+              <div className="grid h-11 w-11 place-items-center rounded-full bg-card text-accent shadow-sm">
+                <MessageCircle className="h-5 w-5" />
+              </div>
             </div>
-            <p className="text-sm font-medium text-ink">{t("sayHello", otherPartyName)}</p>
-            <p className="text-xs text-muted">{t("startConversation")}</p>
+            <div className="space-y-1">
+              <p className="font-display text-base font-bold text-ink">
+                {t("sayHello", otherPartyName)}
+              </p>
+              <p className="text-[13px] text-muted">{t("startConversation")}</p>
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-1">
-            {grouped.map(({ message: m, label, showLabel }) => {
+          <div className="mx-auto flex w-full max-w-3xl flex-col">
+            {grouped.map(({ message: m, label, showLabel, lastOfRun }) => {
               const mine = m.sender_id === myId;
               return (
                 <div key={m.id}>
                   {showLabel && (
-                    <div className="my-3 flex justify-center">
-                      <span className="rounded-full border border-line bg-card px-3 py-1 text-[11px] font-medium text-muted shadow-xs">
+                    <div className="my-3.5 flex justify-center">
+                      <span className="rounded-full border border-line bg-card/90 px-3.5 py-1 text-[11px] font-semibold text-muted shadow-xs backdrop-blur-sm">
                         {label}
                       </span>
                     </div>
                   )}
-                  <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                  <div
+                    className={cn(
+                      "flex animate-fade-up",
+                      mine ? "justify-end" : "justify-start",
+                      lastOfRun ? "mb-2.5" : "mb-0.5",
+                    )}
+                  >
                     <div
                       className={cn(
-                        "max-w-[78%] px-3.5 py-2.5 text-[14px] shadow-xs",
-                        // The tail corner marks the speaker; everything else
-                        // is symmetric so neither side looks like an error.
+                        "max-w-[85%] px-3.5 py-2.5 text-[14.5px] sm:max-w-[72%]",
+                        // The tail corner marks the speaker and only appears on
+                        // the last bubble of a run, so a burst reads as one turn.
                         mine
-                          ? "rounded-[18px] rounded-br-md bg-accent text-accent-ink"
-                          : "rounded-[18px] rounded-bl-md border border-line bg-card text-ink",
+                          ? "rounded-[20px] bg-accent text-accent-ink shadow-sm"
+                          : "rounded-[20px] border border-line bg-card text-ink shadow-xs",
+                        lastOfRun && (mine ? "rounded-br-[6px]" : "rounded-bl-[6px]"),
                       )}
                     >
                       <MessageImageGrid urls={getMessageImageUrls(m)} />
                       {m.content && <p className="leading-relaxed wrap-break-word">{m.content}</p>}
                       <p
                         className={cn(
-                          "mt-1 text-right text-[10px] tabular-nums",
-                          mine ? "text-accent-ink/65" : "text-muted",
+                          "mt-0.5 text-right font-number text-[10px] tabular-nums",
+                          mine ? "text-accent-ink/70" : "text-muted/80",
                         )}
                       >
                         {timeLabel(m.created_at)}
@@ -207,8 +276,8 @@ export function ChatThreadView({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-line pt-3">
-        <div className="flex items-center gap-2">
+      <div className="shrink-0 border-t border-line bg-card px-3 py-3 sm:px-4">
+        <div className="mx-auto flex w-full max-w-3xl items-end gap-2">
           <input
             ref={galleryInputRef}
             type="file"
@@ -225,43 +294,62 @@ export function ChatThreadView({
             className="hidden"
             onChange={(e) => void onPickImages(Array.from(e.target.files ?? []))}
           />
-          <button
-            type="button"
-            onClick={() => galleryInputRef.current?.click()}
-            disabled={uploadingImages}
-            title={t("attachImageTitle")}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-soft disabled:opacity-40"
-          >
-            {uploadingImages ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => cameraInputRef.current?.click()}
-            disabled={uploadingImages}
-            title={t("cameraTitle")}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted hover:bg-soft disabled:opacity-40"
-          >
-            <Camera className="h-5 w-5" />
-          </button>
-          <input
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                onSend();
-              }
-            }}
-            placeholder={t("messagePlaceholder")}
-            className="min-h-11 flex-1 rounded-full border border-line bg-soft px-4 text-sm text-ink outline-none transition-colors placeholder:text-muted focus:border-accent focus:bg-card"
-          />
+
+          {/* Input and its two attachment buttons share one pill, so the
+              composer reads as a single field rather than four controls. */}
+          <div className="flex min-h-11 flex-1 items-center gap-1 rounded-full border border-line bg-soft px-1.5 transition-[background-color,border-color,box-shadow] duration-150 focus-within:border-accent focus-within:bg-card focus-within:ring-4 focus-within:ring-accent/12">
+            <button
+              type="button"
+              onClick={() => galleryInputRef.current?.click()}
+              disabled={uploadingImages}
+              title={t("attachImageTitle")}
+              aria-label={t("attachImageTitle")}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none disabled:opacity-40"
+            >
+              {uploadingImages ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-5 w-5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploadingImages}
+              title={t("cameraTitle")}
+              aria-label={t("cameraTitle")}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none disabled:opacity-40"
+            >
+              <Camera className="h-5 w-5" />
+            </button>
+            <input
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  onSend();
+                }
+              }}
+              placeholder={t("messagePlaceholder")}
+              aria-label={t("messagePlaceholder")}
+              className="min-w-0 flex-1 bg-transparent py-2 pr-2 text-[14.5px] text-ink outline-none placeholder:text-muted/70"
+            />
+          </div>
+
           <button
             type="button"
             onClick={onSend}
-            disabled={send.isPending || !content.trim()}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-sm transition-all hover:shadow-glow active:scale-95 disabled:opacity-40 disabled:shadow-none"
+            disabled={!canSend}
+            title={t("sendMessageTitle")}
+            aria-label={t("sendMessageTitle")}
+            aria-busy={send.isPending || undefined}
+            className={cn(
+              "grid h-11 w-11 shrink-0 place-items-center rounded-full text-accent-ink",
+              "bg-gradient-to-br from-accent to-[#c03d47] shadow-sm",
+              "transition-[box-shadow,transform,opacity] duration-150",
+              "hover:shadow-glow active:scale-95",
+              "focus-visible:ring-4 focus-visible:ring-accent/35 focus-visible:outline-none",
+              "disabled:scale-100 disabled:opacity-40 disabled:shadow-none",
+            )}
           >
-            <Send className="h-4 w-4" />
+            {send.isPending ? <Spinner className="h-4 w-4" /> : <Send className="h-4.5 w-4.5" />}
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3, MapPin, Sparkles } from "lucide-react";
+import { Clock3, MapPin, Sparkles, Users } from "lucide-react";
 import { site } from "@/config/site";
 import { useT } from "@/lib/i18n";
 import { authDict } from "../lib/i18n";
@@ -9,10 +9,12 @@ import { authDict } from "../lib/i18n";
 /**
  * The frame around every auth screen, on both sides of the app.
  *
- * The left panel used to be a flat block of brand colour with a headline
- * floating in the middle of it. It now carries three lines of what the product
- * actually does, because this is the only screen someone who hasn't signed up
- * yet ever sees — the one place a value proposition has any work to do.
+ * Two structural fixes over the previous version. The left panel used
+ * `justify-between`, which stranded the wordmark at the top and left a hole
+ * through the middle; the content is now one centred block with the mark and
+ * the copyright pinned as small ornaments. And the right column was a narrow
+ * `max-w-sm` floating in a wide field of empty paper — it's wider now, with a
+ * type scale that gives the heading somewhere to sit.
  */
 export function AuthShell({
   title,
@@ -28,68 +30,86 @@ export function AuthShell({
   const POINTS = [
     { icon: MapPin, text: t("authPointNearby") },
     { icon: Clock3, text: t("authPointLeaveOnTime") },
-    { icon: Sparkles, text: t("authPointNoQueue") },
+    { icon: Users, text: t("authPointNoQueue") },
   ];
 
   return (
-    <main className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
-      <div className="relative hidden overflow-hidden bg-accent px-12 py-14 lg:flex lg:flex-col lg:justify-between">
-        {/* Soft light sources rather than a flat fill — the panel reads as a
-            surface instead of a swatch. */}
-        <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-white/20 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 -bottom-40 h-[28rem] w-[28rem] rounded-full bg-brass/25 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
+    <main className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
+      <aside className="relative hidden overflow-hidden lg:block">
+        {/* Layered light rather than a flat fill: a diagonal base, two blurred
+            sources, and a fine dot grid to give the surface some tooth. */}
+        <div className="absolute inset-0 bg-gradient-to-br from-accent via-accent to-[#c03d47]" />
+        <div className="absolute -top-40 -left-32 h-[34rem] w-[34rem] rounded-full bg-white/20 blur-[100px]" />
+        <div className="absolute -right-32 -bottom-48 h-[38rem] w-[38rem] rounded-full bg-brass/30 blur-[110px]" />
+        <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:24px_24px]" />
+        {/* A soft vignette keeps the corners from feeling brighter than the middle. */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(120,25,30,0.28)_100%)]" />
 
-        <span className="relative font-display text-xl font-extrabold tracking-tight text-accent-ink">
-          {site.name}
-        </span>
+        <div className="relative flex h-full flex-col justify-center px-14 py-16 xl:px-20">
+          <Link
+            href="/"
+            className="absolute top-14 left-14 flex items-center gap-2.5 xl:left-20"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent-ink/15 text-accent-ink ring-1 ring-accent-ink/20">
+              <Sparkles className="h-4.5 w-4.5" />
+            </span>
+            <span className="font-display text-lg font-extrabold tracking-tight text-accent-ink">
+              {site.name}
+            </span>
+          </Link>
 
-        <div className="relative space-y-7">
-          <div className="space-y-3.5">
-            <h2 className="max-w-md font-display text-[2.6rem] leading-[1.1] font-bold text-accent-ink">
-              {site.tagline}
-            </h2>
-            <p className="max-w-sm text-sm leading-relaxed text-accent-ink/60">
-              {t("authTagline")}
-            </p>
+          <div className="max-w-lg space-y-8">
+            <div className="space-y-4">
+              <h2 className="font-display text-[2.9rem] leading-[1.08] font-bold tracking-tight text-accent-ink xl:text-[3.25rem]">
+                {site.tagline}
+              </h2>
+              <p className="max-w-md text-[15px] leading-relaxed text-accent-ink/65">
+                {t("authTagline")}
+              </p>
+            </div>
+
+            <ul className="space-y-2.5">
+              {POINTS.map(({ icon: Icon, text }) => (
+                <li
+                  key={text}
+                  className="flex items-center gap-3.5 rounded-2xl bg-accent-ink/[0.09] px-4 py-3 ring-1 ring-accent-ink/10 backdrop-blur-[2px]"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent-ink/15 text-accent-ink">
+                    <Icon className="h-4.5 w-4.5" />
+                  </span>
+                  <span className="text-[14px] font-medium text-accent-ink/90">{text}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <ul className="space-y-3">
-            {POINTS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-sm text-accent-ink/85">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-ink/15">
-                  <Icon className="h-4 w-4" />
-                </span>
-                {text}
-              </li>
-            ))}
-          </ul>
+          <p className="absolute bottom-14 left-14 text-xs text-accent-ink/35 xl:left-20">
+            &copy; {new Date().getFullYear()} {site.name}
+          </p>
         </div>
+      </aside>
 
-        <p className="relative text-xs text-accent-ink/40">
-          &copy; {new Date().getFullYear()} {site.name}
-        </p>
-      </div>
-
-      <div className="flex items-center justify-center bg-paper px-4 py-10 sm:px-8">
-        <div className="w-full max-w-sm">
+      <div className="flex items-center justify-center bg-paper px-5 py-12 sm:px-10">
+        <div className="w-full max-w-[26rem]">
           {/* Brand mark on mobile only — on desktop the left panel carries it. */}
           <Link
             href="/"
-            className="mb-7 flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink lg:hidden"
+            className="mb-9 inline-flex items-center gap-2.5 lg:hidden"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-accent text-accent-ink">
-              <Sparkles className="h-4 w-4" />
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-accent-ink shadow-sm">
+              <Sparkles className="h-4.5 w-4.5" />
             </span>
-            {site.name}
+            <span className="font-display text-lg font-extrabold tracking-tight text-ink">
+              {site.name}
+            </span>
           </Link>
 
-          <div className="mb-7">
-            <h1 className="font-display text-[1.75rem] leading-tight font-bold tracking-tight text-ink">
+          <header className="mb-8">
+            <h1 className="font-display text-[2rem] leading-[1.15] font-bold tracking-tight text-ink">
               {title}
             </h1>
-            <p className="mt-1.5 text-sm text-muted">{subtitle}</p>
-          </div>
+            <p className="mt-2 text-[15px] leading-relaxed text-muted">{subtitle}</p>
+          </header>
 
           {children}
         </div>

@@ -37,8 +37,21 @@ export const chatDict = {
     bn: "আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো",
     en: "Upload failed — try again",
   },
-  searchPlaceholder: { bn: "খুঁজো", en: "Search" },
+  searchPlaceholder: { bn: "কথোপকথন খুঁজো", en: "Search conversations" },
   selectConversationHint: { bn: "একটা কথোপকথন বেছে নাও", en: "Select a conversation" },
+  selectConversationDesc: {
+    bn: "বাঁ পাশের তালিকা থেকে একটা কথোপকথন খুললে মেসেজগুলো এখানে দেখাবে।",
+    en: "Open a conversation from the list and the messages will show up here.",
+  },
+  noSearchResultsTitle: { bn: "কিছু পাওয়া যায়নি", en: "Nothing found" },
+  noSearchResultsDesc: {
+    bn: "অন্য নাম দিয়ে খুঁজে দেখো।",
+    en: "Try searching for a different name.",
+  },
+  clearSearch: { bn: "খোঁজা বাতিল করো", en: "Clear search" },
+  sendMessageTitle: { bn: "পাঠাও", en: "Send" },
+  openImageTitle: { bn: "ছবি বড় করে দেখো", en: "View image" },
+  closeImageTitle: { bn: "বন্ধ করো", en: "Close" },
   tooManyImagesError: {
     bn: "একসাথে সর্বোচ্চ ৬টা ছবি পাঠানো যাবে",
     en: "You can send up to 6 images at once",

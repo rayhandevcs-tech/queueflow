@@ -69,14 +69,14 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-ink">{t("accountTypeLabel")}</label>
+      <Field label={t("accountTypeLabel")}>
         <ChipGroup
           options={ROLE_OPTIONS}
           value={selectedRole}
           onChange={(v) => form.setValue("role", v, { shouldDirty: true })}
+          ariaLabel={t("accountTypeLabel")}
         />
-      </div>
+      </Field>
 
       {/* This is not a label on the shop — it decides which dashboard the
           owner gets and what everything is called in it, so say so here
@@ -91,6 +91,7 @@ export function RegisterForm() {
             options={BUSINESS_TYPE_OPTIONS}
             value={form.watch("businessType")}
             onChange={(v) => form.setValue("businessType", v, { shouldDirty: true })}
+            ariaLabel={t("businessTypeLabel")}
           />
         </Field>
       )}
@@ -147,12 +148,15 @@ export function RegisterForm() {
       </Button>
 
       {register.isError && (
-        <p className="text-center text-sm text-live">
+        <p
+          role="alert"
+          className="rounded-[14px] border border-live/25 bg-live-soft px-3.5 py-2.5 text-center text-sm font-medium text-live"
+        >
           {translateAuthError(register.error)}
         </p>
       )}
 
-      <p className="text-center text-sm text-muted">
+      <p className="border-t border-line pt-5 text-center text-sm text-muted">
         {t("haveAccount")}{" "}
         <Link href="/login" className="font-semibold text-accent hover:underline">
           {t("logIn")}

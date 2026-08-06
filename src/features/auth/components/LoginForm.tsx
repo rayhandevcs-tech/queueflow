@@ -51,7 +51,7 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">
       {resetSuccess && (
-        <p className="rounded-lg bg-good-soft px-3 py-2 text-center text-sm font-medium text-good">
+        <p className="rounded-[14px] border border-good/25 bg-good-soft px-3.5 py-2.5 text-center text-sm font-medium text-good">
           {t("resetSuccess")}
         </p>
       )}
@@ -75,10 +75,10 @@ export function LoginForm() {
         />
       </Field>
 
-      <div className="-mt-3 text-right">
+      <div className="-mt-1 text-right">
         <Link
           href="/forgot-password"
-          className="text-xs font-medium text-accent hover:underline"
+          className="text-[13px] font-semibold text-accent hover:underline"
         >
           {t("forgotPassword")}
         </Link>
@@ -94,7 +94,10 @@ export function LoginForm() {
       </Button>
 
       {login.isError && (
-        <div className="text-center text-sm text-live">
+        <div
+          role="alert"
+          className="space-y-1 rounded-[14px] border border-live/25 bg-live-soft px-3.5 py-2.5 text-center text-sm font-medium text-live"
+        >
           <p>{translateAuthError(login.error)}</p>
           {notConfirmed && (
             <Link
@@ -107,7 +110,7 @@ export function LoginForm() {
         </div>
       )}
 
-      <p className="text-center text-sm text-muted">
+      <p className="border-t border-line pt-5 text-center text-sm text-muted">
         {t("noAccount")}{" "}
         <Link href="/register" className="font-semibold text-accent hover:underline">
           {t("signUp")}

@@ -1,6 +1,29 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Field height, radius and focus treatment for the whole app.
+ *
+ * Two deliberate choices: the resting state sits on `--color-soft` and only
+ * turns white on focus, which makes the active field obvious without a heavy
+ * border; and the focus ring is offset from the border rather than layered on
+ * it, so it reads as a ring instead of a thicker outline. 44px is the minimum
+ * touch target the project committed to in Sprint 12.
+ */
+const FIELD_BASE = cn(
+  "w-full min-h-11 rounded-[14px] border bg-soft text-[15px] text-ink",
+  "transition-[background-color,border-color,box-shadow] duration-150",
+  "placeholder:text-muted/70",
+  "hover:border-line/80 hover:bg-card",
+  "focus:bg-card focus:outline-none focus:ring-4",
+  "disabled:cursor-not-allowed disabled:opacity-60",
+);
+
+const FIELD_TONE = {
+  normal: "border-line focus:border-accent focus:ring-accent/12",
+  invalid: "border-live/60 focus:border-live focus:ring-live/15",
+} as const;
+
 interface Props extends React.ComponentProps<"input"> {
   invalid?: boolean;
   icon?: React.ReactNode;
@@ -8,20 +31,25 @@ interface Props extends React.ComponentProps<"input"> {
 
 export const Input = forwardRef<HTMLInputElement, Props>(
   ({ invalid, icon, className, ...props }, ref) => {
+    const tone = invalid ? FIELD_TONE.invalid : FIELD_TONE.normal;
+
     if (icon) {
       return (
-        <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+        <div className="group relative">
+          {/* Tints with the field so the icon belongs to it rather than
+              floating on top — and turns brand-coloured on focus. */}
+          <span
+            className={cn(
+              "pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 transition-colors",
+              invalid ? "text-live/70" : "text-muted group-focus-within:text-accent",
+            )}
+          >
             {icon}
           </span>
           <input
             ref={ref}
-            className={cn(
-              "w-full rounded-lg border bg-card py-2.5 pl-9 pr-3 text-sm text-ink shadow-xs transition-colors placeholder:text-muted/60",
-              "focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25",
-              invalid ? "border-live/60" : "border-line",
-              className,
-            )}
+            aria-invalid={invalid || undefined}
+            className={cn(FIELD_BASE, tone, "pr-3.5 pl-11", className)}
             {...props}
           />
         </div>
@@ -31,12 +59,8 @@ export const Input = forwardRef<HTMLInputElement, Props>(
     return (
       <input
         ref={ref}
-        className={cn(
-          "w-full rounded-lg border bg-card px-3.5 py-2.5 text-sm text-ink shadow-xs transition-colors placeholder:text-muted/60",
-          "focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25",
-          invalid ? "border-live/60" : "border-line",
-          className,
-        )}
+        aria-invalid={invalid || undefined}
+        className={cn(FIELD_BASE, tone, "px-3.5", className)}
         {...props}
       />
     );
@@ -58,13 +82,17 @@ export function Field({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-1.5", className)}>
-      {label && <label className="text-sm font-medium text-ink">{label}</label>}
+    <div className={cn("space-y-2", className)}>
+      {label && (
+        <label className="block text-[13px] font-semibold text-ink">{label}</label>
+      )}
       {children}
       {error ? (
-        <p className="text-xs font-medium text-live">{error}</p>
+        <p role="alert" className="text-xs font-medium text-live">
+          {error}
+        </p>
       ) : hint ? (
-        <p className="text-xs text-muted">{hint}</p>
+        <p className="text-xs leading-relaxed text-muted">{hint}</p>
       ) : null}
     </div>
   );

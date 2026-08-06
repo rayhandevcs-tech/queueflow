@@ -48,6 +48,7 @@
   --animate-fade-up: fade-up 0.3s ease-out;
   --animate-pop: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-slide-up: slide-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-shimmer: shimmer 1.6s linear infinite;
 }
 
 @keyframes pulse-live {
@@ -81,6 +82,17 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* Skeleton sweep. The gradient is twice the box width, so moving the
+   background position across it reads as light passing over the surface. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
   }
 }
 
