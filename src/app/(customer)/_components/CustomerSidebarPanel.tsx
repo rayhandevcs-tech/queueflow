@@ -34,35 +34,36 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
       {/* The desktop sidebar led with the user's own avatar, so the product
           name never appeared on screen once you were signed in. */}
-      <div className="flex items-center justify-between gap-2 px-2 pb-4">
-        <Link href="/explore" onClick={onNavigate}>
+      <div className="px-2 pb-4">
+        <Link href="/explore" onClick={onNavigate} className="block">
           <Wordmark size="md" />
         </Link>
 
-        {/* One tap, one control. Language was only reachable from Account &
-            settings, three taps deep — for something a bilingual user flips
-            while reading, it belongs where the app announces itself. */}
+        {/* Under the brand, not beside it: at md the wordmark already fills
+            the sidebar's width, so a control alongside it squeezed the name
+            it was meant to sit next to. One tap flips the language — it was
+            three taps deep in Account & settings before. */}
         <button
           type="button"
           onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
           aria-label={t("languageToggleAria")}
-          className="flex shrink-0 items-center gap-1 rounded-full bg-soft p-0.5 text-[11px] font-bold"
+          className="mt-2.5 flex w-full items-center rounded-full bg-soft p-0.5 text-[11px] font-bold"
         >
           <span
             className={cn(
-              "rounded-full px-2 py-1 transition-colors",
-              language === "bn" ? "bg-accent text-accent-ink" : "text-muted",
+              "flex-1 rounded-full py-1.5 text-center transition-colors",
+              language === "bn" ? "bg-accent text-accent-ink shadow-xs" : "text-muted",
             )}
           >
-            বাং
+            বাংলা
           </span>
           <span
             className={cn(
-              "rounded-full px-2 py-1 transition-colors",
-              language === "en" ? "bg-accent text-accent-ink" : "text-muted",
+              "flex-1 rounded-full py-1.5 text-center transition-colors",
+              language === "en" ? "bg-accent text-accent-ink shadow-xs" : "text-muted",
             )}
           >
-            EN
+            English
           </span>
         </button>
       </div>

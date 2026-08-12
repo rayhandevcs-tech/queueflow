@@ -325,13 +325,13 @@ function ShopPopupCard({
       <div className="flex gap-2 border-t border-line px-3.5 py-3">
         <Link
           href={`/explore/${shop.id}`}
-          // Ink rather than accent: the pin under this popup is already
-          // accent-red, and a red slab directly beneath it made the card read
-          // as one large red shape rather than a photo with an action.
+          // The colours live in globals.css under .ss-map-cta, not here:
+          // Leaflet's own `.leaflet-container a` rule is more specific than a
+          // Tailwind colour utility, so bg-/text- classes on this element were
+          // silently ignored and the label came out the library's blue-green.
           className={cn(
-            "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[14px]",
-            "bg-ink text-[13px] font-bold text-white shadow-sm",
-            "transition-opacity hover:opacity-90 active:opacity-80",
+            "ss-map-cta flex min-h-10 flex-1 items-center justify-center gap-1.5",
+            "rounded-[14px] text-[13px] font-bold shadow-sm transition-shadow active:shadow-xs",
           )}
         >
           {t("viewShop")}
