@@ -16,11 +16,15 @@ export function CategoryShortcutRow({
 }) {
   const categoryT = useT(SERVICE_CATEGORY_LABEL);
 
-  if (categories.size === 0) return null;
+  // "অন্যান্য" on its own is not a shortcut — every shop lands in it, so
+  // tapping it filters nothing out. The row only earns its space once there
+  // is a real choice to make.
+  const real = [...categories].filter((c) => c !== "OTHER");
+  if (real.length === 0) return null;
 
   return (
     <div className="mb-5 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {[...categories].map((category) => {
+      {real.map((category) => {
         const Icon = SERVICE_CATEGORY_ICON[category];
         const isActive = active === category;
         return (

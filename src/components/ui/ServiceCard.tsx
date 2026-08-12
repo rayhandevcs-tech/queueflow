@@ -96,9 +96,12 @@ export function ServiceCard({
               <Check className="h-3 w-3" strokeWidth={3} />
             </span>
           )}
+          {/* Wraps rather than truncates: at two cards across, "Hair Cutting"
+              was being cut to "Hair …" — a service you cannot read is not a
+              service you can choose. */}
           <span
             className={cn(
-              "min-w-0 flex-1 truncate text-sm font-bold text-ink",
+              "min-w-0 flex-1 text-sm leading-snug font-bold break-words text-ink",
               dimmed && "text-muted line-through",
             )}
           >

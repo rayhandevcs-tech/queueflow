@@ -48,6 +48,19 @@ export const customerBookingDict = {
   messageShop: { bn: "দোকানে মেসেজ করো", en: "Message the shop" },
   nowSerialLabel: { bn: "এখন সিরিয়াল", en: "Now serving" },
   estWaitLabel: { bn: "আনুমানিক ওয়েট", en: "Est. wait" },
+  queueEmptyHeadline: { bn: "লাইনে কেউ নেই", en: "Nobody's waiting" },
+  queueEmptySub: {
+    bn: "এখন গেলে সরাসরি বসতে পারবে।",
+    en: "Go now and you'll be seen straight away.",
+  },
+  queueWaitHeadline: {
+    bn: (n: number) => `প্রায় ${n} মিনিট অপেক্ষা`,
+    en: (n: number) => `About ${n} minutes' wait`,
+  },
+  queueWaitSub: {
+    bn: (n: number) => `তোমার আগে ${n} জন আছে।`,
+    en: (n: number) => `${n} ahead of you.`,
+  },
   minShort: { bn: "মি", en: "m" },
   servicesCountLabel: { bn: "সার্ভিস", en: "Services" },
   shopClosedNotice: {

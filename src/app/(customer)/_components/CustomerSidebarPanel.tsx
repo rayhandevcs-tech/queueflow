@@ -80,8 +80,10 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
               <span className="relative leading-none">
                 <item.icon
                   className="h-4.5 w-4.5"
-                  strokeWidth={active ? 2.25 : 1.75}
-                  fill={active ? "currentColor" : "none"}
+                  // Not filled when active: `fill` floods the whole glyph, so
+                  // a house became a solid blob and a speech bubble a solid
+                  // rectangle. Weight and colour already say "you are here".
+                  strokeWidth={active ? 2.5 : 1.75}
                 />
                 {item.href === "/my-serial" && activeSerial && (
                   <span className="absolute -right-1 -top-1 h-1.75 w-1.75 rounded-full bg-live" />

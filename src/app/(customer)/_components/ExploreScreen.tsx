@@ -123,57 +123,30 @@ export function ExploreScreen() {
     distanceKm,
   ]);
 
-  const openShopCount = shops?.length ?? 0;
-  const waits = Object.values(waitMin);
-  const minWait = waits.length ? Math.min(...waits) : 0;
-
   const firstName = (profile?.full_name ?? "").trim().split(" ")[0] || null;
 
   return (
     <div className="animate-fade-up">
-      {/* A welcome panel rather than a line of text: this is the first thing
-          seen on opening the app, and it should establish where you are and
-          what the screen is for before offering a search box. */}
-      <header className="relative mb-4 overflow-hidden rounded-[24px] border border-line bg-gradient-to-br from-accent/[0.09] via-card to-brass/[0.07] px-5 py-5 shadow-sm">
-        <div className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full bg-accent/10 blur-3xl" />
-
-        <div className="relative flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-medium text-muted">
-              {firstName ? t("greetingNamed", firstName) : t("assalamu")}
-            </p>
-            <h1 className="mt-1 font-display text-[27px] leading-[1.15] font-bold tracking-tight text-ink">
-              {t("heroHeadline")}
-            </h1>
-            <p className="mt-1.5 text-[13px] leading-snug text-muted">
-              {t("heroSubtitle")}
-            </p>
-          </div>
-          {signedIn && (
-            <Link href="/profile" className="shrink-0" aria-label={t("openProfileAria")}>
-              <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} size={46} />
-            </Link>
-          )}
+      {/* The welcome panel that used to sit here — greeting, headline,
+          subtitle, and two stat tiles — took most of the first screen to say
+          things the rest of the page says better. "2 খোলা দোকান" is the list
+          right below it, and "সবচেয়ে কম ওয়েট" read "~0মি" more often than
+          anything else, which is worse than silent. What is left is a line
+          that names you and gets out of the way. */}
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[13px] text-muted">
+            {firstName ? t("greetingNamed", firstName) : t("assalamu")}
+          </p>
+          <h1 className="mt-0.5 truncate font-display text-[22px] leading-tight font-bold text-ink">
+            {t("heroHeadline")}
+          </h1>
         </div>
-
-        {/* The two numbers that decide whether it's worth going out, inside
-            the same panel — they're the answer to the subtitle's question. */}
-        <div className="relative mt-4 flex items-stretch overflow-hidden rounded-2xl border border-line bg-card/80 backdrop-blur-sm">
-          <div className="flex-1 px-4 py-3">
-            <p className="font-number text-[24px] leading-none font-extrabold tabular-nums text-ink">
-              {openShopCount}
-            </p>
-            <p className="mt-1.5 text-[11px] font-medium text-muted">{t("openShopsLabel")}</p>
-          </div>
-          <div className="my-3 w-px bg-line" />
-          <div className="flex-1 px-4 py-3">
-            <p className="font-number text-[24px] leading-none font-extrabold tabular-nums text-accent">
-              ~{minWait}
-              <span className="ml-0.5 text-sm font-bold">{t("minUnit")}</span>
-            </p>
-            <p className="mt-1.5 text-[11px] font-medium text-muted">{t("lowestWaitLabel")}</p>
-          </div>
-        </div>
+        {signedIn && (
+          <Link href="/profile" className="shrink-0" aria-label={t("openProfileAria")}>
+            <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} size={42} />
+          </Link>
+        )}
       </header>
 
       {/* Both belong to an account: a guest has no booking to resume and no

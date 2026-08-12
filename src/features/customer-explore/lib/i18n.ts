@@ -87,6 +87,15 @@ export const customerExploreDict = {
 
   // explore/page.tsx
   assalamu: { bn: "আসসালামু আলাইকুম 👋", en: "Assalamu Alaikum 👋" },
+  walkInNow: { bn: "এখনই ঢোকো", en: "Walk right in" },
+  waitMinutes: {
+    bn: (n: number) => `${n} মিনিট অপেক্ষা`,
+    en: (n: number) => `${n} min wait`,
+  },
+  inQueue: {
+    bn: (n: number) => `${n} জন লাইনে`,
+    en: (n: number) => `${n} in queue`,
+  },
   guestBadge: { bn: "তুমি অতিথি হিসেবে দেখছো", en: "You're browsing as a guest" },
   guestBannerBody: {
     bn: "দোকান, সার্ভিস আর লাইভ সিরিয়াল সবই দেখতে পারবে। সিরিয়াল নিতে বা ফেভারিট করতে অ্যাকাউন্ট লাগবে।",

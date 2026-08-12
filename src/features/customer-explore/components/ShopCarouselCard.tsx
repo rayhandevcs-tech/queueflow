@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Clock3, Star } from "lucide-react";
 import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
@@ -35,10 +35,10 @@ export function ShopCarouselCard({
   return (
     <Link
       href={`/explore/${shop.id}`}
-      className="group flex w-44 shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"
+      className="group flex w-48 shrink-0 flex-col overflow-hidden rounded-[18px] border border-line bg-card shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md"
     >
       <div
-        className="relative grid h-24 place-items-center overflow-hidden font-display text-3xl font-extrabold text-white"
+        className="relative grid aspect-[4/3] w-full place-items-center overflow-hidden font-display text-3xl font-extrabold text-white"
         style={{ background: shopAvatarColor(shop.id) }}
       >
         {image ? (
@@ -82,9 +82,17 @@ export function ShopCarouselCard({
             <span className="text-muted/70"> · {t("reviewsCount", rating.review_count)}</span>
           )}
         </p>
+        {/* The same sentence the list cards use, so a shop reads the same
+            whichever rail you meet it in. */}
         {waitMin != null && (
-          <p className="mt-2 inline-block rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-ink">
-            ~<span className="font-number">{waitMin}</span> {t("minUnit")}
+          <p
+            className={cn(
+              "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold",
+              waitMin === 0 ? "bg-good-soft text-good" : "bg-live-soft text-live",
+            )}
+          >
+            <Clock3 className="h-2.5 w-2.5" />
+            {waitMin === 0 ? t("walkInNow") : t("waitMinutes", waitMin)}
           </p>
         )}
       </div>

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MessageCircle, Ticket } from "lucide-react";
+import { Clock3, MessageCircle, Ticket } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { readRememberedLocation } from "@/lib/last-location";
 import { estimateTravelMin } from "@/lib/travel";
@@ -237,21 +238,43 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
       <div className="mx-auto max-w-lg px-4 sm:px-0">
         <ShopQuickActions shop={shop} hasHistory={hasHistory} />
 
-        <div className="my-4.5 flex gap-2.5">
-          <div className="flex-1 rounded-[14px] bg-accent p-3 text-center text-accent-ink">
-            <p className="font-number text-[22px] font-bold">{queueCount}</p>
-            <p className="text-[11px] opacity-70">{t("nowSerialLabel")}</p>
-          </div>
-          <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
-            <p className="font-number text-[22px] font-bold text-live">
-              ~{waitMinutes}
-              <span className="text-[13px]">{t("minShort")}</span>
+        {/* One sentence instead of three stat tiles.
+            "~0মি / আনুমানিক ওয়েট" was the app telling a customer to do
+            arithmetic on a truncated number. What they came to find out is
+            whether to set off now, so the panel answers that: an empty queue
+            says walk in, a busy one gives the wait and how many are ahead. The
+            service count moved out entirely — the list of services is directly
+            below it. */}
+        <div
+          className={cn(
+            "my-4.5 flex items-center gap-3 rounded-[18px] border p-4",
+            queueCount === 0
+              ? "border-good/25 bg-good-soft"
+              : "border-line bg-soft",
+          )}
+        >
+          <span
+            className={cn(
+              "grid h-11 w-11 shrink-0 place-items-center rounded-full",
+              queueCount === 0 ? "bg-good/15 text-good" : "bg-live/15 text-live",
+            )}
+          >
+            <Clock3 className="h-5.5 w-5.5" />
+          </span>
+          <div className="min-w-0">
+            <p
+              className={cn(
+                "font-display text-[17px] leading-tight font-bold",
+                queueCount === 0 ? "text-good" : "text-ink",
+              )}
+            >
+              {queueCount === 0 ? t("queueEmptyHeadline") : t("queueWaitHeadline", waitMinutes)}
             </p>
-            <p className="text-[11px] text-muted">{t("estWaitLabel")}</p>
-          </div>
-          <div className="flex-1 rounded-[14px] border border-line bg-soft p-3 text-center">
-            <p className="font-number text-[22px] font-bold text-ink">{services?.length ?? 0}</p>
-            <p className="text-[11px] text-muted">{t("servicesCountLabel")}</p>
+            <p className="mt-0.5 text-[12px] text-muted">
+              {queueCount === 0
+                ? t("queueEmptySub")
+                : t("queueWaitSub", queueCount)}
+            </p>
           </div>
         </div>
 

@@ -34,54 +34,50 @@ export function StaffTab({ shopId, services }: { shopId: string; services: Servi
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    // Photo-led cards rather than wide rows. Choosing a barber is the one
+    // decision on this page made by looking at a face, so the face gets the
+    // space; the services they can do sit underneath as a caption, since they
+    // are a tie-breaker rather than the reason you picked anyone.
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
       {chairs.map((chair: Chair) => {
         const blockedIds = blockedByChairId.get(chair.id);
         const capableServices = (services ?? []).filter((s) => !blockedIds?.has(s.id));
+        const rating = ratingByChairId.get(chair.id);
         return (
           <div
             key={chair.id}
-            className="flex items-start gap-3 rounded-2xl border border-line bg-card p-4"
-            style={{ borderLeftWidth: 4, borderLeftColor: chair.color ?? "#cbd5e1" }}
+            className="overflow-hidden rounded-[18px] border border-line bg-card p-2.5"
+            style={{ borderTopWidth: 3, borderTopColor: chair.color ?? "#cbd5e1" }}
           >
-            <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-accent font-display text-lg font-bold text-white">
+            <div className="relative grid aspect-square w-full place-items-center overflow-hidden rounded-[14px] bg-accent font-display text-3xl font-extrabold text-white">
               {chair.staff_avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={chair.staff_avatar_url}
                   alt={chair.staff_name}
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
               ) : (
                 (chair.staff_name || chair.label).trim().charAt(0).toUpperCase() || "?"
               )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="truncate text-sm font-semibold text-ink">
-                  {chair.staff_name || chair.label}
-                </p>
-                {ratingByChairId.get(chair.id) && (
-                  <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-brass">
-                    <Star className="h-3 w-3 fill-brass" />
-                    {ratingByChairId.get(chair.id)!.avg_rating}
-                  </span>
-                )}
-              </div>
-              <p className="truncate text-xs text-muted">{chair.label}</p>
-              {capableServices.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {capableServices.map((s) => (
-                    <span
-                      key={s.id}
-                      className="rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted"
-                    >
-                      {s.name}
-                    </span>
-                  ))}
-                </div>
+
+              {rating && (
+                <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 rounded-full bg-card/95 px-1.5 py-0.5 text-[10px] font-bold text-brass shadow-xs backdrop-blur-sm">
+                  <Star className="h-2.5 w-2.5 fill-current" />
+                  {rating.avg_rating}
+                </span>
               )}
             </div>
+
+            <p className="mt-2 truncate text-sm font-bold text-ink">
+              {chair.staff_name || chair.label}
+            </p>
+            {capableServices.length > 0 && (
+              <p className="mt-0.5 truncate text-[11px] text-muted">
+                {capableServices.map((s) => s.name).join(" · ")}
+              </p>
+            )}
           </div>
         );
       })}

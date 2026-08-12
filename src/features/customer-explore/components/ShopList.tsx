@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Star, Store } from "lucide-react";
+import { Clock3, MapPin, Navigation, Star, Store, Users } from "lucide-react";
 import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -66,6 +66,9 @@ export function ShopList({
         const distance = distanceKm?.[shop.id];
         const availability = shopAvailability(shop);
         const rating = ratingByShopId?.get(shop.id);
+        // First segment only: "Gazipura, Tongi, Gazipur Sadar Upazila, …" is a
+        // postal address, not a place you recognise.
+        const area = shop.address?.split(",")[0]?.trim() || null;
 
         return (
           <li key={shop.id} className="relative">
@@ -91,53 +94,63 @@ export function ShopList({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  {/* Name and rating on one line: the two things that decide
-                      whether this card gets read any further. */}
-                  <div className="flex items-start gap-2">
-                    <p className="min-w-0 flex-1 truncate font-display text-[17px] leading-tight font-bold text-ink">
-                      {shop.name}
-                    </p>
-                    {rating && rating.review_count > 0 && (
-                      <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-brass-soft px-2 py-0.5 text-[11px] font-bold text-brass">
-                        <Star className="h-2.5 w-2.5 fill-current" />
-                        {rating.avg_rating}
-                      </span>
-                    )}
-                  </div>
+                  {/* The name keeps clear of the favourite button in the
+                      card's corner — the rating pill used to sit here too and
+                      the two overlapped. */}
+                  <p className="truncate pr-8 font-display text-[17px] leading-tight font-bold text-ink">
+                    {shop.name}
+                  </p>
 
                   <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
                     <span className="shrink-0 font-semibold text-accent">
                       {businessTypeT(shop.business_type)}
                     </span>
-                    {shop.address && (
+                    {rating && rating.review_count > 0 && (
                       <>
                         <span aria-hidden>·</span>
-                        <span className="flex min-w-0 items-center gap-0.5 truncate">
+                        <span className="flex shrink-0 items-center gap-0.5 font-semibold text-brass">
+                          <Star className="h-2.5 w-2.5 fill-current" />
+                          {rating.avg_rating}
+                        </span>
+                      </>
+                    )}
+                    {area && (
+                      <>
+                        <span aria-hidden>·</span>
+                        {/* Just the area. The full postal address ran three
+                            lines wide and told you nothing you would act on —
+                            the distance chip below already answers "how far". */}
+                        <span className="flex min-w-0 items-center gap-0.5">
                           <MapPin className="h-2.5 w-2.5 shrink-0" />
-                          <span className="truncate">{shop.address}</span>
+                          <span className="truncate">{area}</span>
                         </span>
                       </>
                     )}
                   </p>
 
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    {/* The wait leads — it's the number that decides the trip. */}
+                    {/* The wait leads — it's the number that decides the trip.
+                        A queue of nobody is "go now", which is a different
+                        thing from "~0 min" and reads far better on a card. */}
                     <span
                       className={cn(
-                        "rounded-full px-2.5 py-1 text-[11px] font-bold",
-                        waitOk
-                          ? "bg-good-soft text-good"
-                          : "bg-live-soft text-live",
+                        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold",
+                        waitOk ? "bg-good-soft text-good" : "bg-live-soft text-live",
                       )}
                     >
-                      ~<span className="font-number">{wait}</span> {t("minWait")}
+                      <Clock3 className="h-3 w-3" />
+                      {queue === 0 ? t("walkInNow") : t("waitMinutes", wait)}
                     </span>
-                    <span className="rounded-full bg-soft px-2.5 py-1 text-[11px] text-muted">
-                      {t("runningPrefix")} <b className="font-number text-ink">{queue}</b>
-                    </span>
+                    {queue > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted">
+                        <Users className="h-3 w-3" />
+                        {t("inQueue", queue)}
+                      </span>
+                    )}
                     {distance != null && (
-                      <span className="rounded-full bg-soft px-2.5 py-1 text-[11px] text-muted">
-                        <span className="font-number text-ink">{distance.toFixed(1)}</span>{" "}
+                      <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted">
+                        <Navigation className="h-3 w-3" />
+                        <span className="font-number text-ink">{distance.toFixed(1)}</span>
                         {t("km")}
                       </span>
                     )}

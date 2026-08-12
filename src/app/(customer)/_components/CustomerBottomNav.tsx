@@ -31,8 +31,10 @@ export function CustomerBottomNav({ className }: { className?: string }) {
               <span className="relative leading-none">
                 <item.icon
                   className="h-5.5 w-5.5"
-                  strokeWidth={active ? 2.25 : 1.75}
-                  fill={active ? "currentColor" : "none"}
+                  // Not filled when active: `fill` floods the whole glyph, so
+                  // a house became a solid blob and a speech bubble a solid
+                  // rectangle. Weight and colour already say "you are here".
+                  strokeWidth={active ? 2.5 : 1.75}
                 />
                 {item.href === "/my-serial" && activeSerial && (
                   <span className="absolute -right-1 -top-0.5 h-1.75 w-1.75 rounded-full bg-live" />

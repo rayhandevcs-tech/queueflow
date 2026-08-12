@@ -337,24 +337,44 @@ function ShopPopupCard({
 }
 
 /**
- * Follows the user's location when it arrives or changes.
+ * Frames every nearby shop, plus you, on first paint and whenever the set
+ * changes.
  *
- * MapContainer reads `center` only on first mount, so granting location
- * permission after the map had rendered used to leave it looking at the old
- * centre until you panned by hand. Deliberately keyed on the user's position
- * and nothing else: recentering on the shop-average would yank the view back
- * every time a refetch nudged the average by a few metres, undoing whatever
- * the person was looking at.
+ * The map used to open at a fixed zoom centred on one point, so a shop 16 km
+ * away simply wasn't on screen — the whole "nearby shops" map showed an empty
+ * neighbourhood. fitBounds asks the opposite question: what view contains
+ * everything worth seeing?
+ *
+ * Keyed on the shop ids and the user's coordinates, not on the objects: a
+ * refetch that returns the same shops must not yank the view back from
+ * wherever the person has panned to.
  */
-function FollowUserLocation({ location }: { location?: { lat: number; lng: number } | null }) {
+function FitToShops({
+  points,
+  signature,
+}: {
+  points: Array<[number, number]>;
+  signature: string;
+}) {
   const map = useMap();
-  const lat = location?.lat;
-  const lng = location?.lng;
 
   useEffect(() => {
-    if (lat == null || lng == null) return;
-    map.setView([lat, lng], map.getZoom(), { animate: true });
-  }, [map, lat, lng]);
+    if (points.length === 0) return;
+
+    if (points.length === 1) {
+      map.setView(points[0], 15, { animate: true });
+      return;
+    }
+
+    map.fitBounds(points, {
+      // Room for the popup and the control stack, and a ceiling so two shops
+      // in the same street don't zoom to rooftops.
+      padding: [48, 48],
+      maxZoom: 16,
+      animate: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, signature]);
 
   return null;
 }
@@ -374,13 +394,14 @@ export default function ShopMapInner({
   ratingByShopId?: Map<string, { avg_rating: number; review_count: number }>;
   userLocation?: { lat: number; lng: number } | null;
 }) {
-  const avgLat = shops.reduce((a, s) => a + s.latitude, 0) / shops.length;
-  const avgLng = shops.reduce((a, s) => a + s.longitude, 0) / shops.length;
-  const center: [number, number] = userLocation
-    ? [userLocation.lat, userLocation.lng]
-    : shops.length
-      ? [avgLat, avgLng]
-      : DEFAULT_CENTER;
+  const points: Array<[number, number]> = shops.map((s) => [s.latitude, s.longitude]);
+  if (userLocation) points.push([userLocation.lat, userLocation.lng]);
+
+  const center: [number, number] = points[0] ?? DEFAULT_CENTER;
+  const signature = [
+    shops.map((s) => s.id).join(","),
+    userLocation ? `${userLocation.lat},${userLocation.lng}` : "",
+  ].join("|");
 
   return (
     <MapContainer
@@ -391,16 +412,20 @@ export default function ShopMapInner({
       className="h-[26rem] w-full sm:h-[30rem]"
       scrollWheelZoom={false}
     >
-      {/* CARTO's Voyager basemap instead of raw OSM: fewer competing colours
-          and lighter road fills, so the pins sit on top of the map rather than
-          inside a busy one. Same OSM data underneath, same free tier. */}
+      {/* Voyager, label-free.
+          OSM's place names around Dhaka are Bengali, and the raster tiles bake
+          them in at a size and weight chosen for Latin script — conjuncts and
+          matras came out broken and unreadable, which looked like a rendering
+          fault in our app. There is no per-language raster to switch to, so
+          the labels go: the basemap becomes roads, water and parks, and the
+          only text on the map is ours, on the pins. */}
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
         attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         maxZoom={20}
       />
 
-      <FollowUserLocation location={userLocation} />
+      <FitToShops points={points} signature={signature} />
       <MapControls userLocation={userLocation} />
 
       {userLocation && <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />}
