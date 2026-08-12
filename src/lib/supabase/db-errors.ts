@@ -127,6 +127,15 @@ const RULES: ReadonlyArray<{
     key: "collided",
     silent: false,
   },
+  {
+    // Any other unique violation on a queue write — two people reordering the
+    // same lane at once. PostgREST returns it as a bare 409, which reached the
+    // user as "something went wrong"; retrying is the right advice and it is
+    // what the deadlock case already says.
+    match: (t) => t.includes("23505") || t.includes("duplicate key value"),
+    key: "collided",
+    silent: false,
+  },
   { match: (t) => t.includes("invalid service selection"), key: "invalidServiceSelection", silent: false },
   {
     match: (t) => t.includes("আজকে একবার ব্রডকাস্ট পাঠানো হয়ে গেছে"),
