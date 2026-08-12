@@ -9,6 +9,10 @@ export function chairSchema(lang: Language) {
   return z.object({
     label: z.string().trim().min(1, m("label_required")).max(40, m("max_chars", 40)),
     staff_name: z.string().trim().max(80, m("max_chars", 80)).default(""),
+    // Uploaded before the chair exists — the storage path is keyed by shop,
+    // not by chair, so the photo can be chosen while creating rather than
+    // only after saving.
+    staff_avatar_url: z.string().nullable().default(null),
     color: z
       .string()
       .regex(/^#[0-9A-Fa-f]{6}$/, m("invalid_color"))

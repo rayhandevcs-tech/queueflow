@@ -98,7 +98,15 @@ with checks(ord, migration, kind, obj, present) as (
           (select pg_get_functiondef(p.oid) like '%v_park%'
              from pg_proc p
             where p.oid = to_regprocedure('public.bump_serial_back(uuid)')),
-          false))
+          false)),
+
+    (17, '20260906_delete_chair_rpc', 'ফাংশন', 'delete_chair()',
+        to_regprocedure('public.delete_chair(uuid)') is not null),
+
+    (18, '20260907_chairs_owner_read', 'RLS পলিসি', 'chairs: owner read',
+        exists (select 1 from pg_policies
+                 where schemaname = 'public' and tablename = 'chairs'
+                   and policyname = 'chairs: owner read'))
 )
 select
   case when present then '✅' else '❌' end as ok,

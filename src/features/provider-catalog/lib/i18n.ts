@@ -40,6 +40,10 @@ export const providerCatalogDict = {
   // ChairForm (was hardcoded English; adding bn counterpart)
   chairLabelPlaceholder: { bn: "লেবেল (চেয়ার ১)", en: "Label (Chair 1)" },
   staffNamePlaceholder: { bn: "স্টাফের নাম (রহিম)", en: "Staff name (Rahim)" },
+  staffPhotoHint: {
+    bn: "স্টাফের ছবি — কিউ বোর্ড, কাউন্টার ডিসপ্লে আর কাস্টমারের স্টাফ তালিকায় দেখা যাবে।",
+    en: "Staff photo — shown on the queue board, the counter display and the customer's staff list.",
+  },
   laneColorLabel: { bn: "লেনের রং", en: "Lane color" },
   chairSaving: { bn: "সংরক্ষণ হচ্ছে…", en: "Saving…" },
   chairUpdate: { bn: "আপডেট করো", en: "Update" },

@@ -16,15 +16,17 @@ import {
   type ChairFormOutput,
 } from "../schemas/chair.schema";
 import { providerCatalogDict } from "../lib/i18n";
+import { ImageUploadField } from "./ImageUploadField";
 
 interface Props {
+  shopId: string;
   initial?: Chair;
   busy: boolean;
   onSubmit: (values: ChairFormOutput) => void;
   onCancel: () => void;
 }
 
-export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
+export function ChairForm({ shopId, initial, busy, onSubmit, onCancel }: Props) {
   const { language } = useLanguage();
   const t = useT(providerCatalogDict);
 
@@ -36,6 +38,7 @@ export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
       staff_name: initial?.staff_name ?? "",
       color: initial?.color ?? CHAIR_COLORS[0],
       commission_pct: initial?.commission_pct ?? 0,
+      staff_avatar_url: initial?.staff_avatar_url ?? null,
     },
   });
 
@@ -47,6 +50,23 @@ export function ChairForm({ initial, busy, onSubmit, onCancel }: Props) {
       onSubmit={form.handleSubmit((values) => onSubmit(values))}
       className="space-y-3 rounded-2xl border border-line bg-soft p-4 shadow-xs"
     >
+      {/* The staff photo used to be reachable only on a saved chair's row, so
+          adding a chair and giving it a face were two separate errands. It is
+          the same upload — the storage path is keyed by shop, not by chair —
+          so it belongs here, where the rest of the chair is described. */}
+      <div className="flex items-center gap-3.5">
+        <ImageUploadField
+          shopId={shopId}
+          kind="avatar"
+          label=""
+          currentUrl={form.watch("staff_avatar_url") ?? null}
+          onUploaded={(url) =>
+            form.setValue("staff_avatar_url", url, { shouldDirty: true })
+          }
+        />
+        <p className="text-[12px] leading-snug text-muted">{t("staffPhotoHint")}</p>
+      </div>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field error={err.label?.message}>
           <Input

@@ -50,6 +50,7 @@ export function ChairsManager({ shopId }: { shopId: string }) {
         </Button>
       ) : (
         <ChairForm
+          shopId={shopId}
           initial={editing === "new" ? undefined : editing}
           busy={create.isPending || update.isPending}
           onCancel={() => setEditing(null)}
