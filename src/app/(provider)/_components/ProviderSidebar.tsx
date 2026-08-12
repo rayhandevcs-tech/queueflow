@@ -29,6 +29,7 @@ import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useToast } from "@/components/ui/Toast";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Switch } from "@/components/ui/Switch";
 import { useT, useLanguage } from "@/lib/i18n";
@@ -54,7 +55,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const unreadChatCount = useShopUnreadChatCount(shop?.id);
   const dueCount = useDueCount(shop?.id);
   const logout = useLogout();
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const t = useT(providerCatalogDict);
   const tt = useTerms(shop?.business_type, language);
   const supportT = useT(supportDict);
@@ -82,32 +83,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       style={{ paddingBottom: "max(1.375rem, env(safe-area-inset-bottom))" }}
     >
       <div className="mb-3.5 flex items-center justify-between px-2">
-        <div
-          role="group"
-          aria-label={t("quickLanguageAria")}
-          className="inline-flex rounded-full bg-soft p-0.5 text-[11px] font-semibold"
-        >
-          <button
-            type="button"
-            onClick={() => setLanguage("bn")}
-            className={cn(
-              "min-h-9 min-w-9 rounded-full px-2 transition-colors",
-              language === "bn" ? "bg-accent text-accent-ink" : "text-muted",
-            )}
-          >
-            {t("languageBnShort")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setLanguage("en")}
-            className={cn(
-              "min-h-9 min-w-9 rounded-full px-2 transition-colors",
-              language === "en" ? "bg-accent text-accent-ink" : "text-muted",
-            )}
-          >
-            {t("languageEnShort")}
-          </button>
-        </div>
+        <LanguageToggle />
       </div>
 
       {/* Brand above the shop identity: the sidebar used to open with the

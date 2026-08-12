@@ -192,11 +192,50 @@ export async function listShops(
   return { rows, total: rows[0]?.total_count ?? 0 };
 }
 
+/**
+ * Numeric stats arrive from the RPC as JSON, and one of them can be null even
+ * though the type says number: admin_shop_detail builds the rating as
+ * `(select coalesce(avg_rating, 0) from shop_rating_summary where …)`. The
+ * coalesce is inside the sub-query, so it only rescues a NULL column in a row
+ * that exists — a shop with no reviews at all has no row there, the whole
+ * sub-query is NULL, and the coalesce never runs. review_count came back null
+ * too, so the `review_count === 0` guard in the UI failed and
+ * `avg_rating.toFixed(1)` took the whole admin page down.
+ *
+ * Normalised here rather than at each call site: a panel should not white-
+ * screen because a number was absent, and there is more than one number.
+ */
+function normaliseShopStats(detail: AdminShopDetail): AdminShopDetail {
+  const s = detail.stats;
+  const n = (value: number | null | undefined) => Number(value ?? 0);
+
+  return {
+    ...detail,
+    stats: {
+      ...s,
+      chairs: n(s.chairs),
+      services: n(s.services),
+      gallery: n(s.gallery),
+      offers_active: n(s.offers_active),
+      serials_total: n(s.serials_total),
+      serials_30d: n(s.serials_30d),
+      serials_live: n(s.serials_live),
+      no_shows_30d: n(s.no_shows_30d),
+      revenue_30d: n(s.revenue_30d),
+      due_total: n(s.due_total),
+      avg_rating: n(s.avg_rating),
+      review_count: n(s.review_count),
+    },
+  };
+}
+
 export async function getShopDetail(shopId: string): Promise<AdminShopDetail | null> {
   const supabase = getBrowserClient();
   const { data, error } = await supabase.rpc("admin_shop_detail", { p_shop_id: shopId });
   if (error) throw error;
-  return (data as unknown as AdminShopDetail | null) ?? null;
+
+  const detail = (data as unknown as AdminShopDetail | null) ?? null;
+  return detail ? normaliseShopStats(detail) : null;
 }
 
 export async function setShopStatus(

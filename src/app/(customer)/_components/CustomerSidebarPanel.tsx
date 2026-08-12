@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LifeBuoy, LogOut, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
@@ -26,7 +27,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const { data: activeSerial } = useMyActiveSerial();
   const unreadChatCount = useMyUnreadChatCount();
   const logout = useLogout();
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const t = useT(customerShellDict);
   const supportT = useT(supportDict);
 
@@ -39,33 +40,10 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
           <Wordmark size="md" />
         </Link>
 
-        {/* Under the brand, not beside it: at md the wordmark already fills
-            the sidebar's width, so a control alongside it squeezed the name
-            it was meant to sit next to. One tap flips the language — it was
-            three taps deep in Account & settings before. */}
-        <button
-          type="button"
-          onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-          aria-label={t("languageToggleAria")}
-          className="mt-2.5 flex w-full items-center rounded-full bg-soft p-0.5 text-[11px] font-bold"
-        >
-          <span
-            className={cn(
-              "flex-1 rounded-full py-1.5 text-center transition-colors",
-              language === "bn" ? "bg-accent text-accent-ink shadow-xs" : "text-muted",
-            )}
-          >
-            বাংলা
-          </span>
-          <span
-            className={cn(
-              "flex-1 rounded-full py-1.5 text-center transition-colors",
-              language === "en" ? "bg-accent text-accent-ink shadow-xs" : "text-muted",
-            )}
-          >
-            English
-          </span>
-        </button>
+        {/* Under the brand rather than beside it: at this width the wordmark
+            already fills the row, and a control alongside it squeezed the name
+            it was meant to accompany. */}
+        <LanguageToggle className="mt-2.5" />
       </div>
 
       <div className="flex items-center gap-2.75 border-t border-line px-2 pt-4 pb-5.5">

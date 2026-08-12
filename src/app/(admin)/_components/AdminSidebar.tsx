@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { ADMIN_LEVEL_LABEL, ADMIN_LOGIN } from "@/config/constants";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import {
@@ -22,7 +23,7 @@ import {
   useMyAdminIdentity,
 } from "@/features/admin/hooks/use-admin";
 import { adminDict } from "@/features/admin/lib/i18n";
-import { useT, useLanguage } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 
 const NAV = [
   { href: "/admin", label: "navOverview", icon: LayoutDashboard, exact: true },
@@ -40,7 +41,6 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data: overview } = useAdminOverview();
   const { data: ticketCounts } = useAdminTicketCounts();
   const logout = useLogout(ADMIN_LOGIN);
-  const { language, setLanguage } = useLanguage();
   const t = useT(adminDict);
   const levelT = useT(ADMIN_LEVEL_LABEL);
 
@@ -50,32 +50,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
       style={{ paddingBottom: "max(1.375rem, env(safe-area-inset-bottom))" }}
     >
       <div className="mb-3.5 flex items-center justify-between px-2">
-        <div
-          role="group"
-          aria-label={t("quickLanguageAria")}
-          className="inline-flex rounded-full bg-soft p-0.5 text-[11px] font-semibold"
-        >
-          <button
-            type="button"
-            onClick={() => setLanguage("bn")}
-            className={cn(
-              "min-h-9 min-w-9 rounded-full px-2 transition-colors",
-              language === "bn" ? "bg-accent text-accent-ink" : "text-muted",
-            )}
-          >
-            {t("languageBnShort")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setLanguage("en")}
-            className={cn(
-              "min-h-9 min-w-9 rounded-full px-2 transition-colors",
-              language === "en" ? "bg-accent text-accent-ink" : "text-muted",
-            )}
-          >
-            {t("languageEnShort")}
-          </button>
-        </div>
+        <LanguageToggle />
       </div>
 
       {/* The brand leads and the panel name qualifies it underneath. The old
