@@ -6,6 +6,7 @@ export const customerShellDict = {
   logout: { bn: "লগ-আউট", en: "Log out" },
   openMenu: { bn: "মেনু খোলো", en: "Open menu" },
   closeMenu: { bn: "মেনু বন্ধ করো", en: "Close menu" },
+  languageToggleAria: { bn: "ভাষা বদলাও", en: "Switch language" },
   guestLogin: { bn: "লগইন", en: "Log in" },
   guestNavExplore: { bn: "এক্সপ্লোর", en: "Explore" },
   guestNavAbout: { bn: "আমাদের সম্পর্কে", en: "About" },

@@ -26,7 +26,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const { data: activeSerial } = useMyActiveSerial();
   const unreadChatCount = useMyUnreadChatCount();
   const logout = useLogout();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const t = useT(customerShellDict);
   const supportT = useT(supportDict);
 
@@ -34,9 +34,38 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
       {/* The desktop sidebar led with the user's own avatar, so the product
           name never appeared on screen once you were signed in. */}
-      <Link href="/explore" onClick={onNavigate} className="block px-2 pb-4">
-        <Wordmark size="md" />
-      </Link>
+      <div className="flex items-center justify-between gap-2 px-2 pb-4">
+        <Link href="/explore" onClick={onNavigate}>
+          <Wordmark size="md" />
+        </Link>
+
+        {/* One tap, one control. Language was only reachable from Account &
+            settings, three taps deep — for something a bilingual user flips
+            while reading, it belongs where the app announces itself. */}
+        <button
+          type="button"
+          onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
+          aria-label={t("languageToggleAria")}
+          className="flex shrink-0 items-center gap-1 rounded-full bg-soft p-0.5 text-[11px] font-bold"
+        >
+          <span
+            className={cn(
+              "rounded-full px-2 py-1 transition-colors",
+              language === "bn" ? "bg-accent text-accent-ink" : "text-muted",
+            )}
+          >
+            বাং
+          </span>
+          <span
+            className={cn(
+              "rounded-full px-2 py-1 transition-colors",
+              language === "en" ? "bg-accent text-accent-ink" : "text-muted",
+            )}
+          >
+            EN
+          </span>
+        </button>
+      </div>
 
       <div className="flex items-center gap-2.75 border-t border-line px-2 pt-4 pb-5.5">
         <Link href="/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.75">

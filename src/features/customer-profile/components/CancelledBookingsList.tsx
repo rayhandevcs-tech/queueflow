@@ -40,15 +40,27 @@ export function CancelledBookingsList({
           <div key={s.id} className="rounded-[14px] border border-line bg-card p-3.25">
             <div className="flex items-center gap-3">
               <div
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl font-display font-bold text-white"
+                className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl font-display font-bold text-white"
                 style={{ background: shop ? shopAvatarColor(shop.id) : "var(--color-muted)" }}
               >
-                {shop ? shopInitial(shop.name) : <Store className="h-4 w-4" />}
+                {shop?.logo_url || shop?.cover_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={shop.logo_url ?? shop.cover_image_url ?? undefined}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                ) : shop ? (
+                  shopInitial(shop.name)
+                ) : (
+                  <Store className="h-4 w-4" />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-semibold text-ink">{shop?.name ?? t("shopFallback")}</p>
                 <p className="truncate text-[11px] text-muted">
-                  {shop?.address ? `${shop.address} · ` : ""}
+                  {shop?.address ? `${shop.address.split(",")[0].trim()} · ` : ""}
                   {formatBanglaDate(new Date(s.created_at))}
                 </p>
                 <p className="truncate text-[10px] text-muted">

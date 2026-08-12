@@ -5,12 +5,20 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import Link from "next/link";
-import { ArrowUpRight, LocateFixed, Minus, Navigation, Plus, Star } from "lucide-react";
+import {
+  ArrowUpRight,
+  Clock3,
+  LocateFixed,
+  Minus,
+  Navigation,
+  Plus,
+  Star,
+  Users,
+} from "lucide-react";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
 import { shopAvailability } from "@/lib/shop-availability";
-import { toBanglaDigits } from "@/lib/format-wait";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
@@ -253,7 +261,7 @@ function ShopPopupCard({
             </p>
             <p className="mt-0.5 truncate text-[12px] text-muted">
               {businessTypeT(shop.business_type)}
-              {shop.address ? ` · ${shop.address}` : ""}
+              {shop.address ? ` · ${shop.address.split(",")[0].trim()}` : ""}
             </p>
           </div>
 
@@ -265,27 +273,35 @@ function ShopPopupCard({
           )}
         </div>
 
-        {/* Three facts, one row, each labelled — the old version stacked them
-            as unlabelled pills that read as tags rather than measurements. */}
-        <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-2xl bg-soft p-2.5">
-          <div className="text-center">
-            <p className="font-number text-[15px] leading-none font-bold text-ink">
-              {toBanglaDigits(wait)}
-            </p>
-            <p className="mt-1 text-[10px] text-muted">{t("minUnit")}</p>
-          </div>
-          <div className="border-x border-line text-center">
-            <p className="font-number text-[15px] leading-none font-bold text-ink">
-              {toBanglaDigits(count)}
-            </p>
-            <p className="mt-1 text-[10px] text-muted">{t("inQueueShort")}</p>
-          </div>
-          <div className="text-center">
-            <p className="font-number text-[15px] leading-none font-bold text-ink">
-              {distance != null ? distance.toFixed(1) : "—"}
-            </p>
-            <p className="mt-1 text-[10px] text-muted">{t("km")}</p>
-          </div>
+        {/* Three chips rather than a grid of bare numbers.
+            "০ / মিন" needed reading twice to become "no wait" — an icon and a
+            whole phrase say it once. The wait leads and carries the colour,
+            because it is the fact that decides whether to set off. */}
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold",
+              count === 0 ? "bg-good-soft text-good" : "bg-live-soft text-live",
+            )}
+          >
+            <Clock3 className="h-3 w-3" />
+            {count === 0 ? t("walkInNow") : t("waitMinutes", wait)}
+          </span>
+
+          {count > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted">
+              <Users className="h-3 w-3" />
+              {t("inQueue", count)}
+            </span>
+          )}
+
+          {distance != null && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted">
+              <Navigation className="h-3 w-3" />
+              <span className="font-number text-ink">{distance.toFixed(1)}</span>
+              {t("km")}
+            </span>
+          )}
         </div>
 
         {!photo && (
