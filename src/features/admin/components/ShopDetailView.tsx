@@ -24,6 +24,7 @@ import { AvatarChip } from "@/components/ui/AvatarChip";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { describeDbError } from "@/lib/supabase/db-errors";
 import { Spinner } from "@/components/ui/Spinner";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { formatBanglaDate, formatMoney, toBanglaDigits } from "@/lib/format-wait";
@@ -56,7 +57,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
       <EmptyState
         icon={<TriangleAlert className="h-6 w-6" />}
         title={t("shopDetailLoadFailed")}
-        description={error instanceof Error ? error.message : String(error)}
+        description={describeDbError(error)}
         action={
           <Link href="/admin/shops" className="text-sm font-semibold text-accent hover:underline">
             {t("backToShops")}

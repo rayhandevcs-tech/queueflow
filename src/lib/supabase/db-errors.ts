@@ -19,6 +19,31 @@ function textOf(err: unknown): string {
   return [e.message, e.details, e.code].filter(Boolean).join(" | ");
 }
 
+/**
+ * The raw server message, for screens that show a failure verbatim rather than
+ * translating it.
+ *
+ * Supabase rejects with a PLAIN OBJECT, not an Error — so the obvious
+ * `err instanceof Error ? err.message : String(err)` renders "[object Object]"
+ * and throws away the one thing worth reading. Postgres puts the actionable
+ * part in `hint` and `details` as often as in `message`, so all of them come
+ * through.
+ */
+export function describeDbError(err: unknown): string {
+  if (!err) return "";
+  if (typeof err === "string") return err;
+
+  if (typeof err === "object") {
+    const e = err as PgErrorLike & { hint?: string };
+    const parts = [e.message, e.details, e.hint].filter(Boolean);
+    if (parts.length) {
+      return e.code ? `${parts.join(" — ")} (${e.code})` : parts.join(" — ");
+    }
+  }
+
+  return err instanceof Error ? err.message : JSON.stringify(err);
+}
+
 const MESSAGES = {
   oneActiveSerial: {
     bn: "এই কাস্টমারের আগে থেকেই একটা সিরিয়াল চলছে — একসাথে একটাই রাখা যায়।",
