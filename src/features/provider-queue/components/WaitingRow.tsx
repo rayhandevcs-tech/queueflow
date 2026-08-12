@@ -67,7 +67,22 @@ export function WaitingRow({
   };
 
   return (
-    <div className="rounded-2xl border border-accent/15 bg-accent/10 p-3.5">
+    <div className="relative rounded-2xl border border-accent/15 bg-accent/10 p-3.5">
+      {/* Cancel sits in the card's own corner rather than in the action row:
+          it is the one destructive action here, and mixing it in with call /
+          bump / move made it easy to hit by accident on a phone. Muted until
+          hover — present, not shouting. */}
+      <button
+        type="button"
+        title={t("cancelTitle")}
+        aria-label={t("cancelTitle")}
+        disabled={actions.cancel.isPending}
+        onClick={() => setConfirmCancel(true)}
+        className="absolute top-2 right-2 grid h-8 w-8 place-items-center rounded-lg text-muted transition-colors hover:bg-live-soft hover:text-live disabled:opacity-50"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
       {/* LAYOUT NOTE (Sprint 39)
           This was one flex row: avatar · name+services · starts-in · price.
           On a phone the name column is the only flexible one, so it absorbed
@@ -76,7 +91,7 @@ export function WaitingRow({
           disappeared entirely while badges and the price stayed. The identity
           block now owns its own row and the numbers sit underneath, so nothing
           competes with the name for width at any viewport. */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 pr-8">
         <div className="relative shrink-0">
           <AvatarChip
             label={serial.customer_name}
@@ -221,21 +236,6 @@ export function WaitingRow({
               <UserX className="h-3.5 w-3.5" />
             </button>
           )}
-          {/* Cancelling a waiting serial was only possible once it had been
-              started (the × on NowServingCard), so a booking that shouldn't be
-              in the queue at all could only be no-showed — which needs a call
-              and a five-minute wait, and marks the customer's record for
-              something they never did. WAITING → CANCELLED is a legal move in
-              serial_before_update, so it belongs here. */}
-          <button
-            type="button"
-            title={t("cancelTitle")}
-            disabled={actions.cancel.isPending}
-            onClick={() => setConfirmCancel(true)}
-            className="grid h-9 w-9 place-items-center rounded-lg bg-live-soft text-live disabled:opacity-50"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
           <MoveSerialMenu
             serial={serial}
             lanes={lanes}
