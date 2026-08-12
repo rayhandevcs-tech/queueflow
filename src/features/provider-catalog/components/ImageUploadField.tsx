@@ -13,8 +13,15 @@ interface Props {
   kind: UploadKind;
   label: string;
   currentUrl: string | null;
-  /** aspect: "square" for logo/avatar, "wide" for cover */
-  aspect?: "square" | "wide";
+  /**
+   * "square" — round avatar (staff, shop logo)
+   * "wide"   — full-width cover strip
+   * "tile"   — a square block at the size it will actually be shown. A service
+   *            photo was going through "wide", so a portrait shot was cropped
+   *            to a letterbox in the form and then re-cropped to a square on
+   *            the card: what you picked was never what you got.
+   */
+  aspect?: "square" | "wide" | "tile";
   onUploaded: (url: string) => void;
 }
 
@@ -59,7 +66,9 @@ export function ImageUploadField({
         disabled={uploading}
         className={cn(
           "relative overflow-hidden rounded-xl border-2 border-dashed border-line bg-soft text-muted transition-colors hover:border-accent/50 hover:bg-accent/5",
-          aspect === "square" ? "h-24 w-24 rounded-full" : "h-44 w-full",
+          aspect === "square" && "h-24 w-24 rounded-full",
+          aspect === "wide" && "h-44 w-full",
+          aspect === "tile" && "aspect-square w-40 max-w-full",
         )}
       >
         {src ? (

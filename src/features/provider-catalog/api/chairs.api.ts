@@ -1,4 +1,5 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { withDbErrors } from "@/lib/supabase/db-errors";
 import { ACTIVE_STATUSES } from "@/config/constants";
 import type { Chair } from "@/types";
 import type { ChairFormOutput } from "../schemas/chair.schema";
@@ -65,56 +66,46 @@ export async function isChairInActiveUse(shopId: string, chairId: string): Promi
 }
 
 /**
- * Hard-deletes the chair when nothing references it; falls back to pausing it
- * when history is in the way.
+ * Chair removal, decided in the database.
  *
- * TWO REASONS THIS NEVER ACTUALLY DELETED ANYTHING
+ * Doing it from the client meant two DELETEs against two tables with no
+ * transaction around them, each meeting RLS and the protective triggers on its
+ * own. The browser console showed exactly how that ends: the chairs DELETE
+ * came back 409 (a foreign key still holds the row) and the deactivate
+ * fallback came back 403 — so the owner could neither remove the chair nor
+ * even pause it.
  *
- * 1. chair_service_stats holds one row per (chair, service) — the can-perform
- *    matrix. Every chair has them, always, from the moment it is created. They
- *    are configuration, not history, but the foreign key does not know that, so
- *    the delete was rejected 23503 every single time and quietly downgraded to
- *    "pause". The matrix is cleared first now; the chair's serials are history
- *    and are still allowed to block the delete.
+ * delete_chair() checks ownership once, looks for serials itself, and either
+ * removes the chair with its can-perform matrix or pauses it — in one
+ * transaction, and returns which of the two happened rather than leaving the
+ * client to infer it from an HTTP code.
  *
- * 2. A DELETE that matches no row is not an error in PostgREST. If RLS refuses
- *    it, you get `error === null` and zero rows — which the old code read as
- *    success, told the user the chair was gone, and then showed it again on the
- *    next refetch. Asking for the deleted rows back (`.select()`) is what makes
- *    the difference between "deleted" and "silently refused" visible.
+ * The rule is unchanged: a chair that has served anyone is paused, never
+ * deleted. Its serials are the shop's income history.
  */
 export async function deleteChair(chairId: string): Promise<{ deleted: boolean }> {
-  const supabase = getBrowserClient();
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { data, error } = await supabase.rpc("delete_chair", { p_chair_id: chairId });
+    if (error) throw error;
+    return { deleted: (data as { deleted?: boolean } | null)?.deleted ?? false };
+  });
+}
 
-  await supabase.from("chair_service_stats").delete().eq("chair_id", chairId);
-
-  const { data, error } = await supabase
-    .from("chairs")
-    .delete()
-    .eq("id", chairId)
-    .select("id");
-
-  if (error) {
-    // Still referenced by serials — real history, worth keeping. Pause instead.
-    if (error.code === "23503") {
-      await updateChair(chairId, { is_active: false });
-      return { deleted: false };
-    }
-    throw error;
-  }
-
-  if (data && data.length > 0) return { deleted: true };
-
-  // No error, no row. Either it was already gone, or a policy refused it —
-  // and those need different answers, so ask rather than guess.
-  const { data: survivor } = await supabase
-    .from("chairs")
-    .select("id")
-    .eq("id", chairId)
-    .maybeSingle();
-
-  if (!survivor) return { deleted: true };
-
-  await updateChair(chairId, { is_active: false });
-  return { deleted: false };
+/**
+ * Pause / resume a chair.
+ *
+ * Through the same RPC family as deletion, because the plain PATCH was coming
+ * back 403 — the owner could not pause a chair any more than remove one, which
+ * is why the delete fallback had nothing to fall back to.
+ */
+export async function setChairActive(chairId: string, isActive: boolean): Promise<void> {
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase.rpc("set_chair_active", {
+      p_chair_id: chairId,
+      p_active: isActive,
+    });
+    if (error) throw error;
+  });
 }

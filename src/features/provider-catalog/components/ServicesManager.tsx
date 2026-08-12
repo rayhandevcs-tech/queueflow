@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { ListChecks, Plus, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { Service } from "@/types";
 import type { ServiceCategory } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
+import { ServiceCard, ServiceCardGrid } from "@/components/ui/ServiceCard";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/lib/i18n";
 import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
@@ -87,63 +87,52 @@ export function ServicesManager({ shopId }: { shopId: string }) {
           description={t("noServicesDesc")}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+        <ServiceCardGrid>
           {services?.map((s) => {
             const CategoryIcon = SERVICE_CATEGORY_ICON[(s.category as ServiceCategory) ?? "OTHER"];
             return (
-              <div
+              <ServiceCard
                 key={s.id}
-                className="flex items-center gap-2 rounded-2xl border border-line bg-card p-4 transition-shadow hover:shadow-sm"
-              >
-                <button
-                  type="button"
-                  onClick={() => setEditing(s)}
-                  className="flex min-w-0 flex-1 items-center gap-3.5 text-left"
-                >
-                  <div className="grid h-11.5 w-11.5 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-soft text-muted">
-                    {s.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s.image_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <CategoryIcon className="h-6.5 w-6.5" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={cn(
-                        "truncate text-[15px] font-semibold text-ink",
-                        !s.is_active && "text-muted line-through",
-                      )}
-                    >
-                      {s.name}
-                    </p>
-                    <p className="text-xs text-muted">{t("estimatedMinutes", s.default_duration_min)}</p>
-                  </div>
-                </button>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <p className="font-number text-lg font-bold text-ink">৳{s.rate}</p>
+                name={s.name}
+                imageUrl={s.image_url}
+                fallbackIcon={<CategoryIcon className="h-8 w-8" />}
+                durationLabel={t("estimatedMinutes", s.default_duration_min)}
+                priceLabel={`৳${s.rate}`}
+                dimmed={!s.is_active}
+                onClick={() => setEditing(s)}
+                badge={
                   <button
                     type="button"
-                    onClick={() => toggleActive.mutate({ serviceId: s.id, isActive: !s.is_active })}
+                    onClick={(e) => {
+                      // The card behind this opens the editor; the pill is its
+                      // own control and must not drag the editor open with it.
+                      e.stopPropagation();
+                      toggleActive.mutate({ serviceId: s.id, isActive: !s.is_active });
+                    }}
                   >
                     <StatusPill
                       tone={s.is_active ? "good" : "neutral"}
                       label={s.is_active ? t("serviceActiveWord") : t("serviceInactiveWord")}
                     />
                   </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void startDelete(s)}
-                  aria-label={t("deleteServiceAria")}
-                  className="grid h-9 w-9 shrink-0 place-items-center self-start rounded-lg text-muted transition-colors hover:bg-live-soft hover:text-live"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+                }
+                action={
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void startDelete(s);
+                    }}
+                    aria-label={t("deleteServiceAria")}
+                    className="grid h-8 w-8 place-items-center rounded-lg bg-card/85 text-muted backdrop-blur-sm transition-colors hover:bg-live-soft hover:text-live"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                }
+              />
             );
           })}
-        </div>
+        </ServiceCardGrid>
       )}
 
       <ConfirmSheet

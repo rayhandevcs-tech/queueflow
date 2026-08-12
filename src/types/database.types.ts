@@ -753,6 +753,15 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: void;
       };
+      /** 20260906 — chair removal decided in SQL, not by two client DELETEs. */
+      delete_chair: {
+        Args: { p_chair_id: string };
+        Returns: { deleted: boolean; reason: string; serials?: number };
+      };
+      set_chair_active: {
+        Args: { p_chair_id: string; p_active: boolean };
+        Returns: void;
+      };
       is_platform_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;

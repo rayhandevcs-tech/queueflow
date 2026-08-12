@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { UserPlus, X, Zap } from "lucide-react";
+import { Clock3, UserPlus, X, Zap } from "lucide-react";
 import { keys } from "@/lib/query/keys";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { UiDbError } from "@/lib/supabase/db-errors";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { AvatarChip } from "@/components/ui/AvatarChip";
+import { ServiceCard, ServiceCardGrid } from "@/components/ui/ServiceCard";
 import { useLanguage, useT } from "@/lib/i18n";
 import {
   walkInSchema,
@@ -128,16 +129,21 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                   — which is what decides this serial's ETA — and its price.
                   Deliberately the same card shape as the customer's
                   ServicesTab, not a second design for the same job. */}
-              <div className="space-y-2">
+              <ServiceCardGrid>
                 {services?.map((s) => {
                   const on = field.value.includes(s.id);
                   const CategoryIcon =
                     SERVICE_CATEGORY_ICON[(s.category as ServiceCategory) ?? "OTHER"];
                   return (
-                    <button
+                    <ServiceCard
                       key={s.id}
-                      type="button"
-                      aria-pressed={on}
+                      name={s.name}
+                      imageUrl={s.image_url}
+                      fallbackIcon={<CategoryIcon className="h-7 w-7" />}
+                      durationLabel={t("serviceMinutes", s.default_duration_min)}
+                      priceLabel={`৳${s.rate}`}
+                      selectable
+                      selected={on}
                       onClick={() =>
                         field.onChange(
                           on
@@ -145,54 +151,11 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                             : [...field.value, s.id],
                         )
                       }
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-[14px] border p-3 text-left transition-all",
-                        on ? "border-accent bg-accent/[0.07]" : "border-line bg-card hover:bg-soft",
-                      )}
-                      style={{ borderWidth: 1.5 }}
-                    >
-                      <span className="grid h-10.5 w-10.5 shrink-0 place-items-center overflow-hidden rounded-[11px] bg-soft text-muted">
-                        {s.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={s.image_url}
-                            alt=""
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                            // A dead URL would otherwise leave the browser's
-                            // broken-image glyph sitting in the card.
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <CategoryIcon className="h-4.5 w-4.5" />
-                        )}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-ink">
-                          {s.name}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] text-muted">
-                          {t("serviceMinutes", s.default_duration_min)}
-                        </span>
-                      </span>
-                      <span className="shrink-0 font-number text-[15px] font-semibold text-ink tabular-nums">
-                        ৳{s.rate}
-                      </span>
-                      <span
-                        className={cn(
-                          "grid h-6 w-6 shrink-0 place-items-center rounded-lg border text-sm font-bold text-white",
-                          on ? "border-accent bg-accent" : "border-line bg-transparent",
-                        )}
-                        style={{ borderWidth: 1.5 }}
-                      >
-                        {on ? "✓" : ""}
-                      </span>
-                    </button>
+                    />
                   );
                 })}
-              </div>
+              </ServiceCardGrid>
+
               {err.serviceIds && (
                 <p className="mt-1 text-xs text-live">
                   {err.serviceIds.message as string}
@@ -209,7 +172,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
               type="button"
               onClick={() => form.setValue("chairId", null)}
               className={cn(
-                "flex w-20 flex-col items-center gap-1 rounded-xl border px-2 py-2 text-center transition-all",
+                "flex w-22 flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all",
                 selectedChair === null
                   ? "border-accent bg-accent shadow-sm"
                   : "border-line bg-card hover:border-accent/40 hover:bg-soft",
@@ -240,7 +203,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                   type="button"
                   onClick={() => form.setValue("chairId", lane.chair.id)}
                   className={cn(
-                    "flex w-20 flex-col items-center gap-1 rounded-xl border px-2 py-2 text-center transition-all",
+                    "flex w-22 flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center transition-all",
                     selected
                       ? "border-accent bg-accent shadow-sm"
                       : "border-line bg-card hover:border-accent/40 hover:bg-soft",
@@ -260,8 +223,27 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                   >
                     {lane.chair.staff_name || lane.chair.label}
                   </span>
-                  <span className={cn("text-[10px]", selected ? "text-accent-ink/70" : "text-muted")}>
-                    {t("backlogSuffixMin", lane.backlogMin)}
+                  {/* "~0 মিন" read as a stray fragment under the name. The
+                      same pill the board's lane header uses, so a free chair
+                      looks free at a glance instead of needing to be parsed. */}
+                  <span
+                    className={cn(
+                      "inline-flex max-w-full items-center gap-0.5 truncate rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                      selected
+                        ? "bg-accent-ink/15 text-accent-ink"
+                        : lane.backlogMin > 0
+                          ? "bg-live-soft text-live"
+                          : "bg-good-soft text-good",
+                    )}
+                  >
+                    {lane.backlogMin > 0 ? (
+                      <>
+                        <Clock3 className="h-2.5 w-2.5 shrink-0" />
+                        {t("backlogMin", lane.backlogMin)}
+                      </>
+                    ) : (
+                      t("backlogFree")
+                    )}
                   </span>
                 </button>
               );

@@ -83,8 +83,8 @@ export function ServiceForm({ shopId, initial, busy, onSubmit, onCancel }: Props
           shopId={shopId}
           kind="service"
           label={t("serviceImageLabel")}
+          aspect="tile"
           currentUrl={form.watch("image_url") ?? null}
-          aspect="wide"
           onUploaded={(url) => form.setValue("image_url", url, { shouldDirty: true })}
         />
       </div>

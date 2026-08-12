@@ -4,7 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import { upsertById } from "@/lib/query/realtime-cache";
 import type { Chair } from "@/types";
-import { createChair, deleteChair, getChairs, updateChair } from "../api/chairs.api";
+import {
+  createChair,
+  deleteChair,
+  getChairs,
+  setChairActive,
+  updateChair,
+} from "../api/chairs.api";
 import type { ChairFormOutput } from "../schemas/chair.schema";
 
 const bySortOrder = (a: Chair, b: Chair) => a.sort_order - b.sort_order;
@@ -58,7 +64,7 @@ export function useChairMutations(shopId: string) {
     }: {
       chairId: string;
       isActive: boolean;
-    }) => updateChair(chairId, { is_active: isActive }),
+    }) => setChairActive(chairId, isActive),
     onMutate: async ({ chairId, isActive }) => {
       await queryClient.cancelQueries({ queryKey: listKey });
       const previous = queryClient.getQueryData<Chair[]>(listKey);
