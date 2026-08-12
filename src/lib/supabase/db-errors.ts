@@ -78,6 +78,18 @@ const MESSAGES = {
     bn: "একসাথে সর্বোচ্চ ৫ জনের সিরিয়াল নেওয়া যায়।",
     en: "You can book for at most 5 people at once.",
   },
+  serialNotWaiting: {
+    bn: "সিরিয়ালটা আর অপেক্ষায় নেই — বোর্ড রিফ্রেশ করে দেখো।",
+    en: "That serial isn't waiting any more — refresh the board.",
+  },
+  notYourShop: {
+    bn: "এই সিরিয়ালটা তোমার দোকানের নয়।",
+    en: "That serial doesn't belong to your shop.",
+  },
+  serialNotFound: {
+    bn: "সিরিয়ালটা পাওয়া যায়নি — সম্ভবত এর মধ্যেই সরে গেছে।",
+    en: "Serial not found — it has probably already moved on.",
+  },
   migrationMissing: {
     bn: "এই ফিচারের ডেটাবেস আপডেটটা এখনো চালানো হয়নি — supabase/migrations ফোল্ডারের বাকি ফাইলগুলো SQL এডিটরে চালাও।",
     en: "The database update for this feature hasn't been run yet — apply the remaining files in supabase/migrations.",
@@ -145,6 +157,14 @@ const RULES: ReadonlyArray<{
   { match: (t) => t.includes("no_show_requires_call"), key: "noShowRequiresCall", silent: false },
   { match: (t) => t.includes("no_show_grace_period"), key: "noShowGracePeriod", silent: false },
   { match: (t) => t.includes("nothing_to_bump"), key: "nothingToBump", silent: false },
+  // The other three exceptions bump_serial_back / mark_serial_called can raise.
+  // They were never mapped, so every one of them reached the user as the
+  // generic "something went wrong" — which is exactly what made the back
+  // button look broken rather than refused, and sent the search for a cause
+  // into the UI instead of the queue's state.
+  { match: (t) => t.includes("serial is not waiting"), key: "serialNotWaiting", silent: false },
+  { match: (t) => t.includes("not your shop"), key: "notYourShop", silent: false },
+  { match: (t) => t.includes("serial not found"), key: "serialNotFound", silent: false },
   // Sprint 29 — party rules (20260828_group_booking.sql). `party_lead_missing`
   // means the lead was cancelled out from under a follower mid-insert; from
   // the customer's side that reads as "you already have a booking", which the
