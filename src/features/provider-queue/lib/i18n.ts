@@ -6,6 +6,13 @@ export const providerQueueDict = {
   // NowServingCard
   messageCustomerTitle: { bn: "কাস্টমারকে মেসেজ করো", en: "Message the customer" },
   cancelTitle: { bn: "ক্যানসেল করো", en: "Cancel" },
+  cancelSerialTitle: { bn: "সিরিয়ালটি বাতিল করবে?", en: "Cancel this serial?" },
+  cancelSerialDesc: {
+    bn: "কাস্টমার নোটিফিকেশন পাবে আর কিউ থেকে সরে যাবে। এটা ফেরানো যাবে না।",
+    en: "The customer is notified and leaves the queue. This can't be undone.",
+  },
+  cancelSerialConfirm: { bn: "হ্যাঁ, বাতিল করো", en: "Yes, cancel" },
+  keepSerial: { bn: "থাক", en: "Keep it" },
   nowServingPrefix: { bn: "এখন চলছে", en: "Now serving" },
   serialHash: {
     bn: (n: number) => `সিরিয়াল #${n}`,
@@ -83,16 +90,24 @@ export const providerQueueDict = {
 
   // ChairColumn
   chairClosed: { bn: "বন্ধ", en: "Closed" },
+  // Just the number and unit: the badge around it already says "wait", and
+  // the old "~12 মিন অপেক্ষা" ran into the staff name beside it on a phone.
   backlogMin: {
-    bn: (n: number) => `~${n} মিন অপেক্ষা`,
-    en: (n: number) => `~${n} min wait`,
+    bn: (n: number) => `${n} মিনিট`,
+    en: (n: number) => `${n} min`,
   },
+  backlogFree: { bn: "এখন খালি", en: "Free now" },
+  waitLabelAria: { bn: "আনুমানিক অপেক্ষা", en: "Estimated wait" },
 
   // WalkInDialog
   walkInCustomerTitle: { bn: "অফ-লাইন কাস্টমার", en: "Offline customer" },
   customerNamePlaceholder: { bn: "কাস্টমারের নাম *", en: "Customer name *" },
   phoneOptionalPlaceholder: { bn: "ফোন (ঐচ্ছিক)", en: "Phone (optional)" },
   servicesLabel: { bn: "সার্ভিস *", en: "Services *" },
+  serviceMinutes: {
+    bn: (n: number) => `${n} মিনিট`,
+    en: (n: number) => `${n} min`,
+  },
   chairLabel: { bn: "চেয়ার", en: "Chair" },
   autoChair: { bn: "অটো", en: "Auto" },
   backlogSuffixMin: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause } from "lucide-react";
+import { Clock3, Pause } from "lucide-react";
 import type { Serial } from "@/types";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -41,16 +41,27 @@ export function ChairColumn({ lane, lanes, boardRows, actions }: Props) {
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-ink">{chair.staff_name || chair.label}</p>
-          <p className="flex items-center gap-1 truncate text-[11px] text-muted">
-            {lane.chairInactive ? (
-              <>
-                <Pause className="h-3 w-3" />
-                {t("chairClosed")}
-              </>
-            ) : (
-              t("backlogMin", lane.backlogMin)
-            )}
-          </p>
+          {/* A pill rather than a line of grey text: it is the one number an
+              owner scans this header for, and "~12 মিন অপেক্ষা" read as a
+              caption on the staff name instead of a figure of its own. */}
+          {lane.chairInactive ? (
+            <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-soft px-2 py-0.5 text-[11px] font-semibold text-muted">
+              <Pause className="h-2.5 w-2.5" />
+              {t("chairClosed")}
+            </span>
+          ) : lane.backlogMin > 0 ? (
+            <span
+              title={t("waitLabelAria")}
+              className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-live-soft px-2 py-0.5 text-[11px] font-semibold text-live"
+            >
+              <Clock3 className="h-2.5 w-2.5" />
+              {t("backlogMin", lane.backlogMin)}
+            </span>
+          ) : (
+            <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-good-soft px-2 py-0.5 text-[11px] font-semibold text-good">
+              {t("backlogFree")}
+            </span>
+          )}
         </div>
         <span className="grid h-5.5 min-w-5.5 shrink-0 place-items-center rounded-full bg-soft px-1.5 font-number text-xs font-bold text-ink">
           {count}

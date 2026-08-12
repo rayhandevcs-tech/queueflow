@@ -78,6 +78,10 @@ const MESSAGES = {
     bn: "একসাথে সর্বোচ্চ ৫ জনের সিরিয়াল নেওয়া যায়।",
     en: "You can book for at most 5 people at once.",
   },
+  migrationMissing: {
+    bn: "এই ফিচারের ডেটাবেস আপডেটটা এখনো চালানো হয়নি — supabase/migrations ফোল্ডারের বাকি ফাইলগুলো SQL এডিটরে চালাও।",
+    en: "The database update for this feature hasn't been run yet — apply the remaining files in supabase/migrations.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -147,6 +151,24 @@ const RULES: ReadonlyArray<{
   // one-active-serial message says better than any wording of its own.
   { match: (t) => t.includes("invalid_party_size"), key: "invalidPartySize", silent: false },
   { match: (t) => t.includes("party_lead_missing"), key: "oneActiveSerial", silent: false },
+  {
+    // An RPC or table this build calls that the database does not have — i.e.
+    // a migration in supabase/migrations that was never applied. It used to
+    // fall through to "something went wrong", which sends you hunting through
+    // the UI for a bug that is not in the UI at all. PGRST202 = function not
+    // found, PGRST205 = table not found; 42883/42P01 are the Postgres codes
+    // behind them.
+    match: (t) =>
+      t.includes("PGRST202") ||
+      t.includes("PGRST205") ||
+      t.includes("42883") ||
+      t.includes("42P01") ||
+      t.includes("Could not find the function") ||
+      t.includes("Could not find the table") ||
+      t.includes("schema cache"),
+    key: "migrationMissing",
+    silent: false,
+  },
 ];
 
 export function translateDbError(err: unknown): FriendlyDbError {

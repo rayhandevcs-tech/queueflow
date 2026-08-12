@@ -64,15 +64,57 @@ export async function isChairInActiveUse(shopId: string, chairId: string): Promi
   return (count ?? 0) > 0;
 }
 
-/** Hard-deletes the chair when nothing references it; falls back to pausing it if a foreign key blocks the delete. */
+/**
+ * Hard-deletes the chair when nothing references it; falls back to pausing it
+ * when history is in the way.
+ *
+ * TWO REASONS THIS NEVER ACTUALLY DELETED ANYTHING
+ *
+ * 1. chair_service_stats holds one row per (chair, service) — the can-perform
+ *    matrix. Every chair has them, always, from the moment it is created. They
+ *    are configuration, not history, but the foreign key does not know that, so
+ *    the delete was rejected 23503 every single time and quietly downgraded to
+ *    "pause". The matrix is cleared first now; the chair's serials are history
+ *    and are still allowed to block the delete.
+ *
+ * 2. A DELETE that matches no row is not an error in PostgREST. If RLS refuses
+ *    it, you get `error === null` and zero rows — which the old code read as
+ *    success, told the user the chair was gone, and then showed it again on the
+ *    next refetch. Asking for the deleted rows back (`.select()`) is what makes
+ *    the difference between "deleted" and "silently refused" visible.
+ */
 export async function deleteChair(chairId: string): Promise<{ deleted: boolean }> {
   const supabase = getBrowserClient();
-  const { error } = await supabase.from("chairs").delete().eq("id", chairId);
 
-  if (!error) return { deleted: true };
-  if (error.code === "23503") {
-    await updateChair(chairId, { is_active: false });
-    return { deleted: false };
+  await supabase.from("chair_service_stats").delete().eq("chair_id", chairId);
+
+  const { data, error } = await supabase
+    .from("chairs")
+    .delete()
+    .eq("id", chairId)
+    .select("id");
+
+  if (error) {
+    // Still referenced by serials — real history, worth keeping. Pause instead.
+    if (error.code === "23503") {
+      await updateChair(chairId, { is_active: false });
+      return { deleted: false };
+    }
+    throw error;
   }
-  throw error;
+
+  if (data && data.length > 0) return { deleted: true };
+
+  // No error, no row. Either it was already gone, or a policy refused it —
+  // and those need different answers, so ask rather than guess.
+  const { data: survivor } = await supabase
+    .from("chairs")
+    .select("id")
+    .eq("id", chairId)
+    .maybeSingle();
+
+  if (!survivor) return { deleted: true };
+
+  await updateChair(chairId, { is_active: false });
+  return { deleted: false };
 }
