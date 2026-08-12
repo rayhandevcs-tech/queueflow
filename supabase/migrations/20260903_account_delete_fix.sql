@@ -135,10 +135,13 @@ begin
   -- no longer deleted from SQL.
   delete from profiles where id = p_user_id;
 
-  -- CHANGED (Sprint 37): `delete from auth.users where id = p_user_id;` was
-  -- here. It now happens in /api/admin/account through the Admin API, which is
-  -- the only thing that removes the identity, sessions and one-time tokens
+  -- CHANGED (Sprint 37): the statement that removed the auth.users row used to
+  -- be here. It now happens in /api/admin/account through the Admin API, which
+  -- is the only thing that removes the identity, sessions and one-time tokens
   -- along with the user — i.e. the only thing that actually frees the email.
+  -- (Deliberately described rather than quoted: this comment lives inside the
+  -- function body, so anything quoted here shows up in pg_get_functiondef and
+  -- makes the function look like it still does what it no longer does.)
 
   return json_build_object(
     'email', v_email,

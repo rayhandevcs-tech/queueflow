@@ -72,14 +72,32 @@ with checks(ord, migration, kind, obj, present) as (
     (13, '20260902_support_tickets', 'টেবিল', 'support_tickets',
         to_regclass('public.support_tickets') is not null),
 
+    -- খেয়াল করো: এখানে "auth.users মোছে না" খুঁজলে ভুল উত্তর আসে — ফাংশনের
+    -- ভেতরের কমেন্টেই ওই লেখাটা থাকতে পারে, আর pg_get_functiondef কমেন্টসহ
+    -- পুরো বডি ফেরত দেয়। তাই **নতুন সংস্করণে যা যোগ হয়েছে** সেটা খোঁজা হয়:
+    -- profiles সারিটা এখন ফাংশনটা নিজে মোছে (আগে auth.users-এর cascade-এ যেত)।
     (14, '20260903_account_delete_fix',
-         'admin_delete_user() আর auth.users ছোঁয় না', 'admin_delete_user()',
+         'admin_delete_user() নিজেই profiles মোছে', 'admin_delete_user()',
         coalesce(
-          (select pg_get_functiondef(p.oid) not like '%delete from auth.users%'
+          (select pg_get_functiondef(p.oid) like '%delete from profiles where id = p_user_id%'
              from pg_proc p
-             join pg_namespace n on n.oid = p.pronamespace
-            where n.nspname = 'public' and p.proname = 'admin_delete_user'
-            limit 1),
+            where p.oid = to_regprocedure('public.admin_delete_user(uuid, text)')),
+          false)),
+
+    (15, '20260904_service_duration_authority',
+         'ট্রিগার', 'services_reset_learned_duration',
+        exists (select 1 from pg_trigger
+                 where tgname = 'services_reset_learned_duration'
+                   and not tgisinternal)),
+
+    -- আবারও পজিটিভ মার্কার: নতুন সংস্করণে position অদলবদলের আগে একটা "park"
+    -- ধাপ যোগ হয়েছে, পুরোনোটায় ছিল না।
+    (16, '20260905_fix_bump_serial_back_swap',
+         'পজিশন অদলবদলে park ধাপ', 'bump_serial_back()',
+        coalesce(
+          (select pg_get_functiondef(p.oid) like '%v_park%'
+             from pg_proc p
+            where p.oid = to_regprocedure('public.bump_serial_back(uuid)')),
           false))
 )
 select
