@@ -78,6 +78,10 @@ const MESSAGES = {
     bn: "একসাথে সর্বোচ্চ ৫ জনের সিরিয়াল নেওয়া যায়।",
     en: "You can book for at most 5 people at once.",
   },
+  duplicateChair: {
+    bn: "এই নামের বা এই অবস্থানের একটা চেয়ার আগে থেকেই আছে — নাম বদলে আবার চেষ্টা করো।",
+    en: "A chair with that name or position already exists — try a different name.",
+  },
   serialNotWaiting: {
     bn: "সিরিয়ালটা আর অপেক্ষায় নেই — বোর্ড রিফ্রেশ করে দেখো।",
     en: "That serial isn't waiting any more — refresh the board.",
@@ -125,6 +129,13 @@ const RULES: ReadonlyArray<{
     // Postgres deadlock (opposing lane moves) — retryable, tell them to retry.
     match: (t) => t.includes("40P01") || t.toLowerCase().includes("deadlock"),
     key: "collided",
+    silent: false,
+  },
+  {
+    // A duplicate on the chairs table specifically — "try again" is useless
+    // advice here, since retrying the same values collides the same way.
+    match: (t) => t.includes("chairs_") && (t.includes("23505") || t.includes("duplicate key")),
+    key: "duplicateChair",
     silent: false,
   },
   {

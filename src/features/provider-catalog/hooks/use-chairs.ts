@@ -33,11 +33,10 @@ export function useChairMutations(shopId: string) {
     );
 
   const create = useMutation({
-    mutationFn: (values: ChairFormOutput) => {
-      const current =
-        queryClient.getQueryData<Chair[]>(listKey)?.length ?? 0;
-      return createChair(shopId, values, current + 1);
-    },
+    // No sort_order from here any more: the cached count was wrong the moment
+    // a chair had been deleted. createChair asks the database for the current
+    // highest instead.
+    mutationFn: (values: ChairFormOutput) => createChair(shopId, values),
     onSuccess: (chair) => {
       patchList(chair);
       void queryClient.invalidateQueries({

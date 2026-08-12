@@ -74,30 +74,36 @@ export function ServiceCard({
           <span className="grid h-full w-full place-items-center text-muted">{fallbackIcon}</span>
         )}
 
-        {selectable && (
-          <span
-            aria-hidden
-            className={cn(
-              "absolute top-2 right-2 grid h-6.5 w-6.5 place-items-center rounded-full border transition-all",
-              selected
-                ? "border-accent bg-accent text-accent-ink"
-                : "border-white/70 bg-black/25 text-transparent backdrop-blur-sm",
-            )}
-            style={{ borderWidth: 1.5 }}
-          >
-            <Check className="h-3.5 w-3.5" strokeWidth={3} />
-          </span>
-        )}
       </span>
 
       <span className="mt-2.5 block min-w-0">
-        <span
-          className={cn(
-            "block truncate text-sm font-bold text-ink",
-            dimmed && "text-muted line-through",
+        {/* The tick used to sit on top of the photo, covering the part of the
+            picture the owner chose it for. It reads just as clearly beside the
+            name, where it has the border and tint of the whole card behind
+            it — and the picture stays a picture. */}
+        <span className="flex items-center gap-1.5">
+          {selectable && (
+            <span
+              aria-hidden
+              className={cn(
+                "grid h-4.5 w-4.5 shrink-0 place-items-center rounded-md border transition-colors",
+                selected
+                  ? "border-accent bg-accent text-accent-ink"
+                  : "border-line bg-card text-transparent",
+              )}
+              style={{ borderWidth: 1.5 }}
+            >
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </span>
           )}
-        >
-          {name}
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate text-sm font-bold text-ink",
+              dimmed && "text-muted line-through",
+            )}
+          >
+            {name}
+          </span>
         </span>
         <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted">

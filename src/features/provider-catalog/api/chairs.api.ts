@@ -16,20 +16,39 @@ export async function getChairs(shopId: string): Promise<Chair[]> {
   return data;
 }
 
+/**
+ * sort_order is read from the database, not counted in the client.
+ *
+ * It used to be `cachedChairs.length + 1`, which is only ever right while
+ * nothing has been deleted. Remove the first of three chairs and the count
+ * says 2 while a chair already sits at 3 — the insert then collides with it
+ * and PostgREST returns 409, which is what "chair add doesn't work" looked
+ * like. Asking for the current highest is correct however the list got there.
+ */
 export async function createChair(
   shopId: string,
   values: ChairFormOutput,
-  sortOrder: number,
 ): Promise<Chair> {
-  const supabase = getBrowserClient();
-  const { data, error } = await supabase
-    .from("chairs")
-    .insert({ shop_id: shopId, sort_order: sortOrder, ...values })
-    .select()
-    .single();
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
 
-  if (error) throw error;
-  return data; // DB trigger auto-seeds chair_service_stats for every service
+    const { data: last } = await supabase
+      .from("chairs")
+      .select("sort_order")
+      .eq("shop_id", shopId)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data, error } = await supabase
+      .from("chairs")
+      .insert({ shop_id: shopId, sort_order: (last?.sort_order ?? 0) + 1, ...values })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data; // DB trigger auto-seeds chair_service_stats for every service
+  });
 }
 
 export async function updateChair(
