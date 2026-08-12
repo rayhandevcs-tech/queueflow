@@ -106,7 +106,15 @@ with checks(ord, migration, kind, obj, present) as (
     (18, '20260907_chairs_owner_read', 'RLS পলিসি', 'chairs: owner read',
         exists (select 1 from pg_policies
                  where schemaname = 'public' and tablename = 'chairs'
-                   and policyname = 'chairs: owner read'))
+                   and policyname = 'chairs: owner read')),
+
+    (19, '20260908_fix_admin_shop_detail_rating',
+         'coalesce সাব-কোয়েরিকে মোড়ে', 'admin_shop_detail()',
+        coalesce(
+          (select pg_get_functiondef(p.oid) like '%coalesce((select avg_rating%'
+             from pg_proc p
+            where p.oid = to_regprocedure('public.admin_shop_detail(uuid)')),
+          false))
 )
 select
   case when present then '✅' else '❌' end as ok,

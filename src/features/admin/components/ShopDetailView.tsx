@@ -15,6 +15,7 @@ import {
   Scissors,
   Star,
   Store,
+  TriangleAlert,
   UserX,
   Wallet,
   X,
@@ -34,7 +35,7 @@ import { ShopStatusActions } from "./ShopStatusActions";
 import { ShopStatusBadge } from "./ShopStatusBadge";
 
 export function ShopDetailView({ shopId }: { shopId: string }) {
-  const { data, isPending } = useAdminShop(shopId);
+  const { data, isPending, error } = useAdminShop(shopId);
   const t = useT(adminDict);
   const { language } = useLanguage();
 
@@ -43,6 +44,25 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
       <div className="grid min-h-[40vh] place-items-center">
         <Spinner className="h-6 w-6 text-muted" />
       </div>
+    );
+  }
+
+  // A failed request and a shop that does not exist are different problems,
+  // and this screen used to report both as "shop not found" — which is how a
+  // 400 from the RPC spent a whole afternoon looking like a routing bug. The
+  // server's own message is the fastest thing to act on, so it is shown.
+  if (error) {
+    return (
+      <EmptyState
+        icon={<TriangleAlert className="h-6 w-6" />}
+        title={t("shopDetailLoadFailed")}
+        description={error instanceof Error ? error.message : String(error)}
+        action={
+          <Link href="/admin/shops" className="text-sm font-semibold text-accent hover:underline">
+            {t("backToShops")}
+          </Link>
+        }
+      />
     );
   }
 

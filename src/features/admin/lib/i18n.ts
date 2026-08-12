@@ -11,6 +11,10 @@ export const adminDict = {
   navSupport: { bn: "সাপোর্ট সেন্টার", en: "Support Center" },
   navTeam: { bn: "টিম", en: "Team" },
   backToUsers: { bn: "ইউজার তালিকায় ফিরে যাও", en: "Back to users" },
+  shopDetailLoadFailed: {
+    bn: "দোকানের তথ্য আনা যায়নি",
+    en: "Couldn't load this shop",
+  },
   backToShops: { bn: "দোকানের তালিকায় ফিরে যাও", en: "Back to shops" },
   openMenuAria: { bn: "মেনু খোলো", en: "Open menu" },
   closeMenuAria: { bn: "মেনু বন্ধ করো", en: "Close menu" },
