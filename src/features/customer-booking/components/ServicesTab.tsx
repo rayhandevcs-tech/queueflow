@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Chair, Service } from "@/types";
 import type { ServiceCategory } from "@/config/constants";
@@ -13,6 +14,8 @@ interface Props {
   selected: Set<string>;
   onToggle: (id: string) => void;
   eligibleChairs: Chair[];
+  /** Optional: shown as a badge on each staff card when a rating exists. */
+  ratingByChairId?: Map<string, { avg_rating: number }>;
   preferredChairId: string | null;
   onPreferredChairChange: (chairId: string | null) => void;
   advance: boolean;
@@ -24,6 +27,7 @@ export function ServicesTab({
   selected,
   onToggle,
   eligibleChairs,
+  ratingByChairId,
   preferredChairId,
   onPreferredChairChange,
   advance,
@@ -67,34 +71,69 @@ export function ServicesTab({
           <p className="mb-2.5 text-[13px] font-semibold tracking-wide text-muted uppercase">
             {t("preferredStaffLabel")}
           </p>
-          <div className="flex flex-wrap gap-2">
+          {/* Cards, not name chips. Picking a barber is a decision made by
+              looking at a face and a rating — a row of bare names gave you
+              nothing to decide on. Same shape as the Staff tab, so the person
+              you liked there is recognisable here. */}
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
             <button
               type="button"
               onClick={() => onPreferredChairChange(null)}
               className={cn(
-                "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all",
+                "rounded-[16px] border p-2 text-center transition-all",
                 preferredChairId === null
-                  ? "border-accent bg-accent text-accent-ink shadow-sm"
-                  : "border-line bg-card text-muted hover:border-accent/40",
+                  ? "border-accent bg-accent/[0.07]"
+                  : "border-line bg-card hover:bg-soft",
               )}
+              style={{ borderWidth: 1.5 }}
             >
-              {t("autoBestMatch")}
+              <span className="grid aspect-square w-full place-items-center rounded-[12px] bg-soft text-accent">
+                <Sparkles className="h-6 w-6" />
+              </span>
+              <span className="mt-1.5 block truncate text-[11px] font-bold text-ink">
+                {t("autoBestMatch")}
+              </span>
             </button>
-            {eligibleChairs.map((chair) => (
-              <button
-                key={chair.id}
-                type="button"
-                onClick={() => onPreferredChairChange(chair.id)}
-                className={cn(
-                  "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all",
-                  preferredChairId === chair.id
-                    ? "border-accent bg-accent text-accent-ink shadow-sm"
-                    : "border-line bg-card text-muted hover:border-accent/40",
-                )}
-              >
-                {chair.staff_name || chair.label}
-              </button>
-            ))}
+
+            {eligibleChairs.map((chair) => {
+              const rating = ratingByChairId?.get(chair.id);
+              const on = preferredChairId === chair.id;
+              return (
+                <button
+                  key={chair.id}
+                  type="button"
+                  onClick={() => onPreferredChairChange(chair.id)}
+                  className={cn(
+                    "rounded-[16px] border p-2 text-center transition-all",
+                    on ? "border-accent bg-accent/[0.07]" : "border-line bg-card hover:bg-soft",
+                  )}
+                  style={{ borderWidth: 1.5 }}
+                >
+                  <span className="relative grid aspect-square w-full place-items-center overflow-hidden rounded-[12px] bg-accent font-display text-xl font-extrabold text-white">
+                    {chair.staff_avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={chair.staff_avatar_url}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      (chair.staff_name || chair.label).trim().charAt(0).toUpperCase() || "?"
+                    )}
+                    {rating && (
+                      <span className="absolute right-1 bottom-1 flex items-center gap-0.5 rounded-full bg-card/95 px-1.5 py-0.5 text-[10px] font-bold text-brass shadow-xs backdrop-blur-sm">
+                        <Star className="h-2.5 w-2.5 fill-current" />
+                        {rating.avg_rating}
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-1.5 block truncate text-[11px] font-bold text-ink">
+                    {chair.staff_name || chair.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

@@ -102,7 +102,9 @@ export const customerBookingDict = {
     bn: "এই দোকানে এখনো কোনো সার্ভিস যোগ করা হয়নি।",
     en: "This shop hasn't added any services yet.",
   },
-  minutesSuffix: { bn: (n: number) => `~${n} মিনিট`, en: (n: number) => `~${n} min` },
+  // No tilde: a service's duration is what the shop set it to, not an
+  // estimate. The "~" belongs on the queue's wait, which is a projection.
+  minutesSuffix: { bn: (n: number) => `${n} মিনিট`, en: (n: number) => `${n} min` },
   preferredStaffLabel: { bn: "পছন্দের স্টাফ", en: "Preferred staff" },
   autoBestMatch: { bn: "অটো (সেরা মিল)", en: "Auto (best match)" },
   advanceLockLabel: {

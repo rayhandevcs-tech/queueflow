@@ -19,6 +19,7 @@ import {
   useChairCapabilities,
   useHasShopHistory,
   useShopChairs,
+  useChairRatings,
   useShopDetail,
   useShopServices,
 } from "../hooks/use-shop-detail";
@@ -103,6 +104,8 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   // Derived, not stored: a chair a customer picked earlier silently stops
   // counting as "preferred" the moment it's no longer eligible for the
   // current service selection (falls back to auto-assign for booking).
+  const chairRatings = useChairRatings(eligibleChairs.map((c) => c.id));
+
   const effectivePreferredChairId = eligibleChairs.some((c) => c.id === preferredChairId)
     ? preferredChairId
     : null;
@@ -304,6 +307,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
             selected={selected}
             onToggle={toggle}
             eligibleChairs={eligibleChairs}
+            ratingByChairId={chairRatings}
             preferredChairId={effectivePreferredChairId}
             onPreferredChairChange={setPreferredChairId}
             advance={advance}

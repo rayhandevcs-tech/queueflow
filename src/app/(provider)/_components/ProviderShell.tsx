@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,9 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
         className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <Wordmark size="sm" />
+        <Link href="/dashboard">
+          <Wordmark size="sm" />
+        </Link>
         <button
           type="button"
           onClick={() => setOpen(true)}

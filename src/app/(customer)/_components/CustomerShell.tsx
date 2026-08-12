@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,9 @@ export function CustomerShell({
   return (
     <div className="min-h-dvh lg:flex">
       <div className="flex items-center justify-between border-b border-line bg-card px-4 py-3 lg:hidden">
-        <Wordmark size="sm" />
+        <Link href="/explore">
+          <Wordmark size="sm" />
+        </Link>
         <div className="flex items-center gap-1">
           <NotificationBell className="text-ink hover:bg-soft" />
           <button

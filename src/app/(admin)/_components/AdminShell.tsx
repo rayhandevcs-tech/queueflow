@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, ShieldOff } from "lucide-react";
@@ -52,7 +53,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         className="flex items-center justify-between border-b border-line bg-card px-4 py-3 md:hidden"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <Wordmark size="sm" sub={t("panelName")} />
+        <Link href="/admin">
+          <Wordmark size="sm" sub={t("panelName")} />
+        </Link>
         <button
           type="button"
           onClick={() => setOpen(true)}

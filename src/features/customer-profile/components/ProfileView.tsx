@@ -120,14 +120,17 @@ export function ProfileView({
             </div>
           ))}
         </div>
-      </div>
 
-      <div
-        className="mt-3.25 flex items-center gap-2.75 rounded-2xl p-3.5"
-        style={{ background: callout.bg, border: `1px solid ${callout.border}` }}
-      >
-        {callout.icon}
-        <p className="text-xs leading-relaxed text-ink">{callout.text}</p>
+        {/* The verdict belongs with the numbers it is drawn from. As a
+            separate banner underneath, it read as an unrelated announcement
+            and the card above it looked unfinished. */}
+        <div
+          className="mt-2.5 flex items-center gap-2.75 rounded-2xl p-3"
+          style={{ background: callout.bg, border: `1px solid ${callout.border}` }}
+        >
+          {callout.icon}
+          <p className="text-xs leading-relaxed text-ink">{callout.text}</p>
+        </div>
       </div>
 
       <div className="mt-5 mb-2.75 flex items-center justify-between">

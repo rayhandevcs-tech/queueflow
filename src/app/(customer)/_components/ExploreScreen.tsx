@@ -123,8 +123,6 @@ export function ExploreScreen() {
     distanceKm,
   ]);
 
-  const firstName = (profile?.full_name ?? "").trim().split(" ")[0] || null;
-
   return (
     <div className="animate-fade-up">
       {/* The welcome panel that used to sit here — greeting, headline,
@@ -134,14 +132,9 @@ export function ExploreScreen() {
           anything else, which is worse than silent. What is left is a line
           that names you and gets out of the way. */}
       <header className="mb-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-[13px] text-muted">
-            {firstName ? t("greetingNamed", firstName) : t("assalamu")}
-          </p>
-          <h1 className="mt-0.5 truncate font-display text-[22px] leading-tight font-bold text-ink">
-            {t("heroHeadline")}
-          </h1>
-        </div>
+        <h1 className="min-w-0 truncate font-display text-[22px] leading-tight font-bold text-ink">
+          {t("heroHeadline")}
+        </h1>
         {signedIn && (
           <Link href="/profile" className="shrink-0" aria-label={t("openProfileAria")}>
             <AvatarChip label={profile?.full_name} avatarUrl={profile?.avatar_url} size={42} />

@@ -309,10 +309,13 @@ function ShopPopupCard({
       <div className="flex gap-2 border-t border-line px-3.5 py-3">
         <Link
           href={`/explore/${shop.id}`}
+          // Ink rather than accent: the pin under this popup is already
+          // accent-red, and a red slab directly beneath it made the card read
+          // as one large red shape rather than a photo with an action.
           className={cn(
             "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[14px]",
-            "bg-accent text-[13px] font-bold text-accent-ink shadow-sm",
-            "transition-shadow hover:shadow-glow active:shadow-xs",
+            "bg-ink text-[13px] font-bold text-white shadow-sm",
+            "transition-opacity hover:opacity-90 active:opacity-80",
           )}
         >
           {t("viewShop")}
