@@ -253,9 +253,15 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
 
         {error && <p className="text-sm text-live">{error}</p>}
 
-        <Button type="submit" size="lg" loading={actions.walkIn.isPending} className="w-full">
-          {actions.walkIn.isPending ? t("adding") : t("addToQueue")}
-        </Button>
+        {/* Pinned to the bottom of the sheet's scroll area. The service grid
+            makes this form taller than a phone screen, and an owner adding a
+            walk-in with a customer standing there should not have to scroll to
+            find the one button that finishes the job. */}
+        <div className="sticky bottom-0 -mx-5 bg-card px-5 pt-2">
+          <Button type="submit" size="lg" loading={actions.walkIn.isPending} className="w-full">
+            {actions.walkIn.isPending ? t("adding") : t("addToQueue")}
+          </Button>
+        </div>
       </form>
     </BottomSheet>
   );

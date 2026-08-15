@@ -137,7 +137,12 @@ with checks(ord, migration, kind, obj, present) as (
           (select pg_get_functiondef(p.oid) not like '%rolling_avg_duration_min%'
              from pg_proc p
             where p.oid = to_regprocedure('public.estimate_duration_on_chair(uuid, uuid[])')),
-          false))
+          false)),
+
+    (22, '20260911_seed_chair_service_stats', 'ট্রিগার', 'chairs_seed_service_stats',
+        exists (select 1 from pg_trigger
+                 where tgname = 'chairs_seed_service_stats'
+                   and not tgisinternal))
 )
 select
   case when present then '✅' else '❌' end as ok,

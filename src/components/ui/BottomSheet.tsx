@@ -37,13 +37,25 @@ export function BottomSheet({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "w-full space-y-4 rounded-t-3xl bg-card p-5 pb-6 shadow-lg animate-slide-up sm:rounded-2xl sm:animate-none",
+          // The sheet is capped at the viewport and scrolls inside itself.
+          // Without the cap a tall sheet (the walk-in form's service grid, say)
+          // simply grew past the bottom of the screen, and because the backdrop
+          // is `fixed inset-0` with nothing scrollable, its submit button was
+          // unreachable on a phone. dvh, not vh, so the browser's own chrome
+          // sliding in and out doesn't hide the last row.
+          "flex max-h-[calc(100dvh-2rem)] w-full flex-col gap-4 rounded-t-3xl bg-card p-5 pb-6 shadow-lg animate-slide-up sm:rounded-2xl sm:animate-none",
           maxWidthClassName,
         )}
       >
-        <div className="mx-auto h-1 w-10 rounded-full bg-line sm:hidden" />
-        {title && <h2 className="font-display text-lg font-bold text-ink">{title}</h2>}
-        {children}
+        <div className="mx-auto h-1 w-10 shrink-0 rounded-full bg-line sm:hidden" />
+        {title && (
+          <h2 className="shrink-0 font-display text-lg font-bold text-ink">{title}</h2>
+        )}
+        {/* min-h-0 lets this shrink below its content so overflow-y actually
+            scrolls; -mx-5/px-5 keeps focus rings from being clipped. */}
+        <div className="-mx-5 min-h-0 flex-1 space-y-4 overflow-y-auto px-5">
+          {children}
+        </div>
       </div>
     </div>
   );
