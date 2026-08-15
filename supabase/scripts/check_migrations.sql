@@ -127,6 +127,16 @@ with checks(ord, migration, kind, obj, present) as (
               and pg_get_functiondef(p.oid) like '%''recent_reviews''%'
              from pg_proc p
             where p.oid = to_regprocedure('public.admin_shop_detail(uuid)')),
+          false)),
+
+    -- নেগেটিভ মার্কার, কারণ এই মাইগ্রেশন একটা জিনিস **সরায়**: অনুমান আর
+    -- শেখা গড় দেখে না, শুধু সার্ভিসের সেট করা সময় ধরে।
+    (21, '20260910_service_time_is_the_countdown',
+         'শেখা গড় আর সময় ঠিক করে না', 'estimate_duration_on_chair()',
+        coalesce(
+          (select pg_get_functiondef(p.oid) not like '%rolling_avg_duration_min%'
+             from pg_proc p
+            where p.oid = to_regprocedure('public.estimate_duration_on_chair(uuid, uuid[])')),
           false))
 )
 select

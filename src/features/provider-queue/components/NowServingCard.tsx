@@ -7,6 +7,7 @@ import { CountdownRing } from "@/components/ui/CountdownRing";
 import { LiveDot } from "@/components/ui/LiveDot";
 import { useNowMs } from "@/hooks/use-now";
 import { fmtMMSS, formatMoney, toBanglaDigits } from "@/lib/format-wait";
+import { countdownProgress, remainingSec } from "@/lib/queue-wait";
 import { UiDbError } from "@/lib/supabase/db-errors";
 import { useT } from "@/lib/i18n";
 import type { useSerialActions } from "../hooks/use-serial-actions";
@@ -32,10 +33,9 @@ export function NowServingCard({
   const t = useT(providerQueueDict);
   const party = partyInfo(serial, boardRows);
 
-  const startedMs = serial.started_at ? new Date(serial.started_at).getTime() : nowMs;
-  const totalSec = serial.estimated_duration_min * 60;
-  const remainingSec = Math.max(0, (startedMs + totalSec * 1000 - nowMs) / 1000);
-  const progress = totalSec > 0 ? remainingSec / totalSec : 0;
+  // Same helper the customer's ring uses, so the two clocks cannot drift.
+  const secondsLeft = remainingSec(serial, nowMs);
+  const progress = countdownProgress(serial, nowMs);
 
   const surface = (err: unknown) => {
     if (err instanceof UiDbError && err.silent) return;
@@ -85,7 +85,7 @@ export function NowServingCard({
         >
           <div className="flex flex-col items-center">
             <span className="font-number text-[26px] leading-none font-bold tracking-tight">
-              {fmtMMSS(remainingSec)}
+              {fmtMMSS(secondsLeft)}
             </span>
             <span className="mt-1 text-[10px] text-accent-ink/50">{t("remainingWord")}</span>
           </div>

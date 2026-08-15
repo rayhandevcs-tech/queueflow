@@ -26,6 +26,7 @@ import {
 import { useNowMs } from "@/hooks/use-now";
 import { fmtMMSS, fmtWait } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
+import { countdownProgress, remainingSec } from "@/lib/queue-wait";
 import { customerBookingDict } from "../lib/i18n";
 
 /**
@@ -215,8 +216,7 @@ export function LiveTrackingView() {
   // Center of the ring: my own wait (WAITING) or my own remaining service (IN_PROGRESS).
   let centerSec: number;
   if (myInProgress) {
-    const startedMs = serial.started_at ? new Date(serial.started_at).getTime() : nowMs;
-    centerSec = Math.max(0, (startedMs + serial.estimated_duration_min * 60_000 - nowMs) / 1000);
+    centerSec = remainingSec(serial, nowMs);
   } else {
     const startAtMs = serial.estimated_start_at ? new Date(serial.estimated_start_at).getTime() : nowMs;
     centerSec = Math.max(0, (startAtMs - nowMs) / 1000);
@@ -227,13 +227,18 @@ export function LiveTrackingView() {
   // once it's my turn, the ring is literally my own remaining service.
   let ringProgress = 1;
   if (myInProgress) {
-    ringProgress = centerSec / (serial.estimated_duration_min * 60);
+    ringProgress = countdownProgress(serial, nowMs);
   } else if (currentJob?.estimated_start_at) {
-    const finishMs =
-      new Date(currentJob.estimated_start_at).getTime() +
-      currentJob.estimated_duration_min * 60_000;
-    const totalSec = currentJob.estimated_duration_min * 60;
-    ringProgress = totalSec > 0 ? Math.max(0, (finishMs - nowMs) / 1000) / totalSec : 1;
+    // queue_public carries no started_at, but for an IN_PROGRESS row the DB
+    // writes the real start into estimated_start_at — so this is the same
+    // clock the owner's card is showing, not a second estimate of it.
+    ringProgress = countdownProgress(
+      {
+        started_at: currentJob.estimated_start_at,
+        estimated_duration_min: currentJob.estimated_duration_min,
+      },
+      nowMs,
+    );
   }
 
   // Everyone on my chair, ahead of me — PII-free, so rows are labeled by

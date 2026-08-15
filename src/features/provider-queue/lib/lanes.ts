@@ -1,3 +1,4 @@
+import { remainingMin } from "@/lib/queue-wait";
 import type { Chair, Serial } from "@/types";
 
 export interface Lane {
@@ -14,14 +15,7 @@ export interface Lane {
   chairInactive: boolean;
 }
 
-/** Remaining minutes of a running job, clamped to ≥1 (overruns never go negative). */
-export function remainingMin(serial: Serial, nowMs: number): number {
-  const startedMs = serial.started_at
-    ? new Date(serial.started_at).getTime()
-    : nowMs;
-  const endMs = startedMs + serial.estimated_duration_min * 60_000;
-  return Math.max(1, Math.ceil((endMs - nowMs) / 60_000));
-}
+export { remainingMin };
 
 /**
  * rows → lanes.
