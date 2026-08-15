@@ -18,6 +18,7 @@ import {
   Star,
   Users,
   Wallet,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyShop, useShopMutations } from "@/features/provider-catalog/hooks/use-my-shop";
@@ -68,6 +69,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     { href: "/offers", label: t("navOffers"), icon: Percent },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },
     { href: "/income", label: t("navIncome"), icon: Wallet },
+    { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },
     { href: "/manual-entries", label: t("navManualEntries"), icon: NotebookPen },
     { href: "/due-ledger", label: t("navDueLedger"), icon: Receipt },
     { href: "/analytics", label: t("navAnalytics"), icon: BarChart3 },

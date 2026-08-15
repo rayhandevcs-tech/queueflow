@@ -11,6 +11,12 @@ const PROVIDER_PREFIXES = [
   "/summary",
   "/settings",
   "/income",
+  // The shop's money pages. RLS already returns nothing to a non-owner, so
+  // these were never a leak — but landing on an empty ledger reads like a bug,
+  // and being sent home reads like an answer.
+  "/cashbook",
+  "/due-ledger",
+  "/manual-entries",
   "/analytics",
   "/regulars",
   "/reviews",

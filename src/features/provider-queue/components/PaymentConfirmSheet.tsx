@@ -47,6 +47,9 @@ export function PaymentConfirmSheet({
   const t = useT(providerQueueDict);
   const [pickingMethod, setPickingMethod] = useState(false);
   const [settleParty, setSettleParty] = useState(true);
+  // Kept as a string so the field can be emptied while typing without the
+  // amount snapping back to 0 under the owner's finger.
+  const [amountText, setAmountText] = useState(String(serial.total_amount));
 
   // A family is billed as separate jobs because that's what they are —
   // different chairs, different services, finishing at different times. But
@@ -78,10 +81,19 @@ export function PaymentConfirmSheet({
   const busy = actions.complete.isPending || actions.settleParty.isPending;
   const canSettleParty = outstanding.count > 0;
 
+  // A half-typed or empty field falls back to the quoted price rather than
+  // completing the job at ৳0.
+  const parsed = Number(amountText);
+  const finalAmount =
+    amountText.trim() !== "" && Number.isFinite(parsed) && parsed >= 0
+      ? parsed
+      : serial.total_amount;
+  const edited = finalAmount !== serial.total_amount;
+
   const settle = (payment: { method: PaymentMethodValue } | { due: number }) => {
     if (busy) return;
     actions.complete.mutate(
-      { serialId: serial.id, payment },
+      { serialId: serial.id, payment, finalAmount },
       {
         onSuccess: () => {
           if ("method" in payment && canSettleParty && settleParty && serial.group_id) {
@@ -105,15 +117,26 @@ export function PaymentConfirmSheet({
         <p className="text-xs font-semibold text-muted">
           {pickingMethod ? t("choosePaymentMethod") : t("paymentAskTitle")}
         </p>
-        {/* This job's own bill. A party's extra dues are stated on the
-            checkbox below, so "no" — which only ever sends this job to the
-            ledger — can never disagree with the number on screen. */}
-        <p className="mt-0.5 font-display text-[2.5rem] leading-tight font-bold text-ink">
-          ৳{formatMoney(serial.total_amount)}
+        {/* The listed price is a quote; what was actually charged is decided
+            here. This job's own bill only — a party's extra dues are stated on
+            the checkbox below, so "no", which only ever sends this job to the
+            ledger, can never disagree with the number on screen. */}
+        <div className="mt-0.5 flex items-baseline justify-center gap-0.5">
+          <span className="font-display text-[2.5rem] leading-tight font-bold text-ink">৳</span>
+          <input
+            value={amountText}
+            onChange={(e) => setAmountText(e.target.value.replace(/[^\d.]/g, ""))}
+            onFocus={(e) => e.target.select()}
+            inputMode="decimal"
+            aria-label={t("paymentAskTitle")}
+            className="w-[5ch] min-w-0 rounded-lg bg-transparent text-center font-display text-[2.5rem] leading-tight font-bold text-ink caret-accent outline-none focus:bg-soft"
+          />
+        </div>
+        <p className="truncate text-xs text-muted">
+          {edited
+            ? t("amountQuoted", formatMoney(serial.total_amount))
+            : (serial.customer_name ?? t("amountEditHint"))}
         </p>
-        {serial.customer_name && (
-          <p className="truncate text-xs text-muted">{serial.customer_name}</p>
-        )}
       </div>
 
       {canSettleParty && (
@@ -174,19 +197,19 @@ export function PaymentConfirmSheet({
             type="button"
             disabled={busy}
             onClick={onYes}
-            className="flex flex-col items-center gap-2 rounded-2xl bg-accent px-3 py-5 text-accent-ink shadow-sm transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="flex items-center justify-center gap-2 rounded-xl bg-accent px-3 py-3 text-accent-ink shadow-sm transition-transform active:scale-[0.98] disabled:opacity-60"
           >
-            <Check className="h-7 w-7" strokeWidth={2.5} />
-            <span className="font-display text-lg font-bold">{t("paidYesCta")}</span>
+            <Check className="h-5 w-5" strokeWidth={2.5} />
+            <span className="font-display text-base font-bold">{t("paidYesCta")}</span>
           </button>
           <button
             type="button"
             disabled={busy}
-            onClick={() => settle({ due: serial.total_amount })}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-card px-3 py-5 text-ink transition-colors hover:border-accent/50 hover:bg-soft active:scale-[0.98] disabled:opacity-60"
+            onClick={() => settle({ due: finalAmount })}
+            className="flex items-center justify-center gap-2 rounded-xl border border-line bg-card px-3 py-3 text-ink transition-colors hover:border-accent/50 hover:bg-soft active:scale-[0.98] disabled:opacity-60"
           >
-            <X className="h-7 w-7 text-muted" strokeWidth={2.5} />
-            <span className="font-display text-lg font-bold">{t("paidNoCta")}</span>
+            <X className="h-5 w-5 text-muted" strokeWidth={2.5} />
+            <span className="font-display text-base font-bold">{t("paidNoCta")}</span>
           </button>
         </div>
       )}

@@ -33,6 +33,11 @@ export const providerQueueDict = {
   paymentAskTitle: { bn: "টাকা পেয়েছ?", en: "Payment received?" },
   paidYesCta: { bn: "হ্যাঁ", en: "Yes" },
   paidNoCta: { bn: "না", en: "No" },
+  amountEditHint: { bn: "অঙ্কে চাপ দিয়ে বদলাও", en: "Tap the amount to change it" },
+  amountQuoted: {
+    bn: (amount: string) => `সার্ভিসের দাম ৳${amount}`,
+    en: (amount: string) => `Listed price ৳${amount}`,
+  },
   choosePaymentMethod: { bn: "কোন মাধ্যমে?", en: "Which method?" },
   paymentBackCta: { bn: "← ফিরে যাও", en: "← Back" },
   cashOption: { bn: "ক্যাশ", en: "Cash" },

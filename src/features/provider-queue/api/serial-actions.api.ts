@@ -30,10 +30,17 @@ export const startSerial = (serialId: string) =>
  * `{ due: amount }` → provider left the balance outstanding ("বাকি"); it
  * shows up in the due ledger until marked collected there. No method is
  * recorded yet since nothing was actually collected.
+ *
+ * `finalAmount` is what was actually charged, which need not equal the sum of
+ * the service rates — a bit of extra work, or a discount for a regular. The DB
+ * accepts total_amount only on this one transition (see 20260912); every other
+ * update still treats it as immutable. services_snapshot keeps the quoted
+ * rates, so what was said and what was charged both survive.
  */
 export const completeSerial = (
   serialId: string,
   payment: { method: string } | { due: number },
+  finalAmount?: number,
 ) =>
   patchSerial(
     serialId,
@@ -44,6 +51,7 @@ export const completeSerial = (
           due_amount: payment.due,
           due_collected_at: null,
           payment_method: null,
+          ...(finalAmount !== undefined && { total_amount: finalAmount }),
         }
       : {
           status: "DONE",
@@ -51,6 +59,7 @@ export const completeSerial = (
           due_amount: 0,
           due_collected_at: new Date().toISOString(),
           payment_method: payment.method,
+          ...(finalAmount !== undefined && { total_amount: finalAmount }),
         },
   );
 

@@ -80,6 +80,11 @@ export const keys = {
   expenses: {
     byShop: (shopId: string) => ["shop-expenses", shopId] as const,
   },
+  transactions: {
+    serials: (shopId: string) => ["transactions", "serials", shopId] as const,
+    manual: (shopId: string) => ["transactions", "manual", shopId] as const,
+    expenses: (shopId: string) => ["transactions", "expenses", shopId] as const,
+  },
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,
   },

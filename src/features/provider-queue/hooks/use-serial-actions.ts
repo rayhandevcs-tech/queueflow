@@ -65,7 +65,8 @@ export function useSerialActions(shopId: string) {
     mutationFn: (payload: {
       serialId: string;
       payment: { method: string } | { due: number };
-    }) => completeSerial(payload.serialId, payload.payment),
+      finalAmount?: number;
+    }) => completeSerial(payload.serialId, payload.payment, payload.finalAmount),
     onMutate: async ({ serialId }) => {
       const ctx = await snapshot();
       removeLocally(serialId); // DONE leaves the board immediately

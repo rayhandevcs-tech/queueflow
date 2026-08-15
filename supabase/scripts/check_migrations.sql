@@ -142,7 +142,19 @@ with checks(ord, migration, kind, obj, present) as (
     (22, '20260911_seed_chair_service_stats', 'ট্রিগার', 'chairs_seed_service_stats',
         exists (select 1 from pg_trigger
                  where tgname = 'chairs_seed_service_stats'
-                   and not tgisinternal))
+                   and not tgisinternal)),
+
+    -- দুটো অংশ, তাই দুটোই যাচাই: চূড়ান্ত বিল লেখার অনুমতি, আর ছবির ট্রিগার।
+    (23, '20260912_final_bill_and_customer_photo',
+         'চূড়ান্ত বিল + কাস্টমারের ছবি', 'serial_before_update()',
+        coalesce(
+          (select pg_get_functiondef(p.oid) like '%greatest(0, new.total_amount)%'
+             from pg_proc p
+            where p.oid = to_regprocedure('public.serial_before_update()')),
+          false)
+        and exists (select 1 from pg_trigger
+                     where tgname = 'serials_z_fill_customer_avatar'
+                       and not tgisinternal))
 )
 select
   case when present then '✅' else '❌' end as ok,
