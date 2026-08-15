@@ -121,7 +121,12 @@ export function PaymentConfirmSheet({
             here. This job's own bill only — a party's extra dues are stated on
             the checkbox below, so "no", which only ever sends this job to the
             ledger, can never disagree with the number on screen. */}
-        <div className="mt-0.5 flex items-baseline justify-center gap-0.5">
+        {/* The input is sized to its own text rather than to a fixed width, so
+            ৳ stays tight against the digits and the pair reads as one number —
+            a fixed box left a hole between them that grew as the amount got
+            shorter. tabular-nums makes every digit exactly 1ch, which is what
+            the ch-based width is counting. */}
+        <div className="mt-0.5 flex items-baseline justify-center">
           <span className="font-display text-[2.5rem] leading-tight font-bold text-ink">৳</span>
           <input
             value={amountText}
@@ -129,7 +134,8 @@ export function PaymentConfirmSheet({
             onFocus={(e) => e.target.select()}
             inputMode="decimal"
             aria-label={t("paymentAskTitle")}
-            className="w-[5ch] min-w-0 rounded-lg bg-transparent text-center font-display text-[2.5rem] leading-tight font-bold text-ink caret-accent outline-none focus:bg-soft"
+            style={{ width: `${Math.max(amountText.length, 1)}ch` }}
+            className="min-w-0 border-b-2 border-dashed border-line bg-transparent text-left font-display text-[2.5rem] leading-tight font-bold tabular-nums text-ink caret-accent outline-none focus:border-accent"
           />
         </div>
         <p className="truncate text-xs text-muted">
