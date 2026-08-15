@@ -30,14 +30,21 @@ export const providerQueueDict = {
   extendCancel: { bn: "বাতিল", en: "Cancel" },
 
   // PaymentConfirmSheet
-  paymentSheetTitle: { bn: "পেমেন্ট নিশ্চিত করো", en: "Confirm payment" },
+  paymentAskTitle: { bn: "টাকা পেয়েছ?", en: "Payment received?" },
+  paymentAskHint: {
+    bn: "হ্যাঁ দিলে আদায় ধরা হবে, না দিলে বাকির খাতায় যাবে।",
+    en: "Yes counts it as collected; No sends it to the due ledger.",
+  },
+  paidYesCta: { bn: "হ্যাঁ, পেয়েছি", en: "Yes, received" },
+  paidNoCta: { bn: "না, বাকি", en: "No, due" },
+  choosePaymentMethod: { bn: "কোন মাধ্যমে?", en: "Which method?" },
+  paymentBackCta: { bn: "← ফিরে যাও", en: "← Back" },
   cashOption: { bn: "ক্যাশ", en: "Cash" },
   bkashOption: { bn: "বিকাশ", en: "bKash" },
   nagadOption: { bn: "নগদ", en: "Nagad" },
   rocketOption: { bn: "রকেট", en: "Rocket" },
   cardOption: { bn: "কার্ড", en: "Card" },
   dueOption: { bn: "বাকি", en: "Due" },
-  confirmPaymentCta: { bn: "নিশ্চিত করো", en: "Confirm" },
 
   // WaitingRow
   walkInBadge: { bn: "অফ-লাইন", en: "Offline" },

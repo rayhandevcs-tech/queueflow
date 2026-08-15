@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Banknote, CreditCard, Receipt, Smartphone, Wallet } from "lucide-react";
+import { Banknote, Check, CreditCard, Receipt, Smartphone, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type PaymentMethodValue } from "@/config/constants";
 import { keys } from "@/lib/query/keys";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
 import type { Serial } from "@/types";
@@ -24,6 +23,19 @@ const METHOD_ICON: Record<PaymentMethodValue, typeof Banknote> = {
   card: CreditCard,
 };
 
+/**
+ * One question, not a menu: did the money come in?
+ *
+ * The old sheet listed every accepted method plus "due" as equal choices, then
+ * asked for a second tap to confirm. In practice nearly every job is paid on
+ * the spot, so the owner was picking the same answer out of a list dozens of
+ * times a day. Asking yes/no makes the common case a single tap and keeps the
+ * rare one — a customer leaving without paying — right there in the same
+ * breath instead of in a ledger to be remembered later.
+ *
+ * A shop that accepts more than one method still has a real choice to make, so
+ * "yes" opens the method list for it. A cash-only shop never sees that step.
+ */
 export function PaymentConfirmSheet({
   serial,
   onClose,
@@ -34,7 +46,7 @@ export function PaymentConfirmSheet({
   actions: ReturnType<typeof useSerialActions>;
 }) {
   const t = useT(providerQueueDict);
-  const [selected, setSelected] = useState<PaymentMethodValue | "due" | null>(null);
+  const [pickingMethod, setPickingMethod] = useState(false);
   const [settleParty, setSettleParty] = useState(true);
 
   // A family is billed as separate jobs because that's what they are —
@@ -49,7 +61,6 @@ export function PaymentConfirmSheet({
   });
 
   const outstanding = partyOutstanding(serial.id, partyQuery.data ?? []);
-  const canSettleParty = outstanding.count > 0 && selected !== null && selected !== "due";
 
   const acceptedQuery = useQuery({
     queryKey: keys.shops.acceptedPaymentMethods(serial.shop_id),
@@ -65,15 +76,17 @@ export function PaymentConfirmSheet({
     card: t("cardOption"),
   };
 
-  const onConfirm = () => {
-    if (!selected) return;
-    const payment = selected === "due" ? { due: serial.total_amount } : { method: selected };
+  const busy = actions.complete.isPending || actions.settleParty.isPending;
+  const canSettleParty = outstanding.count > 0;
+
+  const settle = (payment: { method: PaymentMethodValue } | { due: number }) => {
+    if (busy) return;
     actions.complete.mutate(
       { serialId: serial.id, payment },
       {
         onSuccess: () => {
-          if (canSettleParty && settleParty && serial.group_id) {
-            actions.settleParty.mutate({ groupId: serial.group_id, method: selected });
+          if ("method" in payment && canSettleParty && settleParty && serial.group_id) {
+            actions.settleParty.mutate({ groupId: serial.group_id, method: payment.method });
           }
           onClose();
         },
@@ -81,57 +94,27 @@ export function PaymentConfirmSheet({
     );
   };
 
-  const grandTotal = serial.total_amount + (canSettleParty && settleParty ? outstanding.amount : 0);
+  const onYes = () => {
+    // Nothing to choose between when the shop takes one method.
+    if (accepted.length === 1) settle({ method: accepted[0] });
+    else setPickingMethod(true);
+  };
 
   return (
     <BottomSheet open onClose={onClose} maxWidthClassName="max-w-sm">
-      <h2 className="font-display text-lg font-bold text-ink">{t("paymentSheetTitle")}</h2>
-
-      <div className="flex flex-col gap-2">
-        {accepted.map((m) => {
-          const Icon = METHOD_ICON[m];
-          const active = selected === m;
-          return (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setSelected(m)}
-              className={cn(
-                "flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors",
-                active ? "border-accent bg-accent/10" : "border-line bg-card",
-              )}
-            >
-              <div
-                className={cn(
-                  "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
-                  active ? "bg-accent text-accent-ink" : "bg-soft text-muted",
-                )}
-              >
-                <Icon className="h-5 w-5" />
-              </div>
-              <span className="font-display text-base font-bold text-ink">{METHOD_LABEL[m]}</span>
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() => setSelected("due")}
-          className={cn(
-            "flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors",
-            selected === "due" ? "border-accent bg-accent/10" : "border-line bg-card",
-          )}
-        >
-          <div
-            className={cn(
-              "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
-              selected === "due" ? "bg-accent text-accent-ink" : "bg-soft text-muted",
-            )}
-          >
-            <Receipt className="h-5 w-5" />
-          </div>
-          <span className="font-display text-base font-bold text-ink">{t("dueOption")}</span>
-        </button>
+      <div className="text-center">
+        <p className="text-xs font-semibold text-muted">
+          {pickingMethod ? t("choosePaymentMethod") : t("paymentAskTitle")}
+        </p>
+        {/* This job's own bill. A party's extra dues are stated on the
+            checkbox below, so "no" — which only ever sends this job to the
+            ledger — can never disagree with the number on screen. */}
+        <p className="mt-0.5 font-display text-[2.5rem] leading-tight font-bold text-ink">
+          ৳{formatMoney(serial.total_amount)}
+        </p>
+        {serial.customer_name && (
+          <p className="truncate text-xs text-muted">{serial.customer_name}</p>
+        )}
       </div>
 
       {canSettleParty && (
@@ -153,16 +136,60 @@ export function PaymentConfirmSheet({
         </label>
       )}
 
-      <Button
-        type="button"
-        size="lg"
-        className="w-full"
-        disabled={!selected}
-        loading={actions.complete.isPending || actions.settleParty.isPending}
-        onClick={onConfirm}
-      >
-        {t("confirmPaymentCta")} · ৳{formatMoney(grandTotal)}
-      </Button>
+      {pickingMethod ? (
+        <div className="flex flex-col gap-2">
+          {accepted.map((m) => {
+            const Icon = METHOD_ICON[m];
+            return (
+              <button
+                key={m}
+                type="button"
+                disabled={busy}
+                onClick={() => settle({ method: m })}
+                className="flex items-center gap-3 rounded-2xl border border-line bg-card p-3.5 text-left transition-colors hover:border-accent/50 hover:bg-accent/[0.06] disabled:opacity-60"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-soft text-muted">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="font-display text-base font-bold text-ink">
+                  {METHOD_LABEL[m]}
+                </span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setPickingMethod(false)}
+            className="mt-0.5 py-1 text-center text-xs font-semibold text-muted transition-colors hover:text-ink"
+          >
+            {t("paymentBackCta")}
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onYes}
+              className="flex flex-col items-center gap-1.5 rounded-2xl bg-accent px-3 py-4 text-accent-ink shadow-sm transition-transform active:scale-[0.98] disabled:opacity-60"
+            >
+              <Check className="h-6 w-6" />
+              <span className="font-display text-sm font-bold">{t("paidYesCta")}</span>
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => settle({ due: serial.total_amount })}
+              className="flex flex-col items-center gap-1.5 rounded-2xl border border-line bg-card px-3 py-4 text-ink transition-colors hover:border-accent/50 hover:bg-soft active:scale-[0.98] disabled:opacity-60"
+            >
+              <Receipt className="h-6 w-6 text-muted" />
+              <span className="font-display text-sm font-bold">{t("paidNoCta")}</span>
+            </button>
+          </div>
+          <p className="text-center text-[11px] text-muted">{t("paymentAskHint")}</p>
+        </>
+      )}
     </BottomSheet>
   );
 }
