@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Banknote, Check, CreditCard, Receipt, Smartphone, Wallet } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Banknote, Check, CreditCard, Smartphone, Wallet, X } from "lucide-react";
 import { type PaymentMethodValue } from "@/config/constants";
 import { keys } from "@/lib/query/keys";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -166,29 +165,30 @@ export function PaymentConfirmSheet({
           </button>
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={onYes}
-              className="flex flex-col items-center gap-1.5 rounded-2xl bg-accent px-3 py-4 text-accent-ink shadow-sm transition-transform active:scale-[0.98] disabled:opacity-60"
-            >
-              <Check className="h-6 w-6" />
-              <span className="font-display text-sm font-bold">{t("paidYesCta")}</span>
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => settle({ due: serial.total_amount })}
-              className="flex flex-col items-center gap-1.5 rounded-2xl border border-line bg-card px-3 py-4 text-ink transition-colors hover:border-accent/50 hover:bg-soft active:scale-[0.98] disabled:opacity-60"
-            >
-              <Receipt className="h-6 w-6 text-muted" />
-              <span className="font-display text-sm font-bold">{t("paidNoCta")}</span>
-            </button>
-          </div>
-          <p className="text-center text-[11px] text-muted">{t("paymentAskHint")}</p>
-        </>
+        // Just the answer to the question above. The word "বাকি" is
+        // deliberately absent: naming the unpaid case on every single job
+        // makes an owner who is paid in cash all day read a warning that
+        // isn't there. "No" quietly does the ledger work.
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onYes}
+            className="flex flex-col items-center gap-2 rounded-2xl bg-accent px-3 py-5 text-accent-ink shadow-sm transition-transform active:scale-[0.98] disabled:opacity-60"
+          >
+            <Check className="h-7 w-7" strokeWidth={2.5} />
+            <span className="font-display text-lg font-bold">{t("paidYesCta")}</span>
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => settle({ due: serial.total_amount })}
+            className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-card px-3 py-5 text-ink transition-colors hover:border-accent/50 hover:bg-soft active:scale-[0.98] disabled:opacity-60"
+          >
+            <X className="h-7 w-7 text-muted" strokeWidth={2.5} />
+            <span className="font-display text-lg font-bold">{t("paidNoCta")}</span>
+          </button>
+        </div>
       )}
     </BottomSheet>
   );

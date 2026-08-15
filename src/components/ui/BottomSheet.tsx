@@ -51,9 +51,14 @@ export function BottomSheet({
         {title && (
           <h2 className="shrink-0 font-display text-lg font-bold text-ink">{title}</h2>
         )}
-        {/* min-h-0 lets this shrink below its content so overflow-y actually
-            scrolls; -mx-5/px-5 keeps focus rings from being clipped. */}
-        <div className="-mx-5 min-h-0 flex-1 space-y-4 overflow-y-auto px-5">
+        {/* No flex-1 here. The panel's height is auto (only capped by
+            max-h), and `flex: 1 1 0%` in an auto-height column resolves its
+            basis to 0 — with min-h-0 removing the automatic minimum, the box
+            collapsed and a short sheet grew a scrollbar it did not need.
+            Default basis plus min-h-0 is what's wanted: size to the content,
+            shrink only once the cap is reached, and scroll from there.
+            -mx-5/px-5 keeps focus rings from being clipped. */}
+        <div className="-mx-5 min-h-0 shrink space-y-4 overflow-y-auto px-5">
           {children}
         </div>
       </div>
