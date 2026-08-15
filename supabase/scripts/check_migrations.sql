@@ -114,6 +114,19 @@ with checks(ord, migration, kind, obj, present) as (
           (select pg_get_functiondef(p.oid) like '%coalesce((select avg_rating%'
              from pg_proc p
             where p.oid = to_regprocedure('public.admin_shop_detail(uuid)')),
+          false)),
+
+    -- 20260909 মূল ফাংশনটা ফিরিয়ে আনে। তিনটে জিনিস একসাথে থাকলেই সেটা
+    -- নিশ্চিত: offers-এ সঠিক কলাম (o.active), readiness ব্লক, আর
+    -- recent_reviews — খসড়া সংস্করণে এই তিনটেরই একটাও ছিল না।
+    (20, '20260909_restore_admin_shop_detail',
+         'মূল বডি ফিরে এসেছে', 'admin_shop_detail()',
+        coalesce(
+          (select pg_get_functiondef(p.oid) like '%o.active)%'
+              and pg_get_functiondef(p.oid) like '%''readiness''%'
+              and pg_get_functiondef(p.oid) like '%''recent_reviews''%'
+             from pg_proc p
+            where p.oid = to_regprocedure('public.admin_shop_detail(uuid)')),
           false))
 )
 select
