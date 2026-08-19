@@ -1,9 +1,9 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { translate } from "@/lib/i18n";
+import { compressImage, IMAGE_PRESETS, MAX_SOURCE_BYTES } from "@/lib/image-compress";
 import { chatDict } from "../lib/i18n";
 
 const BUCKET = "chat-media";
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
 /** Reasonable cap for a single message's image grid, not a product requirement. */
 export const MAX_CHAT_IMAGES_PER_MESSAGE = 6;
@@ -12,7 +12,7 @@ function validateChatImage(file: File): void {
   if (!file.type.startsWith("image/")) {
     throw new Error(translate(chatDict, "imagesOnlyError"));
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_SOURCE_BYTES) {
     throw new Error(translate(chatDict, "imageSizeLimitError"));
   }
 }
@@ -22,13 +22,14 @@ async function uploadOneChatImage(
   customerId: string,
   file: File,
 ): Promise<string> {
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const image = await compressImage(file, IMAGE_PRESETS.attachment);
+  const ext = image.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${shopId}/${customerId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
   const supabase = getBrowserClient();
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, image, { cacheControl: "3600", upsert: false });
 
   if (error) throw new Error(translate(chatDict, "uploadFailedError"));
 

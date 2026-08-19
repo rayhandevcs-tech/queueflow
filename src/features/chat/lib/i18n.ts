@@ -32,7 +32,10 @@ export const chatDict = {
     en: "Messages aren't ready — try again.",
   },
   imagesOnlyError: { bn: "শুধু ছবি পাঠানো যাবে", en: "Only images can be sent" },
-  imageSizeLimitError: { bn: "ছবি ২ এমবি-র নিচে হতে হবে", en: "Image must be under 2 MB" },
+  imageSizeLimitError: {
+    bn: "ছবিটা অনেক বড় — ৪০ এমবি-র নিচে হতে হবে",
+    en: "That image is too large — it must be under 40 MB",
+  },
   uploadFailedError: {
     bn: "আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো",
     en: "Upload failed — try again",

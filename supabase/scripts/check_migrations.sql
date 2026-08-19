@@ -154,7 +154,15 @@ with checks(ord, migration, kind, obj, present) as (
           false)
         and exists (select 1 from pg_trigger
                      where tgname = 'serials_z_fill_customer_avatar'
-                       and not tgisinternal))
+                       and not tgisinternal)),
+
+    (24, '20260913_shops_live_on_registration',
+         'ট্রিগার + দুটো নতুন RPC', 'shops_set_live_on_insert',
+        exists (select 1 from pg_trigger
+                 where tgname = 'shops_set_live_on_insert'
+                   and not tgisinternal)
+        and to_regprocedure('public.admin_recent_shops(integer, integer)') is not null
+        and to_regprocedure('public.admin_audit_feed(text, integer, integer)') is not null)
 )
 select
   case when present then '✅' else '❌' end as ok,

@@ -1,11 +1,19 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { translate } from "@/lib/i18n";
+import { compressImage, IMAGE_PRESETS, MAX_SOURCE_BYTES } from "@/lib/image-compress";
 import { providerCatalogDict } from "../lib/i18n";
 
 const BUCKET = "shop-media";
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
 export type UploadKind = "logo" | "cover" | "avatar" | "service";
+
+/** A cover is the only shop image shown edge to edge; the rest are tiles. */
+const PRESET_FOR: Record<UploadKind, (typeof IMAGE_PRESETS)[keyof typeof IMAGE_PRESETS]> = {
+  logo: IMAGE_PRESETS.tile,
+  cover: IMAGE_PRESETS.wide,
+  avatar: IMAGE_PRESETS.avatar,
+  service: IMAGE_PRESETS.tile,
+};
 
 /**
  * Upload an image to Supabase Storage and return its public URL.
@@ -20,17 +28,18 @@ export async function uploadShopImage(
   if (!file.type.startsWith("image/")) {
     throw new Error(translate(providerCatalogDict, "onlyImagesAllowed"));
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_SOURCE_BYTES) {
     throw new Error(translate(providerCatalogDict, "imageTooLarge"));
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const image = await compressImage(file, PRESET_FOR[kind]);
+  const ext = image.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${shopId}/${kind}-${Date.now()}.${ext}`;
 
   const supabase = getBrowserClient();
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, image, { cacheControl: "3600", upsert: false });
 
   if (error) throw new Error(translate(providerCatalogDict, "uploadFailedRetry"));
 
@@ -50,17 +59,18 @@ export async function uploadShopGalleryImage(
   if (!file.type.startsWith("image/")) {
     throw new Error(translate(providerCatalogDict, "onlyImagesAllowed"));
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_SOURCE_BYTES) {
     throw new Error(translate(providerCatalogDict, "imageTooLarge"));
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const image = await compressImage(file, IMAGE_PRESETS.wide);
+  const ext = image.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${shopId}/gallery-${Date.now()}.${ext}`;
 
   const supabase = getBrowserClient();
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, image, { cacheControl: "3600", upsert: false });
 
   if (error) throw new Error(translate(providerCatalogDict, "uploadFailedRetry"));
 

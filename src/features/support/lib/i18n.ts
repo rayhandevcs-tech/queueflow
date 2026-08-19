@@ -68,8 +68,8 @@ export const supportDict = {
   openedOn: { bn: "খোলা হয়েছে", en: "Opened" },
   imagesOnlyError: { bn: "শুধু ছবি দেওয়া যাবে।", en: "Images only." },
   imageSizeLimitError: {
-    bn: "ছবিটা ২ এমবি-র কম হতে হবে।",
-    en: "The image must be under 2 MB.",
+    bn: "ছবিটা অনেক বড় — ৪০ এমবি-র কম হতে হবে।",
+    en: "That image is too large — it must be under 40 MB.",
   },
   tooManyImagesError: { bn: "সর্বোচ্চ ৩টি ছবি দেওয়া যাবে।", en: "Up to 3 images." },
   uploadFailedError: { bn: "ছবি আপলোড করা যায়নি।", en: "Could not upload the image." },

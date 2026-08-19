@@ -814,6 +814,14 @@ export type Database = {
         Args: { p_shop_id: string };
         Returns: Json;
       };
+      admin_recent_shops: {
+        Args: { p_days?: number; p_limit?: number };
+        Returns: Json;
+      };
+      admin_audit_feed: {
+        Args: { p_action?: string | null; p_limit?: number; p_offset?: number };
+        Returns: Json;
+      };
       admin_set_shop_status: {
         Args: {
           p_shop_id: string;

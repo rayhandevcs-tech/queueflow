@@ -1,9 +1,9 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { translate } from "@/lib/i18n";
+import { compressImage, IMAGE_PRESETS, MAX_SOURCE_BYTES } from "@/lib/image-compress";
 import { customerProfileDict } from "../lib/i18n";
 
 const BUCKET = "review-media";
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
 /**
  * Upload one review photo and return its public URL.
@@ -14,17 +14,18 @@ export async function uploadReviewImage(userId: string, file: File): Promise<str
   if (!file.type.startsWith("image/")) {
     throw new Error(translate(customerProfileDict, "onlyImagesAllowed"));
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_SOURCE_BYTES) {
     throw new Error(translate(customerProfileDict, "imageTooLarge"));
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const image = await compressImage(file, IMAGE_PRESETS.attachment);
+  const ext = image.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${userId}/${Date.now()}.${ext}`;
 
   const supabase = getBrowserClient();
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, image, { cacheControl: "3600", upsert: false });
 
   if (error) throw new Error(translate(customerProfileDict, "uploadFailedRetry"));
 

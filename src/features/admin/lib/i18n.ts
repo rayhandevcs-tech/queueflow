@@ -1,10 +1,12 @@
 import type { Dict } from "@/lib/i18n";
+import { toBanglaDigits as toBn } from "@/lib/format-wait";
 
 export const adminDict = {
   // ---- shell / nav ----
   panelName: { bn: "এডমিন প্যানেল", en: "Admin panel" },
   navOverview: { bn: "ওভারভিউ", en: "Overview" },
-  navVerification: { bn: "ভেরিফিকেশন", en: "Verification" },
+  navVerification: { bn: "নতুন দোকান", en: "New shops" },
+  navAudit: { bn: "অডিট লগ", en: "Audit log" },
   navShops: { bn: "দোকান", en: "Shops" },
   navUsers: { bn: "ইউজার", en: "Users" },
   navModeration: { bn: "মডারেশন", en: "Moderation" },
@@ -72,6 +74,47 @@ export const adminDict = {
   parlourCount: { bn: (n: number) => `পার্লার ${n}`, en: (n: number) => `${n} parlours` },
 
   // ---- verification queue ----
+  // Recent shops — replaced the approval queue when shops started going live
+  // on registration (20260913).
+  recentShopsTitle: { bn: "নতুন দোকান", en: "New shops" },
+  recentShopsSubtitle: {
+    bn: "গত ৩০ দিনে যারা রেজিস্ট্রার করেছে। দোকান এখন সঙ্গে সঙ্গেই লাইভ হয় — এখানে দেখে সন্দেহজনক কিছু পেলে সাসপেন্ড করা যাবে।",
+    en: "Everyone who registered in the last 30 days. Shops go live immediately now — look here, and suspend anything that shouldn't be.",
+  },
+  recentTabAll: { bn: "সব", en: "All" },
+  recentTabIncomplete: { bn: "অসম্পূর্ণ", en: "Incomplete" },
+  incompleteTag: { bn: "অসম্পূর্ণ", en: "Incomplete" },
+  recentCounts: {
+    bn: (chairs: number, services: number, serials: number) =>
+      `${toBn(chairs)} চেয়ার · ${toBn(services)} সার্ভিস · ${toBn(serials)} সিরিয়াল`,
+    en: (chairs: number, services: number, serials: number) =>
+      `${chairs} chairs · ${services} services · ${serials} serials`,
+  },
+  recentEmptyTitle: { bn: "গত ৩০ দিনে নতুন কোনো দোকান নেই", en: "No new shops in the last 30 days" },
+  recentEmptyBody: {
+    bn: "কেউ রেজিস্ট্রার করলে সঙ্গে সঙ্গে এখানে দেখা যাবে।",
+    en: "Anyone who registers will show up here straight away.",
+  },
+  recentAllCompleteTitle: { bn: "সব দোকানই প্রস্তুত", en: "Every shop is set up" },
+  recentAllCompleteBody: {
+    bn: "নতুন দোকানগুলোর সবকটিতেই চেয়ার, সার্ভিস আর ম্যাপে লোকেশন দেওয়া আছে।",
+    en: "Every new shop has staff, services and a location on the map.",
+  },
+
+  // Audit log
+  auditTitle: { bn: "অডিট লগ", en: "Audit log" },
+  auditSubtitle: {
+    bn: "এডমিনরা কে কী করেছে — নতুনগুলো উপরে।",
+    en: "Every admin action, newest first.",
+  },
+  auditFilterAll: { bn: "সব", en: "All" },
+  auditSystemActor: { bn: "সিস্টেম", en: "System" },
+  auditEmptyTitle: { bn: "কিছু নেই", en: "Nothing here" },
+  auditEmptyBody: {
+    bn: "এই ধরনের কোনো কাজ এখনো হয়নি।",
+    en: "No action of this kind has been taken yet.",
+  },
+
   verificationTitle: { bn: "ভেরিফিকেশন কিউ", en: "Verification queue" },
   verificationSubtitle: {
     bn: "নতুন দোকান অনুমোদন না করা পর্যন্ত কাস্টমাররা সেটি দেখতে পায় না",

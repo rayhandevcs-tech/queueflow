@@ -650,3 +650,67 @@ export async function listTicketMessages(ticketId: string): Promise<AdminTicketM
   if (error) throw error;
   return data ?? [];
 }
+
+// ---------------------------------------------------------------------------
+// Recent shops — the watchlist that replaced the approval queue
+// ---------------------------------------------------------------------------
+// Shops go live the moment they register (see 20260913), so nothing waits for
+// an admin any more. What an admin still needs is to see who just arrived, and
+// which of them look like nobody is actually running a shop there.
+
+export interface AdminRecentShop {
+  id: string;
+  name: string;
+  status: ShopStatus;
+  address: string | null;
+  business_type: BusinessType;
+  logo_url: string | null;
+  created_at: string;
+  owner_name: string | null;
+  owner_email: string | null;
+  chairs: number;
+  services: number;
+  serials: number;
+  /** No staff, no service, or no map pin — it cannot serve anyone yet. */
+  incomplete: boolean;
+}
+
+export async function listRecentShops(days = 30): Promise<AdminRecentShop[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_recent_shops", { p_days: days });
+  if (error) throw error;
+
+  const rows = (data as unknown as AdminRecentShop[] | null) ?? [];
+  // Counts arrive as bigint, which PostgREST serialises as a string.
+  return rows.map((r) => ({
+    ...r,
+    chairs: Number(r.chairs ?? 0),
+    services: Number(r.services ?? 0),
+    serials: Number(r.serials ?? 0),
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Audit feed — who did what
+// ---------------------------------------------------------------------------
+
+export interface AdminAuditRow {
+  id: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+  actor_name: string | null;
+  /** Resolved shop or user name, so a row reads without another lookup. */
+  target_name: string | null;
+}
+
+export async function listAuditFeed(action?: string | null): Promise<AdminAuditRow[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_audit_feed", {
+    p_action: action ?? null,
+  });
+  if (error) throw error;
+  return (data as unknown as AdminAuditRow[] | null) ?? [];
+}

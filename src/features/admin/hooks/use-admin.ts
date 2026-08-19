@@ -10,6 +10,8 @@ import type {
   SupportStatus,
 } from "@/types";
 import {
+  listRecentShops,
+  listAuditFeed,
   amIPlatformAdmin,
   createAdmin,
   setAdminPassword,
@@ -363,4 +365,25 @@ export function useAdminTicketMutations(ticketId?: string) {
   const markRead = useMutation({ mutationFn: markTicketReadByAdmin, onSuccess: invalidate });
 
   return { reply, changeStatus, markRead };
+}
+
+/**
+ * Shops registered in the last `days` days. Replaces the approval queue as the
+ * admin's first stop: nothing is waiting for a decision any more, so what
+ * matters is noticing who turned up and which of them look abandoned.
+ */
+export type { AdminRecentShop, AdminAuditRow } from "../api/admin.api";
+
+export function useRecentShops(days = 30) {
+  return useQuery({
+    queryKey: keys.admin.recentShops(days),
+    queryFn: () => listRecentShops(days),
+  });
+}
+
+export function useAuditFeed(action: string | null) {
+  return useQuery({
+    queryKey: keys.admin.auditFeed(action),
+    queryFn: () => listAuditFeed(action),
+  });
 }

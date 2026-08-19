@@ -1,12 +1,15 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { translate, type Dict } from "@/lib/i18n";
+import { compressImage, IMAGE_PRESETS, MAX_SOURCE_BYTES } from "@/lib/image-compress";
 
 const BUCKET = "avatars";
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const dict = {
   onlyImagesAllowed: { bn: "শুধু ছবি আপলোড করা যাবে", en: "Only images can be uploaded" },
-  imageTooLarge: { bn: "ছবি ২ MB-এর কম হতে হবে", en: "Image must be under 2 MB" },
+  imageTooLarge: {
+    bn: "ছবিটা অনেক বড় — ৪০ MB-এর কম হতে হবে",
+    en: "That image is too large — it must be under 40 MB",
+  },
   uploadFailedRetry: { bn: "আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো", en: "Upload failed — try again" },
 } satisfies Dict;
 
@@ -19,17 +22,18 @@ export async function uploadUserAvatar(userId: string, file: File): Promise<stri
   if (!file.type.startsWith("image/")) {
     throw new Error(translate(dict, "onlyImagesAllowed"));
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_SOURCE_BYTES) {
     throw new Error(translate(dict, "imageTooLarge"));
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const image = await compressImage(file, IMAGE_PRESETS.avatar);
+  const ext = image.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${userId}/${Date.now()}.${ext}`;
 
   const supabase = getBrowserClient();
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, image, { cacheControl: "3600", upsert: false });
 
   if (error) throw new Error(translate(dict, "uploadFailedRetry"));
 

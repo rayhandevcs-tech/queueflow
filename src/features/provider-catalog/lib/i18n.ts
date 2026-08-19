@@ -58,7 +58,10 @@ export const providerCatalogDict = {
 
   // storage.api.ts
   onlyImagesAllowed: { bn: "শুধু ছবি আপলোড করা যাবে", en: "Only images can be uploaded" },
-  imageTooLarge: { bn: "ছবি ২ এমবি-র নিচে হতে হবে", en: "Image must be under 2 MB" },
+  imageTooLarge: {
+    bn: "ছবিটা অনেক বড় — ৪০ এমবি-র নিচে হতে হবে",
+    en: "That image is too large — it must be under 40 MB",
+  },
   uploadFailedRetry: {
     bn: "আপলোড ব্যর্থ হয়েছে — আবার চেষ্টা করো",
     en: "Upload failed — try again",
