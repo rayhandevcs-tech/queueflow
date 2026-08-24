@@ -109,6 +109,8 @@ export const adminDict = {
   },
   auditFilterAll: { bn: "সব", en: "All" },
   auditSystemActor: { bn: "সিস্টেম", en: "System" },
+  auditYes: { bn: "হ্যাঁ", en: "Yes" },
+  auditNo: { bn: "না", en: "No" },
   auditEmptyTitle: { bn: "কিছু নেই", en: "Nothing here" },
   auditEmptyBody: {
     bn: "এই ধরনের কোনো কাজ এখনো হয়নি।",

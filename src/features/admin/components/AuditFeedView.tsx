@@ -7,30 +7,55 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
-import { useLanguage, useT } from "@/lib/i18n";
+import { useLanguage, useT, type Language } from "@/lib/i18n";
 import { useAuditFeed, type AdminAuditRow } from "../hooks/use-admin";
 import { adminDict } from "../lib/i18n";
 
 /**
- * The actions worth filtering by, with their labels.
+ * Every action string admin_log() can write, with its label.
  *
- * Kept here rather than in the shared dict because these strings are the log's
- * vocabulary — they exist only on this screen, and an action the log knows
- * about but this map doesn't should still render (as its raw key) instead of
- * disappearing.
+ * These are the log's own vocabulary — they exist nowhere else in the product,
+ * so they live here rather than in the shared dict. The keys must match the
+ * literals the RPCs pass to admin_log(); anything unrecognised still renders,
+ * as its raw key, because a log that hides what it doesn't know is worse than
+ * one that occasionally looks technical.
  */
 const ACTION_LABEL: Record<string, { bn: string; en: string }> = {
-  shop_status_change: { bn: "দোকানের অবস্থা বদল", en: "Shop status changed" },
-  user_block: { bn: "ইউজার ব্লক", en: "User blocked" },
-  user_unblock: { bn: "ব্লক তুলে নেওয়া", en: "User unblocked" },
-  review_hide: { bn: "রিভিউ লুকানো", en: "Review hidden" },
-  report_resolve: { bn: "রিপোর্ট নিষ্পত্তি", en: "Report resolved" },
-  admin_grant: { bn: "এডমিন বানানো", en: "Admin granted" },
-  admin_revoke: { bn: "এডমিন সরানো", en: "Admin revoked" },
-  user_delete: { bn: "একাউন্ট ডিলিট", en: "Account deleted" },
+  SHOP_STATUS: { bn: "দোকানের অবস্থা বদল", en: "Shop status changed" },
+  SHOP_FEATURED: { bn: "দোকান ফিচার্ড", en: "Shop featured" },
+  USER_BLOCKED: { bn: "ইউজার ব্লক", en: "User blocked" },
+  USER_UNBLOCKED: { bn: "ব্লক তুলে নেওয়া", en: "User unblocked" },
+  USER_PROFILE_EDITED: { bn: "প্রোফাইল সম্পাদনা", en: "Profile edited" },
+  USER_DELETED: { bn: "একাউন্ট ডিলিট", en: "Account deleted" },
+  SERIAL_FORCE_CANCELLED: { bn: "সিরিয়াল জোর করে বাতিল", en: "Serial force-cancelled" },
+  REVIEW_HIDDEN: { bn: "রিভিউ লুকানো", en: "Review hidden" },
+  REVIEW_UNHIDDEN: { bn: "রিভিউ ফেরানো", en: "Review restored" },
+  REPORT_RESOLVED: { bn: "রিপোর্ট নিষ্পত্তি", en: "Report resolved" },
+  REPORT_DISMISSED: { bn: "রিপোর্ট খারিজ", en: "Report dismissed" },
+  REPORT_OPEN: { bn: "রিপোর্ট আবার খোলা", en: "Report reopened" },
+  ADMIN_SET_STATUS: { bn: "এডমিনের অবস্থা বদল", en: "Admin status changed" },
+  ADMIN_SET_LEVEL: { bn: "এডমিনের স্তর বদল", en: "Admin level changed" },
+  ADMIN_REVOKE: { bn: "এডমিন সরানো", en: "Admin revoked" },
+  SUPPORT_REPLY: { bn: "সাপোর্টে উত্তর", en: "Support reply" },
+  SUPPORT_SET_STATUS: { bn: "টিকিটের অবস্থা বদল", en: "Ticket status changed" },
 };
 
 const ACTIONS = Object.keys(ACTION_LABEL);
+
+/**
+ * The one meta field worth putting on the headline, per action.
+ *
+ * Every RPC writes a different shape — SHOP_STATUS has `to`, the admin ones
+ * have `status` / `level`, SHOP_FEATURED has a boolean `featured`. Naming the
+ * field per action beats guessing across all of them.
+ */
+const OUTCOME_KEY: Record<string, string> = {
+  SHOP_STATUS: "to",
+  SHOP_FEATURED: "featured",
+  ADMIN_SET_STATUS: "status",
+  ADMIN_SET_LEVEL: "level",
+  SUPPORT_SET_STATUS: "status",
+};
 
 /**
  * Every admin action, newest first.
@@ -48,10 +73,6 @@ export function AuditFeedView() {
   const [action, setAction] = useState<string | null>(null);
   const { data, isPending } = useAuditFeed(action);
 
-  // Unknown actions render as their raw key rather than blank — a log that
-  // hides what it doesn't recognise is worse than one that looks technical.
-  const label = (a: string) => ACTION_LABEL[a]?.[language] ?? a;
-
   const rows = data ?? [];
 
   return (
@@ -64,7 +85,7 @@ export function AuditFeedView() {
         </FilterChip>
         {ACTIONS.map((a) => (
           <FilterChip key={a} active={action === a} onClick={() => setAction(a)}>
-            {label(a)}
+            {labelFor(a, language)}
           </FilterChip>
         ))}
       </div>
@@ -82,12 +103,16 @@ export function AuditFeedView() {
       ) : (
         <ul className="overflow-hidden rounded-2xl border border-line bg-card">
           {rows.map((row) => (
-            <AuditRow key={row.id} row={row} label={label(row.action)} />
+            <AuditRow key={row.id} row={row} language={language} />
           ))}
         </ul>
       )}
     </div>
   );
+}
+
+function labelFor(action: string, language: Language): string {
+  return ACTION_LABEL[action]?.[language] ?? action;
 }
 
 function FilterChip({
@@ -115,15 +140,32 @@ function FilterChip({
   );
 }
 
-function AuditRow({ row, label }: { row: AdminAuditRow; label: string }) {
+function AuditRow({ row, language }: { row: AdminAuditRow; language: Language }) {
   const t = useT(adminDict);
-  const reason = typeof row.meta?.reason === "string" ? row.meta.reason : null;
-  const to = typeof row.meta?.to === "string" ? row.meta.to : null;
 
+  // Whichever of reason / note the action happened to record — both are the
+  // admin's own words about why, and only one is ever set.
+  const why =
+    (typeof row.meta?.reason === "string" && row.meta.reason) ||
+    (typeof row.meta?.note === "string" && row.meta.note) ||
+    null;
+
+  const outcomeKey = OUTCOME_KEY[row.action];
+  const outcomeRaw = outcomeKey ? row.meta?.[outcomeKey] : undefined;
+  const outcome =
+    typeof outcomeRaw === "boolean"
+      ? outcomeRaw
+        ? t("auditYes")
+        : t("auditNo")
+      : typeof outcomeRaw === "string" || typeof outcomeRaw === "number"
+        ? String(outcomeRaw)
+        : null;
+
+  // 'admin' targets are user ids too, so they open the same user page.
   const href =
     row.target_type === "shop" && row.target_id
       ? `/admin/shops/${row.target_id}`
-      : row.target_type === "user" && row.target_id
+      : (row.target_type === "user" || row.target_type === "admin") && row.target_id
         ? `/admin/users/${row.target_id}`
         : null;
 
@@ -131,12 +173,12 @@ function AuditRow({ row, label }: { row: AdminAuditRow; label: string }) {
     <>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-ink">
-          {label}
+          {labelFor(row.action, language)}
           {row.target_name && <span className="font-normal text-muted"> · {row.target_name}</span>}
-          {to && <span className="font-normal text-muted"> → {to}</span>}
+          {outcome && <span className="font-normal text-muted"> → {outcome}</span>}
         </p>
         <p className="truncate text-[11px] text-muted">
-          {[row.actor_name ?? t("auditSystemActor"), reason].filter(Boolean).join(" · ")}
+          {[row.actor_name ?? t("auditSystemActor"), why].filter(Boolean).join(" · ")}
         </p>
       </div>
       <time className="shrink-0 text-[11px] text-muted">

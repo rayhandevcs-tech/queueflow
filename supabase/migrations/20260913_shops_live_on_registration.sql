@@ -164,9 +164,14 @@ begin
       al.meta,
       al.created_at,
       (select p.full_name from profiles p where p.id = al.actor_id) as actor_name,
+      -- 'admin' rows carry a user id too (admin_users.user_id), so they
+      -- resolve through profiles like a 'user' row does. review / report /
+      -- ticket targets have no name worth showing, and the meta already says
+      -- what happened, so they stay null rather than inventing a label.
       case al.target_type
-        when 'shop' then (select sh.name from shops sh where sh.id = al.target_id)
-        when 'user' then (select p2.full_name from profiles p2 where p2.id = al.target_id)
+        when 'shop'  then (select sh.name from shops sh where sh.id = al.target_id)
+        when 'user'  then (select p2.full_name from profiles p2 where p2.id = al.target_id)
+        when 'admin' then (select p3.full_name from profiles p3 where p3.id = al.target_id)
         else null
       end as target_name
     from admin_audit_log al
