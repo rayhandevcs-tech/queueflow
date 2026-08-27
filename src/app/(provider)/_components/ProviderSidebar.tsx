@@ -19,6 +19,7 @@ import {
   Users,
   Wallet,
   ArrowLeftRight,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyShop, useShopMutations } from "@/features/provider-catalog/hooks/use-my-shop";
@@ -72,6 +73,7 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },
     { href: "/manual-entries", label: t("navManualEntries"), icon: NotebookPen },
     { href: "/due-ledger", label: t("navDueLedger"), icon: Receipt },
+    { href: "/ai", label: t("navAi"), icon: Sparkles },
     { href: "/analytics", label: t("navAnalytics"), icon: BarChart3 },
     { href: "/regulars", label: t("navRegulars"), icon: Users },
     { href: "/notifications/send", label: t("navSendNotification"), icon: Megaphone },

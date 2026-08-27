@@ -184,6 +184,7 @@ export const providerCatalogDict = {
   navChat: { bn: "মেসেজ", en: "Messages" },
   navIncome: { bn: "ইনকাম", en: "Income" },
   navTransactions: { bn: "লেনদেন", en: "Transactions" },
+  navAi: { bn: "AI সহকারী", en: "AI assistant" },
   navManualEntries: { bn: "ম্যানুয়াল এন্ট্রি", en: "Manual entries" },
   navDueLedger: { bn: "বাকির খাতা", en: "Due ledger" },
   navAnalytics: { bn: "অ্যানালিটিক্স", en: "Analytics" },

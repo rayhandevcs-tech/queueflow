@@ -11,6 +11,9 @@ const PROVIDER_PREFIXES = [
   "/summary",
   "/settings",
   "/income",
+  // The AI assistant reads the caller's own shop and spends real money doing
+  // it, so it is provider-only for both reasons at once.
+  "/ai",
   // The shop's money pages. RLS already returns nothing to a non-owner, so
   // these were never a leak — but landing on an empty ledger reads like a bug,
   // and being sent home reads like an answer.
