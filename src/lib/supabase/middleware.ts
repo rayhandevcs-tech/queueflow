@@ -24,7 +24,7 @@ const PROVIDER_PREFIXES = [
   "/regulars",
   "/reviews",
 ];
-const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile", "/chats", "/transactions"];
+const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile", "/chats", "/transactions", "/style"];
 /**
  * Customer pages that are one exact path, because a child of theirs belongs to
  * someone else: /notifications is the customer's inbox, while

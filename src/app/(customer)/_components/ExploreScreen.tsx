@@ -19,6 +19,7 @@ import { OfferCarousel } from "@/features/customer-explore/components/OfferCarou
 import { CategoryShortcutRow } from "@/features/customer-explore/components/CategoryShortcutRow";
 import { TopRatedSection } from "@/features/customer-explore/components/TopRatedSection";
 import { FavouriteShopsSection } from "@/features/customer-explore/components/FavouriteShopsSection";
+import { StyleStudioBanner } from "@/features/customer-style/components/StyleStudioBanner";
 import { SearchFilterBar } from "@/features/customer-explore/components/SearchFilterBar";
 import {
   DEFAULT_FILTERS,
@@ -202,6 +203,13 @@ export function ExploreScreen() {
       />
 
       <div className="mt-6">
+        {/* Signed-in only: the studio's whole point is telling your shop what
+            you want, which needs an account. */}
+        {signedIn && (
+          <div className="mb-5">
+            <StyleStudioBanner />
+          </div>
+        )}
         <TopRatedSection shops={shops} ratingByShopId={ratingByShopId} waitMin={waitMin} />
         {signedIn && (
           <FavouriteShopsSection

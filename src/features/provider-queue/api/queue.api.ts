@@ -114,3 +114,50 @@ export async function getPartyDues(groupId: string): Promise<Serial[]> {
   if (error) throw error;
   return data;
 }
+
+/**
+ * The style each waiting customer asked for, keyed by serial id.
+ *
+ * A separate query rather than a join on getShopQueue: the board refetches on
+ * every realtime tick, and the choices change perhaps once per booking. Keeping
+ * them apart lets each cache on its own schedule and leaves the hot path alone.
+ *
+ * RLS on serial_style_preferences already limits this to the caller's own shop,
+ * so the serial-id filter is about size, not access.
+ */
+export interface QueueStylePick {
+  serialId: string;
+  nameBn: string;
+  nameEn: string;
+  note: string | null;
+  referenceImageUrl: string | null;
+}
+
+export async function getQueueStylePicks(
+  serialIds: readonly string[],
+): Promise<Map<string, QueueStylePick>> {
+  if (serialIds.length === 0) return new Map();
+
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("serial_style_preferences")
+    .select("serial_id, note, hairstyles(name_bn, name_en, reference_image_url)")
+    .in("serial_id", [...serialIds]);
+
+  if (error) throw error;
+
+  const out = new Map<string, QueueStylePick>();
+  for (const row of data ?? []) {
+    // The embed is typed as an array by supabase-js even for a to-one FK.
+    const style = Array.isArray(row.hairstyles) ? row.hairstyles[0] : row.hairstyles;
+    if (!style) continue;
+    out.set(row.serial_id, {
+      serialId: row.serial_id,
+      nameBn: style.name_bn,
+      nameEn: style.name_en,
+      note: row.note,
+      referenceImageUrl: style.reference_image_url,
+    });
+  }
+  return out;
+}

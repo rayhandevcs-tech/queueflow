@@ -85,6 +85,12 @@ export const keys = {
     manual: (shopId: string) => ["transactions", "manual", shopId] as const,
     expenses: (shopId: string) => ["transactions", "expenses", shopId] as const,
   },
+  hairstyles: {
+    byKind: (kind: string) => ["hairstyles", kind] as const,
+  },
+  stylePick: {
+    bySerial: (serialId: string) => ["style-pick", serialId] as const,
+  },
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,
   },

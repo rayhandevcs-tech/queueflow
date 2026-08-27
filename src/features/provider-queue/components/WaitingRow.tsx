@@ -14,6 +14,7 @@ import { useT } from "@/lib/i18n";
 import type { Lane } from "../lib/lanes";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
+import { StylePickNote } from "./StylePickNote";
 import { partyInfo } from "../lib/party";
 import { MoveSerialMenu } from "./MoveSerialMenu";
 
@@ -150,6 +151,12 @@ export function WaitingRow({
           <p className="mt-1 line-clamp-2 text-xs text-muted">
             {services.map((s) => s.name).join(" + ") || "—"}
           </p>
+          {/* What the customer asked for, if they said. Renders nothing
+              otherwise — most bookings have no pick, and an empty row on every
+              card would clutter the one screen that must stay scannable. */}
+          <div className="mt-1.5">
+            <StylePickNote serialId={serial.id} />
+          </div>
         </div>
       </div>
 

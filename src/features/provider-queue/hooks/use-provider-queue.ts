@@ -10,7 +10,7 @@ import {
 } from "@/lib/query/realtime-cache";
 import { ACTIVE_STATUSES } from "@/config/constants";
 import type { Chair, Serial } from "@/types";
-import { getAllChairs, getShopQueue } from "../api/queue.api";
+import { getAllChairs, getQueueStylePicks, getShopQueue } from "../api/queue.api";
 import { buildLanes, boardTotals, type Lane } from "../lib/lanes";
 
 export interface ProviderQueue {
@@ -97,4 +97,23 @@ export function useProviderQueue(shopId: string): ProviderQueue {
     isPending: serialsQuery.isPending || chairsQuery.isPending,
     isError: serialsQuery.isError || chairsQuery.isError,
   };
+}
+/**
+ * The style each customer on the board asked for.
+ *
+ * Keyed off the board's own serial ids, so it follows the board rather than
+ * polling on its own. A pick changes at most once per booking, so this is
+ * allowed to go stale for a minute — the board's realtime refetches are for
+ * positions and statuses, not for this.
+ */
+export function useQueueStylePicks(serials: readonly Serial[]) {
+  const ids = serials.map((s) => s.id).sort();
+
+  return useQuery({
+    queryKey: keys.stylePick.bySerial(ids.join(",")),
+    queryFn: () => getQueueStylePicks(ids),
+    enabled: ids.length > 0,
+    staleTime: 60_000,
+    placeholderData: (previous) => previous,
+  });
 }

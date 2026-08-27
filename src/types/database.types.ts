@@ -398,6 +398,71 @@ export type Database = {
         };
         Relationships: [];
       };
+      hairstyles: {
+        Row: {
+          id: string;
+          kind: "HAIR" | "BEARD";
+          slug: string;
+          name_bn: string;
+          name_en: string;
+          description_bn: string;
+          description_en: string;
+          /** English-only: read by the AI advisor, never rendered. */
+          suits_notes_en: string;
+          reference_image_url: string | null;
+          /** Transparent PNG laid over the customer's photo. */
+          overlay_image_url: string | null;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          kind: "HAIR" | "BEARD";
+          slug: string;
+          name_bn: string;
+          name_en: string;
+          description_bn: string;
+          description_en: string;
+          suits_notes_en: string;
+          reference_image_url?: string | null;
+          overlay_image_url?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          kind?: "HAIR" | "BEARD";
+          name_bn?: string;
+          name_en?: string;
+          description_bn?: string;
+          description_en?: string;
+          suits_notes_en?: string;
+          reference_image_url?: string | null;
+          overlay_image_url?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      serial_style_preferences: {
+        Row: {
+          serial_id: string;
+          hairstyle_id: string;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          serial_id: string;
+          hairstyle_id: string;
+          note?: string | null;
+        };
+        Update: {
+          hairstyle_id?: string;
+          note?: string | null;
+        };
+        Relationships: [];
+      };
       manual_entries: {
         Row: {
           id: string;

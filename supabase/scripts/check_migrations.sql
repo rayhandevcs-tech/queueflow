@@ -162,7 +162,14 @@ with checks(ord, migration, kind, obj, present) as (
                  where tgname = 'shops_set_live_on_insert'
                    and not tgisinternal)
         and to_regprocedure('public.admin_recent_shops(integer, integer)') is not null
-        and to_regprocedure('public.admin_audit_feed(text, integer, integer)') is not null)
+        and to_regprocedure('public.admin_audit_feed(text, integer, integer)') is not null),
+
+    -- টেবিল থাকলেই যথেষ্ট নয় — সিডটাও বসেছে কিনা দেখা হয়, নইলে AI-এর
+    -- বেছে নেওয়ার মতো কোনো স্টাইলই থাকবে না।
+    (25, '20260914_hairstyle_catalogue', 'টেবিল + সিড', 'hairstyles',
+        to_regclass('public.hairstyles') is not null
+        and to_regclass('public.serial_style_preferences') is not null
+        and coalesce((select count(*) >= 18 from public.hairstyles), false))
 )
 select
   case when present then '✅' else '❌' end as ok,

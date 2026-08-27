@@ -12,6 +12,7 @@ import { UiDbError } from "@/lib/supabase/db-errors";
 import { useT } from "@/lib/i18n";
 import type { useSerialActions } from "../hooks/use-serial-actions";
 import { providerQueueDict } from "../lib/i18n";
+import { StylePickNote } from "./StylePickNote";
 import { partyInfo } from "../lib/party";
 import { PaymentConfirmSheet } from "./PaymentConfirmSheet";
 
@@ -106,6 +107,9 @@ export function NowServingCard({
           <p className="mt-0.5 truncate text-[13px] text-accent-ink/60">
             {services.map((s) => s.name).join(" + ") || "—"}
           </p>
+          <div className="mt-2">
+            <StylePickNote serialId={serial.id} tone="onAccent" />
+          </div>
           <p className="mt-4 font-number text-lg font-bold">৳{formatMoney(serial.total_amount)}</p>
         </div>
       </div>
