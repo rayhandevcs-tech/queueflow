@@ -16,9 +16,11 @@ interface Props {
    * may not import each other, so the page composes the two.
    */
   breakSlot?: React.ReactNode;
+  /** The voice-command button, injected for the same reason breakSlot is. */
+  voiceSlot?: React.ReactNode;
 }
 
-export function BoardHeader({ totals, onWalkIn, breakSlot }: Props) {
+export function BoardHeader({ totals, onWalkIn, breakSlot, voiceSlot }: Props) {
   const waitingTotal = totals.waiting + totals.inProgress;
   const { language } = useLanguage();
   const t = useT(providerQueueDict);
@@ -41,6 +43,7 @@ export function BoardHeader({ totals, onWalkIn, breakSlot }: Props) {
           {t("realtimeUpdating")}
         </span>
         {/* Right where the owner already is when he needs to step away. */}
+        {voiceSlot}
         {breakSlot}
         <Button onClick={onWalkIn}>
           <UserPlus className="h-4 w-4" />

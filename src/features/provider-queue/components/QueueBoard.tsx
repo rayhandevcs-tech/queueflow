@@ -21,9 +21,11 @@ const EMPTY_PICKS = new Map<string, QueueStylePick>();
 export function QueueBoard({
   shopId,
   breakSlot,
+  voiceSlot,
 }: {
   shopId: string;
   breakSlot?: React.ReactNode;
+  voiceSlot?: React.ReactNode;
 }) {
   const { lanes, totals, rows, isPending, isError } = useProviderQueue(shopId);
   const stylePicks = useQueueStylePicks(rows);
@@ -49,6 +51,7 @@ export function QueueBoard({
         totals={totals}
         onWalkIn={() => setWalkInOpen(true)}
         breakSlot={breakSlot}
+        voiceSlot={voiceSlot}
       />
 
       {lanes.length === 0 ? (

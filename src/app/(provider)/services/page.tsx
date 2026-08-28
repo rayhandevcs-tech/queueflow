@@ -5,6 +5,8 @@ import { Settings } from "lucide-react";
 import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
 import { ServicesManager } from "@/features/provider-catalog/components/ServicesManager";
 import { CanPerformMatrix } from "@/features/provider-catalog/components/CanPerformMatrix";
+import { ShopSetupCard } from "@/features/provider-setup/components/ShopSetupCard";
+import { useServices } from "@/features/provider-catalog/hooks/use-services";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
@@ -12,6 +14,9 @@ import { useT } from "@/lib/i18n";
 
 export default function ServicesPage() {
   const { data: shop, isPending } = useMyShop();
+  // Only offered while the catalogue is empty: once there are services, the
+  // owner has already done this work and the card is just clutter.
+  const { data: services } = useServices(shop?.id ?? "");
   const t = useT(providerCatalogDict);
 
   if (isPending) {
@@ -38,6 +43,8 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-8">
+      {services?.length === 0 && <ShopSetupCard shopId={shop.id} />}
+
       <ServicesManager shopId={shop.id} />
 
       <div>

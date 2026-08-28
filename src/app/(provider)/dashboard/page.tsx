@@ -7,6 +7,7 @@ import { keys } from "@/lib/query/keys";
 import { ACTIVE_STATUSES } from "@/config/constants";
 import { QueueBoard } from "@/features/provider-queue/components/QueueBoard";
 import { ShopBreakControl } from "@/features/provider-catalog/components/ShopBreakControl";
+import { VoiceCommandButton } from "@/features/provider-voice/components/VoiceCommandButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { translate } from "@/lib/i18n";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
@@ -98,7 +99,11 @@ export default async function DashboardPage() {
       {/* The break control lives in provider-catalog and the board in
           provider-queue; features can't import each other, so the page is
           where the two are composed. */}
-      <QueueBoard shopId={shop.id} breakSlot={<ShopBreakControl shop={shop} />} />
+      <QueueBoard
+        shopId={shop.id}
+        breakSlot={<ShopBreakControl shop={shop} />}
+        voiceSlot={<VoiceCommandButton shopId={shop.id} />}
+      />
     </HydrationBoundary>
   );
 }
