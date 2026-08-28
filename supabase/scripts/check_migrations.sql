@@ -169,7 +169,10 @@ with checks(ord, migration, kind, obj, present) as (
     (25, '20260914_hairstyle_catalogue', 'টেবিল + সিড', 'hairstyles',
         to_regclass('public.hairstyles') is not null
         and to_regclass('public.serial_style_preferences') is not null
-        and coalesce((select count(*) >= 18 from public.hairstyles), false))
+        and coalesce((select count(*) >= 18 from public.hairstyles), false)),
+
+    (26, '20260915_style_media_bucket', 'স্টোরেজ বাকেট', 'style-media',
+        exists (select 1 from storage.buckets where id = 'style-media'))
 )
 select
   case when present then '✅' else '❌' end as ok,

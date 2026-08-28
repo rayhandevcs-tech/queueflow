@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   LogOut,
   ScrollText,
+  Scissors,
   Store,
   Users,
   UsersRound,
@@ -34,6 +35,7 @@ const NAV = [
   { href: "/admin/moderation", label: "navModeration", icon: Flag, exact: false },
   { href: "/admin/support", label: "navSupport", icon: LifeBuoy, exact: false },
   { href: "/admin/team", label: "navTeam", icon: UsersRound, exact: false },
+  { href: "/admin/styles", label: "navStyles", icon: Scissors, exact: false },
   { href: "/admin/audit", label: "navAudit", icon: ScrollText, exact: false },
 ] as const;
 

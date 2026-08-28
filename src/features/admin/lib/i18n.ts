@@ -101,6 +101,36 @@ export const adminDict = {
     en: "Every new shop has staff, services and a location on the map.",
   },
 
+  // Hairstyle catalogue
+  navStyles: { bn: "স্টাইল ক্যাটালগ", en: "Style catalogue" },
+  stylesTitle: { bn: "স্টাইল ক্যাটালগ", en: "Style catalogue" },
+  stylesSubtitle: {
+    bn: "কাস্টমার সাইডের হেয়ার ও দাড়ির স্টাইল। ছবি ছাড়াও AI সুপারিশ কাজ করে, তবে ছবি দিলে কাস্টমার বসিয়ে দেখতে পারবে।",
+    en: "The hair and beard styles customers see. The AI advises without images, but images let customers try a style on.",
+  },
+  styleTabHair: { bn: "চুল", en: "Hair" },
+  styleTabBeard: { bn: "দাড়ি", en: "Beard" },
+  styleReferenceLabel: { bn: "রেফারেন্স ছবি", en: "Reference photo" },
+  styleOverlayLabel: { bn: "ওভারলে (স্বচ্ছ PNG)", en: "Overlay (transparent PNG)" },
+  styleOverlayHint: {
+    bn: "স্বচ্ছ ব্যাকগ্রাউন্ডের PNG — কাস্টমারের ছবির উপর বসবে। কম্প্রেস করা হয় না, তাই ধার পরিষ্কার থাকে।",
+    en: "A PNG with a transparent background, laid over the customer's photo. Not compressed, so the edges stay clean.",
+  },
+  styleUploadCta: { bn: "ছবি দাও", en: "Upload" },
+  styleReplaceCta: { bn: "বদলাও", en: "Replace" },
+  styleImageTypeError: { bn: "শুধু ছবি আপলোড করা যাবে।", en: "Images only." },
+  styleImageTooLarge: {
+    bn: "ছবিটা ২ এমবি-র কম হতে হবে।",
+    en: "The image must be under 2 MB.",
+  },
+  styleActiveLabel: { bn: "চালু", en: "Active" },
+  styleNoImages: { bn: "ছবি নেই", en: "No images" },
+  styleImagesDone: { bn: "ছবি দেওয়া আছে", en: "Images added" },
+  styleProgress: {
+    bn: (done: number, total: number) => `${toBn(done)}/${toBn(total)} স্টাইলে ছবি দেওয়া হয়েছে`,
+    en: (done: number, total: number) => `${done} of ${total} styles have images`,
+  },
+
   // Audit log
   auditTitle: { bn: "অডিট লগ", en: "Audit log" },
   auditSubtitle: {

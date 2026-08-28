@@ -2,26 +2,30 @@
 
 import { useCallback, useRef, useState } from "react";
 
-export type HelpErrorCode = "NOT_SIGNED_IN" | "ANTHROPIC_KEY_MISSING" | "GENERIC";
+export type ChatErrorCode = "NOT_SIGNED_IN" | "ANTHROPIC_KEY_MISSING" | "GENERIC";
 
-export interface HelpTurn {
+export interface ChatTurn {
   role: "user" | "assistant";
   content: string;
 }
 
 /**
- * The help thread, kept in component state for as long as the widget is mounted.
+ * A streaming chat thread against any of our text/plain streaming endpoints.
  *
- * Not persisted anywhere. A support exchange about "where am I in the queue" is
- * worthless five minutes later, and storing it would mean a table of customers'
+ * Shared because the customer's help assistant and the shop's own assistant are
+ * the same mechanism pointed at different data — one hook rather than two that
+ * drift apart the first time one of them grows a bug fix.
+ *
+ * Nothing is persisted. An exchange about "where am I in the queue" is
+ * worthless five minutes later, and storing it would mean a table of people's
  * questions to secure, expire and eventually explain. The thread survives
  * closing and reopening the panel because the hook lives above it; it does not
  * survive a reload, which is the right trade for what this is.
  */
-export function useHelpChat() {
-  const [turns, setTurns] = useState<HelpTurn[]>([]);
+export function useStreamingChat(endpoint: string) {
+  const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [streaming, setStreaming] = useState(false);
-  const [error, setError] = useState<HelpErrorCode | null>(null);
+  const [error, setError] = useState<ChatErrorCode | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const send = useCallback(
@@ -30,7 +34,7 @@ export function useHelpChat() {
       if (!question || streaming) return;
 
       setError(null);
-      const history: HelpTurn[] = [...turns, { role: "user", content: question }];
+      const history: ChatTurn[] = [...turns, { role: "user", content: question }];
       setTurns([...history, { role: "assistant", content: "" }]);
       setStreaming(true);
 
@@ -38,7 +42,7 @@ export function useHelpChat() {
       abortRef.current = controller;
 
       try {
-        const res = await fetch("/api/ai/help", {
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history }),
@@ -85,7 +89,7 @@ export function useHelpChat() {
         abortRef.current = null;
       }
     },
-    [turns, streaming],
+    [turns, streaming, endpoint],
   );
 
   const stop = useCallback(() => abortRef.current?.abort(), []);

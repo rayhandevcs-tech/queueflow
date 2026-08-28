@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useT } from "@/lib/i18n";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
+import { ProviderAssistantWidget } from "./ProviderAssistantWidget";
 import { ShopStatusBanner } from "@/features/provider-catalog/components/ShopStatusBanner";
 import { ProviderSidebar } from "./ProviderSidebar";
 
@@ -55,6 +56,8 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
         <ShopStatusBanner />
         {children}
       </main>
+
+      <ProviderAssistantWidget />
     </div>
   );
 }

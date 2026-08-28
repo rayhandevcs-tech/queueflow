@@ -54,6 +54,22 @@ export const providerAiDict = {
   },
   retryCta: { bn: "আবার চেষ্টা করো", en: "Try again" },
 
+  // Floating widget
+  botName: { bn: "সহায়ক", en: "Assistant" },
+  botSubtitle: { bn: "তোমার দোকানের হিসাব জানে", en: "Knows your shop's numbers" },
+  openLabel: { bn: "সহায়ক খোলো", en: "Open the assistant" },
+  closeLabel: { bn: "বন্ধ করো", en: "Close" },
+  greeting: {
+    bn: "দোকানের হিসাব নিয়ে যা জানার আছে জিজ্ঞেস করো।",
+    en: "Ask me anything about your shop's numbers.",
+  },
+  stopLabel: { bn: "থামাও", en: "Stop" },
+  botFootnote: {
+    bn: "এটা AI — কাস্টমারের মেসেজ নয়।",
+    en: "This is AI — not a customer message.",
+  },
+  errSignedOut: { bn: "আগে লগইন করো।", en: "Please sign in first." },
+
   // Honesty
   aiCaveat: {
     bn: "AI ভুল করতে পারে — বড় সিদ্ধান্তের আগে নিজের হিসাব মিলিয়ে নিও।",

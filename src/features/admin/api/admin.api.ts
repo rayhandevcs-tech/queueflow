@@ -1,4 +1,7 @@
 import { getBrowserClient } from "@/lib/supabase/client";
+import { compressImage, IMAGE_PRESETS } from "@/lib/image-compress";
+import { translate } from "@/lib/i18n";
+import { adminDict } from "../lib/i18n";
 import type { Database } from "@/types/database.types";
 import type {
   AdminLevel,
@@ -6,11 +9,16 @@ import type {
   BusinessType,
   Profile,
   ReportStatus,
+  Hairstyle,
   Shop,
   ShopStatus,
   SupportStatus,
   UserRole,
 } from "@/types";
+
+const STYLE_BUCKET = "style-media";
+/** A transparent PNG of a haircut has no business being larger than this. */
+const MAX_STYLE_IMAGE_BYTES = 2 * 1024 * 1024;
 
 /** Row shape of the admin_list_shops() RPC (aggregates joined server-side). */
 export type AdminShopRow =
@@ -713,4 +721,73 @@ export async function listAuditFeed(action?: string | null): Promise<AdminAuditR
   });
   if (error) throw error;
   return (data as unknown as AdminAuditRow[] | null) ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Hairstyle catalogue
+// ---------------------------------------------------------------------------
+// The catalogue is platform-wide and admin-owned: one shop editing "Low Fade"
+// would change it for every customer in the country, and the advisor picks from
+// this list by slug, so a shop inventing its own entries would break the join.
+
+export type AdminHairstyle = Hairstyle;
+
+export async function listHairstyles(): Promise<AdminHairstyle[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("hairstyles")
+    .select("*")
+    .order("kind")
+    .order("sort_order");
+
+  if (error) throw error;
+  return data;
+}
+
+export type StyleImageKind = "reference" | "overlay";
+
+/**
+ * Upload one style image and return its public URL.
+ *
+ * Reference photos are compressed like any other tile. Overlays are NOT: they
+ * are transparent PNGs laid over a customer's face, and WebP re-encoding at a
+ * lossy quality puts halos around the alpha edges — exactly where the illusion
+ * lives. They are size-checked instead.
+ */
+export async function uploadStyleImage(
+  slug: string,
+  kind: StyleImageKind,
+  file: File,
+): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error(translate(adminDict, "styleImageTypeError"));
+  }
+
+  const image =
+    kind === "overlay" ? file : await compressImage(file, IMAGE_PRESETS.tile);
+
+  if (image.size > MAX_STYLE_IMAGE_BYTES) {
+    throw new Error(translate(adminDict, "styleImageTooLarge"));
+  }
+
+  const ext = image.name.split(".").pop()?.toLowerCase() ?? "png";
+  const path = `${slug}/${kind}-${Date.now()}.${ext}`;
+
+  const supabase = getBrowserClient();
+  const { error } = await supabase.storage
+    .from(STYLE_BUCKET)
+    .upload(path, image, { cacheControl: "3600", upsert: false });
+
+  if (error) throw error;
+
+  return supabase.storage.from(STYLE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+export async function updateHairstyle(
+  id: string,
+  patch: { reference_image_url?: string | null; overlay_image_url?: string | null; is_active?: boolean },
+): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase.from("hairstyles").update(patch).eq("id", id);
+  if (error) throw error;
 }

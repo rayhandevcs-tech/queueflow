@@ -9,7 +9,7 @@ import { Wordmark } from "@/components/ui/Wordmark";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useT } from "@/lib/i18n";
 import { CustomerBottomNav } from "./CustomerBottomNav";
-import { HelpChatWidget } from "@/features/customer-help/components/HelpChatWidget";
+import { CustomerHelpWidget } from "./CustomerHelpWidget";
 import { CustomerSidebarPanel } from "./CustomerSidebarPanel";
 import { GuestShell } from "./GuestShell";
 import { customerShellDict } from "./i18n";
@@ -83,7 +83,7 @@ export function CustomerShell({
 
       {/* Signed-in only: the assistant answers from the customer's own
           bookings and dues, which a guest does not have. */}
-      <HelpChatWidget />
+      <CustomerHelpWidget />
     </div>
   );
 }

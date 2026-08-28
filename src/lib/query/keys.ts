@@ -115,6 +115,7 @@ export const keys = {
     shopDetail: (shopId: string) => ["admin", "shop", shopId] as const,
     recentShops: (days: number) => ["admin", "recent-shops", days] as const,
     auditFeed: (action: string | null) => ["admin", "audit", action] as const,
+    hairstyles: () => ["admin", "hairstyles"] as const,
     users: (filters: {
       role: string | null;
       blocked: boolean | null;

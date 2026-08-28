@@ -1,27 +1,52 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, MessageCircleQuestion, Sparkles, Square, X } from "lucide-react";
+import { ArrowUp, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
-import { useHelpChat, type HelpErrorCode } from "../hooks/use-help-chat";
-import { customerHelpDict } from "../lib/i18n";
+import { useStreamingChat, type ChatErrorCode } from "@/hooks/use-streaming-chat";
+import { AssistantOrb } from "./AssistantOrb";
+
+export interface FloatingChatLabels {
+  name: string;
+  subtitle: string;
+  openLabel: string;
+  closeLabel: string;
+  greeting: string;
+  suggestions: string[];
+  placeholder: string;
+  sendLabel: string;
+  stopLabel: string;
+  /** The line that stops this being mistaken for a human thread. */
+  footnote: string;
+  errNotSignedIn: string;
+  errNoKey: string;
+  errGeneric: string;
+}
 
 /**
- * The floating help assistant.
+ * The floating assistant, shared by both apps.
  *
- * Two things about the placement are load-bearing rather than cosmetic. It sits
- * above the mobile bottom navigation — a bubble pinned to bottom-6 would cover
- * the Profile tab on every phone, which is how a helpful feature becomes a
- * daily annoyance. And it is styled deliberately unlike the shop's message
- * thread: this answers as software, and a customer who mistakes it for their
- * barber will be confused twice — once when it knows their queue position, and
- * again when it cannot pass on a message.
+ * Customer and shop get the same widget pointed at different endpoints — one
+ * component rather than two that drift apart the first time one of them is
+ * fixed. Everything specific to an app arrives as labels, so this file has no
+ * opinion about who is using it.
+ *
+ * Two placement details are load-bearing rather than cosmetic. It sits above
+ * the mobile bottom navigation: pinned to bottom-6 it would cover a nav tab on
+ * every phone, which is how a helpful feature becomes a daily annoyance. And it
+ * is styled unlike the app's human message threads, with a footnote saying so —
+ * someone who mistakes it for a person is confused twice, once when it knows
+ * their queue position and again when it cannot pass on a message.
  */
-export function HelpChatWidget() {
-  const t = useT(customerHelpDict);
+export function FloatingChatWidget({
+  endpoint,
+  labels,
+}: {
+  endpoint: string;
+  labels: FloatingChatLabels;
+}) {
   const [open, setOpen] = useState(false);
-  const { turns, streaming, error, send, stop } = useHelpChat();
+  const { turns, streaming, error, send, stop } = useStreamingChat(endpoint);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,7 +55,6 @@ export function HelpChatWidget() {
     if (open) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [turns, open]);
 
-  // Escape closes it, like every other dismissible surface in the app.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -46,12 +70,12 @@ export function HelpChatWidget() {
     inputRef.current?.focus();
   };
 
-  const suggestions = [
-    t("suggestion1"),
-    t("suggestion2"),
-    t("suggestion3"),
-    t("suggestion4"),
-  ];
+  const errorMessage =
+    error === "NOT_SIGNED_IN"
+      ? labels.errNotSignedIn
+      : error === "ANTHROPIC_KEY_MISSING"
+        ? labels.errNoKey
+        : labels.errGeneric;
 
   return (
     <>
@@ -59,18 +83,18 @@ export function HelpChatWidget() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label={t("openLabel")}
+          aria-label={labels.openLabel}
           // bottom-24 clears the mobile bottom bar; lg:bottom-6 takes the space
           // back on desktop, where that bar does not exist.
           className="fixed right-4 bottom-24 z-30 grid h-13 w-13 place-items-center rounded-full bg-accent text-accent-ink shadow-lg transition-transform active:scale-95 lg:right-6 lg:bottom-6"
         >
-          <MessageCircleQuestion className="h-6 w-6" />
+          <AssistantOrb size={24} state={streaming ? "thinking" : "idle"} />
         </button>
       )}
 
       {open && (
         <>
-          {/* Dimmed backdrop on phones only. On desktop the panel is small
+          {/* Dimmed backdrop on phones only — on desktop the panel is small
               enough to sit over the page without taking it hostage. */}
           <div
             className="fixed inset-0 z-30 bg-ink/40 backdrop-blur-[2px] lg:hidden"
@@ -80,21 +104,21 @@ export function HelpChatWidget() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={t("botName")}
+            aria-label={labels.name}
             className="fixed right-3 bottom-20 left-3 z-40 flex max-h-[70dvh] flex-col overflow-hidden rounded-3xl border border-line bg-card shadow-2xl sm:left-auto sm:w-96 lg:right-6 lg:bottom-6 lg:max-h-[34rem]"
           >
             <header className="flex shrink-0 items-center gap-2.5 border-b border-line bg-soft px-4 py-3">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-accent-ink">
-                <Sparkles className="h-4 w-4" />
+                <AssistantOrb size={17} state={streaming ? "thinking" : "idle"} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-bold text-ink">{t("botName")}</span>
-                <span className="block text-[10px] text-muted">{t("botSubtitle")}</span>
+                <span className="block text-[13px] font-bold text-ink">{labels.name}</span>
+                <span className="block text-[10px] text-muted">{labels.subtitle}</span>
               </span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label={t("closeLabel")}
+                aria-label={labels.closeLabel}
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-card hover:text-ink"
               >
                 <X className="h-4 w-4" />
@@ -103,12 +127,12 @@ export function HelpChatWidget() {
 
             <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-4 py-3.5">
               <div className="rounded-2xl bg-soft px-3.5 py-2.5 text-[13px] leading-relaxed text-ink">
-                {t("greeting")}
+                {labels.greeting}
               </div>
 
               {turns.length === 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {suggestions.map((s) => (
+                  {labels.suggestions.map((s) => (
                     <button
                       key={s}
                       type="button"
@@ -135,7 +159,11 @@ export function HelpChatWidget() {
                 </div>
               ))}
 
-              {error && <ErrorNote code={error} />}
+              {error && (
+                <p className="rounded-xl bg-live-soft px-3.5 py-2.5 text-[12px] text-live">
+                  {errorMessage}
+                </p>
+              )}
               <div ref={endRef} />
             </div>
 
@@ -151,7 +179,7 @@ export function HelpChatWidget() {
                   ref={inputRef}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder={t("placeholder")}
+                  placeholder={labels.placeholder}
                   maxLength={1000}
                   className="min-w-0 flex-1 rounded-xl border border-line bg-soft px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent"
                 />
@@ -159,7 +187,7 @@ export function HelpChatWidget() {
                   <button
                     type="button"
                     onClick={stop}
-                    aria-label={t("stopLabel")}
+                    aria-label={labels.stopLabel}
                     className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl border border-line bg-card text-muted transition-colors hover:text-ink"
                   >
                     <Square className="h-3.5 w-3.5" />
@@ -168,35 +196,19 @@ export function HelpChatWidget() {
                   <button
                     type="submit"
                     disabled={!draft.trim()}
-                    aria-label={t("sendLabel")}
+                    aria-label={labels.sendLabel}
                     className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink transition-opacity disabled:opacity-40"
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
                 )}
               </div>
-              <p className="mt-1.5 text-center text-[10px] text-muted">
-                {t("notTheShopNote")}
-              </p>
+              <p className="mt-1.5 text-center text-[10px] text-muted">{labels.footnote}</p>
             </form>
           </div>
         </>
       )}
     </>
-  );
-}
-
-function ErrorNote({ code }: { code: HelpErrorCode }) {
-  const t = useT(customerHelpDict);
-  const message =
-    code === "NOT_SIGNED_IN"
-      ? t("errSignedOut")
-      : code === "ANTHROPIC_KEY_MISSING"
-        ? t("errNoKey")
-        : t("errGeneric");
-
-  return (
-    <p className="rounded-xl bg-live-soft px-3.5 py-2.5 text-[12px] text-live">{message}</p>
   );
 }
 
@@ -213,3 +225,5 @@ function TypingDots() {
     </span>
   );
 }
+
+export type { ChatErrorCode };
