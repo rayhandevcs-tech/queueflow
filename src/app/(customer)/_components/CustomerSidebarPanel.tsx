@@ -13,7 +13,7 @@ import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useLanguage, useT } from "@/lib/i18n";
 import { supportDict } from "@/features/support/lib/i18n";
-import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
+import { CUSTOMER_NAV_ITEMS, CUSTOMER_SIDEBAR_EXTRA_ITEMS } from "./customer-nav-items";
 import { customerShellDict } from "./i18n";
 
 /**
@@ -71,7 +71,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
       </div>
 
       <nav className="flex flex-col gap-0.75">
-        {CUSTOMER_NAV_ITEMS.map((item) => {
+        {[...CUSTOMER_NAV_ITEMS, ...CUSTOMER_SIDEBAR_EXTRA_ITEMS].map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
