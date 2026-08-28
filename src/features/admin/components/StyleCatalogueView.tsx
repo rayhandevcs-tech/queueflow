@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageOff, Upload } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -119,7 +118,10 @@ function StyleRow({ style }: { style: AdminHairstyle }) {
         {language === "bn" ? style.description_bn : style.description_en}
       </p>
 
-      <div className="mt-3 grid grid-cols-2 gap-2.5">
+      {/* Capped rather than full-width: these are thumbnails to check at a
+          glance, and a half-column square on a desktop admin page is the size
+          of a poster. */}
+      <div className="mt-3 grid max-w-xs grid-cols-2 gap-2.5">
         <ImageSlot
           label={t("styleReferenceLabel")}
           url={style.reference_image_url}
@@ -173,7 +175,12 @@ function ImageSlot({
         )}
       >
         {url ? (
-          <Image src={url} alt="" fill sizes="200px" className="object-contain" />
+          // A plain img, like every other Supabase-hosted image in this app.
+          // next/image would need the storage hostname allowlisted in
+          // next.config, and would bill per optimised image for assets that are
+          // already small and already on a CDN.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="h-full w-full object-contain" />
         ) : (
           <span className="flex flex-col items-center gap-1 text-muted">
             <ImageOff className="h-5 w-5" />

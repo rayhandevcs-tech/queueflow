@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import Image from "next/image";
 import { RotateCcw } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { customerStyleDict } from "../lib/i18n";
@@ -115,12 +114,10 @@ export function TryOnCanvas({
         <img src={photoUrl} alt="" className="h-full w-full object-cover" draggable={false} />
 
         {overlayUrl ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={overlayUrl}
             alt={styleName}
-            width={512}
-            height={512}
-            unoptimized
             draggable={false}
             className="pointer-events-none absolute origin-center"
             style={{

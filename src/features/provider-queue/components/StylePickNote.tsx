@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import Image from "next/image";
 import { Scissors } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
@@ -51,11 +50,10 @@ export function StylePickNote({
       )}
     >
       {pick.referenceImageUrl ? (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           src={pick.referenceImageUrl}
           alt=""
-          width={28}
-          height={28}
           className="h-7 w-7 shrink-0 rounded-md object-cover"
         />
       ) : (

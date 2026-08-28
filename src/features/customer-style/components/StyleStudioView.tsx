@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { AlertTriangle, Camera, Check, ImageOff, Scissors, Sparkles } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -328,11 +327,10 @@ function AdviceSection({
 
 function StyleThumb({ style, size }: { style: Hairstyle; size: number }) {
   return style.reference_image_url ? (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={style.reference_image_url}
       alt=""
-      width={size}
-      height={size}
       className="shrink-0 rounded-lg object-cover"
       style={{ width: size, height: size }}
     />
@@ -369,12 +367,11 @@ function StyleCard({
       >
         <span className="relative block aspect-square w-full bg-soft">
           {style.reference_image_url ? (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={style.reference_image_url}
               alt=""
-              fill
-              sizes="(max-width: 640px) 50vw, 33vw"
-              className="object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
             <span className="grid h-full w-full place-items-center text-muted">
@@ -441,11 +438,10 @@ function TryOnSheet({
           styleName={language === "bn" ? style.name_bn : style.name_en}
         />
       ) : style.reference_image_url ? (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           src={style.reference_image_url}
           alt=""
-          width={512}
-          height={512}
           className="w-full rounded-2xl object-cover"
         />
       ) : null}
