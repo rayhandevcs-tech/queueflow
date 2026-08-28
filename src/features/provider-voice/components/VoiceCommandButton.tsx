@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { AlertTriangle, Check, Mic, Square } from "lucide-react";
+import { AlertTriangle, Check, Mic } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -126,8 +126,11 @@ export function VoiceCommandButton({ shopId }: { shopId: string | undefined }) {
 
               {dictation.error && <DictationError code={dictation.error} />}
 
-              <Button variant="outline" className="w-full" onClick={() => dictation.stop()}>
-                <Square className="mr-1.5 h-3.5 w-3.5" />
+              {/* Primary, not outline: this is the one thing to do here once
+                  you have said your sentence, and an outline button next to a
+                  live microphone reads as "cancel". */}
+              <Button className="w-full" onClick={() => dictation.stop()}>
+                <Check className="mr-1.5 h-4 w-4" />
                 {t("stopCta")}
               </Button>
             </div>

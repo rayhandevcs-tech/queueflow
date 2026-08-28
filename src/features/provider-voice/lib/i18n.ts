@@ -7,7 +7,7 @@ export const providerVoiceDict = {
     bn: "বলো — যেমন “অফলাইনে সালামের হেয়ার কাটিং যোগ করো”",
     en: "Say something like “add a walk-in for Salam, hair cutting”",
   },
-  stopCta: { bn: "থামাও", en: "Stop" },
+  stopCta: { bn: "বলা শেষ", en: "Done speaking" },
   thinking: { bn: "বুঝছি…", en: "Working it out…" },
 
   confirmTitle: { bn: "এটাই বললে তো?", en: "Is this right?" },
