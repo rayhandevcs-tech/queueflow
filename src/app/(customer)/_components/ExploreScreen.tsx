@@ -112,6 +112,12 @@ export function ExploreScreen() {
       list = list.filter((shop) => (distanceKm[shop.id] ?? Infinity) <= filters.maxDistanceKm!);
     }
 
+    // `?? false` covers the window where the deploy is ahead of the migration:
+    // an unknown flag reads as "not women-only" rather than hiding every shop.
+    if (filters.womenOnly) {
+      list = list.filter((shop) => (shop.women_only ?? false) === true);
+    }
+
     return list;
   }, [
     sortedShops,

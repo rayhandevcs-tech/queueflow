@@ -12,6 +12,11 @@ import { getStoredLanguage, type Language } from "@/lib/i18n";
  * This is the single place that mapping lives. It is deliberately small — only
  * the nouns that genuinely differ — because a general "translate everything by
  * business type" layer would be a second i18n system on top of the real one.
+ *
+ * Keyed by business type rather than by booking model (`bookingModel()`), and
+ * that distinction is deliberate: what a shop calls its furniture belongs to
+ * the trade, not to how it takes work in. A car wash would run the queue and
+ * still call them bays.
  */
 export type TermKey =
   | "chair"
@@ -19,7 +24,8 @@ export type TermKey =
   | "staff"
   | "staffMember"
   | "venue"
-  | "queueBoard";
+  /** The provider's main operational screen — nav label and page heading. */
+  | "board";
 
 type TermSet = Record<TermKey, { bn: string; en: string }>;
 
@@ -29,7 +35,7 @@ const SALON: TermSet = {
   staff: { bn: "স্টাফ", en: "Staff" },
   staffMember: { bn: "স্টাফ", en: "staff member" },
   venue: { bn: "সেলুন", en: "salon" },
-  queueBoard: { bn: "লাইভ সিরিয়াল", en: "Live queue" },
+  board: { bn: "লাইভ সিরিয়াল", en: "Live queue" },
 };
 
 const PARLOUR: TermSet = {
@@ -38,7 +44,9 @@ const PARLOUR: TermSet = {
   staff: { bn: "বিউটিশিয়ান", en: "Beauticians" },
   staffMember: { bn: "বিউটিশিয়ান", en: "beautician" },
   venue: { bn: "পার্লার", en: "parlour" },
-  queueBoard: { bn: "লাইভ সিরিয়াল", en: "Live queue" },
+  // Not "লাইভ সিরিয়াল": a parlour has no line, so naming its home screen after
+  // one would be the first thing to mislead a new owner.
+  board: { bn: "অ্যাপয়েন্টমেন্ট", en: "Appointments" },
 };
 
 /** UNISEX shops read as salons — that's the flow they actually run today. */

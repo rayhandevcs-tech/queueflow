@@ -4,6 +4,8 @@ export const customerExploreDict = {
   // FilterSheet
   filterTitle: { bn: "ফিল্টার", en: "Filter" },
   ratingLabel: { bn: "রেটিং", en: "Rating" },
+  womenOnlyFilter: { bn: "শুধু মহিলাদের জন্য", en: "Women only" },
+  womenOnlyBadge: { bn: "মহিলাদের", en: "Women only" },
   all: { bn: "সব", en: "All" },
   distanceLabel: { bn: "দূরত্ব", en: "Distance" },
   withinKm: {

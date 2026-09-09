@@ -76,6 +76,8 @@ export type Database = {
           about: string | null;
           weekly_hours: Json | null;
           accepted_payment_methods: string[];
+          /** Serves women only. Independent of business_type — see 20260916. */
+          women_only: boolean;
           /** Verification lifecycle — admin-controlled (see 20260824_admin_panel.sql). */
           status: Database["public"]["Enums"]["shop_status"];
           verified_at: string | null;
@@ -104,6 +106,7 @@ export type Database = {
           about?: string | null;
           weekly_hours?: Json | null;
           accepted_payment_methods?: string[];
+          women_only?: boolean;
         };
         // status / verified_* / status_reason / is_featured are intentionally
         // absent here and in Insert: the shops_lock_status trigger rejects any
@@ -121,6 +124,7 @@ export type Database = {
           about?: string | null;
           weekly_hours?: Json | null;
           accepted_payment_methods?: string[];
+          women_only?: boolean;
           accepting_new?: boolean;
           // break_until / break_reason go through set_shop_break() so every
           // chair's ETA is recomputed in the same call.

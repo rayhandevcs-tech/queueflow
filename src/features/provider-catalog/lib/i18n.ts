@@ -37,6 +37,13 @@ export const providerCatalogDict = {
   shopCreate: { bn: "দোকান তৈরি করো", en: "Create shop" },
   saveFailed: { bn: "সংরক্ষণ করা যায়নি — আবার চেষ্টা করো।", en: "Couldn't save — try again." },
 
+  // WomenOnlyToggle
+  womenOnlyLabel: { bn: "শুধু মহিলাদের জন্য", en: "Women only" },
+  womenOnlyHint: {
+    bn: "চালু করলে কাস্টমার খোঁজার সময় ছেঁকে নিতে পারবে, আর তোমার দোকানের কার্ডে লেখা থাকবে।",
+    en: "Customers can filter for it, and it shows on your shop card.",
+  },
+
   // ChairForm (was hardcoded English; adding bn counterpart)
   chairLabelPlaceholder: { bn: "লেবেল (চেয়ার ১)", en: "Label (Chair 1)" },
   staffNamePlaceholder: { bn: "স্টাফের নাম (রহিম)", en: "Staff name (Rahim)" },

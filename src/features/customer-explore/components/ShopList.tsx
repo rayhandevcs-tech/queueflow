@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3, MapPin, Navigation, Star, Store, Users } from "lucide-react";
+import { Clock3, MapPin, Navigation, ShieldCheck, Star, Store, Users } from "lucide-react";
 import type { Shop } from "@/types";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -105,6 +105,12 @@ export function ShopList({
                     <span className="shrink-0 font-semibold text-accent">
                       {businessTypeT(shop.business_type)}
                     </span>
+                    {shop.women_only && (
+                      <span className="flex shrink-0 items-center gap-0.5 font-semibold text-accent">
+                        <ShieldCheck className="h-2.5 w-2.5" />
+                        {t("womenOnlyBadge")}
+                      </span>
+                    )}
                     {rating && rating.review_count > 0 && (
                       <>
                         <span aria-hidden>·</span>

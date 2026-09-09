@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Check, ShieldCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -16,15 +16,22 @@ import { customerExploreDict } from "../lib/i18n";
 export interface ShopFilters {
   minRating: number;
   maxDistanceKm: number | null;
+  /**
+   * Women-only shops. Not the same axis as business type at all: this is about
+   * who may walk in, which is the one thing a customer has to know before
+   * setting out, and a salon can be women-only too.
+   */
+  womenOnly: boolean;
 }
 
 export const DEFAULT_FILTERS: ShopFilters = {
   minRating: 0,
   maxDistanceKm: null,
+  womenOnly: false,
 };
 
 export function hasActiveFilters(filters: ShopFilters): boolean {
-  return filters.minRating > 0 || filters.maxDistanceKm != null;
+  return filters.minRating > 0 || filters.maxDistanceKm != null || filters.womenOnly;
 }
 
 const RATING_OPTIONS = [0, 3, 4, 4.5];
@@ -114,6 +121,29 @@ export function FilterSheet({
           />
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={() => setDraft((d) => ({ ...d, womenOnly: !d.womenOnly }))}
+        aria-pressed={draft.womenOnly}
+        className={cn(
+          "flex min-h-11 w-full items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 text-left transition-colors",
+          draft.womenOnly ? "border-accent bg-accent/8" : "border-line bg-soft",
+        )}
+      >
+        <ShieldCheck
+          className={cn("h-4.5 w-4.5 shrink-0", draft.womenOnly ? "text-accent" : "text-muted")}
+        />
+        <span className="flex-1 text-sm font-semibold text-ink">{t("womenOnlyFilter")}</span>
+        <span
+          className={cn(
+            "grid h-5 w-5 shrink-0 place-items-center rounded-full border",
+            draft.womenOnly ? "border-accent bg-accent text-accent-ink" : "border-line bg-card",
+          )}
+        >
+          {draft.womenOnly && <Check className="h-3 w-3" />}
+        </span>
+      </button>
 
       <div className="flex gap-2">
         <Button variant="outline" className="flex-1" onClick={() => setDraft(DEFAULT_FILTERS)}>

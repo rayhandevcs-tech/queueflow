@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Armchair,
   BarChart3,
+  CalendarClock,
   LifeBuoy,
   LogOut,
   Megaphone,
@@ -36,6 +37,7 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { Switch } from "@/components/ui/Switch";
 import { useT, useLanguage } from "@/lib/i18n";
 import { useTerms } from "@/lib/business-terms";
+import { isAppointmentModel } from "@/lib/business-model";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { supportDict } from "@/features/support/lib/i18n";
 
@@ -62,8 +64,17 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const tt = useTerms(shop?.business_type, language);
   const supportT = useT(supportDict);
 
+  // A parlour's home screen is its appointments, not a live line — so the nav
+  // neither names one nor counts one. The live badge would sit at 0 forever.
+  const appointmentModel = isAppointmentModel(shop?.business_type);
+
   const NAV: NavItem[] = [
-    { href: "/dashboard", label: t("navLiveQueue"), icon: Radio, live: true },
+    {
+      href: "/dashboard",
+      label: tt("board"),
+      icon: appointmentModel ? CalendarClock : Radio,
+      live: !appointmentModel,
+    },
     // Salon says "চেয়ার", parlour says "সিট" — decided once, at registration.
     { href: "/chairs", label: tt("chair"), icon: Armchair },
     { href: "/services", label: t("navServices"), icon: Scissors },

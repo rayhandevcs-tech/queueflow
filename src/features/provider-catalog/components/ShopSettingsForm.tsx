@@ -17,6 +17,7 @@ import { AcceptedPaymentsSection } from "./AcceptedPaymentsSection";
 import { GalleryManager } from "./GalleryManager";
 import { ImageUploadField } from "./ImageUploadField";
 import { LocationPickerField } from "./LocationPickerField";
+import { WomenOnlyToggle } from "./WomenOnlyToggle";
 
 export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
   const { create, update } = useShopMutations();
@@ -136,6 +137,8 @@ export function ShopSettingsForm({ shop }: { shop: Shop | null }) {
           <GalleryManager shopId={shop.id} />
         </div>
       )}
+
+      {isEdit && <WomenOnlyToggle shop={shop} />}
 
       {isEdit && <AboutHoursForm shop={shop} />}
 

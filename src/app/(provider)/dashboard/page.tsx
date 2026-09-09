@@ -6,10 +6,12 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { keys } from "@/lib/query/keys";
 import { ACTIVE_STATUSES } from "@/config/constants";
 import { QueueBoard } from "@/features/provider-queue/components/QueueBoard";
+import { ParlourDashboard } from "@/features/provider-appointments/components/ParlourDashboard";
 import { ShopBreakControl } from "@/features/provider-catalog/components/ShopBreakControl";
 import { VoiceCommandButton } from "@/features/provider-voice/components/VoiceCommandButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { translate } from "@/lib/i18n";
+import { isAppointmentModel } from "@/lib/business-model";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 export default async function DashboardPage() {
@@ -94,16 +96,28 @@ export default async function DashboardPage() {
     }),
   ]);
 
+  // The break control lives in provider-catalog and the board in
+  // provider-queue; features can't import each other, so the page is where
+  // they are composed.
+  const board = (
+    <QueueBoard
+      shopId={shop.id}
+      breakSlot={<ShopBreakControl shop={shop} />}
+      voiceSlot={<VoiceCommandButton shopId={shop.id} />}
+    />
+  );
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      {/* The break control lives in provider-catalog and the board in
-          provider-queue; features can't import each other, so the page is
-          where the two are composed. */}
-      <QueueBoard
-        shopId={shop.id}
-        breakSlot={<ShopBreakControl shop={shop} />}
-        voiceSlot={<VoiceCommandButton shopId={shop.id} />}
-      />
+      {/* The fork between the two products (decision 27). A parlour books time
+          slots, so the queue board is not its home — but it is still the board
+          that parlour is running today, so it stays reachable inside the
+          parlour dashboard rather than being taken away. */}
+      {isAppointmentModel(shop.business_type) ? (
+        <ParlourDashboard shopId={shop.id} queueSlot={board} />
+      ) : (
+        board
+      )}
     </HydrationBoundary>
   );
 }
