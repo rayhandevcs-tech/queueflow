@@ -42,23 +42,29 @@ export default async function DashboardPage() {
   }
 
   const queryClient = getQueryClient();
+  const appointment = isAppointmentModel(shop.business_type);
 
   await Promise.all([
-    // 1) Active serials — the board itself
-    queryClient.prefetchQuery({
-      queryKey: keys.serials.byShop(shop.id),
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from("serials")
-          .select("*")
-          .eq("shop_id", shop.id)
-          .in("status", [...ACTIVE_STATUSES])
-          .order("chair_id")
-          .order("position");
-        if (error) throw error;
-        return data;
-      },
-    }),
+    // 1) Active serials — the board itself. A parlour renders no board, so this
+    //    is skipped rather than filling a cache nothing reads.
+    ...(appointment
+      ? []
+      : [
+          queryClient.prefetchQuery({
+            queryKey: keys.serials.byShop(shop.id),
+            queryFn: async () => {
+              const { data, error } = await supabase
+                .from("serials")
+                .select("*")
+                .eq("shop_id", shop.id)
+                .in("status", [...ACTIVE_STATUSES])
+                .order("chair_id")
+                .order("position");
+              if (error) throw error;
+              return data;
+            },
+          }),
+        ]),
 
     // 2) Chairs — lane definitions
     queryClient.prefetchQuery({
@@ -96,27 +102,23 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  // The break control lives in provider-catalog and the board in
-  // provider-queue; features can't import each other, so the page is where
-  // they are composed.
-  const board = (
-    <QueueBoard
-      shopId={shop.id}
-      breakSlot={<ShopBreakControl shop={shop} />}
-      voiceSlot={<VoiceCommandButton shopId={shop.id} />}
-    />
-  );
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      {/* The fork between the two products (decision 27). A parlour books time
-          slots, so the queue board is not its home — but it is still the board
-          that parlour is running today, so it stays reachable inside the
-          parlour dashboard rather than being taken away. */}
-      {isAppointmentModel(shop.business_type) ? (
-        <ParlourDashboard shopId={shop.id} queueSlot={board} />
+      {/* The fork between the two products (decisions 27 and 37). A parlour
+          books time slots, so the queue board is not its home and is not
+          reachable from it — the appointment screen is the whole dashboard.
+
+          The break control lives in provider-catalog and the board in
+          provider-queue; features can't import each other, so the page is
+          where they are composed. */}
+      {appointment ? (
+        <ParlourDashboard shopId={shop.id} />
       ) : (
-        board
+        <QueueBoard
+          shopId={shop.id}
+          breakSlot={<ShopBreakControl shop={shop} />}
+          voiceSlot={<VoiceCommandButton shopId={shop.id} />}
+        />
       )}
     </HydrationBoundary>
   );

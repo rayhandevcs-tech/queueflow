@@ -1,10 +1,6 @@
 import type { Dict } from "@/lib/i18n";
 
 export const providerAppointmentsDict = {
-  // ---- Tabs ----
-  tabToday: { bn: "আজকের দিন", en: "Today" },
-  tabLiveQueue: { bn: "লাইভ সিরিয়াল", en: "Live queue" },
-
   // ---- Today ----
   greeting: { bn: "আজকের হিসাব", en: "Today at a glance" },
   todayDate: {
@@ -39,14 +35,6 @@ export const providerAppointmentsDict = {
     bn: "কাস্টমারকে আগের দিন মনে করিয়ে দেওয়া",
     en: "A reminder to the customer the day before",
   },
-
-  // ---- Queue still available ----
-  queueStillOnTitle: { bn: "ততদিন লাইভ সিরিয়াল চালু থাকছে", en: "The live queue stays on until then" },
-  queueStillOnBody: {
-    bn: "তোমার দোকান আগে যেভাবে লাইভ সিরিয়ালে চলছিল, সেভাবেই চলবে — উপরের “লাইভ সিরিয়াল” ট্যাবে সব আছে। অ্যাপয়েন্টমেন্ট চালু হলে তুমি বেছে নিতে পারবে।",
-    en: "Your shop keeps running exactly as it did — everything is in the “Live queue” tab above. When appointments land, you'll get to choose.",
-  },
-  openQueueCta: { bn: "লাইভ সিরিয়াল খোলো", en: "Open the live queue" },
 
   // ---- Quick actions ----
   setUpTitle: { bn: "এখনই যা গুছিয়ে রাখতে পারো", en: "What you can set up now" },
