@@ -147,6 +147,26 @@ const MESSAGES = {
     bn: "এই স্টাফ বাছাই করা সব সার্ভিস করে না — অন্য কাউকে বেছে নাও।",
     en: "That staff member doesn't do all the selected services — pick someone else.",
   },
+  staffOnLeave: {
+    bn: "এই বিউটিশিয়ান ওই সময়ে ছুটিতে — অন্য সময় বা অন্য কাউকে বেছে নাও।",
+    en: "That beautician is on leave then — pick another time or another person.",
+  },
+  staffNotWorking: {
+    bn: "এই বিউটিশিয়ান ওই দিনে কাজ করেন না।",
+    en: "That beautician doesn't work that day.",
+  },
+  staffInactive: {
+    bn: "এই সিটটা এখন বন্ধ আছে।",
+    en: "That seat is paused right now.",
+  },
+  notReschedulable: {
+    bn: "শেষ বা বাতিল হয়ে যাওয়া অ্যাপয়েন্টমেন্ট সরানো যায় না।",
+    en: "A finished or cancelled appointment can't be moved.",
+  },
+  appointmentNotFound: {
+    bn: "অ্যাপয়েন্টমেন্টটা পাওয়া যায়নি।",
+    en: "That appointment couldn't be found.",
+  },
   shopNotActive: {
     bn: "এই দোকান এখন অ্যাপয়েন্টমেন্ট নিচ্ছে না।",
     en: "This shop isn't taking appointments right now.",
@@ -213,6 +233,12 @@ const RULES: ReadonlyArray<{
   { match: (t) => t.includes("shop_closed_that_day"), key: "shopClosedThatDay", silent: false },
   { match: (t) => t.includes("staff does not belong"), key: "staffNotInShop", silent: false },
   { match: (t) => t.includes("selected staff cannot perform"), key: "staffCannotPerform", silent: false },
+  // Sprint 5 — keep in sync with 20260919_appointment_availability.sql.
+  { match: (t) => t.includes("staff_on_leave"), key: "staffOnLeave", silent: false },
+  { match: (t) => t.includes("staff_not_working_that_day"), key: "staffNotWorking", silent: false },
+  { match: (t) => t.includes("staff_inactive"), key: "staffInactive", silent: false },
+  { match: (t) => t.includes("appointment_not_reschedulable"), key: "notReschedulable", silent: false },
+  { match: (t) => t.includes("appointment_not_found"), key: "appointmentNotFound", silent: false },
   { match: (t) => t.includes("shop is not active"), key: "shopNotActive", silent: false },
   {
     // Same reasoning as the queue's: realtime/refetch has already corrected

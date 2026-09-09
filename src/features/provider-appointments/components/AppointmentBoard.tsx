@@ -27,6 +27,7 @@ import {
 import { providerAppointmentsDict } from "../lib/i18n";
 import { AppointmentBlock } from "./AppointmentBlock";
 import { AppointmentDetailSheet } from "./AppointmentDetailSheet";
+import { RescheduleSheet } from "./RescheduleSheet";
 
 /** Height of one 30-minute row. Big enough to tap a block on a phone. */
 const SLOT_PX = 44;
@@ -65,7 +66,9 @@ export function AppointmentBoard({
   const { data: appointments, isPending, isError } = useTodayAppointments(shop.id, day);
   const setStatus = useAppointmentStatus(shop.id, day);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
   const openAppointment = appointments?.find((a) => a.id === openId) ?? null;
+  const moving = appointments?.find((a) => a.id === movingId) ?? null;
 
   // null until mounted — see `useNow`. The "now" line appears after the first
   // client commit rather than being rendered on the server at a stale minute.
@@ -277,7 +280,21 @@ export function AppointmentBoard({
             { onSuccess: () => setOpenId(null) },
           );
         }}
+        onReschedule={() => {
+          setMovingId(openId);
+          setOpenId(null);
+        }}
       />
+
+      {moving && (
+        <RescheduleSheet
+          shopId={shop.id}
+          appointment={moving}
+          serviceIds={moving.serviceIds}
+          onClose={() => setMovingId(null)}
+          onMoved={() => setMovingId(null)}
+        />
+      )}
     </>
   );
 }

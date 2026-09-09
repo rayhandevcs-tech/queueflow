@@ -60,6 +60,52 @@ export const providerAppointmentsDict = {
   },
   noCustomerName: { bn: "নাম দেওয়া হয়নি", en: "No name given" },
 
+  // ---- Staff availability (Sprint 5) ----
+  availabilityHeading: { bn: "কে কখন কাজ করে", en: "Who works when" },
+  availabilityDesc: {
+    bn: "দোকানের খোলার সময়ের ভেতরে প্রত্যেকের নিজের সময়। যে দিনের সময় দেওয়া নেই, সেদিন ওই বিউটিশিয়ানের কোনো স্লট দেখানো হবে না।",
+    en: "Each person's own hours, inside the shop's. A day with no hours set means no slots are offered for them that day.",
+  },
+  availabilitySetDay: { bn: "এই দিনে কাজ করে", en: "Works this day" },
+  availabilityDayOff: { bn: "ছুটির দিন", en: "Day off" },
+  availabilityShopShut: { bn: "দোকান বন্ধ", en: "Shop shut" },
+  availabilityClipped: { bn: "দোকানের সময়ে ছাঁটা", en: "Trimmed to shop hours" },
+
+  leaveHeading: { bn: "ছুটি", en: "Time off" },
+  leaveAdd: { bn: "ছুটি যোগ করো", en: "Add time off" },
+  leaveNone: { bn: "সামনে কোনো ছুটি নেই।", en: "No time off coming up." },
+  leaveWholeDay: { bn: "পুরো দিন", en: "Whole day" },
+  leavePartDay: { bn: "দিনের একটা অংশ", en: "Part of the day" },
+  leaveReasonPlaceholder: { bn: "কারণ (ঐচ্ছিক)", en: "Reason (optional)" },
+  leaveSave: { bn: "রাখো", en: "Save" },
+  leaveCancel: { bn: "বাতিল", en: "Cancel" },
+  leaveRemove: { bn: "ছুটি মুছো", en: "Remove time off" },
+  leaveFullDay: {
+    bn: (date: string) => `${date} — পুরো দিন`,
+    en: (date: string) => `${date} — all day`,
+  },
+  leaveRange: {
+    bn: (date: string, from: string, to: string) => `${date} — ${from} থেকে ${to}`,
+    en: (date: string, from: string, to: string) => `${date} — ${from} to ${to}`,
+  },
+
+  // ---- Reschedule ----
+  rescheduleCta: { bn: "সময় বদলাও", en: "Reschedule" },
+  rescheduleTitle: { bn: "নতুন সময় বেছে নাও", en: "Pick a new time" },
+  rescheduleNone: {
+    bn: "এই দিনে আর কোনো সময় খালি নেই — অন্য দিন দেখো।",
+    en: "No free times left that day — try another.",
+  },
+  rescheduleConfirm: {
+    bn: (time: string) => `${time}-এ সরাও`,
+    en: (time: string) => `Move to ${time}`,
+  },
+  rescheduleDone: { bn: "অ্যাপয়েন্টমেন্ট সরানো হয়েছে।", en: "Appointment moved." },
+  rescheduleHistory: {
+    bn: (n: string) => `${n} বার সরানো হয়েছে`,
+    en: (n: string) => `Moved ${n} time(s)`,
+  },
+
   nowLabel: { bn: "এখন", en: "Now" },
   runsPastClose: { bn: "বন্ধের সময় পেরিয়ে যাচ্ছে", en: "Runs past closing" },
   startsBeforeOpen: { bn: "খোলার আগে শুরু", en: "Starts before opening" },
@@ -83,16 +129,16 @@ export const providerAppointmentsDict = {
     en: "Slot length comes from the service's duration — change one and the other follows",
   },
   liveHoursRule: {
-    bn: "দোকানের সাপ্তাহিক খোলা-বন্ধের সময়ের বাইরে কেউ বুক করতে পারবে না",
-    en: "Nobody can book outside your weekly opening hours",
+    bn: "দোকানের সময়, প্রত্যেকের নিজের কর্মঘণ্টা আর ছুটি — তিনটেই স্লট ঠিক করে",
+    en: "Shop hours, each person's own hours and their time off all shape the slots",
   },
   liveStatusRule: {
     bn: "বোর্ডে অ্যাপয়েন্টমেন্টে চাপ দিয়ে নিশ্চিত, শুরু, শেষ বা বাতিল করো",
     en: "Tap an appointment on the board to confirm, start, finish or cancel it",
   },
   liveComingReminder: {
-    bn: "কাস্টমারকে আগের দিন মনে করিয়ে দেওয়া — পরের ধাপে আসছে",
-    en: "Reminding the customer the day before — coming next",
+    bn: "কাস্টমার আগের রাতে নিজে থেকেই মনে করিয়ে দেওয়ার নোটিফিকেশন পাবে",
+    en: "Customers get a reminder notification the night before, on their own",
   },
 
   // ---- Quick actions ----

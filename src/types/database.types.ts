@@ -164,6 +164,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      /** Per-beautician weekly schedule — see 20260919. */
+      staff_working_hours: {
+        Row: {
+          chair_id: string;
+          /** isodow: 1 = Monday .. 7 = Sunday. */
+          weekday: number;
+          start_time: string;
+          end_time: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          chair_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+        };
+        Update: { start_time?: string; end_time?: string };
+        Relationships: [];
+      };
+      /** A period one beautician is unavailable — see 20260919. */
+      staff_time_off: {
+        Row: {
+          id: string;
+          chair_id: string;
+          starts_at: string;
+          ends_at: string;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          chair_id: string;
+          starts_at: string;
+          ends_at: string;
+          reason?: string | null;
+        };
+        Update: { starts_at?: string; ends_at?: string; reason?: string | null };
+        Relationships: [];
+      };
+      /** Written only by the appointments AFTER UPDATE trigger — read-only. */
+      appointment_reschedules: {
+        Row: {
+          id: string;
+          appointment_id: string;
+          from_starts_at: string;
+          from_ends_at: string;
+          from_staff_id: string;
+          to_starts_at: string;
+          to_ends_at: string;
+          to_staff_id: string;
+          moved_by: string | null;
+          moved_at: string;
+          reason: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       /** Beauty parlour bookings — see 20260918_appointment_core.sql. */
       appointments: {
         Row: {
@@ -864,6 +923,23 @@ export type Database = {
           slot_start: string;
           slot_end: string;
         }[];
+      };
+      reschedule_appointment: {
+        Args: {
+          p_appointment_id: string;
+          p_starts_at: string;
+          p_staff_id?: string | null;
+          p_reason?: string | null;
+        };
+        Returns: string;
+      };
+      staff_is_available: {
+        Args: { p_chair_id: string; p_starts_at: string; p_ends_at: string };
+        Returns: string;
+      };
+      send_appointment_reminders: {
+        Args: { p_within_hours?: number };
+        Returns: number;
       };
       book_appointment: {
         Args: {

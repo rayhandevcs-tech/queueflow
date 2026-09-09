@@ -42,4 +42,6 @@ export interface AppointmentCard {
   status: AppointmentStatus;
   /** Frozen at booking time (decision 42) — never re-read from `services`. */
   totalAmount: number;
+  /** Needed to ask for slots of the same length when rescheduling. */
+  serviceIds: string[];
 }

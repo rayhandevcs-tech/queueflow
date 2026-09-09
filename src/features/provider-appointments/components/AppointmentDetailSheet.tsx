@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Coins, Scissors } from "lucide-react";
+import { CalendarClock, CalendarSync, Coins, Scissors } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { AvatarChip } from "@/components/ui/AvatarChip";
@@ -25,11 +25,13 @@ export function AppointmentDetailSheet({
   busy,
   onClose,
   onSetStatus,
+  onReschedule,
 }: {
   appointment: AppointmentCard | null;
   busy: boolean;
   onClose: () => void;
   onSetStatus: (status: AppointmentStatus) => void;
+  onReschedule: () => void;
 }) {
   const t = useT(providerAppointmentsDict);
   if (!appointment) return null;
@@ -88,6 +90,15 @@ export function AppointmentDetailSheet({
             {canTransition(appointment.status, "NO_SHOW") && (
               <Button variant="outline" onClick={() => onSetStatus("NO_SHOW")} disabled={busy}>
                 {t(STATUS_LABEL_KEY.NO_SHOW)}
+              </Button>
+            )}
+            {/* Only while it is still ahead of the shop — `reschedule_appointment`
+                refuses anything past BOOKED/CONFIRMED, so offering it later
+                would be a button that always fails. */}
+            {(appointment.status === "BOOKED" || appointment.status === "CONFIRMED") && (
+              <Button variant="soft" onClick={onReschedule} disabled={busy}>
+                <CalendarSync className="h-4 w-4" />
+                {t("rescheduleCta")}
               </Button>
             )}
             {canTransition(appointment.status, "CANCELLED") && (

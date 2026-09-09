@@ -49,6 +49,12 @@ export const keys = {
     slots: (shopId: string, day: string, serviceIds: string[], staffId: string | null) =>
       ["appointments", "slots", shopId, day, serviceIds.slice().sort(), staffId] as const,
   },
+  staffAvailability: {
+    hours: (chairIds: string[]) =>
+      ["staff-availability", "hours", chairIds.slice().sort()] as const,
+    timeOff: (chairIds: string[]) =>
+      ["staff-availability", "time-off", chairIds.slice().sort()] as const,
+  },
   dueLedger: {
     byShop: (shopId: string) => ["due-ledger", "shop", shopId] as const,
     countByShop: (shopId: string) => ["due-ledger", "count", "shop", shopId] as const,

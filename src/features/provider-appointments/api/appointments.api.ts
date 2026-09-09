@@ -47,6 +47,7 @@ export function toCard(row: Appointment): AppointmentCard {
     endsAt: row.ends_at,
     status: row.status,
     totalAmount: row.total_amount,
+    serviceIds: row.service_ids,
   };
 }
 

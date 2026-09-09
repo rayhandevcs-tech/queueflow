@@ -34,6 +34,7 @@ function appt(startsAt: string, endsAt: string, over: Partial<AppointmentCard> =
     endsAt,
     status: "BOOKED",
     totalAmount: 0,
+    serviceIds: ["sv1"],
     ...over,
   };
 }

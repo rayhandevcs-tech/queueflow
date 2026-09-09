@@ -57,3 +57,21 @@ create table public.chair_service_stats (
 create or replace function public.is_shop_owner(p_shop_id uuid)
  returns boolean language sql stable security definer set search_path to 'public'
 as $$ select exists (select 1 from public.shops where id = p_shop_id and owner_id = auth.uid()) $$;
+
+-- ---------------------------------------------------------------------------
+-- Notification infrastructure the appointment reminder writes into.
+-- ---------------------------------------------------------------------------
+create table public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  type text not null,
+  title text not null,
+  body text,
+  data jsonb,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- The real one reads profiles.notification_prefs (opt-out model).
+create or replace function public.notification_enabled(p_user_id uuid, p_type text)
+  returns boolean language sql stable as $$ select true $$;

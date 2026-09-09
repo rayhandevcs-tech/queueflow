@@ -4,9 +4,9 @@ import { getServiceRoleClient } from "@/lib/supabase/service-role";
 /**
  * The app's one nightly job.
  *
- * Two things run here — the shop owner's end-of-day summary, and any customer
- * self-reminders that came due — because both want daily granularity and
- * neither has an event that could trigger it. ("The day ended" is not
+ * Three things run here — the shop owner's end-of-day summary, any customer
+ * self-reminders that came due, and tomorrow's parlour appointments — because
+ * all three want daily granularity and none has an event that could trigger it. ("The day ended" is not
  * something the queue ever tells us; everything else in this app rides on a
  * queue event instead, per decision 26.)
  *
@@ -32,10 +32,14 @@ export async function GET(req: Request) {
   const results = await Promise.allSettled([
     supabase.rpc("send_daily_summaries", { p_day: undefined }),
     supabase.rpc("send_customer_reminders", {}),
+    // Tomorrow's parlour appointments. Idempotent through
+    // appointments.reminded_at, so a retried night sends nothing twice.
+    supabase.rpc("send_appointment_reminders", { p_within_hours: 24 }),
   ]);
 
+  const LABELS = ["daily summaries", "customer reminders", "appointment reminders"];
   const counts = results.map((result, i) => {
-    const label = i === 0 ? "daily summaries" : "customer reminders";
+    const label = LABELS[i];
     if (result.status === "rejected") {
       console.error(`nightly: ${label} crashed`, result.reason);
       return null;
@@ -47,10 +51,10 @@ export async function GET(req: Request) {
     return (result.value.data as number | null) ?? 0;
   });
 
-  const [summaries, reminders] = counts;
-  if (summaries === null && reminders === null) {
+  const [summaries, reminders, appointmentReminders] = counts;
+  if (counts.every((c) => c === null)) {
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ summaries, reminders });
+  return NextResponse.json({ summaries, reminders, appointmentReminders });
 }
