@@ -11,7 +11,7 @@ import { UiDbError } from "@/lib/supabase/db-errors";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/types";
 import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
-import type { ServiceCategory } from "@/config/constants";
+import { isServiceCategory } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -133,7 +133,7 @@ export function WalkInDialog({ shopId, lanes, actions, onClose }: Props) {
                 {services?.map((s) => {
                   const on = field.value.includes(s.id);
                   const CategoryIcon =
-                    SERVICE_CATEGORY_ICON[(s.category as ServiceCategory) ?? "OTHER"];
+                    SERVICE_CATEGORY_ICON[isServiceCategory(s.category) ? s.category : "OTHER"];
                   return (
                     <ServiceCard
                       key={s.id}

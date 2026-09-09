@@ -57,7 +57,11 @@ export const VALIDATION = {
   rate_too_large: { bn: "মূল্য অনেক বড়", en: "Rate is too large" },
   whole_number_required: { bn: "পূর্ণসংখ্যা দাও", en: "Enter a whole number" },
   duration_min_1: { bn: "কমপক্ষে ১ মিনিট", en: "At least 1 minute" },
-  duration_max_480: { bn: "সর্বোচ্চ ৪৮০ মিনিট", en: "Max 480 minutes" },
+  duration_max_480: { bn: "সর্বোচ্চ ৮ ঘণ্টা", en: "Max 8 hours" },
+  category_invalid: {
+    bn: "এই ক্যাটাগরিটা তোমার দোকানের জন্য নয়",
+    en: "That category isn't available for your shop",
+  },
   discount_min_1: { bn: "কমপক্ষে ১%", en: "At least 1%" },
   discount_max_90: { bn: "সর্বোচ্চ ৯০%", en: "Max 90%" },
   valid_until_required: {

@@ -2,22 +2,30 @@
 
 import { useState } from "react";
 import { ListChecks, Plus, Trash2 } from "lucide-react";
-import type { Service } from "@/types";
-import type { ServiceCategory } from "@/config/constants";
+import type { BusinessType, Service } from "@/types";
+import { SERVICE_CATEGORY_LABEL, isServiceCategory } from "@/config/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { Badge } from "@/components/ui/Badge";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { ServiceCard, ServiceCardGrid } from "@/components/ui/ServiceCard";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/lib/i18n";
+import { formatDuration } from "@/lib/duration";
 import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
 import { isServiceInActiveUse } from "../api/services.api";
 import { useServiceMutations, useServices } from "../hooks/use-services";
 import { providerCatalogDict } from "../lib/i18n";
 import { ServiceForm } from "./ServiceForm";
 
-export function ServicesManager({ shopId }: { shopId: string }) {
+export function ServicesManager({
+  shopId,
+  businessType,
+}: {
+  shopId: string;
+  businessType: BusinessType;
+}) {
   const { data: services, isPending } = useServices(shopId);
   const { create, update, toggleActive, remove } = useServiceMutations(shopId);
   const [editing, setEditing] = useState<Service | "new" | null>(null);
@@ -25,6 +33,7 @@ export function ServicesManager({ shopId }: { shopId: string }) {
   const [deleteWarning, setDeleteWarning] = useState(false);
   const [checkingDelete, setCheckingDelete] = useState(false);
   const t = useT(providerCatalogDict);
+  const categoryLabel = useT(SERVICE_CATEGORY_LABEL);
   const showToast = useToast();
 
   async function startDelete(service: Service) {
@@ -64,6 +73,7 @@ export function ServicesManager({ shopId }: { shopId: string }) {
       {editing !== null && (
         <ServiceForm
           shopId={shopId}
+          businessType={businessType}
           initial={editing === "new" ? undefined : editing}
           busy={create.isPending || update.isPending}
           onCancel={() => setEditing(null)}
@@ -89,32 +99,40 @@ export function ServicesManager({ shopId }: { shopId: string }) {
       ) : (
         <ServiceCardGrid>
           {services?.map((s) => {
-            const CategoryIcon = SERVICE_CATEGORY_ICON[(s.category as ServiceCategory) ?? "OTHER"];
+            // NULL is the honest state for a service saved before the picker
+            // existed; it falls back to the OTHER glyph without being relabelled.
+            const category = isServiceCategory(s.category) ? s.category : null;
+            const CategoryIcon = SERVICE_CATEGORY_ICON[category ?? "OTHER"];
             return (
               <ServiceCard
                 key={s.id}
                 name={s.name}
                 imageUrl={s.image_url}
                 fallbackIcon={<CategoryIcon className="h-8 w-8" />}
-                durationLabel={t("estimatedMinutes", s.default_duration_min)}
+                durationLabel={formatDuration(s.default_duration_min)}
                 priceLabel={`৳${s.rate}`}
                 dimmed={!s.is_active}
                 onClick={() => setEditing(s)}
                 badge={
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      // The card behind this opens the editor; the pill is its
-                      // own control and must not drag the editor open with it.
-                      e.stopPropagation();
-                      toggleActive.mutate({ serviceId: s.id, isActive: !s.is_active });
-                    }}
-                  >
-                    <StatusPill
-                      tone={s.is_active ? "good" : "neutral"}
-                      label={s.is_active ? t("serviceActiveWord") : t("serviceInactiveWord")}
-                    />
-                  </button>
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        // The card behind this opens the editor; the pill is its
+                        // own control and must not drag the editor open with it.
+                        e.stopPropagation();
+                        toggleActive.mutate({ serviceId: s.id, isActive: !s.is_active });
+                      }}
+                    >
+                      <StatusPill
+                        tone={s.is_active ? "good" : "neutral"}
+                        label={s.is_active ? t("serviceActiveWord") : t("serviceInactiveWord")}
+                      />
+                    </button>
+                    {/* Only when it has one — an untagged service says nothing
+                        rather than claiming to be "Other". */}
+                    {category && <Badge>{categoryLabel(category)}</Badge>}
+                  </span>
                 }
                 action={
                   <button

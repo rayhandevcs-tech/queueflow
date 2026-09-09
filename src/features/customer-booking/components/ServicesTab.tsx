@@ -3,7 +3,8 @@
 import { Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Chair, Service } from "@/types";
-import type { ServiceCategory } from "@/config/constants";
+import { isServiceCategory } from "@/config/constants";
+import { formatDuration } from "@/lib/duration";
 import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
 import { ServiceCard, ServiceCardGrid } from "@/components/ui/ServiceCard";
 import { useT } from "@/lib/i18n";
@@ -47,14 +48,15 @@ export function ServicesTab({
           <ServiceCardGrid>
             {services.map((s) => {
               const on = selected.has(s.id);
-              const CategoryIcon = SERVICE_CATEGORY_ICON[(s.category as ServiceCategory) ?? "OTHER"];
+              const CategoryIcon =
+                SERVICE_CATEGORY_ICON[isServiceCategory(s.category) ? s.category : "OTHER"];
               return (
                 <ServiceCard
                   key={s.id}
                   name={s.name}
                   imageUrl={s.image_url}
                   fallbackIcon={<CategoryIcon className="h-7 w-7" />}
-                  durationLabel={t("minutesSuffix", s.default_duration_min)}
+                  durationLabel={formatDuration(s.default_duration_min)}
                   priceLabel={`৳${s.rate}`}
                   selectable
                   selected={on}

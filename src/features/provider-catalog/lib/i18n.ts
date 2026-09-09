@@ -17,6 +17,24 @@ export const providerCatalogDict = {
   serviceNamePlaceholder: { bn: "সার্ভিসের নাম (চুল কাটা)", en: "Service name (Haircut)" },
   ratePlaceholder: { bn: "রেট (৳)", en: "Rate (৳)" },
   durationPlaceholder: { bn: "সময় (মিনিট)", en: "Duration (minutes)" },
+
+  // DurationField — hours + minutes in, one minutes number stored.
+  durationLabel: { bn: "কত সময় লাগে", en: "How long it takes" },
+  durationHours: { bn: "ঘণ্টা", en: "hr" },
+  durationMinutes: { bn: "মিনিট", en: "min" },
+  durationHoursAria: { bn: "ঘণ্টা", en: "Hours" },
+  durationMinutesAria: { bn: "মিনিট", en: "Minutes" },
+  durationSummary: {
+    bn: (pretty: string) => `এই সার্ভিসে ধরা হবে ${pretty}`,
+    en: (pretty: string) => `This service will be counted as ${pretty}`,
+  },
+
+  // CategoryPicker
+  categoryLabel: { bn: "ক্যাটাগরি", en: "Category" },
+  categoryHint: {
+    bn: "কাস্টমার এটা দিয়ে খুঁজে নেয়, আর ছবি না থাকলে এর আইকনটাই কার্ডে বসে।",
+    en: "Customers browse by this, and its icon stands in when a service has no photo.",
+  },
   serviceSaving: { bn: "সেভ হচ্ছে…", en: "Saving…" },
   serviceUpdate: { bn: "আপডেট করো", en: "Update" },
   serviceAdd: { bn: "যোগ করো", en: "Add" },

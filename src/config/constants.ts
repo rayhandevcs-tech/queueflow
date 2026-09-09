@@ -89,12 +89,34 @@ export const BUSINESS_TYPE_LABEL: Record<BusinessType, { bn: string; en: string 
   UNISEX: { bn: "ইউনিসেক্স", en: "Unisex" },
 };
 
+/**
+ * Every category a service can carry.
+ *
+ * This list is the **source of truth**, and the `services_category_check`
+ * constraint in migration `20260917` is its mirror in the database — the two
+ * must be changed together, which is why the migration names this file.
+ *
+ * A code list rather than a `service_categories` table (decision 40): the
+ * icon for a category has to live in code either way
+ * (`service-category-icon.ts`), so a row added in the database would render
+ * without one. A category is therefore not data this system can accept from
+ * outside, and pretending otherwise would cost a join on the explore page's
+ * cross-shop service query for no gained ability.
+ *
+ * Order matters — it is the order the picker and the explore shortcut row
+ * draw. `OTHER` stays last.
+ */
 export const SERVICE_CATEGORIES = [
   "HAIRCUT",
   "SHAVE",
   "COLOR",
   "FACIAL",
   "SPA",
+  "THREADING",
+  "WAXING",
+  "MEHENDI",
+  "MAKEUP",
+  "NAILS",
   "BRIDAL",
   "OTHER",
 ] as const;
@@ -107,9 +129,66 @@ export const SERVICE_CATEGORY_LABEL: Record<ServiceCategory, { bn: string; en: s
   COLOR: { bn: "কালার", en: "Color" },
   FACIAL: { bn: "ফেসিয়াল", en: "Facial" },
   SPA: { bn: "স্পা", en: "Spa" },
+  THREADING: { bn: "থ্রেডিং", en: "Threading" },
+  WAXING: { bn: "ওয়্যাক্সিং", en: "Waxing" },
+  MEHENDI: { bn: "মেহেদি", en: "Mehendi" },
+  MAKEUP: { bn: "মেকআপ", en: "Makeup" },
+  NAILS: { bn: "নেইল", en: "Nails" },
   BRIDAL: { bn: "ব্রাইডাল", en: "Bridal" },
   OTHER: { bn: "অন্যান্য", en: "Other" },
 };
+
+/**
+ * Which trades are offered each category in the picker.
+ *
+ * Keyed by `business_type` rather than by booking model: what a shop *sells*
+ * belongs to the trade, the same reasoning as `business-terms.ts`. UNISEX
+ * shops get everything — they are exactly the shops that do both.
+ *
+ * This narrows the **picker only**. The database check accepts all twelve for
+ * every shop, deliberately: a salon that has been tagging bridal work for a
+ * year must not have that row rejected on its next edit. `categoriesFor()`
+ * keeps a service's existing category in the list for the same reason.
+ */
+const CATEGORY_TRADES: Record<ServiceCategory, readonly BusinessType[]> = {
+  HAIRCUT: ["SALON", "PARLOUR", "UNISEX"],
+  SHAVE: ["SALON", "UNISEX"],
+  COLOR: ["SALON", "PARLOUR", "UNISEX"],
+  FACIAL: ["SALON", "PARLOUR", "UNISEX"],
+  SPA: ["SALON", "PARLOUR", "UNISEX"],
+  THREADING: ["PARLOUR", "UNISEX"],
+  WAXING: ["PARLOUR", "UNISEX"],
+  MEHENDI: ["PARLOUR", "UNISEX"],
+  MAKEUP: ["PARLOUR", "UNISEX"],
+  NAILS: ["PARLOUR", "UNISEX"],
+  BRIDAL: ["SALON", "PARLOUR", "UNISEX"],
+  OTHER: ["SALON", "PARLOUR", "UNISEX"],
+};
+
+/**
+ * The categories a shop's picker should offer.
+ *
+ * `keep` is the value the service already carries: it is always included even
+ * when the trade would not offer it, so opening an old service in the editor
+ * can never silently drop its category. An unknown business type gets the
+ * salon's list — the same direction `bookingModel()` fails in.
+ */
+export function categoriesFor(
+  type: BusinessType | null | undefined,
+  keep?: string | null,
+): ServiceCategory[] {
+  const trade: BusinessType = type === "PARLOUR" || type === "UNISEX" ? type : "SALON";
+  const list = SERVICE_CATEGORIES.filter((c) => CATEGORY_TRADES[c].includes(trade));
+  if (keep && isServiceCategory(keep) && !list.includes(keep)) {
+    return [...list, keep];
+  }
+  return [...list];
+}
+
+/** Narrows a raw `services.category` string, which the DB types as `string`. */
+export function isServiceCategory(value: string | null | undefined): value is ServiceCategory {
+  return !!value && (SERVICE_CATEGORIES as readonly string[]).includes(value);
+}
 
 export const ROLE_LABEL: Record<UserRole, { bn: string; en: string }> = {
   customer: { bn: "কাস্টমার", en: "Customer" },

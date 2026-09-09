@@ -45,7 +45,7 @@ export default function ServicesPage() {
     <div className="space-y-8">
       {services?.length === 0 && <ShopSetupCard shopId={shop.id} />}
 
-      <ServicesManager shopId={shop.id} />
+      <ServicesManager shopId={shop.id} businessType={shop.business_type} />
 
       <div>
         <h2 className="mb-1 font-display text-lg font-bold text-ink">{t("canPerformHeading")}</h2>
