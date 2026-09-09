@@ -57,3 +57,23 @@ export function isAppointmentModel(type: BusinessType | null | undefined): boole
 export function isQueueModel(type: BusinessType | null | undefined): boolean {
   return bookingModel(type) === "QUEUE";
 }
+
+/**
+ * Pick one of two values by booking model.
+ *
+ * For the handful of places where the difference is a whole *sentence*, not a
+ * noun — "each chair is a lane on the board" versus "each seat is a column on
+ * today's schedule". Nouns belong in `business-terms.ts` (decision 28); this
+ * is for copy that the terminology layer cannot fix, and it keeps those call
+ * sites declarative instead of sprouting `isAppointmentModel(...) ? a : b`
+ * ternaries that each have to be found again later.
+ *
+ * Both branches are required, so adding a model to `BookingModel` is a
+ * compile error at every call site rather than a silently missing case.
+ */
+export function byModel<T>(
+  type: BusinessType | null | undefined,
+  choices: Record<BookingModel, T>,
+): T {
+  return choices[bookingModel(type)];
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BusinessType } from "@/types";
-import { bookingModel, isAppointmentModel, isQueueModel } from "./business-model";
+import { bookingModel, byModel, isAppointmentModel, isQueueModel } from "./business-model";
 
 describe("bookingModel", () => {
   it("puts salons on the queue", () => {
@@ -27,6 +27,32 @@ describe("bookingModel", () => {
   // the queue is the model that is fully built, so that is the safe direction.
   it("falls back to the queue for an enum value it does not know", () => {
     expect(bookingModel("CAR_WASH" as BusinessType)).toBe("QUEUE");
+  });
+});
+
+describe("byModel", () => {
+  const copy = { QUEUE: "lane", APPOINTMENT: "column" };
+
+  it("hands back the branch for the shop's model", () => {
+    expect(byModel("SALON", copy)).toBe("lane");
+    expect(byModel("UNISEX", copy)).toBe("lane");
+    expect(byModel("PARLOUR", copy)).toBe("column");
+  });
+
+  // Same fallback as bookingModel: a screen with no shop yet reads as a queue.
+  it("falls back to the queue branch for an unknown or missing type", () => {
+    expect(byModel(null, copy)).toBe("lane");
+    expect(byModel(undefined, copy)).toBe("lane");
+    expect(byModel("CAR_WASH" as BusinessType, copy)).toBe("lane");
+  });
+
+  it("never disagrees with bookingModel", () => {
+    const types: (BusinessType | null)[] = ["SALON", "PARLOUR", "UNISEX", null];
+    for (const type of types) {
+      expect(byModel(type, { QUEUE: "QUEUE", APPOINTMENT: "APPOINTMENT" })).toBe(
+        bookingModel(type),
+      );
+    }
   });
 });
 

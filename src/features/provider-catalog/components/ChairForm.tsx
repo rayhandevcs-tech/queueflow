@@ -6,7 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check } from "lucide-react";
 import { CHAIR_COLORS } from "@/config/constants";
 import { cn } from "@/lib/utils";
-import type { Chair } from "@/types";
+import type { BusinessType, Chair } from "@/types";
+import { byModel } from "@/lib/business-model";
+import { useTerms } from "@/lib/business-terms";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { useLanguage, useT } from "@/lib/i18n";
@@ -20,15 +22,17 @@ import { ImageUploadField } from "./ImageUploadField";
 
 interface Props {
   shopId: string;
+  businessType: BusinessType;
   initial?: Chair;
   busy: boolean;
   onSubmit: (values: ChairFormOutput) => void;
   onCancel: () => void;
 }
 
-export function ChairForm({ shopId, initial, busy, onSubmit, onCancel }: Props) {
+export function ChairForm({ shopId, businessType, initial, busy, onSubmit, onCancel }: Props) {
   const { language } = useLanguage();
   const t = useT(providerCatalogDict);
+  const tt = useTerms(businessType, language);
 
   const schema = useMemo(() => chairSchema(language), [language]);
   const form = useForm<ChairFormValues, unknown, ChairFormOutput>({
@@ -64,21 +68,27 @@ export function ChairForm({ shopId, initial, busy, onSubmit, onCancel }: Props) 
             form.setValue("staff_avatar_url", url, { shouldDirty: true })
           }
         />
-        <p className="text-[12px] leading-snug text-muted">{t("staffPhotoHint")}</p>
+        <p className="text-[12px] leading-snug text-muted">{t(
+            byModel(businessType, {
+              QUEUE: "staffPhotoHintQueue",
+              APPOINTMENT: "staffPhotoHintAppointment",
+            }),
+            tt("staffMember"),
+          )}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field error={err.label?.message}>
           <Input
             {...form.register("label")}
-            placeholder={t("chairLabelPlaceholder")}
+            placeholder={t("chairLabelPlaceholder", tt("chair"))}
             invalid={!!err.label}
           />
         </Field>
         <Field error={err.staff_name?.message}>
           <Input
             {...form.register("staff_name")}
-            placeholder={t("staffNamePlaceholder")}
+            placeholder={t("staffNamePlaceholder", tt("staffMember"))}
             invalid={!!err.staff_name}
           />
         </Field>
@@ -96,7 +106,12 @@ export function ChairForm({ shopId, initial, busy, onSubmit, onCancel }: Props) 
       </Field>
 
       <div>
-        <span className="mb-1.5 block text-xs font-medium text-muted">{t("laneColorLabel")}</span>
+        <span className="mb-1.5 block text-xs font-medium text-muted">{t(
+            byModel(businessType, {
+              QUEUE: "laneColorLabelQueue",
+              APPOINTMENT: "laneColorLabelAppointment",
+            }),
+          )}</span>
         <div className="flex gap-2">
           {CHAIR_COLORS.map((c) => (
             <button
@@ -120,7 +135,7 @@ export function ChairForm({ shopId, initial, busy, onSubmit, onCancel }: Props) 
 
       <div className="flex gap-2 pt-1">
         <Button type="submit" loading={busy}>
-          {busy ? t("chairSaving") : initial ? t("chairUpdate") : t("chairAdd")}
+          {busy ? t("chairSaving") : initial ? t("chairUpdate") : t("chairAdd", tt("chair"))}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           {t("cancel")}

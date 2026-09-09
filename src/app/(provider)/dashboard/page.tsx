@@ -112,7 +112,10 @@ export default async function DashboardPage() {
           provider-queue; features can't import each other, so the page is
           where they are composed. */}
       {appointment ? (
-        <ParlourDashboard shopId={shop.id} />
+        // The whole row, not just the id: the board reads `weekly_hours` for
+        // its time axis and `business_type` for its vocabulary, and the page
+        // has already fetched it.
+        <ParlourDashboard shop={shop} />
       ) : (
         <QueueBoard
           shopId={shop.id}

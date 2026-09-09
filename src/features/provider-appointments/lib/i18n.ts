@@ -12,6 +12,56 @@ export const providerAppointmentsDict = {
   seatsTile: { bn: "সিট ও বিউটিশিয়ান", en: "Seats & staff" },
   activeSeatsTile: { bn: "আজ চালু", en: "On today" },
   servicesTile: { bn: "সার্ভিস", en: "Services" },
+  appointmentsTile: { bn: "আজকের অ্যাপয়েন্টমেন্ট", en: "Today's appointments" },
+
+  // ---- The day board ----
+  boardTitle: { bn: "আজকের সময়সূচি", en: "Today's schedule" },
+  boardHours: {
+    bn: (open: string, close: string) => `${open} – ${close}`,
+    en: (open: string, close: string) => `${open} – ${close}`,
+  },
+  boardLoadFailed: {
+    bn: "সময়সূচি আনা গেল না। একটু পরে আবার চেষ্টা করো।",
+    en: "Couldn't load the schedule. Try again in a moment.",
+  },
+  boardNoStaffTitle: {
+    bn: (staff: string) => `এখনো কোনো ${staff} যোগ করা হয়নি`,
+    en: (staff: string) => `No ${staff.toLowerCase()} yet`,
+  },
+  boardNoStaffDesc: {
+    bn: "সময়সূচির প্রতিটা কলাম একজন করে — অন্তত একজন যোগ করলে বোর্ড আঁকা শুরু হবে।",
+    en: "Each column of the schedule is one of them — add at least one and the board starts drawing.",
+  },
+  boardNoStaffCta: { bn: "যোগ করো", en: "Add one" },
+  boardClosedTitle: { bn: "আজ দোকান বন্ধ", en: "Closed today" },
+  boardClosedDesc: {
+    bn: "সাপ্তাহিক সময়সূচি অনুযায়ী আজ বন্ধ, তাই আজকের কোনো গ্রিড নেই।",
+    en: "Your weekly hours say you're shut today, so there's no grid to draw.",
+  },
+  boardNoHoursTitle: { bn: "খোলার সময় এখনো সেট করা হয়নি", en: "Opening hours aren't set" },
+  boardNoHoursDesc: {
+    bn: "দিনের গ্রিড তোমার খোলা-বন্ধের সময় ধরে আঁকা হয়। সেটিংসে সময় বসালেই সময়সূচি দেখা যাবে।",
+    en: "The day grid is drawn from your opening and closing times. Set them and the schedule appears.",
+  },
+  boardHoursCta: { bn: "সময় সেট করো", en: "Set your hours" },
+  boardEmptyDay: { bn: "আজ কোনো অ্যাপয়েন্টমেন্ট নেই", en: "No appointments today" },
+  // The board is honest about *why* it is empty: booking is not live yet, so
+  // an owner does not sit waiting for bookings that cannot arrive.
+  boardNotLiveNote: {
+    bn: "কাস্টমার এখনো অ্যাপয়েন্টমেন্ট নিতে পারছে না — বুকিং চালু হলে সেগুলো এখানে বসবে।",
+    en: "Customers can't book yet — once booking goes live, their appointments land here.",
+  },
+  nowLabel: { bn: "এখন", en: "Now" },
+  runsPastClose: { bn: "বন্ধের সময় পেরিয়ে যাচ্ছে", en: "Runs past closing" },
+  startsBeforeOpen: { bn: "খোলার আগে শুরু", en: "Starts before opening" },
+
+  // ---- Appointment statuses (mirrors the planned appointment_status enum) ----
+  statusBOOKED: { bn: "বুক করা", en: "Booked" },
+  statusCONFIRMED: { bn: "নিশ্চিত", en: "Confirmed" },
+  statusIN_PROGRESS: { bn: "চলছে", en: "In progress" },
+  statusDONE: { bn: "শেষ", en: "Done" },
+  statusCANCELLED: { bn: "বাতিল", en: "Cancelled" },
+  statusNO_SHOW: { bn: "আসেনি", en: "No show" },
 
   // ---- The honest state of the feature ----
   buildingTitle: { bn: "অ্যাপয়েন্টমেন্ট বুকিং তৈরি হচ্ছে", en: "Appointment booking is being built" },

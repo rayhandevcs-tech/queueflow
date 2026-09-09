@@ -42,6 +42,10 @@ export const keys = {
     analyticsHistory: (shopId: string) => ["serials", "analytics-history", shopId] as const,
     party: (groupId: string) => ["serials", "party", groupId] as const,
   },
+  appointments: {
+    /** `day` is local "YYYY-MM-DD" — see `ymd()` in the appointments slice. */
+    byShopDay: (shopId: string, day: string) => ["appointments", shopId, day] as const,
+  },
   dueLedger: {
     byShop: (shopId: string) => ["due-ledger", "shop", shopId] as const,
     countByShop: (shopId: string) => ["due-ledger", "count", "shop", shopId] as const,

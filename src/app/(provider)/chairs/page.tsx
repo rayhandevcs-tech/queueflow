@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLanguage, useT } from "@/lib/i18n";
 import { useTerms } from "@/lib/business-terms";
+import { byModel } from "@/lib/business-model";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 
 export default function ChairsPage() {
@@ -43,9 +44,15 @@ export default function ChairsPage() {
     <div className="space-y-6">
       <PageHeader
         title={tt("chairs")}
-        description={t("chairsPageDesc")}
+        description={t(
+          byModel(shop.business_type, {
+            QUEUE: "chairsPageDescQueue",
+            APPOINTMENT: "chairsPageDescAppointment",
+          }),
+          tt("chair"),
+        )}
       />
-      <ChairsManager shopId={shop.id} />
+      <ChairsManager shopId={shop.id} businessType={shop.business_type} />
     </div>
   );
 }

@@ -1,5 +1,14 @@
 import type { Dict } from "@/lib/i18n";
 
+/**
+ * Business terms arrive lower-cased mid-sentence ("beautician") but have to
+ * start an English label ("Beautician photo"). Bangla has no case, so this is
+ * a no-op there.
+ */
+function sentenceCase(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 export const providerCatalogDict = {
   // Shared
   cancel: { bn: "বাতিল", en: "Cancel" },
@@ -44,17 +53,34 @@ export const providerCatalogDict = {
     en: "Customers can filter for it, and it shows on your shop card.",
   },
 
-  // ChairForm (was hardcoded English; adding bn counterpart)
-  chairLabelPlaceholder: { bn: "লেবেল (চেয়ার ১)", en: "Label (Chair 1)" },
-  staffNamePlaceholder: { bn: "স্টাফের নাম (রহিম)", en: "Staff name (Rahim)" },
-  staffPhotoHint: {
-    bn: "স্টাফের ছবি — কিউ বোর্ড, কাউন্টার ডিসপ্লে আর কাস্টমারের স্টাফ তালিকায় দেখা যাবে।",
-    en: "Staff photo — shown on the queue board, the counter display and the customer's staff list.",
+  // ChairForm. The nouns arrive from `business-terms.ts` (decision 28) so a
+  // parlour reads "সিট" and "বিউটিশিয়ান" without a second dictionary.
+  chairLabelPlaceholder: {
+    bn: (chair: string) => `লেবেল (${chair} ১)`,
+    en: (chair: string) => `Label (${chair} 1)`,
   },
-  laneColorLabel: { bn: "লেনের রং", en: "Lane color" },
+  staffNamePlaceholder: {
+    bn: (staff: string) => `${staff}ের নাম (রহিম)`,
+    en: (staff: string) => `${sentenceCase(staff)} name (Rahim)`,
+  },
+  staffPhotoHintQueue: {
+    bn: (staff: string) => `${staff}ের ছবি — কিউ বোর্ড, কাউন্টার ডিসপ্লে আর কাস্টমারের তালিকায় দেখা যাবে।`,
+    en: (staff: string) =>
+      `${sentenceCase(staff)} photo — shown on the queue board, the counter display and the customer's list.`,
+  },
+  staffPhotoHintAppointment: {
+    bn: (staff: string) => `${staff}ের ছবি — আজকের সময়সূচি আর কাস্টমারের তালিকায় দেখা যাবে।`,
+    en: (staff: string) =>
+      `${sentenceCase(staff)} photo — shown on today's schedule and the customer's list.`,
+  },
+  laneColorLabelQueue: { bn: "লেনের রং", en: "Lane color" },
+  laneColorLabelAppointment: { bn: "কলামের রং", en: "Column color" },
   chairSaving: { bn: "সংরক্ষণ হচ্ছে…", en: "Saving…" },
   chairUpdate: { bn: "আপডেট করো", en: "Update" },
-  chairAdd: { bn: "চেয়ার যোগ করো", en: "Add chair" },
+  chairAdd: {
+    bn: (chair: string) => `${chair} যোগ করো`,
+    en: (chair: string) => `Add ${chair.toLowerCase()}`,
+  },
 
   // ImageUploadField
   uploadFailedGeneric: { bn: "আপলোড ব্যর্থ হয়েছে", en: "Upload failed" },
@@ -153,25 +179,51 @@ export const providerCatalogDict = {
 
   // (provider)/chairs/page.tsx + ChairsManager
   chairsPageTitle: { bn: "চেয়ার ও স্টাফ", en: "Chairs & Staff" },
-  chairsPageDesc: {
-    bn: "প্রতিটা চেয়ার ড্যাশবোর্ডে একটা লেন — নতুন সিরিয়াল বন্ধ করতে চেয়ার পজ করো।",
-    en: "Each chair is one lane on the dashboard — pause a chair to stop new serials.",
+  // Two whole sentences rather than one with a swapped noun: a lane on a live
+  // board and a column on a day's schedule are different explanations, and
+  // `business-terms.ts` is deliberately only for the nouns (decision 28).
+  chairsPageDescQueue: {
+    bn: (chair: string) => `প্রতিটা ${chair} ড্যাশবোর্ডে একটা লেন — নতুন সিরিয়াল বন্ধ করতে পজ করো।`,
+    en: (chair: string) =>
+      `Each ${chair.toLowerCase()} is one lane on the dashboard — pause it to stop new serials.`,
   },
-  newChairCta: { bn: "নতুন চেয়ার", en: "New chair" },
-  noChairsYetTitle: { bn: "এখনো কোনো চেয়ার যোগ করা হয়নি", en: "No chairs yet" },
+  chairsPageDescAppointment: {
+    bn: (chair: string) =>
+      `প্রতিটা ${chair} আজকের সময়সূচিতে একটা কলাম — পজ করলে ওখানে নতুন অ্যাপয়েন্টমেন্ট বসবে না।`,
+    en: (chair: string) =>
+      `Each ${chair.toLowerCase()} is one column on today's schedule — pause it and nothing new lands there.`,
+  },
+  newChairCta: {
+    bn: (chair: string) => `নতুন ${chair}`,
+    en: (chair: string) => `New ${chair.toLowerCase()}`,
+  },
+  noChairsYetTitle: {
+    bn: (chair: string) => `এখনো কোনো ${chair} যোগ করা হয়নি`,
+    en: (chair: string) => `No ${chair.toLowerCase()}s yet`,
+  },
   noChairsYetDesc: {
-    bn: "প্রথম চেয়ার বা স্টাফ লেন যোগ করো, সিরিয়াল নেওয়া শুরু করতে।",
-    en: "Add your first chair or staff lane to start taking serials.",
+    bn: (chair: string, staff: string) =>
+      `প্রথম ${chair} আর ${staff} যোগ করো — এখান থেকেই তোমার দিনের কাজ ভাগ হবে।`,
+    en: (chair: string, staff: string) =>
+      `Add your first ${chair.toLowerCase()} and ${staff} — this is what the day's work gets split across.`,
   },
   chairEditCta: { bn: "এডিট", en: "Edit" },
   chairActiveWord: { bn: "চালু", en: "Active" },
   chairPausedWord: { bn: "পজড", en: "Paused" },
-  chairNoStaffName: { bn: "স্টাফের নাম নেই", en: "No staff name" },
-  deleteChairAria: { bn: "চেয়ার মুছো", en: "Delete chair" },
-  deleteChairTitle: { bn: "এই চেয়ারটা মুছে ফেলবে?", en: "Delete this chair?" },
+  // No noun at all: "স্টাফের নাম নেই" needed one, "নাম দেওয়া হয়নি" doesn't,
+  // and the row it sits under already says whose name is missing.
+  chairNoStaffName: { bn: "নাম দেওয়া হয়নি", en: "No name set" },
+  deleteChairAria: {
+    bn: (chair: string) => `${chair} মুছো`,
+    en: (chair: string) => `Delete ${chair.toLowerCase()}`,
+  },
+  deleteChairTitle: {
+    bn: (chair: string) => `এই ${chair}টা মুছে ফেলবে?`,
+    en: (chair: string) => `Delete this ${chair.toLowerCase()}?`,
+  },
   deleteChairDesc: {
-    bn: "এটা আর ড্যাশবোর্ডে দেখা যাবে না, নতুন কোনো সিরিয়ালও এখানে আসবে না।",
-    en: "It won't appear on the dashboard anymore, and no new serials will come here.",
+    bn: "এটা আর ড্যাশবোর্ডে দেখা যাবে না, নতুন কোনো কাজও এখানে আসবে না।",
+    en: "It won't appear on the dashboard anymore, and no new work will be sent here.",
   },
   deleteChairActiveWarning: {
     bn: "এই চেয়ারে এখন একটা চলমান সিরিয়াল আছে — মুছে ফেললেও সেই কাস্টমারের কাজ প্রভাবিত হবে না, শুধু চেয়ারটা পজ হয়ে যাবে।",
