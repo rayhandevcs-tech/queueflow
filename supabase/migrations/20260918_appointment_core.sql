@@ -26,16 +26,28 @@
 create extension if not exists btree_gist;
 
 -- ---------------------------------------------------------------------------
--- ১) স্ট্যাটাস
+-- ১) স্ট্যাটাস — text + CHECK, Postgres enum নয়
 -- ---------------------------------------------------------------------------
--- BOOKED = "pending" (কাস্টমার নিয়েছে, দোকান এখনো নিশ্চিত করেনি)।
--- নামটা serial_status-এর ধাঁচে রাখা হলো এবং Sprint 2-এর `AppointmentStatus`
--- টাইপের সঙ্গে হুবহু মেলে — দুই জায়গায় দুই নাম রাখলে ম্যাপিং টেবিল লাগত।
+-- **এই স্কিমায় একটাও আসল Postgres enum টাইপ নেই।** serial_status,
+-- payment_status, business_type — সবই `text` কলাম + CHECK কনস্ট্রেইন্ট।
+-- `database.types.ts`-এর `Enums` ব্লকটা শুধু অ্যাপের নামকরণের স্তর, ডেটাবেসের
+-- গঠন নয়। তাই appointments-ও একই ধাঁচে, নইলে এই একটা টেবিলেই আলাদা নিয়ম হতো
+-- (আর `alter type ... add value` ট্রানজেকশনে চলে না, যা পরে ভোগাত)।
+--
+-- BOOKED = "pending" (কাস্টমার নিয়েছে, দোকান এখনো নিশ্চিত করেনি)। নামগুলো
+-- Sprint 2-এর `AppointmentStatus` টাইপের সঙ্গে হুবহু মেলে।
+
+-- এই ফাইলের আগের খসড়া একটা enum টাইপ বানাত। কোনো আংশিক রান সেটা রেখে গিয়ে
+-- থাকলে সরিয়ে দেওয়া হচ্ছে — কেউ ব্যবহার করে থাকলে হাত দেওয়া হবে না।
 do $$
 begin
-  if not exists (select 1 from pg_type where typname = 'appointment_status') then
-    create type public.appointment_status as enum
-      ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'DONE', 'CANCELLED', 'NO_SHOW');
+  if exists (select 1 from pg_type where typname = 'appointment_status') then
+    begin
+      drop type public.appointment_status;
+      raise notice 'dropped leftover appointment_status enum type';
+    exception when dependent_objects_still_exist then
+      raise notice 'appointment_status type is still in use — left alone';
+    end;
   end if;
 end $$;
 
@@ -85,11 +97,13 @@ create table if not exists public.appointments (
   -- ক্লায়েন্ট পাঠায় না — ইনসার্ট ট্রিগার সার্ভিসের সময় থেকে হিসাব করে।
   ends_at timestamptz not null,
 
-  status public.appointment_status not null default 'BOOKED',
+  status text not null default 'BOOKED'
+    check (status in ('BOOKED', 'CONFIRMED', 'IN_PROGRESS', 'DONE', 'CANCELLED', 'NO_SHOW')),
 
   -- টাকা (সিদ্ধান্ত ২৯ — serials-এর নকল)
   total_amount numeric(10, 2) not null default 0,
-  payment_status public.payment_status not null default 'DUE',
+  payment_status text not null default 'DUE'
+    check (payment_status in ('PAID', 'DUE', 'ADVANCE')),
   due_amount numeric(10, 2) not null default 0,
   due_collected_at timestamptz,
   payment_method text,
@@ -583,8 +597,14 @@ comment on function public.book_appointment is
 --   ('table exists',
 --    to_regclass('public.appointments') is not null),
 --
---   ('status enum exists',
---    exists (select 1 from pg_type where typname = 'appointment_status')),
+--   ('status check constraint exists (text + CHECK, not an enum)',
+--    exists (select 1 from pg_constraint con
+--             join pg_class rel on rel.oid = con.conrelid
+--            where rel.relname = 'appointments' and con.contype = 'c'
+--              and pg_get_constraintdef(con.oid) like '%NO_SHOW%')),
+--
+--   ('no stray appointment_status enum type left behind',
+--    not exists (select 1 from pg_type where typname = 'appointment_status')),
 --
 --   ('RLS enabled',
 --    (select relrowsecurity from pg_class where oid = 'public.appointments'::regclass)),
