@@ -1,33 +1,50 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
+import { getAppointmentsForDay, setAppointmentStatus } from "../api/appointments.api";
 import { ymd } from "../lib/schedule";
-import type { AppointmentCard } from "../lib/types";
+import type { AppointmentCard, AppointmentStatus } from "../lib/types";
 
 /**
  * One day's bookings for a shop.
  *
- * **This is the Sprint 4 seam.** The `appointments` table does not exist yet
- * (§৩ Sprint 4 of the plan), so this resolves to an empty day and the board
- * draws its empty state. When the table lands, only the `queryFn` body
- * changes — the query key, the return shape and every component reading it
- * are already what they will be.
- *
- * It is a real `useQuery` rather than a bare `return []` on purpose: the
- * board must already handle `isPending` and `isError`, or Sprint 4 would be
- * the sprint that discovers the screen has no loading or failure states.
+ * Sprint 2 built this as a real `useQuery` returning an empty array, so the
+ * board's loading and error states existed before there was anything to load.
+ * Sprint 4 replaced only the `queryFn` body — every component reading it is
+ * unchanged, which is what that seam was for (decision 39).
  */
 export function useTodayAppointments(shopId: string, day: Date) {
   return useQuery({
     queryKey: keys.appointments.byShopDay(shopId, ymd(day)),
-    queryFn: async (): Promise<AppointmentCard[]> => {
-      // Sprint 4 replaces this with a select on `appointments` filtered by
-      // shop and by the day's local window. Querying the table now would
-      // fail on every parlour dashboard, which is worse than an honest
-      // empty day.
-      return [];
-    },
+    queryFn: (): Promise<AppointmentCard[]> => getAppointmentsForDay(shopId, day),
     staleTime: 30_000,
+  });
+}
+
+/**
+ * Move one appointment along its lifecycle.
+ *
+ * No optimistic update: the database owns the state machine, and a refused
+ * move (a racing tap, a status that has already advanced) should leave the
+ * board showing what is actually true rather than a guess it then has to take
+ * back.
+ */
+export function useAppointmentStatus(shopId: string, day: Date) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+      reason,
+    }: {
+      id: string;
+      status: AppointmentStatus;
+      reason?: string;
+    }) => setAppointmentStatus(id, status, reason),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: keys.appointments.byShopDay(shopId, ymd(day)),
+      }),
   });
 }

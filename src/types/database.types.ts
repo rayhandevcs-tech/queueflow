@@ -164,6 +164,72 @@ export type Database = {
         };
         Relationships: [];
       };
+      /** Beauty parlour bookings — see 20260918_appointment_core.sql. */
+      appointments: {
+        Row: {
+          id: string;
+          shop_id: string;
+          /** A chairs row is the seat and its beautician both. */
+          staff_id: string;
+          customer_id: string | null;
+          customer_name: string;
+          customer_phone: string | null;
+          customer_avatar_url: string | null;
+          service_ids: string[];
+          services_snapshot: Json;
+          starts_at: string;
+          ends_at: string;
+          status: Database["public"]["Enums"]["appointment_status"];
+          total_amount: number;
+          payment_status: Database["public"]["Enums"]["payment_status"];
+          due_amount: number;
+          due_collected_at: string | null;
+          payment_method: string | null;
+          advance_paid: boolean;
+          advance_method: string | null;
+          advance_txn_id: string | null;
+          is_walk_in: boolean;
+          notes: string | null;
+          booked_at: string;
+          created_at: string;
+          updated_at: string;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          cancel_reason: string | null;
+          /** Sprint 5 reminder seam — nothing writes it yet. */
+          reminded_at: string | null;
+        };
+        // ends_at, total_amount, services_snapshot, status and the customer
+        // snapshot are all computed by appointment_before_insert. Prefer the
+        // book_appointment() RPC, which supplies the placeholder ends_at.
+        Insert: {
+          id?: string;
+          shop_id: string;
+          staff_id: string;
+          customer_id?: string | null;
+          customer_name?: string;
+          customer_phone?: string | null;
+          service_ids: string[];
+          starts_at: string;
+          ends_at: string;
+          is_walk_in?: boolean;
+          notes?: string | null;
+        };
+        // Booking-time columns are force-reset by appointment_before_update,
+        // so they are deliberately absent here — including starts_at/ends_at/
+        // staff_id, which would be a reschedule (not this sprint).
+        Update: {
+          status?: Database["public"]["Enums"]["appointment_status"];
+          payment_status?: Database["public"]["Enums"]["payment_status"];
+          due_amount?: number;
+          due_collected_at?: string | null;
+          payment_method?: string | null;
+          customer_phone?: string | null;
+          notes?: string | null;
+          cancel_reason?: string | null;
+        };
+        Relationships: [];
+      };
       offers: {
         Row: {
           id: string;
@@ -785,6 +851,33 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      shop_available_slots: {
+        Args: {
+          p_shop_id: string;
+          p_date: string;
+          p_service_ids: string[];
+          p_staff_id?: string | null;
+        };
+        Returns: {
+          staff_id: string;
+          staff_name: string;
+          slot_start: string;
+          slot_end: string;
+        }[];
+      };
+      book_appointment: {
+        Args: {
+          p_shop_id: string;
+          p_staff_id: string;
+          p_service_ids: string[];
+          p_starts_at: string;
+          p_customer_name?: string | null;
+          p_customer_phone?: string | null;
+          p_is_walk_in?: boolean;
+          p_notes?: string | null;
+        };
+        Returns: string;
+      };
       assign_best_chair: {
         Args: { p_shop_id: string; p_service_ids: string[] };
         Returns: string | null;
@@ -1235,6 +1328,13 @@ export type Database = {
         | "DAILY_SUMMARY"
         | "WAIT_ALERT";
       payment_status: "PAID" | "DUE" | "ADVANCE";
+      appointment_status:
+        | "BOOKED"
+        | "CONFIRMED"
+        | "IN_PROGRESS"
+        | "DONE"
+        | "CANCELLED"
+        | "NO_SHOW";
       // shop_status / admin_level are CHECK constraints in Postgres rather than
       // real enum types; they live here so the app has one name for the values.
       shop_status: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";

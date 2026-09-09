@@ -40,4 +40,6 @@ export interface AppointmentCard {
   startsAt: string;
   endsAt: string;
   status: AppointmentStatus;
+  /** Frozen at booking time (decision 42) — never re-read from `services`. */
+  totalAmount: number;
 }

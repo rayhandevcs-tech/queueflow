@@ -33,6 +33,7 @@ function appt(startsAt: string, endsAt: string, over: Partial<AppointmentCard> =
     startsAt,
     endsAt,
     status: "BOOKED",
+    totalAmount: 0,
     ...over,
   };
 }

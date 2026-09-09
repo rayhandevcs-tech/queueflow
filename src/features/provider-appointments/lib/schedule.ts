@@ -1,4 +1,8 @@
 import { DAY_ORDER, type DayKey, type WeeklyHours } from "@/lib/weekly-hours";
+// Shared, because the customer's booking sheet names the same day and
+// features may not import each other. Re-exported so this module stays the
+// one import site for the board's date maths.
+import { ymd } from "@/lib/day-key";
 import type { AppointmentCard } from "./types";
 
 /**
@@ -77,20 +81,6 @@ export function timeRows(window: DayWindow, step = SLOT_MINUTES): number[] {
 /** Minutes since midnight for a Date, in the viewer's local zone. */
 export function minutesOfDay(date: Date): number {
   return date.getHours() * 60 + date.getMinutes();
-}
-
-/**
- * "2026-09-09" in local time — the board's day identity, and the query key.
- *
- * Not `toISOString().slice(0, 10)`: that converts to UTC first, so in Dhaka
- * (UTC+6) every board before 6am would key itself to the previous day.
- */
-export function ymd(date: Date): string {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
 }
 
 export function isSameDay(a: Date, b: Date): boolean {
@@ -174,3 +164,5 @@ export function groupByStaff(
   }
   return byStaff;
 }
+
+export { ymd };

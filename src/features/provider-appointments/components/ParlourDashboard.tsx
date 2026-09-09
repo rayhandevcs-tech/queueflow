@@ -31,9 +31,8 @@ import { AppointmentBoard } from "./AppointmentBoard";
  * parlour is an appointment business, so the transition does not get a
  * second, contradictory screen.
  *
- * Until the booking engine lands (Sprint 4–5) this screen is read-only. It
- * says so rather than implying otherwise, which is why the board carries its
- * "customers can't book yet" note instead of a bare empty state.
+ * Since Sprint 4 the board is live: customers book real slots and the owner
+ * moves each appointment along its lifecycle from here.
  */
 export function ParlourDashboard({ shop }: { shop: Shop }) {
   const { language } = useLanguage();
@@ -62,11 +61,11 @@ export function ParlourDashboard({ shop }: { shop: Shop }) {
     ? today.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
     : formatBanglaDate(today);
 
-  const coming = [
-    { icon: CalendarDays, label: t("comingSlotPicker") },
-    { icon: CalendarClock, label: t("comingCalendar") },
-    { icon: Users, label: t("comingHours") },
-    { icon: Check, label: t("comingReminder") },
+  const howItWorks = [
+    { icon: CalendarDays, label: t("liveSlotRule") },
+    { icon: CalendarClock, label: t("liveHoursRule") },
+    { icon: Check, label: t("liveStatusRule") },
+    { icon: Users, label: t("liveComingReminder") },
   ];
 
   return (
@@ -109,13 +108,13 @@ export function ParlourDashboard({ shop }: { shop: Shop }) {
             <CalendarClock className="h-4.5 w-4.5" />
           </span>
           <div className="min-w-0">
-            <p className="font-display text-base font-bold text-ink">{t("buildingTitle")}</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted">{t("buildingBody")}</p>
+            <p className="font-display text-base font-bold text-ink">{t("liveTitle")}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted">{t("liveBody")}</p>
           </div>
         </div>
 
         <ul className="mt-4 space-y-2.5 border-t border-accent/15 pt-4">
-          {coming.map(({ icon: Icon, label }) => (
+          {howItWorks.map(({ icon: Icon, label }) => (
             <li key={label} className="flex items-start gap-2.5 text-sm text-ink">
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
               <span className="leading-snug">{label}</span>

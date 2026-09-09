@@ -8,6 +8,7 @@ export type ChairServiceStat = Tables<"chair_service_stats">;
 export type Hairstyle = Tables<"hairstyles">;
 export type SerialStylePreference = Tables<"serial_style_preferences">;
 export type Serial = Tables<"serials">;
+export type Appointment = Tables<"appointments">;
 export type QueuePublicRow = Tables<"queue_public">;
 export type Review = Tables<"reviews">;
 export type ShopGalleryImage = Tables<"shop_gallery_images">;
@@ -29,6 +30,7 @@ export type Report = Tables<"reports">;
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type SerialStatus = Database["public"]["Enums"]["serial_status"];
+export type AppointmentStatusDb = Database["public"]["Enums"]["appointment_status"];
 export type AssignmentMode = Database["public"]["Enums"]["assignment_mode"];
 export type NotificationType = Database["public"]["Enums"]["notification_type"];
 export type PaymentStatus = Database["public"]["Enums"]["payment_status"];

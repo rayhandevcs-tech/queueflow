@@ -3,7 +3,7 @@
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
-import { formatBanglaTime } from "@/lib/format-wait";
+import { formatBanglaTime, toBanglaDigits } from "@/lib/format-wait";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { BADGE_VARIANTS } from "@/components/ui/Badge";
 import { STATUS_LABEL_KEY, statusStyle } from "../lib/status";
@@ -34,10 +34,12 @@ export function AppointmentBlock({
   appointment,
   position,
   columnHeightPx,
+  onOpen,
 }: {
   appointment: AppointmentCard;
   position: BlockPosition;
   columnHeightPx: number;
+  onOpen: () => void;
 }) {
   const t = useT(providerAppointmentsDict);
   const style = statusStyle(appointment.status);
@@ -50,9 +52,12 @@ export function AppointmentBlock({
   const statusLabel = t(STATUS_LABEL_KEY[appointment.status]);
 
   return (
-    <article
+    <button
+      type="button"
+      onClick={onOpen}
       className={cn(
-        "absolute inset-x-1 overflow-hidden rounded-xl border px-2 py-1.5 shadow-xs",
+        "absolute inset-x-1 overflow-hidden rounded-xl border px-2 py-1.5 text-left shadow-xs",
+        "transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none",
         SURFACE[style.tone] ?? SURFACE.neutral,
         style.vacated && "opacity-55",
       )}
@@ -64,6 +69,7 @@ export function AppointmentBlock({
         appointment.customerName,
         services,
         `${start} – ${end}`,
+        `৳${toBanglaDigits(appointment.totalAmount)}`,
         statusLabel,
       ]
         .filter(Boolean)
@@ -114,6 +120,7 @@ export function AppointmentBlock({
 
           <p className="mt-0.5 flex items-center gap-1 truncate font-number text-[11px] text-muted">
             {start} – {end}
+            <span className="font-semibold text-ink">৳{toBanglaDigits(appointment.totalAmount)}</span>
             {(position.clippedEnd || position.clippedStart) && (
               <AlertTriangle
                 className="h-3 w-3 shrink-0 text-brass"
@@ -123,6 +130,6 @@ export function AppointmentBlock({
           </p>
         </>
       )}
-    </article>
+    </button>
   );
 }

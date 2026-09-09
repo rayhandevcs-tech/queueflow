@@ -104,6 +104,42 @@ export const customerBookingDict = {
   },
   // No tilde: a service's duration is what the shop set it to, not an
   // estimate. The "~" belongs on the queue's wait, which is a projection.
+  // ---- Appointment booking (parlour) ----
+  apptSheetTitle: { bn: "সময় বেছে নাও", en: "Pick a time" },
+  apptSummary: {
+    bn: (dur: string, amount: string) => `${dur} · ৳${amount}`,
+    en: (dur: string, amount: string) => `${dur} · ৳${amount}`,
+  },
+  apptPickDay: { bn: "কোন দিন", en: "Which day" },
+  apptPickStaff: { bn: "কার কাছে", en: "With whom" },
+  apptAnyStaff: { bn: "যে কেউ", en: "Anyone" },
+  apptPickTime: { bn: "কখন", en: "What time" },
+  apptNoSlots: {
+    bn: "এই দিনে আর কোনো সময় খালি নেই — অন্য দিন দেখো।",
+    en: "No times left on this day — try another one.",
+  },
+  apptSlotsFailed: {
+    bn: "খালি সময় আনা গেল না। একটু পরে আবার চেষ্টা করো।",
+    en: "Couldn't load the free times. Try again in a moment.",
+  },
+  apptBookFailed: { bn: "বুকিং হয়নি — আবার চেষ্টা করো।", en: "Booking failed — try again." },
+  apptPickTimeFirst: { bn: "আগে একটা সময় বেছে নাও", en: "Pick a time first" },
+  apptConfirmAt: {
+    bn: (time: string, staff: string) => `${time}-এ ${staff} — বুক করো`,
+    en: (time: string, staff: string) => `Book ${time} with ${staff}`,
+  },
+  apptBookedToast: {
+    bn: "অ্যাপয়েন্টমেন্ট বুক হয়ে গেছে।",
+    en: "Your appointment is booked.",
+  },
+  apptCta: { bn: "সময় বেছে বুক করো", en: "Pick a time & book" },
+  apptUpcomingHeading: { bn: "আসন্ন অ্যাপয়েন্টমেন্ট", en: "Upcoming appointments" },
+  apptStatusBooked: { bn: "বুক করা", en: "Booked" },
+  apptStatusConfirmed: { bn: "নিশ্চিত", en: "Confirmed" },
+  apptStatusInProgress: { bn: "চলছে", en: "In progress" },
+  apptCancelCta: { bn: "বাতিল করো", en: "Cancel" },
+  apptCancelledToast: { bn: "অ্যাপয়েন্টমেন্ট বাতিল করা হয়েছে।", en: "Appointment cancelled." },
+
   minutesSuffix: { bn: (n: number) => `${n} মিনিট`, en: (n: number) => `${n} min` },
   preferredStaffLabel: { bn: "পছন্দের স্টাফ", en: "Preferred staff" },
   autoBestMatch: { bn: "অটো (সেরা মিল)", en: "Auto (best match)" },

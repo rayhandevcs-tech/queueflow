@@ -43,8 +43,11 @@ export const keys = {
     party: (groupId: string) => ["serials", "party", groupId] as const,
   },
   appointments: {
-    /** `day` is local "YYYY-MM-DD" — see `ymd()` in the appointments slice. */
+    /** `day` is local "YYYY-MM-DD" — see `ymd()` in `src/lib/day-key.ts`. */
     byShopDay: (shopId: string, day: string) => ["appointments", shopId, day] as const,
+    mine: () => ["appointments", "mine"] as const,
+    slots: (shopId: string, day: string, serviceIds: string[], staffId: string | null) =>
+      ["appointments", "slots", shopId, day, serviceIds.slice().sort(), staffId] as const,
   },
   dueLedger: {
     byShop: (shopId: string) => ["due-ledger", "shop", shopId] as const,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { CalendarClock, CalendarOff, Clock3, Users } from "lucide-react";
 import type { Chair, Shop } from "@/types";
@@ -14,7 +15,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { useNow } from "../hooks/use-now";
-import { useTodayAppointments } from "../hooks/use-today-appointments";
+import { useAppointmentStatus, useTodayAppointments } from "../hooks/use-today-appointments";
 import {
   SLOT_MINUTES,
   blockPosition,
@@ -25,6 +26,7 @@ import {
 } from "../lib/schedule";
 import { providerAppointmentsDict } from "../lib/i18n";
 import { AppointmentBlock } from "./AppointmentBlock";
+import { AppointmentDetailSheet } from "./AppointmentDetailSheet";
 
 /** Height of one 30-minute row. Big enough to tap a block on a phone. */
 const SLOT_PX = 44;
@@ -35,10 +37,10 @@ const GUTTER_PX = 52;
 /**
  * The parlour's day: beauticians across, time down.
  *
- * The columns and the time axis are drawn from data that already exists —
- * `chairs` and the shop's `weekly_hours` — so this is a real screen today,
- * not a mock. The only thing missing is the bookings, which arrive in
- * Sprint 4 through `useTodayAppointments` without this file changing.
+ * The columns and the time axis are drawn from `chairs` and the shop's
+ * `weekly_hours`; the bookings come from `useTodayAppointments`, which
+ * Sprint 4 pointed at the real `appointments` table without this file
+ * changing — the seam decision 39 was built for.
  *
  * One grid for both breakpoints rather than a phone layout and a desktop
  * layout: a day view whose columns are people is the same idea at every
@@ -61,6 +63,9 @@ export function AppointmentBoard({
   const { language } = useLanguage();
   const tt = useTerms(shop.business_type, language);
   const { data: appointments, isPending, isError } = useTodayAppointments(shop.id, day);
+  const setStatus = useAppointmentStatus(shop.id, day);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openAppointment = appointments?.find((a) => a.id === openId) ?? null;
 
   // null until mounted — see `useNow`. The "now" line appears after the first
   // client commit rather than being rendered on the server at a stale minute.
@@ -233,6 +238,7 @@ export function AppointmentBoard({
                     appointment={appointment}
                     position={position}
                     columnHeightPx={columnHeightPx}
+                    onOpen={() => setOpenId(appointment.id)}
                   />
                 );
               })}
@@ -254,10 +260,25 @@ export function AppointmentBoard({
   }
 
   return (
-    <Card className="overflow-hidden p-0">
-      {header}
-      {body()}
-    </Card>
+    <>
+      <Card className="overflow-hidden p-0">
+        {header}
+        {body()}
+      </Card>
+
+      <AppointmentDetailSheet
+        appointment={openAppointment}
+        busy={setStatus.isPending}
+        onClose={() => setOpenId(null)}
+        onSetStatus={(status) => {
+          if (!openAppointment) return;
+          setStatus.mutate(
+            { id: openAppointment.id, status },
+            { onSuccess: () => setOpenId(null) },
+          );
+        }}
+      />
+    </>
   );
 }
 

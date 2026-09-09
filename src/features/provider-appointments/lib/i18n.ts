@@ -45,12 +45,21 @@ export const providerAppointmentsDict = {
   },
   boardHoursCta: { bn: "সময় সেট করো", en: "Set your hours" },
   boardEmptyDay: { bn: "আজ কোনো অ্যাপয়েন্টমেন্ট নেই", en: "No appointments today" },
-  // The board is honest about *why* it is empty: booking is not live yet, so
-  // an owner does not sit waiting for bookings that cannot arrive.
   boardNotLiveNote: {
-    bn: "কাস্টমার এখনো অ্যাপয়েন্টমেন্ট নিতে পারছে না — বুকিং চালু হলে সেগুলো এখানে বসবে।",
-    en: "Customers can't book yet — once booking goes live, their appointments land here.",
+    bn: "কাস্টমাররা তোমার পাতা থেকে সময় বেছে বুক করলে সেগুলো এখানেই বসবে।",
+    en: "When customers pick a time on your page, their bookings appear here.",
   },
+  // ---- Detail sheet ----
+  detailTitle: { bn: "অ্যাপয়েন্টমেন্টের বিস্তারিত", en: "Appointment details" },
+  detailWhen: { bn: "সময়", en: "When" },
+  detailServices: { bn: "সার্ভিস", en: "Services" },
+  detailPrice: { bn: "দাম", en: "Price" },
+  detailFinished: {
+    bn: "এই অ্যাপয়েন্টমেন্টটা শেষ হয়ে গেছে — আর কিছু করার নেই।",
+    en: "This appointment is finished — nothing left to do.",
+  },
+  noCustomerName: { bn: "নাম দেওয়া হয়নি", en: "No name given" },
+
   nowLabel: { bn: "এখন", en: "Now" },
   runsPastClose: { bn: "বন্ধের সময় পেরিয়ে যাচ্ছে", en: "Runs past closing" },
   startsBeforeOpen: { bn: "খোলার আগে শুরু", en: "Starts before opening" },
@@ -63,27 +72,27 @@ export const providerAppointmentsDict = {
   statusCANCELLED: { bn: "বাতিল", en: "Cancelled" },
   statusNO_SHOW: { bn: "আসেনি", en: "No show" },
 
-  // ---- The honest state of the feature ----
-  buildingTitle: { bn: "অ্যাপয়েন্টমেন্ট বুকিং তৈরি হচ্ছে", en: "Appointment booking is being built" },
-  buildingBody: {
-    bn: "পার্লারে লাইভ সিরিয়াল নয় — কাস্টমার তারিখ আর সময় বেছে অ্যাপয়েন্টমেন্ট নেবে। ওটা তৈরি হচ্ছে; নিচে কী কী আসছে দেখো।",
-    en: "A parlour doesn't run a live line — customers will pick a date and a time slot. That's being built; here's what's coming.",
+  // ---- How booking works now that it is live ----
+  liveTitle: { bn: "অ্যাপয়েন্টমেন্ট বুকিং চালু", en: "Appointment booking is live" },
+  liveBody: {
+    bn: "কাস্টমার তোমার দোকানের পাতা থেকে সার্ভিস, দিন আর সময় বেছে বুক করতে পারছে। যে সময় ইতিমধ্যেই কারো নামে বুক, সেটা তাকে দেখানোই হবে না।",
+    en: "Customers can pick a service, a day and a time on your shop page. A time that is already taken is never offered to them.",
   },
-  comingSlotPicker: {
-    bn: "কাস্টমার তারিখ ও সময় বেছে বুক করবে",
-    en: "Customers pick a date and a time slot",
+  liveSlotRule: {
+    bn: "সার্ভিসের সময় ধরেই স্লট বসে — সার্ভিসের সময় বদলালে স্লটও বদলাবে",
+    en: "Slot length comes from the service's duration — change one and the other follows",
   },
-  comingCalendar: {
-    bn: "তোমার দিনের ক্যালেন্ডার — কোন বিউটিশিয়ানের কখন কাজ",
-    en: "Your day calendar — who is booked, and when",
+  liveHoursRule: {
+    bn: "দোকানের সাপ্তাহিক খোলা-বন্ধের সময়ের বাইরে কেউ বুক করতে পারবে না",
+    en: "Nobody can book outside your weekly opening hours",
   },
-  comingHours: {
-    bn: "প্রত্যেক বিউটিশিয়ানের কর্মঘণ্টা ও ছুটি",
-    en: "Working hours and time off for each beautician",
+  liveStatusRule: {
+    bn: "বোর্ডে অ্যাপয়েন্টমেন্টে চাপ দিয়ে নিশ্চিত, শুরু, শেষ বা বাতিল করো",
+    en: "Tap an appointment on the board to confirm, start, finish or cancel it",
   },
-  comingReminder: {
-    bn: "কাস্টমারকে আগের দিন মনে করিয়ে দেওয়া",
-    en: "A reminder to the customer the day before",
+  liveComingReminder: {
+    bn: "কাস্টমারকে আগের দিন মনে করিয়ে দেওয়া — পরের ধাপে আসছে",
+    en: "Reminding the customer the day before — coming next",
   },
 
   // ---- Quick actions ----

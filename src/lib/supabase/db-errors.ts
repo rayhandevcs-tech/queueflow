@@ -123,6 +123,34 @@ const MESSAGES = {
     bn: "এই ফিচারের ডেটাবেস আপডেটটা এখনো চালানো হয়নি — supabase/migrations ফোল্ডারের বাকি ফাইলগুলো SQL এডিটরে চালাও।",
     en: "The database update for this feature hasn't been run yet — apply the remaining files in supabase/migrations.",
   },
+  slotTaken: {
+    bn: "এই সময়টা এইমাত্র কেউ নিয়ে নিয়েছে — অন্য একটা সময় বেছে নাও।",
+    en: "Someone just took that time — pick another one.",
+  },
+  appointmentInPast: {
+    bn: "যে সময় পেরিয়ে গেছে সেখানে বুক করা যায় না।",
+    en: "You can't book a time that has already passed.",
+  },
+  outsideWorkingHours: {
+    bn: "এই সময়টা দোকানের খোলা সময়ের বাইরে পড়ে যাচ্ছে।",
+    en: "That time falls outside the shop's opening hours.",
+  },
+  shopClosedThatDay: {
+    bn: "ওই দিন দোকান বন্ধ — অন্য একটা দিন বেছে নাও।",
+    en: "The shop is closed that day — pick another one.",
+  },
+  staffNotInShop: {
+    bn: "এই স্টাফ এই দোকানের নয় বা এখন বন্ধ আছে।",
+    en: "That staff member isn't at this shop, or is paused.",
+  },
+  staffCannotPerform: {
+    bn: "এই স্টাফ বাছাই করা সব সার্ভিস করে না — অন্য কাউকে বেছে নাও।",
+    en: "That staff member doesn't do all the selected services — pick someone else.",
+  },
+  shopNotActive: {
+    bn: "এই দোকান এখন অ্যাপয়েন্টমেন্ট নিচ্ছে না।",
+    en: "This shop isn't taking appointments right now.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -171,6 +199,27 @@ const RULES: ReadonlyArray<{
     match: (t) => t.includes("23505") || t.includes("duplicate key value"),
     key: "collided",
     silent: false,
+  },
+  // Sprint 4 — keep these strings in sync with 20260918_appointment_core.sql.
+  {
+    // book_appointment() translates the exclusion constraint into this; the
+    // raw constraint name is matched too, for a direct insert.
+    match: (t) => t.includes("slot_taken") || t.includes("appointments_no_overlap"),
+    key: "slotTaken",
+    silent: false,
+  },
+  { match: (t) => t.includes("appointment_in_past"), key: "appointmentInPast", silent: false },
+  { match: (t) => t.includes("outside_working_hours"), key: "outsideWorkingHours", silent: false },
+  { match: (t) => t.includes("shop_closed_that_day"), key: "shopClosedThatDay", silent: false },
+  { match: (t) => t.includes("staff does not belong"), key: "staffNotInShop", silent: false },
+  { match: (t) => t.includes("selected staff cannot perform"), key: "staffCannotPerform", silent: false },
+  { match: (t) => t.includes("shop is not active"), key: "shopNotActive", silent: false },
+  {
+    // Same reasoning as the queue's: realtime/refetch has already corrected
+    // the board, so a racing tap needs no toast.
+    match: (t) => t.includes("invalid appointment status transition"),
+    key: null,
+    silent: true,
   },
   { match: (t) => t.includes("invalid service selection"), key: "invalidServiceSelection", silent: false },
   {

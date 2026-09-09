@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LiveTrackingView } from "@/features/customer-booking/components/LiveTrackingView";
+import { MyAppointmentsList } from "@/features/customer-booking/components/MyAppointmentsList";
 import { TabBar } from "@/components/ui/TabBar";
 import { Spinner } from "@/components/ui/Spinner";
 import { useProfileHistory } from "@/features/customer-profile/hooks/use-profile-history";
@@ -26,7 +27,14 @@ export default function MySerialPage() {
       <h1 className="mb-3.5 font-display text-xl font-bold text-ink">{t("myBookingsTitle")}</h1>
       <TabBar tabs={TABS} active={tab} onChange={setTab} className="mb-4" />
 
-      {tab === "ongoing" && <LiveTrackingView />}
+      {/* Renders nothing when there are no appointments, so a salon
+          customer's page is unchanged. */}
+      {tab === "ongoing" && (
+        <>
+          <MyAppointmentsList />
+          <LiveTrackingView />
+        </>
+      )}
 
       {tab === "completed" &&
         (isPending ? (

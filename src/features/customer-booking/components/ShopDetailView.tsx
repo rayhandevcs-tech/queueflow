@@ -8,6 +8,7 @@ import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { readRememberedLocation } from "@/lib/last-location";
 import { estimateTravelMin } from "@/lib/travel";
 import { breakMinutesLeft, canBookNow, shopAvailability } from "@/lib/shop-availability";
+import { isAppointmentModel } from "@/lib/business-model";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { TabBar } from "@/components/ui/TabBar";
@@ -28,6 +29,7 @@ import { useAuthGate } from "@/components/auth/AuthGate";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useCreateBooking, useCreateGroupBooking } from "../hooks/use-booking-mutations";
 import { AdvancePaymentDialog } from "./AdvancePaymentDialog";
+import { AppointmentBookingSheet } from "./AppointmentBookingSheet";
 import { PartySection, type PartyGuest } from "./PartySection";
 import { ShopHero } from "./ShopHero";
 import { ShopQuickActions } from "./ShopQuickActions";
@@ -78,6 +80,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   );
   const [advance, setAdvance] = useState(false);
   const [payingWith, setPayingWith] = useState(false);
+  const [pickingSlot, setPickingSlot] = useState(false);
   const [guests, setGuests] = useState<PartyGuest[]>([]);
 
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -160,7 +163,11 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
 
   const availability = shopAvailability(shop);
   const breakLeft = breakMinutesLeft(shop);
-  const bookable = canBookNow(shop);
+  // A parlour books days ahead, so "is the shop open at this second" is the
+  // wrong gate for it — canBookNow() is the queue's rule (is_open,
+  // accepting_new, on-break). An appointment only needs the shop to exist.
+  const appointment = isAppointmentModel(shop.business_type);
+  const bookable = appointment ? shop.status === "ACTIVE" : canBookNow(shop);
 
   const selectedServices = services?.filter((s) => selected.has(s.id)) ?? [];
   const rateOf = (id: string) => services?.find((s) => s.id === id)?.rate ?? 0;
@@ -225,6 +232,12 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   // moment they ask for something that needs one, rather than a failed RPC or
   // a login wall in front of the whole page.
   const onConfirm = guard(() => {
+    // The parlour path never books from here: it opens the slot picker, and
+    // the booking happens against a time the server said was free.
+    if (appointment) {
+      setPickingSlot(true);
+      return;
+    }
     if (advance && !isParty) {
       setPayingWith(true);
       return;
@@ -314,7 +327,9 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
             onAdvanceChange={setAdvance}
           />
         )}
-        {tab === "services" && selected.size > 0 && (
+        {/* Parties are a queue idea — five people join one line. An
+            appointment is one person in one slot. */}
+        {tab === "services" && selected.size > 0 && !appointment && (
           <div className="mt-4">
             <PartySection
               services={services}
@@ -356,7 +371,9 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
               >
                 {booking.isPending
                   ? t("booking")
-                  : isParty
+                  : appointment
+                    ? t("apptCta")
+                    : isParty
                     ? t("takePartySerial", guests.length + 1)
                     : advance
                       ? t("confirmWithAdvance")
@@ -366,6 +383,20 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
           </div>
         )}
       </div>
+
+      {pickingSlot && (
+        <AppointmentBookingSheet
+          shopId={shopId}
+          services={selectedServices}
+          staff={(chairs ?? []).filter((c) => c.is_active)}
+          onClose={() => setPickingSlot(false)}
+          onBooked={() => {
+            setPickingSlot(false);
+            showToast(t("apptBookedToast"));
+            router.push("/my-serial");
+          }}
+        />
+      )}
 
       {payingWith && (
         <AdvancePaymentDialog
