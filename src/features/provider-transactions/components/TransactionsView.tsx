@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
 import type { ExpenseCategory } from "@/types";
 import {
+  useAppointmentTransactions,
   useExpenseTransactions,
   useManualTransactions,
   useSerialTransactions,
@@ -40,19 +41,26 @@ export function TransactionsView({ shopId }: { shopId: string }) {
   const serials = useSerialTransactions(shopId);
   const manual = useManualTransactions(shopId);
   const expenses = useExpenseTransactions(shopId);
+  const appointments = useAppointmentTransactions(shopId);
 
   const categoryLabel = (c: ExpenseCategory) =>
     t(`category${c}` as "categoryRENT" | "categoryUTILITY" | "categorySUPPLIES" | "categorySTAFF" | "categoryOTHER");
 
   const rows = useMemo(
     () =>
-      buildTransactions(serials.data ?? [], manual.data ?? [], expenses.data ?? [], {
-        walkInLabel: t("walkInCustomer"),
-        manualLabel: t("manualEntry"),
-        expenseLabel: categoryLabel,
-      }),
+      buildTransactions(
+        serials.data ?? [],
+        manual.data ?? [],
+        expenses.data ?? [],
+        {
+          walkInLabel: t("walkInCustomer"),
+          manualLabel: t("manualEntry"),
+          expenseLabel: categoryLabel,
+        },
+        appointments.data ?? [],
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t and categoryLabel are stable per language
-    [serials.data, manual.data, expenses.data],
+    [serials.data, manual.data, expenses.data, appointments.data],
   );
 
   // Totals always describe the whole year, not the current filter: switching to

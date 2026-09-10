@@ -11,6 +11,10 @@ const PROVIDER_PREFIXES = [
   "/summary",
   "/settings",
   "/income",
+  // The parlour's appointment register. Provider-only for the same reason
+  // /income is: RLS returns nothing to a non-owner, but an empty register
+  // reads like a bug where being sent home reads like an answer.
+  "/appointments",
   // The AI assistant reads the caller's own shop and spends real money doing
   // it, so it is provider-only for both reasons at once.
   "/ai",

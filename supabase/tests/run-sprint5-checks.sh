@@ -211,14 +211,23 @@ Q "delete from appointments; delete from notifications;" >/dev/null
 # Tracked by id, not by name: the insert trigger snapshots customer_name from
 # the customer's profile, so the name passed in here does not survive.
 INSC="insert into appointments (shop_id,staff_id,customer_id,service_ids,starts_at,ends_at,is_walk_in)"
-SOON=$(Q "$INSC values ('$S','$ST','$C1',array['$SV'::uuid], now() + interval '20 hours', now() + interval '21 hours', false) returning id" | head -1)
-CANX=$(Q "$INSC values ('$S','$ST2','$C2',array['$SV'::uuid], now() + interval '22 hours', now() + interval '23 hours', false) returning id" | head -1)
+# The next 12:00 in the shop's own zone, plus N days.
+#
+# NOT `now() + interval '20 hours'`: 20260919 validates every booking against
+# the shop's 10:00–20:00 and the staff member's own hours, so a fixed offset
+# lands outside them at some times of day and the whole reminder section fails
+# depending on when it is run. Anchoring to local noon makes it deterministic.
+# The offset flips to tomorrow from 11:00 local, so the soonest row is at most
+# ~25 hours out — hence a 26-hour window below rather than 24.
+NOON() { echo "((((now() at time zone 'Asia/Dhaka')::date + case when (now() at time zone 'Asia/Dhaka')::time < time '11:00' then 0 else 1 end + $1) + time '$2') at time zone 'Asia/Dhaka')"; }
+SOON=$(Q "$INSC values ('$S','$ST','$C1',array['$SV'::uuid], $(NOON 0 12:00), $(NOON 0 13:00), false) returning id" | head -1)
+CANX=$(Q "$INSC values ('$S','$ST2','$C2',array['$SV'::uuid], $(NOON 0 14:00), $(NOON 0 15:00), false) returning id" | head -1)
 Q "update appointments set status='CANCELLED' where id='$CANX'" >/dev/null
-FAR=$(Q "$INSC values ('$S','$ST','$C1',array['$SV'::uuid], now() + interval '9 days 2 hours', now() + interval '9 days 3 hours', false) returning id" | head -1)
+FAR=$(Q "$INSC values ('$S','$ST','$C1',array['$SV'::uuid], $(NOON 8 12:00), $(NOON 8 13:00), false) returning id" | head -1)
 check "the cancel actually landed" "CANCELLED" "$(Q "select status from appointments where id='$CANX'")"
 
-check "one due appointment is reminded"          1 "$(Q 'select send_appointment_reminders(24)')"
-check "a second run sends nothing (idempotent)"  0 "$(Q 'select send_appointment_reminders(24)')"
+check "one due appointment is reminded"          1 "$(Q 'select send_appointment_reminders(26)')"
+check "a second run sends nothing (idempotent)"  0 "$(Q 'select send_appointment_reminders(26)')"
 check "exactly one notification was written"     1 "$(Q "select count(*) from notifications where type='REMINDER'")"
 check "it went to the right customer"            "$C1" "$(Q "select user_id from notifications where type='REMINDER'")"
 check "the cancelled one was never reminded"     "t" \

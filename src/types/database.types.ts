@@ -255,8 +255,11 @@ export type Database = {
           cancelled_at: string | null;
           cancelled_by: string | null;
           cancel_reason: string | null;
-          /** Sprint 5 reminder seam — nothing writes it yet. */
+          /** Sprint 5 reminder seam. */
           reminded_at: string | null;
+          /** Stamped on the move to DONE — the date income counts against. */
+          completed_at: string | null;
+          due_reminded_at: string | null;
         };
         // ends_at, total_amount, services_snapshot, status and the customer
         // snapshot are all computed by appointment_before_insert. Prefer the
@@ -287,6 +290,9 @@ export type Database = {
           notes?: string | null;
           cancel_reason?: string | null;
         };
+        // completed_at is absent on purpose: the trigger stamps it on DONE and
+        // then freezes it, so no client can move an appointment's income to
+        // another month.
         Relationships: [];
       };
       offers: {
@@ -936,6 +942,10 @@ export type Database = {
       staff_is_available: {
         Args: { p_chair_id: string; p_starts_at: string; p_ends_at: string };
         Returns: string;
+      };
+      send_appointment_due_reminder: {
+        Args: { p_appointment_id: string };
+        Returns: undefined;
       };
       send_appointment_reminders: {
         Args: { p_within_hours?: number };

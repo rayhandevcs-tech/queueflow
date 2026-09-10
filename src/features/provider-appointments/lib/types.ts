@@ -45,3 +45,21 @@ export interface AppointmentCard {
   /** Needed to ask for slots of the same length when rescheduling. */
   serviceIds: string[];
 }
+
+/**
+ * One row of the appointment list.
+ *
+ * The board draws a block and needs a window, a person and a status; the list
+ * is a record and also has to answer "was I paid". Rather than fattening
+ * `AppointmentCard` — which every block on the board would then carry — the
+ * list extends it, so the sheet and the block keep reading exactly what they
+ * read before.
+ */
+export interface AppointmentListRow extends AppointmentCard {
+  paymentStatus: "PAID" | "DUE" | "ADVANCE";
+  paymentMethod: string | null;
+  dueAmount: number;
+  /** Stamped by the trigger on the move to DONE (20260920), then frozen. */
+  completedAt: string | null;
+  cancelReason: string | null;
+}

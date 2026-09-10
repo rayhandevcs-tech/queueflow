@@ -7,7 +7,13 @@ import { useRealtimeChannel } from "@/lib/supabase/realtime";
 import { useNowMs } from "@/hooks/use-now";
 import type { ManualEntry, Serial } from "@/types";
 import { useLanguage } from "@/lib/i18n";
-import { getIncomeHistory, getManualEntries, getShopServicesForEntries, toManualEntryRows } from "../api/income.api";
+import {
+  getAppointmentIncomeHistory,
+  getIncomeHistory,
+  getManualEntries,
+  getShopServicesForEntries,
+  toManualEntryRows,
+} from "../api/income.api";
 import { computeIncomeSummary, type IncomeSummary } from "../lib/compute-income";
 
 const EMPTY: IncomeSummary = {
@@ -28,6 +34,7 @@ export function useIncomeSummary(shopId: string | undefined): {
   const serialsKey = keys.serials.incomeHistory(shopId ?? "");
   const manualKey = keys.manualEntries.byShop(shopId ?? "");
   const servicesKey = keys.services.byShop(shopId ?? "");
+  const appointmentsKey = keys.appointments.incomeHistory(shopId ?? "");
   // Recompute once a minute so "today"/"this month" roll over on their own
   // without needing a page refresh.
   const nowMs = useNowMs(60_000);
@@ -77,6 +84,20 @@ export function useIncomeSummary(shopId: string | undefined): {
     },
   });
 
+  // A parlour's finished appointments, merged in by the same pure function.
+  // Its own key so the realtime channel below can refresh just this one.
+  const appointmentsQuery = useQuery({
+    queryKey: appointmentsKey,
+    queryFn: () => getAppointmentIncomeHistory(shopId!),
+    enabled: !!shopId,
+  });
+
+  // No realtime channel for appointments, deliberately. `appointments` is not
+  // in the realtime publication, so a subscription here would be a silent
+  // no-op that also demanded a dashboard step from the operator. The
+  // completion mutation invalidates this key instead — the money only changes
+  // when someone finishes an appointment, and that someone is in this app.
+
   // Only the serials query gates the loading spinner — manual entries (a
   // brand-new table) or the services lookup being unavailable shouldn't zero
   // out the income page that already worked before this table existed; they
@@ -85,8 +106,23 @@ export function useIncomeSummary(shopId: string | undefined): {
     if (!serialsQuery.data) return EMPTY;
     const nameById = new Map((servicesQuery.data ?? []).map((s) => [s.id, s.name]));
     const manualRows = toManualEntryRows(manualQuery.data ?? [], nameById);
-    return computeIncomeSummary(serialsQuery.data, manualRows, new Date(nowMs), language);
-  }, [serialsQuery.data, manualQuery.data, servicesQuery.data, nowMs, language]);
+    // Appointments degrade the same way manual entries do: if that query is
+    // unavailable the page still shows the queue's income rather than zero.
+    return computeIncomeSummary(
+      serialsQuery.data,
+      manualRows,
+      new Date(nowMs),
+      language,
+      appointmentsQuery.data ?? [],
+    );
+  }, [
+    serialsQuery.data,
+    manualQuery.data,
+    servicesQuery.data,
+    appointmentsQuery.data,
+    nowMs,
+    language,
+  ]);
 
   return {
     summary,

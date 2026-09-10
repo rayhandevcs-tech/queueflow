@@ -1,6 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { translateDbError, UiDbError, withDbErrors } from "@/lib/supabase/db-errors";
-import type { DueSerialRow } from "../lib/compute-due-ledger";
+import type { DueAppointmentRow, DueSerialRow } from "../lib/compute-due-ledger";
 
 export interface DueManualEntryRow {
   id: string;
@@ -25,6 +25,29 @@ export async function getDueSerials(shopId: string): Promise<DueSerialRow[]> {
 
   if (error) throw error;
   return data;
+}
+
+/**
+ * Every completed-but-unsettled parlour appointment.
+ *
+ * The same query as `getDueSerials` against the other table — the columns
+ * were mirrored in Sprint 4 precisely so this would be a copy rather than a
+ * design. A salon simply has none of these rows.
+ */
+export async function getDueAppointments(shopId: string): Promise<DueAppointmentRow[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select(
+      "id, customer_id, customer_name, customer_phone, customer_avatar_url, due_amount, completed_at, due_reminded_at",
+    )
+    .eq("shop_id", shopId)
+    .eq("status", "DONE")
+    .eq("payment_status", "DUE")
+    .order("completed_at", { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
 }
 
 /** Sidebar badge — raw count of unsettled serials (not distinct customers). */
@@ -116,6 +139,39 @@ export async function markDueCollected(serialIds: string[]): Promise<void> {
 
     if (error) throw error;
   });
+}
+
+/** "আদায় হয়েছে" for appointments — the same settle, on the other table. */
+export async function markAppointmentDueCollected(appointmentIds: string[]): Promise<void> {
+  if (appointmentIds.length === 0) return;
+  return withDbErrors(async () => {
+    const supabase = getBrowserClient();
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        payment_status: "PAID",
+        due_amount: 0,
+        due_collected_at: new Date().toISOString(),
+      })
+      .in("id", appointmentIds);
+
+    if (error) throw error;
+  });
+}
+
+/** Appointment due reminders — its own RPC, so the queue's stays untouched. */
+export async function sendAppointmentDueReminders(appointmentIds: string[]): Promise<void> {
+  const supabase = getBrowserClient();
+  let lastRealError: unknown = null;
+
+  for (const id of appointmentIds) {
+    const { error } = await supabase.rpc("send_appointment_due_reminder", {
+      p_appointment_id: id,
+    });
+    if (error && !translateDbError(error).silent) lastRealError = error;
+  }
+
+  if (lastRealError) throw new UiDbError(translateDbError(lastRealError));
 }
 
 /**

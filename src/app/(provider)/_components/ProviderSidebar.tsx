@@ -6,6 +6,7 @@ import {
   Armchair,
   BarChart3,
   CalendarClock,
+  CalendarDays,
   LifeBuoy,
   LogOut,
   Megaphone,
@@ -75,6 +76,12 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       icon: appointmentModel ? CalendarClock : Radio,
       live: !appointmentModel,
     },
+    // The register of every booking, past and coming. Parlour only: a salon
+    // has no appointments to list, and the page itself says so to anyone who
+    // arrives from a bookmark.
+    ...(appointmentModel
+      ? [{ href: "/appointments", label: t("navAppointments"), icon: CalendarDays }]
+      : []),
     // Salon says "চেয়ার", parlour says "সিট" — decided once, at registration.
     { href: "/chairs", label: tt("chair"), icon: Armchair },
     { href: "/services", label: t("navServices"), icon: Scissors },

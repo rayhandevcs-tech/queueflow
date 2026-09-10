@@ -1,5 +1,10 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { ExpenseTxRow, ManualTxRow, SerialTxRow } from "../lib/build-transactions";
+import type {
+  AppointmentTxRow,
+  ExpenseTxRow,
+  ManualTxRow,
+  SerialTxRow,
+} from "../lib/build-transactions";
 
 /**
  * A rolling year, matching the income page's window. Small-shop volume, so the
@@ -33,6 +38,29 @@ export async function getSerialTransactions(shopId: string): Promise<SerialTxRow
 
   if (error) throw error;
   return data as SerialTxRow[];
+}
+
+/**
+ * Completed appointments on the same timeline.
+ *
+ * The photo comes from the row's own snapshot for the same reason a serial's
+ * does — RLS lets a customer read only their own profiles row, so the shop
+ * side has nothing else to show.
+ */
+export async function getAppointmentTransactions(shopId: string): Promise<AppointmentTxRow[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select(
+      "id, completed_at, total_amount, payment_status, payment_method, customer_name, customer_avatar_url, is_walk_in, services_snapshot",
+    )
+    .eq("shop_id", shopId)
+    .eq("status", "DONE")
+    .gte("completed_at", historySince())
+    .order("completed_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as AppointmentTxRow[];
 }
 
 export async function getManualTransactions(shopId: string): Promise<ManualTxRow[]> {

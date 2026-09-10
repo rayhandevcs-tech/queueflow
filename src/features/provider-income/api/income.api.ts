@@ -1,6 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { Chair, ExpenseCategory, ManualEntry, Service, ShopExpense } from "@/types";
-import type { DoneSerialRow, ManualEntryRow } from "../lib/compute-income";
+import type { DoneAppointmentRow, DoneSerialRow, ManualEntryRow } from "../lib/compute-income";
 import type { ManualEntryFormOutput } from "../schemas/manual-entry.schema";
 
 function historySince(): string {
@@ -34,6 +34,31 @@ export async function getIncomeHistory(shopId: string): Promise<DoneSerialRow[]>
   // supabase-js's typed client can't narrow payment_status from a runtime
   // filter — the full serials.payment_status enum stays in the inferred type.
   return data as DoneSerialRow[];
+}
+
+/**
+ * Every DONE parlour appointment in the same trailing window, PAID or DUE.
+ *
+ * `.in()` on payment_status mirrors `getIncomeHistory` exactly: a finished
+ * appointment is resolved to PAID or DUE by the payment sheet, so ADVANCE
+ * never reaches income and is excluded rather than handled as a third case.
+ * `completed_at` — not starts_at — is the date, so work that ran late lands
+ * on the day it actually finished.
+ */
+export async function getAppointmentIncomeHistory(shopId: string): Promise<DoneAppointmentRow[]> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("completed_at, total_amount, services_snapshot, payment_status, staff_id")
+    .eq("shop_id", shopId)
+    .eq("status", "DONE")
+    .in("payment_status", ["PAID", "DUE"])
+    .gte("completed_at", historySince());
+
+  if (error) throw error;
+  // Same narrowing note as getIncomeHistory: the runtime `.in()` filter can't
+  // narrow the column's inferred type.
+  return (data ?? []) as DoneAppointmentRow[];
 }
 
 /** Raw manual-entry rows — same trailing-window as getIncomeHistory, used both for aggregation and the editable list. */

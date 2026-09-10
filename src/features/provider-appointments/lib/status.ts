@@ -9,7 +9,13 @@ import type { AppointmentStatus } from "./types";
  * orange is "happening now" here exactly as it is there, good green is
  * "finished", brass is "needs your attention".
  */
-export type Tone = keyof typeof BADGE_VARIANTS;
+/**
+ * `onAccent` is excluded: it is the variant for a badge sitting *on* an accent
+ * surface, not a status colour, and no status below uses it. Narrowing it away
+ * here is what lets a status tone be handed straight to `StatusPill`, which
+ * accepts the five real tones.
+ */
+export type Tone = Exclude<keyof typeof BADGE_VARIANTS, "onAccent">;
 
 export interface StatusStyle {
   tone: Tone;

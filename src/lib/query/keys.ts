@@ -48,6 +48,9 @@ export const keys = {
     mine: () => ["appointments", "mine"] as const,
     slots: (shopId: string, day: string, serviceIds: string[], staffId: string | null) =>
       ["appointments", "slots", shopId, day, serviceIds.slice().sort(), staffId] as const,
+    incomeHistory: (shopId: string) => ["appointments", "income-history", shopId] as const,
+    list: (shopId: string, filters: { scope: string; staffId: string | null; from: string | null; to: string | null }) =>
+      ["appointments", "list", shopId, filters] as const,
   },
   staffAvailability: {
     hours: (chairIds: string[]) =>
@@ -60,6 +63,7 @@ export const keys = {
     countByShop: (shopId: string) => ["due-ledger", "count", "shop", shopId] as const,
     manualByShop: (shopId: string) => ["due-ledger", "manual", "shop", shopId] as const,
     manualCountByShop: (shopId: string) => ["due-ledger", "manual-count", "shop", shopId] as const,
+    appointmentsByShop: (shopId: string) => ["due-ledger", "appointments", "shop", shopId] as const,
   },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
@@ -97,6 +101,7 @@ export const keys = {
     serials: (shopId: string) => ["transactions", "serials", shopId] as const,
     manual: (shopId: string) => ["transactions", "manual", shopId] as const,
     expenses: (shopId: string) => ["transactions", "expenses", shopId] as const,
+    appointments: (shopId: string) => ["transactions", "appointments", shopId] as const,
   },
   hairstyles: {
     byKind: (kind: string) => ["hairstyles", kind] as const,

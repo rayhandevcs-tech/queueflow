@@ -2,7 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
-import { getAppointmentsForDay, setAppointmentStatus } from "../api/appointments.api";
+import {
+  completeAppointment,
+  getAppointmentsForDay,
+  setAppointmentStatus,
+} from "../api/appointments.api";
 import { ymd } from "../lib/schedule";
 import type { AppointmentCard, AppointmentStatus } from "../lib/types";
 
@@ -46,5 +50,41 @@ export function useAppointmentStatus(shopId: string, day: Date) {
       queryClient.invalidateQueries({
         queryKey: keys.appointments.byShopDay(shopId, ymd(day)),
       }),
+  });
+}
+
+/**
+ * Finish an appointment and record the payment in the same write.
+ *
+ * Separate from `useAppointmentStatus` because it invalidates more: the money
+ * screens read `appointments` directly now, and `appointments` is not in the
+ * realtime publication, so nothing else would tell income, the transaction
+ * list or the due ledger that a job just closed. Invalidating here is what
+ * keeps them honest — see the note in `use-income-summary.ts` for why a
+ * realtime channel was not the answer.
+ */
+export function useCompleteAppointment(shopId: string, day: Date) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      payment,
+    }: {
+      id: string;
+      payment: { method: string } | { due: number };
+    }) => completeAppointment(id, payment),
+    onSettled: () => {
+      for (const queryKey of [
+        keys.appointments.byShopDay(shopId, ymd(day)),
+        keys.appointments.incomeHistory(shopId),
+        keys.transactions.appointments(shopId),
+        keys.dueLedger.appointmentsByShop(shopId),
+      ]) {
+        queryClient.invalidateQueries({ queryKey });
+      }
+      // The list page's own key carries its filters, so invalidate the whole
+      // branch rather than guessing which filter combination is mounted.
+      queryClient.invalidateQueries({ queryKey: ["appointments", "list", shopId] });
+    },
   });
 }

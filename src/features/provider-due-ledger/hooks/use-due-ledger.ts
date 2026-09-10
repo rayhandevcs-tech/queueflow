@@ -10,12 +10,16 @@ import {
   getDueCount,
   getDueManualEntries,
   getDueManualEntryCount,
+  getDueAppointments,
   getDueSerials,
+  markAppointmentDueCollected,
   markDueCollected,
   markManualEntryCollected,
+  sendAppointmentDueReminders,
   sendDueReminders,
 } from "../api/due-ledger.api";
 import { computeDueLedger } from "../lib/compute-due-ledger";
+import type { DueCustomerGroup } from "../lib/compute-due-ledger";
 
 export type { DueManualEntryRow } from "../api/due-ledger.api";
 
@@ -41,6 +45,7 @@ export function useDueLedger(shopId: string | undefined) {
   const nowMs = useNowMs(60_000);
   const queryKey = keys.dueLedger.byShop(shopId ?? "");
   const manualQueryKey = keys.dueLedger.manualByShop(shopId ?? "");
+  const appointmentQueryKey = keys.dueLedger.appointmentsByShop(shopId ?? "");
 
   const dueQuery = useQuery({
     queryKey,
@@ -51,6 +56,15 @@ export function useDueLedger(shopId: string | undefined) {
   const manualDueQuery = useQuery({
     queryKey: manualQueryKey,
     queryFn: () => getDueManualEntries(shopId!),
+    enabled: !!shopId,
+  });
+
+  // A parlour's unpaid work lives in `appointments`. Without this the "who
+  // owes me" page would read empty for a parlour that is owed money — worse
+  // than showing nothing, because it looks like an answer.
+  const appointmentDueQuery = useQuery({
+    queryKey: appointmentQueryKey,
+    queryFn: () => getDueAppointments(shopId!),
     enabled: !!shopId,
   });
 
@@ -71,8 +85,8 @@ export function useDueLedger(shopId: string | undefined) {
   });
 
   const groups = useMemo(
-    () => computeDueLedger(dueQuery.data ?? [], new Date(nowMs)),
-    [dueQuery.data, nowMs],
+    () => computeDueLedger(dueQuery.data ?? [], new Date(nowMs), appointmentDueQuery.data ?? []),
+    [dueQuery.data, appointmentDueQuery.data, nowMs],
   );
   const manualEntries = manualDueQuery.data ?? [];
   const totalDue =
@@ -87,10 +101,22 @@ export function useDueLedger(shopId: string | undefined) {
     void queryClient.invalidateQueries({ queryKey: keys.serials.today(shopId ?? "") });
     void queryClient.invalidateQueries({ queryKey: keys.serials.incomeHistory(shopId ?? "") });
     void queryClient.invalidateQueries({ queryKey: keys.manualEntries.byShop(shopId ?? "") });
+    void queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
   };
 
+  /**
+   * Settling and reminding take the whole group, not a list of ids.
+   *
+   * One person's debt can now sit in two tables at once — a serial from last
+   * month and an appointment from last week. The counter settles the person,
+   * so the action has to reach both tables in one go; passing bare ids made
+   * that impossible to express.
+   */
   const collect = useMutation({
-    mutationFn: markDueCollected,
+    mutationFn: async (g: DueCustomerGroup) => {
+      if (g.serialIds.length) await markDueCollected(g.serialIds);
+      if (g.appointmentIds.length) await markAppointmentDueCollected(g.appointmentIds);
+    },
     onSuccess: invalidateAfterSettle,
   });
 
@@ -100,7 +126,12 @@ export function useDueLedger(shopId: string | undefined) {
   });
 
   const remind = useMutation({
-    mutationFn: sendDueReminders,
+    mutationFn: async (g: DueCustomerGroup) => {
+      if (g.remindableSerialIds.length) await sendDueReminders(g.remindableSerialIds);
+      if (g.remindableAppointmentIds.length) {
+        await sendAppointmentDueReminders(g.remindableAppointmentIds);
+      }
+    },
   });
 
   return {

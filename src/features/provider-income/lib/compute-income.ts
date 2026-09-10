@@ -10,6 +10,22 @@ export interface DoneSerialRow {
   chair_id: string | null;
 }
 
+/**
+ * One completed parlour appointment.
+ *
+ * Deliberately the same shape as `DoneSerialRow` down to the field names,
+ * except that a chair is called `staff_id` on this table. That is decision 29
+ * paying off: the money columns were mirrored onto `appointments` in Sprint 4
+ * so this aggregation would need no second implementation.
+ */
+export interface DoneAppointmentRow {
+  completed_at: string | null;
+  total_amount: number;
+  services_snapshot: Json;
+  payment_status: "PAID" | "DUE";
+  staff_id: string | null;
+}
+
 /** One "কাজ শেষ, সিরিয়াল ছাড়া" entry — already resolved to a service name at read time. */
 export interface ManualEntryRow {
   created_at: string;
@@ -80,6 +96,11 @@ export function computeIncomeSummary(
   manualRows: ManualEntryRow[],
   now: Date,
   lang: Language = "bn",
+  /**
+   * Completed appointments. Last and optional so every existing call site —
+   * and every salon — behaves exactly as before this argument existed.
+   */
+  appointmentRows: DoneAppointmentRow[] = [],
 ): IncomeSummary {
   const MONTHS_SHORT = lang === "en" ? EN_MONTHS_SHORT : BN_MONTHS_SHORT;
   const todayKey = now.toDateString();
@@ -133,6 +154,19 @@ export function computeIncomeSummary(
     apply(new Date(row.created_at), row.amount, row.payment_status, row.chair_id, [
       { name: row.service_name, amount: row.amount },
     ]);
+  }
+
+  // Appointments go through the same `apply()` as serials, so a parlour's day
+  // is totalled by exactly the rules a salon's day is: counted at completion,
+  // cash and due broken out, the service snapshot driving the per-service
+  // split. `staff_id` is a chairs row here too, so byStaff needs no mapping.
+  for (const row of appointmentRows) {
+    if (!row.completed_at) continue;
+    const services = parseServicesSnapshot(row.services_snapshot).map((s) => ({
+      name: s.name,
+      amount: s.rate,
+    }));
+    apply(new Date(row.completed_at), row.total_amount, row.payment_status, row.staff_id, services);
   }
 
   const monthlyTrend: MonthlyPoint[] = [];

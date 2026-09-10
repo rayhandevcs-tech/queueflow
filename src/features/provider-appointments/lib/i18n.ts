@@ -60,6 +60,64 @@ export const providerAppointmentsDict = {
   },
   noCustomerName: { bn: "নাম দেওয়া হয়নি", en: "No name given" },
 
+  // ---- Appointment list (Sprint 5 hardening) ----
+  listTitle: { bn: "অ্যাপয়েন্টমেন্টের খাতা", en: "Appointment register" },
+  listSubtitle: {
+    bn: "কে, কী সার্ভিস, কার কাছে, কোন দিন, কত টাকা — সব এক জায়গায়।",
+    en: "Who, what service, with whom, on which day, for how much — all in one place.",
+  },
+  listScopeToday: { bn: "আজ", en: "Today" },
+  listScopeUpcoming: { bn: "সামনে", en: "Upcoming" },
+  listScopeCompleted: { bn: "শেষ হয়েছে", en: "Completed" },
+  listScopeCancelled: { bn: "বাতিল ও আসেনি", en: "Cancelled & no-show" },
+  listScopeAll: { bn: "সব", en: "All" },
+  listAllStaff: { bn: "সবাই", en: "Everyone" },
+  listFrom: { bn: "থেকে", en: "From" },
+  listTo: { bn: "পর্যন্ত", en: "To" },
+  listClearFilters: { bn: "ফিল্টার মুছো", en: "Clear" },
+  listColCustomer: { bn: "কাস্টমার", en: "Customer" },
+  listColServices: { bn: "সার্ভিস", en: "Service" },
+  listColStaff: { bn: "কার কাছে", en: "With" },
+  listColDate: { bn: "দিন", en: "Date" },
+  listColStart: { bn: "শুরু", en: "Start" },
+  listColEnd: { bn: "শেষ", en: "End" },
+  listColPrice: { bn: "টাকা", en: "Price" },
+  listColStatus: { bn: "অবস্থা", en: "Status" },
+  listPaidTag: { bn: "টাকা পেয়েছ", en: "Paid" },
+  listUnpaidTag: { bn: "বাকি", en: "Unpaid" },
+  listEmptyTitle: { bn: "এই ফিল্টারে কিছু নেই", en: "Nothing matches these filters" },
+  listEmptyBody: {
+    bn: "অন্য ট্যাব বা অন্য দিন দেখো — অথবা ফিল্টার মুছে পুরো খাতা দেখো।",
+    en: "Try another tab or another day — or clear the filters to see the whole register.",
+  },
+  listLoadFailed: {
+    bn: "খাতা আনা গেল না। একটু পরে আবার চেষ্টা করো।",
+    en: "Couldn't load the register. Try again in a moment.",
+  },
+  listQueueShopTitle: { bn: "এই দোকান সিরিয়ালে চলে", en: "This shop runs on a queue" },
+  listQueueShopBody: {
+    bn: "অ্যাপয়েন্টমেন্টের খাতা পার্লারের জন্য। তোমার দোকানের কাজের হিসাব সিরিয়াল বোর্ড আর আয়ের পাতায়।",
+    en: "The appointment register is for parlours. Your shop's work is on the queue board and the income page.",
+  },
+  listQueueShopCta: { bn: "বোর্ডে ফিরে যাও", en: "Back to the board" },
+  listCapped: {
+    bn: (n: string) => `সবচেয়ে সাম্প্রতিক ${n}টা দেখানো হচ্ছে — আরো পুরনো দেখতে দিন বেছে নাও।`,
+    en: (n: string) => `Showing the most recent ${n} — pick a date range to reach further back.`,
+  },
+
+  // ---- Payment on completion (Sprint 5 hardening) ----
+  // Same wording as the queue's sheet, on purpose: one shop, one question.
+  payAskTitle: { bn: "টাকা পেয়েছ?", en: "Did you get paid?" },
+  payMethodTitle: { bn: "কীভাবে পেলে?", en: "How did they pay?" },
+  payYesCta: { bn: "হ্যাঁ", en: "Yes" },
+  payNoCta: { bn: "না", en: "No" },
+  payBackCta: { bn: "ফিরে যাও", en: "Go back" },
+  payCash: { bn: "নগদ টাকা", en: "Cash" },
+  payBkash: { bn: "বিকাশ", en: "bKash" },
+  payNagad: { bn: "নগদ", en: "Nagad" },
+  payRocket: { bn: "রকেট", en: "Rocket" },
+  payCard: { bn: "কার্ড", en: "Card" },
+
   // ---- Staff availability (Sprint 5) ----
   availabilityHeading: { bn: "কে কখন কাজ করে", en: "Who works when" },
   availabilityDesc: {

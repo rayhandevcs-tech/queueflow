@@ -8,7 +8,7 @@ import type { ExpenseCategory } from "@/types";
  * here as a pure function rather than inside a component — a ledger is exactly
  * the kind of thing that should be testable without a browser.
  */
-export type TransactionKind = "SERIAL" | "MANUAL" | "EXPENSE";
+export type TransactionKind = "SERIAL" | "MANUAL" | "EXPENSE" | "APPOINTMENT";
 
 export interface Transaction {
   id: string;
@@ -38,6 +38,24 @@ export interface SerialTxRow {
   customer_name: string | null;
   customer_avatar_url: string | null;
   party_member_name: string | null;
+  is_walk_in: boolean;
+  services_snapshot: unknown;
+}
+
+/**
+ * One parlour appointment on the money timeline.
+ *
+ * No `party_member_name`: a party is five people joining one queue, which an
+ * appointment never is. Everything else matches `SerialTxRow` field for field.
+ */
+export interface AppointmentTxRow {
+  id: string;
+  completed_at: string | null;
+  total_amount: number;
+  payment_status: string;
+  payment_method: string | null;
+  customer_name: string | null;
+  customer_avatar_url: string | null;
   is_walk_in: boolean;
   services_snapshot: unknown;
 }
@@ -80,6 +98,8 @@ export function buildTransactions(
   manual: readonly ManualTxRow[],
   expenses: readonly ExpenseTxRow[],
   opts: BuildOptions,
+  /** Last and optional, so a salon's timeline is byte-for-byte what it was. */
+  appointments: readonly AppointmentTxRow[] = [],
 ): Transaction[] {
   const out: Transaction[] = [];
 
@@ -96,6 +116,24 @@ export function buildTransactions(
       avatarUrl: s.customer_avatar_url,
       unpaid: s.payment_status === "DUE",
       method: s.payment_method,
+      expenseCategory: null,
+    });
+  }
+
+  for (const a of appointments) {
+    // Same rule as a serial: no completed_at means the work never finished,
+    // so no money moved and it does not belong on a money timeline.
+    if (!a.completed_at) continue;
+    out.push({
+      id: a.id,
+      kind: "APPOINTMENT",
+      amount: a.total_amount,
+      atMs: new Date(a.completed_at).getTime(),
+      title: a.customer_name || opts.walkInLabel,
+      subtitle: serviceNames(a.services_snapshot),
+      avatarUrl: a.customer_avatar_url,
+      unpaid: a.payment_status === "DUE",
+      method: a.payment_method,
       expenseCategory: null,
     });
   }

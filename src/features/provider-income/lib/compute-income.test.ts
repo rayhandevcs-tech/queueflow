@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { computeIncomeSummary, type DoneSerialRow, type ManualEntryRow } from "./compute-income";
+import {
+  computeIncomeSummary,
+  type DoneAppointmentRow,
+  type DoneSerialRow,
+  type ManualEntryRow,
+} from "./compute-income";
 
 const NOW = new Date("2026-07-30T12:00:00.000Z");
 
@@ -21,6 +26,19 @@ function manualRow(overrides: Partial<ManualEntryRow>): ManualEntryRow {
     service_name: "Shave",
     chair_id: null,
     payment_status: "PAID",
+    ...overrides,
+  };
+}
+
+function appointmentRow(overrides: Partial<DoneAppointmentRow> = {}): DoneAppointmentRow {
+  return {
+    completed_at: NOW.toISOString(),
+    total_amount: 500,
+    services_snapshot: [
+      { service_id: "p1", name: "Facial", rate: 500, estimated_duration_min: 45 },
+    ],
+    payment_status: "PAID",
+    staff_id: null,
     ...overrides,
   };
 }
@@ -157,5 +175,97 @@ describe("computeIncomeSummary", () => {
     const summary = computeIncomeSummary(rows, [], NOW);
     expect(summary.byStaff).toEqual([{ chairId: "chair-1", amount: 200 }]);
     expect(summary.byStaff.reduce((sum, s) => sum + s.amount, 0)).toBe(summary.month.amount);
+  });
+
+  // ---- Sprint 5 hardening: completed parlour appointments ----
+
+  it("leaves every total untouched when no appointments are passed", () => {
+    const rows = [row({ total_amount: 150 })];
+    expect(computeIncomeSummary(rows, [], NOW)).toEqual(
+      computeIncomeSummary(rows, [], NOW, "bn", []),
+    );
+  });
+
+  it("counts a completed appointment into today, the month and the year", () => {
+    const summary = computeIncomeSummary([], [], NOW, "bn", [appointmentRow({ total_amount: 500 })]);
+    expect(summary.today).toEqual({ amount: 500, cash: 500, due: 0, doneCount: 1 });
+    expect(summary.month.amount).toBe(500);
+    expect(summary.year.amount).toBe(500);
+  });
+
+  it("splits an unpaid appointment into due, not cash — the same rule serials get", () => {
+    const summary = computeIncomeSummary([], [], NOW, "bn", [
+      appointmentRow({ total_amount: 500, payment_status: "DUE" }),
+    ]);
+    expect(summary.today).toEqual({ amount: 500, cash: 0, due: 500, doneCount: 1 });
+  });
+
+  it("skips an appointment with no completed_at — booked is not earned", () => {
+    const summary = computeIncomeSummary([], [], NOW, "bn", [
+      appointmentRow({ completed_at: null, total_amount: 500 }),
+    ]);
+    expect(summary.today.amount).toBe(0);
+  });
+
+  it("counts an appointment at its completed_at, not at its scheduled day", () => {
+    // Completed last month: it belongs to last month's takings even though a
+    // shop reading `starts_at` would have filed it under today.
+    const summary = computeIncomeSummary([], [], NOW, "bn", [
+      appointmentRow({ completed_at: "2026-06-15T12:00:00.000Z", total_amount: 400 }),
+    ]);
+    expect(summary.today.amount).toBe(0);
+    expect(summary.month.amount).toBe(0);
+    expect(summary.monthlyTrend.at(-2)!.amount).toBe(400);
+  });
+
+  it("merges appointments with serials and manual entries into one set of totals", () => {
+    const summary = computeIncomeSummary(
+      [row({ total_amount: 150, chair_id: "chair-1" })],
+      [manualRow({ amount: 100, chair_id: "chair-2" })],
+      NOW,
+      "bn",
+      [appointmentRow({ total_amount: 500, staff_id: "chair-3" })],
+    );
+    expect(summary.today).toEqual({ amount: 750, cash: 750, due: 0, doneCount: 3 });
+    expect(summary.byStaff).toEqual([
+      { chairId: "chair-3", amount: 500 },
+      { chairId: "chair-1", amount: 150 },
+      { chairId: "chair-2", amount: 100 },
+    ]);
+  });
+
+  it("splits an appointment by its snapshot services, so a repriced service cannot rewrite it", () => {
+    const summary = computeIncomeSummary([], [], NOW, "bn", [
+      appointmentRow({
+        total_amount: 800,
+        services_snapshot: [
+          { service_id: "p1", name: "Facial", rate: 500, estimated_duration_min: 45 },
+          { service_id: "p2", name: "Threading", rate: 300, estimated_duration_min: 15 },
+        ],
+      }),
+    ]);
+    expect(summary.byService).toEqual([
+      { name: "Facial", amount: 500 },
+      { name: "Threading", amount: 300 },
+    ]);
+  });
+
+  it("adds an appointment's amount to the same staff bucket as that person's serials", () => {
+    const summary = computeIncomeSummary(
+      [row({ total_amount: 150, chair_id: "chair-1" })],
+      [],
+      NOW,
+      "bn",
+      [appointmentRow({ total_amount: 500, staff_id: "chair-1" })],
+    );
+    expect(summary.byStaff).toEqual([{ chairId: "chair-1", amount: 650 }]);
+  });
+
+  it("leaves an appointment with no staff_id out of byStaff without losing the money", () => {
+    const summary = computeIncomeSummary([], [], NOW, "bn", [
+      appointmentRow({ total_amount: 500, staff_id: null }),
+    ]);
+    expect(summary.today.amount).toBe(500);
+    expect(summary.byStaff).toEqual([]);
   });
 });

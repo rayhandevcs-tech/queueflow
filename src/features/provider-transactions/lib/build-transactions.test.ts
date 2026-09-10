@@ -4,6 +4,7 @@ import {
   groupByDay,
   totalsOf,
   type ExpenseTxRow,
+  type AppointmentTxRow,
   type ManualTxRow,
   type SerialTxRow,
 } from "./build-transactions";
@@ -45,6 +46,21 @@ function manual(o: Partial<ManualTxRow> = {}): ManualTxRow {
 
 function expense(o: Partial<ExpenseTxRow> = {}): ExpenseTxRow {
   return { id: "e1", amount: 3000, spent_on: "2026-08-15", category: "RENT", note: null, ...o };
+}
+
+function appointment(o: Partial<AppointmentTxRow> = {}): AppointmentTxRow {
+  return {
+    id: "a1",
+    completed_at: "2026-08-15T12:00:00.000Z",
+    total_amount: 500,
+    payment_status: "PAID",
+    payment_method: "bkash",
+    customer_name: "Nusrat",
+    customer_avatar_url: null,
+    is_walk_in: false,
+    services_snapshot: [{ name: "Facial", rate: 500 }],
+    ...o,
+  };
 }
 
 describe("buildTransactions", () => {
@@ -155,5 +171,81 @@ describe("groupByDay", () => {
     expect(days).toHaveLength(2);
     expect(days[0].rows.map((r) => r.id)).toEqual(["b", "a"]);
     expect(days[1].rows.map((r) => r.id)).toEqual(["c"]);
+  });
+});
+
+describe("buildTransactions with appointments", () => {
+  it("adds nothing when no appointments are passed", () => {
+    expect(buildTransactions([serial()], [manual()], [expense()], opts)).toEqual(
+      buildTransactions([serial()], [manual()], [expense()], opts, []),
+    );
+  });
+
+  it("puts a completed appointment on the timeline as its own kind", () => {
+    const rows = buildTransactions([], [], [], opts, [appointment()]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].kind).toBe("APPOINTMENT");
+    expect(rows[0].amount).toBe(500);
+    expect(rows[0].title).toBe("Nusrat");
+    expect(rows[0].subtitle).toBe("Facial");
+    expect(rows[0].method).toBe("bkash");
+    expect(rows[0].unpaid).toBe(false);
+  });
+
+  it("skips an appointment that never finished", () => {
+    expect(buildTransactions([], [], [], opts, [appointment({ completed_at: null })])).toEqual([]);
+  });
+
+  it("marks an unpaid appointment as pending rather than collected", () => {
+    const rows = buildTransactions([], [], [], opts, [
+      appointment({ payment_status: "DUE", payment_method: null, total_amount: 700 }),
+    ]);
+    expect(rows[0].unpaid).toBe(true);
+    expect(totalsOf(rows)).toEqual({ inflow: 0, outflow: 0, pending: 700, net: 0 });
+  });
+
+  it("falls back to the walk-in label when no name was taken", () => {
+    const rows = buildTransactions([], [], [], opts, [appointment({ customer_name: null })]);
+    expect(rows[0].title).toBe("walk-in");
+  });
+
+  it("interleaves appointments with serials and expenses in one newest-first timeline", () => {
+    const rows = buildTransactions(
+      [serial({ id: "s", completed_at: "2026-08-15T10:00:00.000Z" })],
+      [],
+      [expense({ id: "e", spent_on: "2026-08-14" })],
+      opts,
+      [appointment({ id: "a", completed_at: "2026-08-15T14:00:00.000Z" })],
+    );
+    expect(rows.map((r) => r.id)).toEqual(["a", "s", "e"]);
+  });
+
+  it("counts appointment money into the same totals as the rest of the ledger", () => {
+    const rows = buildTransactions(
+      [serial({ total_amount: 100 })],
+      [manual({ amount: 30 })],
+      [expense({ amount: 3000 })],
+      opts,
+      [appointment({ total_amount: 500 })],
+    );
+    expect(totalsOf(rows)).toEqual({
+      inflow: 630,
+      outflow: 3000,
+      pending: 0,
+      net: 630 - 3000,
+    });
+  });
+
+  it("groups an appointment into the same day bucket as that day's serials", () => {
+    const rows = buildTransactions(
+      [serial({ id: "s", completed_at: "2026-08-15T10:00:00.000Z" })],
+      [],
+      [],
+      opts,
+      [appointment({ id: "a", completed_at: "2026-08-15T18:00:00.000Z" })],
+    );
+    const days = groupByDay(rows);
+    expect(days).toHaveLength(1);
+    expect(days[0].rows.map((r) => r.id)).toEqual(["a", "s"]);
   });
 });

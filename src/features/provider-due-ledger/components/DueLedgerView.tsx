@@ -56,7 +56,10 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
         <div className="flex flex-col gap-2.75">
           {groups.map((g) => {
             const reminded = justReminded.has(g.key);
-            const canRemind = g.remindableSerialIds.length > 0 && !reminded;
+            // Either table can carry the debt, so either list can make it
+            // remindable.
+            const canRemind =
+              g.remindableSerialIds.length + g.remindableAppointmentIds.length > 0 && !reminded;
             return (
               <div key={g.key} className="rounded-2xl border border-line bg-card p-4">
                 <div className="flex items-center gap-3">
@@ -65,7 +68,9 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                     <p className="truncate font-display text-base font-bold text-ink">{g.name}</p>
                     <p className="text-xs text-muted">
                       {g.oldestDueAt ? t("dueSince", formatBanglaDate(new Date(g.oldestDueAt))) : "—"}
-                      {g.serialIds.length > 1 ? ` · ${t("timesSuffix", g.serialIds.length)}` : ""}
+                      {g.serialIds.length + g.appointmentIds.length > 1
+                        ? ` · ${t("timesSuffix", g.serialIds.length + g.appointmentIds.length)}`
+                        : ""}
                     </p>
                   </div>
                   <span className="shrink-0 rounded-full bg-live-soft px-3 py-1 font-number text-sm font-bold text-live">
@@ -79,7 +84,7 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                     disabled={!canRemind || remind.isPending}
                     title={reminded ? t("alreadyRemindedToday") : t("sendReminderTitle")}
                     onClick={() => {
-                      remind.mutate(g.remindableSerialIds, {
+                      remind.mutate(g, {
                         onSuccess: () => {
                           setJustReminded((prev) => new Set(prev).add(g.key));
                           showToast(t("reminderSent"));
@@ -127,7 +132,7 @@ export function DueLedgerView({ shopId }: { shopId: string | undefined }) {
                     type="button"
                     disabled={collect.isPending}
                     onClick={() => {
-                      collect.mutate(g.serialIds, {
+                      collect.mutate(g, {
                         onSuccess: () => showToast(t("markedCollected")),
                         onError: () => showToast(t("markFailed")),
                       });

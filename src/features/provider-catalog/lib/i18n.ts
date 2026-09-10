@@ -256,6 +256,7 @@ export const providerCatalogDict = {
   // ProviderSidebar — nav labels
   navLiveQueue: { bn: "লাইভ সিরিয়াল", en: "Live queue" },
   navChairs: { bn: "চেয়ার", en: "Chairs" },
+  navAppointments: { bn: "অ্যাপয়েন্টমেন্ট", en: "Appointments" },
   navServices: { bn: "সার্ভিস ও রেট", en: "Services & rates" },
   navOffers: { bn: "অফার", en: "Offers" },
   navChat: { bn: "মেসেজ", en: "Messages" },

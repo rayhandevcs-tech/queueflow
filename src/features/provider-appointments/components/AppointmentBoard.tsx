@@ -15,7 +15,11 @@ import { Spinner } from "@/components/ui/Spinner";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { useNow } from "../hooks/use-now";
-import { useAppointmentStatus, useTodayAppointments } from "../hooks/use-today-appointments";
+import {
+  useAppointmentStatus,
+  useCompleteAppointment,
+  useTodayAppointments,
+} from "../hooks/use-today-appointments";
 import {
   SLOT_MINUTES,
   blockPosition,
@@ -27,6 +31,7 @@ import {
 import { providerAppointmentsDict } from "../lib/i18n";
 import { AppointmentBlock } from "./AppointmentBlock";
 import { AppointmentDetailSheet } from "./AppointmentDetailSheet";
+import { AppointmentPaymentSheet } from "./AppointmentPaymentSheet";
 import { RescheduleSheet } from "./RescheduleSheet";
 
 /** Height of one 30-minute row. Big enough to tap a block on a phone. */
@@ -65,10 +70,13 @@ export function AppointmentBoard({
   const tt = useTerms(shop.business_type, language);
   const { data: appointments, isPending, isError } = useTodayAppointments(shop.id, day);
   const setStatus = useAppointmentStatus(shop.id, day);
+  const complete = useCompleteAppointment(shop.id, day);
   const [openId, setOpenId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
   const openAppointment = appointments?.find((a) => a.id === openId) ?? null;
   const moving = appointments?.find((a) => a.id === movingId) ?? null;
+  const paying = appointments?.find((a) => a.id === payingId) ?? null;
 
   // null until mounted — see `useNow`. The "now" line appears after the first
   // client commit rather than being rendered on the server at a stale minute.
@@ -275,6 +283,14 @@ export function AppointmentBoard({
         onClose={() => setOpenId(null)}
         onSetStatus={(status) => {
           if (!openAppointment) return;
+          // Finishing is the one transition that also decides money, so it
+          // goes through the payment sheet instead of straight to the DB —
+          // the same detour the queue takes when a job is marked done.
+          if (status === "DONE") {
+            setPayingId(openAppointment.id);
+            setOpenId(null);
+            return;
+          }
           setStatus.mutate(
             { id: openAppointment.id, status },
             { onSuccess: () => setOpenId(null) },
@@ -285,6 +301,21 @@ export function AppointmentBoard({
           setOpenId(null);
         }}
       />
+
+      {paying && (
+        <AppointmentPaymentSheet
+          appointment={paying}
+          shopId={shop.id}
+          busy={complete.isPending}
+          onClose={() => setPayingId(null)}
+          onSettle={(payment) =>
+            complete.mutate(
+              { id: paying.id, payment },
+              { onSuccess: () => setPayingId(null) },
+            )
+          }
+        />
+      )}
 
       {moving && (
         <RescheduleSheet
