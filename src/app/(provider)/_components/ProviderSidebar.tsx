@@ -7,6 +7,7 @@ import {
   BarChart3,
   CalendarClock,
   CalendarDays,
+  Crown,
   LifeBuoy,
   LogOut,
   Megaphone,
@@ -86,6 +87,9 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     { href: "/chairs", label: tt("chair"), icon: Armchair },
     { href: "/services", label: t("navServices"), icon: Scissors },
     { href: "/offers", label: t("navOffers"), icon: Percent },
+    // Both business types: membership is a property of the business, not of
+    // how it takes bookings, so unlike /appointments this one is unconditional.
+    { href: "/memberships", label: t("navMemberships"), icon: Crown },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },
     { href: "/income", label: t("navIncome"), icon: Wallet },
     { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },

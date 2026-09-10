@@ -171,6 +171,31 @@ const MESSAGES = {
     bn: "এই দোকান এখন অ্যাপয়েন্টমেন্ট নিচ্ছে না।",
     en: "This shop isn't taking appointments right now.",
   },
+  // Sprint 6 — membership. Keep in sync with 20260921_membership.sql.
+  membershipAlreadyLive: {
+    bn: "এই দোকানে একটা সদস্যপদ ইতিমধ্যেই চলছে — একসাথে একটাই রাখা যায়।",
+    en: "There's already a live membership here — only one at a time.",
+  },
+  membershipTierGone: {
+    bn: "প্যাকেজটা আর নেই — পাতাটা রিফ্রেশ করে দেখো।",
+    en: "That package no longer exists — refresh the page.",
+  },
+  membershipTierWrongShop: {
+    bn: "প্যাকেজটা এই দোকানের নয়।",
+    en: "That package doesn't belong to this shop.",
+  },
+  membershipTierInactive: {
+    bn: "প্যাকেজটা এখন বন্ধ আছে, তাই নেওয়া যাবে না।",
+    en: "That package is switched off, so it can't be joined.",
+  },
+  membershipTierNameTaken: {
+    bn: "এই নামে তোমার একটা প্যাকেজ আছেই — অন্য নাম দাও।",
+    en: "You already have a package by that name — pick another.",
+  },
+  membershipTierHasMembers: {
+    bn: "এই প্যাকেজে সদস্য আছে, তাই মোছা যাবে না। 'বন্ধ' করে দাও।",
+    en: "This package has members, so it can't be deleted. Switch it off instead.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -240,6 +265,45 @@ const RULES: ReadonlyArray<{
   { match: (t) => t.includes("appointment_not_reschedulable"), key: "notReschedulable", silent: false },
   { match: (t) => t.includes("appointment_not_found"), key: "appointmentNotFound", silent: false },
   { match: (t) => t.includes("shop is not active"), key: "shopNotActive", silent: false },
+  // Sprint 6 — membership (20260921_membership.sql). The two index names are
+  // matched before the generic "duplicate key" rules below, because which
+  // unique index was violated is the whole message: one means "already a
+  // member", the other means "you already have a Gold".
+  {
+    match: (t) => t.includes("customer_memberships_one_live_idx"),
+    key: "membershipAlreadyLive",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("membership_tiers_shop_name_idx"),
+    key: "membershipTierNameTaken",
+    silent: false,
+  },
+  { match: (t) => t.includes("membership_tier_not_found"), key: "membershipTierGone", silent: false },
+  {
+    match: (t) => t.includes("membership_tier_wrong_shop"),
+    key: "membershipTierWrongShop",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("membership_tier_inactive"),
+    key: "membershipTierInactive",
+    silent: false,
+  },
+  {
+    // The FK's on-delete-restrict firing: a tier that has been sold cannot be
+    // deleted, only switched off.
+    match: (t) => t.includes("customer_memberships_tier_id_fkey"),
+    key: "membershipTierHasMembers",
+    silent: false,
+  },
+  {
+    // A racing tap on an already-advanced membership — the list has already
+    // refetched, so there is nothing useful to say.
+    match: (t) => t.includes("invalid membership status transition"),
+    key: null,
+    silent: true,
+  },
   {
     // Same reasoning as the queue's: realtime/refetch has already corrected
     // the board, so a racing tap needs no toast.

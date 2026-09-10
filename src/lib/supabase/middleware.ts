@@ -15,6 +15,9 @@ const PROVIDER_PREFIXES = [
   // /income is: RLS returns nothing to a non-owner, but an empty register
   // reads like a bug where being sent home reads like an answer.
   "/appointments",
+  // Membership management — both business types, so no model gate here, only
+  // the provider one.
+  "/memberships",
   // The AI assistant reads the caller's own shop and spends real money doing
   // it, so it is provider-only for both reasons at once.
   "/ai",

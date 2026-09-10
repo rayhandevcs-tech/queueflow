@@ -1,4 +1,4 @@
-import { ShopDetailView } from "@/features/customer-booking/components/ShopDetailView";
+import { ShopDetailWithMembership } from "./_components/ShopDetailWithMembership";
 
 export default async function ShopDetailPage({
   params,
@@ -6,5 +6,7 @@ export default async function ShopDetailPage({
   params: Promise<{ shopId: string }>;
 }) {
   const { shopId } = await params;
-  return <ShopDetailView shopId={shopId} />;
+  // Not ShopDetailView directly: the membership tab is composed in, because
+  // features may not import each other.
+  return <ShopDetailWithMembership shopId={shopId} />;
 }

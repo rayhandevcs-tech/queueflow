@@ -65,6 +65,17 @@ export const keys = {
     manualCountByShop: (shopId: string) => ["due-ledger", "manual-count", "shop", shopId] as const,
     appointmentsByShop: (shopId: string) => ["due-ledger", "appointments", "shop", shopId] as const,
   },
+  membership: {
+    /** Every tier, switched-off ones included — the owner's list. */
+    tiers: (shopId: string) => ["membership", "tiers", shopId] as const,
+    /** Active tiers only — what a customer sees on a shop page. */
+    publicTiers: (shopId: string) => ["membership", "public-tiers", shopId] as const,
+    byShop: (shopId: string) => ["membership", "shop", shopId] as const,
+    mine: () => ["membership", "mine"] as const,
+    summary: (shopId: string) => ["membership", "summary", shopId] as const,
+    shopCustomers: (shopId: string) => ["membership", "shop-customers", shopId] as const,
+    shops: (shopIds: string[]) => ["membership", "shops", shopIds.slice().sort()] as const,
+  },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,

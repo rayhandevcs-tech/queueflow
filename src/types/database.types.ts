@@ -324,6 +324,111 @@ export type Database = {
         };
         Relationships: [];
       };
+      /**
+       * One shop's membership programme (20260921).
+       *
+       * Business-scoped, not booking-model-scoped: a salon and a parlour sell
+       * memberships out of this one table. `shop_id` is absent from Update
+       * because `membership_tier_touch()` freezes it — a tier cannot be moved
+       * to another shop without making its members' history a lie.
+       */
+      membership_tiers: {
+        Row: {
+          id: string;
+          shop_id: string;
+          name: string;
+          description: string | null;
+          price: number;
+          duration_days: number;
+          /** `MembershipBenefit[]` — see `parseBenefits()` in `src/types`. */
+          benefits: Json;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          name: string;
+          description?: string | null;
+          price: number;
+          duration_days: number;
+          benefits?: Json;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          price?: number;
+          duration_days?: number;
+          benefits?: Json;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      /**
+       * Who is a member of which shop (20260921).
+       *
+       * Insert carries only what a client may send: the trigger computes
+       * `price`, `duration_days` and `tier_snapshot` from the tier row, and
+       * refuses a `payment_status` from anyone but the shop owner.
+       *
+       * Update is deliberately narrow. `price`, `duration_days`,
+       * `tier_snapshot`, `started_at` and `expires_at` are all frozen by
+       * `membership_before_update()` — renewal is a new row, never a stretched
+       * one — so they are absent here rather than silently ignored.
+       */
+      customer_memberships: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string;
+          tier_id: string;
+          status: Database["public"]["Enums"]["membership_status"];
+          /** Snapshotted from `profiles` by the trigger — `profiles` has no cross-user read policy. */
+          customer_name: string;
+          customer_phone: string | null;
+          customer_avatar_url: string | null;
+          /** Frozen at enrollment: `{tier_id, name, description, price, duration_days, benefits}`. */
+          tier_snapshot: Json;
+          price: number;
+          duration_days: number;
+          payment_status: "PAID" | "DUE";
+          payment_method: string | null;
+          paid_at: string | null;
+          started_at: string | null;
+          expires_at: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          cancel_reason: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          customer_id: string;
+          tier_id: string;
+          /** Only PENDING or ACTIVE; a customer's RLS policy allows PENDING only. */
+          status?: Database["public"]["Enums"]["membership_status"];
+          /** Owner-only — the trigger forces DUE for anyone else. */
+          payment_status?: "PAID" | "DUE";
+          payment_method?: string | null;
+          note?: string | null;
+        };
+        Update: {
+          status?: Database["public"]["Enums"]["membership_status"];
+          payment_status?: "PAID" | "DUE";
+          payment_method?: string | null;
+          cancel_reason?: string | null;
+          note?: string | null;
+        };
+        Relationships: [];
+      };
       shop_rating_summary: {
         Row: {
           shop_id: string;
@@ -947,6 +1052,29 @@ export type Database = {
         Args: { p_appointment_id: string };
         Returns: undefined;
       };
+      /**
+       * The one door for "is this person a member of this shop right now"
+       * (20260921). Checks `expires_at` itself, so a lapsed membership never
+       * reads as active even before the nightly job has flipped it.
+       */
+      membership_is_active: {
+        Args: { p_shop_id: string; p_customer_id: string };
+        Returns: boolean;
+      };
+      /** Nightly tidy-up — flips lapsed ACTIVE memberships to EXPIRED. */
+      expire_memberships: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      shop_membership_summary: {
+        Args: { p_shop_id: string };
+        Returns: {
+          active_count: number;
+          pending_count: number;
+          expiring_soon: number;
+          unpaid_count: number;
+        }[];
+      };
       send_appointment_reminders: {
         Args: { p_within_hours?: number };
         Returns: number;
@@ -1414,6 +1542,13 @@ export type Database = {
         | "DAILY_SUMMARY"
         | "WAIT_ALERT";
       payment_status: "PAID" | "DUE" | "ADVANCE";
+      /**
+       * `customer_memberships.status` — a text column with a CHECK, like every
+       * other status in this schema (decision 45). PENDING exists because
+       * there is no real payment gateway: a customer requests, the owner takes
+       * the money and activates.
+       */
+      membership_status: "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED";
       appointment_status:
         | "BOOKED"
         | "CONFIRMED"

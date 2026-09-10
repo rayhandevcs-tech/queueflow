@@ -35,9 +35,19 @@ export async function GET(req: Request) {
     // Tomorrow's parlour appointments. Idempotent through
     // appointments.reminded_at, so a retried night sends nothing twice.
     supabase.rpc("send_appointment_reminders", { p_within_hours: 24 }),
+    // Lapsed memberships. Tidy-up rather than correctness: every read path
+    // (`membership_is_active()`, and `effectiveStatus()` on the client) checks
+    // `expires_at` itself, so a night this misses costs an owner an accurate
+    // list and nothing more. Idempotent — a second run flips zero rows.
+    supabase.rpc("expire_memberships", {}),
   ]);
 
-  const LABELS = ["daily summaries", "customer reminders", "appointment reminders"];
+  const LABELS = [
+    "daily summaries",
+    "customer reminders",
+    "appointment reminders",
+    "membership expiry",
+  ];
   const counts = results.map((result, i) => {
     const label = LABELS[i];
     if (result.status === "rejected") {
@@ -51,10 +61,15 @@ export async function GET(req: Request) {
     return (result.value.data as number | null) ?? 0;
   });
 
-  const [summaries, reminders, appointmentReminders] = counts;
+  const [summaries, reminders, appointmentReminders, expiredMemberships] = counts;
   if (counts.every((c) => c === null)) {
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ summaries, reminders, appointmentReminders });
+  return NextResponse.json({
+    summaries,
+    reminders,
+    appointmentReminders,
+    expiredMemberships,
+  });
 }

@@ -40,7 +40,26 @@ import { ReviewsTab } from "./ReviewsTab";
 import { DetailsTab } from "./DetailsTab";
 import type { AdvancePaymentInfo } from "../api/booking.api";
 
-export function ShopDetailView({ shopId }: { shopId: string }) {
+/**
+ * One extra tab, handed in rather than imported.
+ *
+ * `null` means this shop runs no membership programme and the tab does not
+ * exist at all — not a tab that says "nothing here". The label travels with
+ * the content because it lives in the membership feature's dictionary, which
+ * this feature cannot read.
+ */
+export interface ShopDetailExtraTab {
+  label: string;
+  content: React.ReactNode;
+}
+
+export function ShopDetailView({
+  shopId,
+  membershipTab,
+}: {
+  shopId: string;
+  membershipTab?: ShopDetailExtraTab | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useT(customerBookingDict);
@@ -54,6 +73,11 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
   const TABS = [
     { id: "services", label: t("tabServices") },
     { id: "staff", label: tt("staff") },
+    // Membership arrives as a slot from the app layer, because features may
+    // not import each other — and it is absent entirely for a shop that runs
+    // no programme (decision 36), so the tab row is unchanged for every shop
+    // that never sets one up.
+    ...(membershipTab ? [{ id: "membership", label: membershipTab.label }] : []),
     { id: "gallery", label: t("tabGallery") },
     { id: "reviews", label: t("tabReviews") },
     { id: "details", label: t("tabDetails") },
@@ -341,6 +365,7 @@ export function ShopDetailView({ shopId }: { shopId: string }) {
         )}
 
         {tab === "staff" && <StaffTab shopId={shopId} services={services} />}
+        {tab === "membership" && membershipTab?.content}
         {tab === "gallery" && <GalleryTab shopId={shopId} />}
         {tab === "reviews" && <ReviewsTab shopId={shopId} />}
         {tab === "details" && <DetailsTab shop={shop} />}

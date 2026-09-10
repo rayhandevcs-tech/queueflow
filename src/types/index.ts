@@ -22,6 +22,9 @@ export type Favorite = Tables<"favorites">;
 export type CustomerReminder = Tables<"customer_reminders">;
 export type PushSubscriptionRow = Tables<"push_subscriptions">;
 export type Offer = Tables<"offers">;
+export type MembershipTier = Tables<"membership_tiers">;
+export type CustomerMembership = Tables<"customer_memberships">;
+export type MembershipStatus = Database["public"]["Enums"]["membership_status"];
 export type ManualEntry = Tables<"manual_entries">;
 export type ShopExpense = Tables<"shop_expenses">;
 export type ExpenseCategory = Database["public"]["Enums"]["expense_category"];
@@ -65,4 +68,86 @@ export function parseServicesSnapshot(snapshot: Json): ServiceSnapshotItem[] {
   return Array.isArray(snapshot)
     ? (snapshot as unknown as ServiceSnapshotItem[])
     : [];
+}
+
+/**
+ * What a membership tier promises.
+ *
+ * Definition only — Sprint 6 builds no redemption engine, deliberately. A
+ * benefit here is something an owner has written down and will honour at the
+ * counter; teaching the app to *apply* it is Sprint 7+ work, and doing half of
+ * it now would leave a discount that sometimes came off the bill and
+ * sometimes didn't.
+ *
+ * The five kinds are fixed in SQL too (`membership_benefits_valid`), so a new
+ * one means editing both — which is the point: a kind nothing can honour is
+ * worse than no kind at all.
+ */
+export const MEMBERSHIP_BENEFIT_KINDS = [
+  "DISCOUNT",
+  "FREE_SERVICE",
+  "PRIORITY_BOOKING",
+  "COMPLIMENTARY",
+  "SPECIAL_OFFER",
+] as const;
+
+export type MembershipBenefitKind = (typeof MEMBERSHIP_BENEFIT_KINDS)[number];
+
+export type MembershipBenefit = {
+  kind: MembershipBenefitKind;
+  /** The owner's own words — this is what the customer reads. */
+  label: string;
+  /** Percent for DISCOUNT, a count for the others, absent where meaningless. */
+  value?: number | null;
+};
+
+/** Shape of `customer_memberships.tier_snapshot`, frozen at enrollment. */
+export type MembershipTierSnapshot = {
+  tier_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  duration_days: number;
+  benefits: MembershipBenefit[];
+};
+
+/**
+ * Safe accessor for a benefits jsonb column.
+ *
+ * Filters rather than casts: the SQL CHECK guards what this app writes, but a
+ * row could predate a kind being renamed, and a card that renders "undefined"
+ * is worse than one that renders one benefit fewer.
+ */
+export function parseBenefits(benefits: Json): MembershipBenefit[] {
+  if (!Array.isArray(benefits)) return [];
+  const kinds: readonly string[] = MEMBERSHIP_BENEFIT_KINDS;
+  return benefits.flatMap((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+    const row = raw as Record<string, Json>;
+    const kind = typeof row.kind === "string" ? row.kind : "";
+    const label = typeof row.label === "string" ? row.label.trim() : "";
+    if (!kinds.includes(kind) || !label) return [];
+    return [
+      {
+        kind: kind as MembershipBenefitKind,
+        label,
+        value: typeof row.value === "number" ? row.value : null,
+      },
+    ];
+  });
+}
+
+/** Safe accessor for `customer_memberships.tier_snapshot`. */
+export function parseTierSnapshot(snapshot: Json): MembershipTierSnapshot | null {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
+  const row = snapshot as Record<string, Json>;
+  if (typeof row.name !== "string") return null;
+  return {
+    tier_id: typeof row.tier_id === "string" ? row.tier_id : "",
+    name: row.name,
+    description: typeof row.description === "string" ? row.description : null,
+    price: typeof row.price === "number" ? row.price : Number(row.price ?? 0) || 0,
+    duration_days: typeof row.duration_days === "number" ? row.duration_days : 0,
+    benefits: parseBenefits(row.benefits ?? []),
+  };
 }

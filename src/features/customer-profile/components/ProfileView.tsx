@@ -19,10 +19,17 @@ export function ProfileView({
   fullName,
   phone,
   avatarUrl,
+  membershipSlot,
 }: {
   fullName: string;
   phone: string | null;
   avatarUrl?: string | null;
+  /**
+   * The customer's memberships, handed in by the app layer — features may not
+   * import each other, so `/profile` composes this the same way the shop page
+   * composes its membership tab. Renders nothing when they hold none.
+   */
+  membershipSlot?: React.ReactNode;
 }) {
   const { history, shopsById, trust, spending, isPending } = useProfileHistory();
   const { shops: favoriteShops } = useMyFavoriteShops();
@@ -243,6 +250,10 @@ export function ProfileView({
           </div>
         </div>
       )}
+
+      {/* Above favourites and habits: a membership is money already spent at
+          a particular shop, so it outranks a bookmark. */}
+      {membershipSlot && <div className="mt-5">{membershipSlot}</div>}
 
       {/* Their own rhythm, and the offer to be reminded of it — placed above
           favourites because it's the thing that brings them back. */}
