@@ -1176,8 +1176,90 @@ comment on function public.shop_analytics_breakdown(uuid, date, date, text) is
 --    not exists (
 --      select 1 from public.loyalty_accounts a
 --       where a.balance <> coalesce((select sum(t.points) from public.loyalty_transactions t
---                                     where t.shop_id=a.shop_id and t.customer_id=a.customer_id), 0)))
+--                                     where t.shop_id=a.shop_id and t.customer_id=a.customer_id), 0))),
+--
+--   -- গেটটা সত্যিই সব RPC-র প্রথম ধাপ, আর সই মিলিয়ে
+--   ('every analytics RPC takes (uuid, date, date) first',
+--    (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+--      where n.nspname='public'
+--        and p.proname in ('shop_overview_stats','shop_revenue_trend','shop_appointment_stats',
+--                          'shop_queue_stats','shop_staff_stats','shop_peak_slots',
+--                          'shop_loyalty_stats','shop_membership_stats','shop_referral_summary',
+--                          'shop_reward_stats','shop_analytics_breakdown')
+--        and p.proargtypes[0] = 'uuid'::regtype
+--        and p.proargtypes[1] = 'date'::regtype
+--        and p.proargtypes[2] = 'date'::regtype) = 11),
+--   ('every analytics RPC returns a set, never a scalar',
+--    (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+--      where n.nspname='public' and p.proretset
+--        and p.proname like 'shop\_%stat%') >= 8),
+--   ('every analytics RPC pins search_path',
+--    not exists (
+--      select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+--       where n.nspname='public'
+--         and p.proname in ('analytics_scope','shop_overview_stats','shop_revenue_trend',
+--                           'shop_appointment_stats','shop_queue_stats','shop_staff_stats',
+--                           'shop_peak_slots','shop_loyalty_stats','shop_membership_stats',
+--                           'shop_referral_summary','shop_reward_stats','shop_analytics_breakdown')
+--         and not exists (select 1 from unnest(coalesce(p.proconfig, '{}'))  c
+--                          where c like 'search_path=%'))),
+--
+--   -- ইনডেক্সটা পার্শিয়াল — শেষ-হওয়া কাজের সমান বড়, পুরো টেবিলের নয়
+--   ('the new index is partial, not whole-table',
+--    (select indexdef from pg_indexes where indexname='serials_shop_completed_idx')
+--      like '%WHERE (completed_at IS NOT NULL)%'),
+--
+--   -- লেনদেনের টেবিলে একটাও কলাম যোগ করা হয়নি (সিদ্ধান্ত ৬৭)
+--   ('no analytics column landed on serials',
+--    (select count(*) from information_schema.columns
+--      where table_name='serials' and column_name like '%analytic%') = 0),
+--   ('no analytics column landed on appointments',
+--    (select count(*) from information_schema.columns
+--      where table_name='appointments' and column_name like '%analytic%') = 0),
+--   ('no analytics column landed on the ledger',
+--    (select count(*) from information_schema.columns
+--      where table_name='loyalty_transactions' and column_name like '%analytic%') = 0),
+--   ('no materialized view was created',
+--    (select count(*) from pg_matviews where schemaname='public') = 0)
 -- ) as t(check_name, ok) order by ok, check_name;
+--
+--
+-- ---------------------------------------------------------------------------
+-- গেটটা সত্যিই আটকায় — এটা SQL এডিটরেই চালানো যায়
+-- ---------------------------------------------------------------------------
+-- উপরের চেকগুলো কাঠামো দেখে; এটা **আচরণ** দেখে, আর ঠিক এই একটা জিনিসই
+-- SQL এডিটরে যাচাই করা সম্ভব: এডিটর `service_role`-এ চলে, যার `auth.uid()`
+-- নেই, তাই `is_shop_owner()` কখনোই সত্যি হবে না — অর্থাৎ **যেকোনো** shop id
+-- দিলেই `not your shop` আসতে হবে। শূন্য সারি এলে গার্ডটা কাজ করছে না।
+-- কিছুই লেখে না, তাই rollback লাগে না।
+--
+-- do $$
+-- declare
+--   v_shop    uuid;
+--   v_msg     text := null;
+--   v_allowed boolean := false;
+-- begin
+--   select id into v_shop from public.shops limit 1;
+--   if v_shop is null then
+--     raise notice 'ok — কোনো দোকান নেই, পরীক্ষার কিছু নেই';
+--     return;
+--   end if;
+--
+--   begin
+--     perform 1 from public.shop_overview_stats(v_shop, current_date - 6, current_date);
+--     v_allowed := true;   -- গার্ড আটকায়নি
+--   exception
+--     when others then v_msg := sqlerrm;
+--   end;
+--
+--   if v_allowed then
+--     raise exception 'FAIL — গার্ড আটকায়নি: auth.uid() ছাড়াই হিসাব বেরিয়ে এসেছে';
+--   elsif v_msg like '%not your shop%' then
+--     raise notice 'ok — গার্ড আটকেছে: %', v_msg;
+--   else
+--     raise exception 'FAIL — অন্য কারণে ব্যর্থ: %', v_msg;
+--   end if;
+-- end $$;
 --
 --
 -- ---------------------------------------------------------------------------

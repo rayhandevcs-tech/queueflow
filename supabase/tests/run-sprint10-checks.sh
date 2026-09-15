@@ -814,6 +814,30 @@ check "    and the reward-discount trigger still leaves an uncouponed bill alone
   "$(Q "select total_amount::text from serials where id='$SRX'")"
 
 echo
+echo "== the handover block itself =="
+# The verification block at the end of the migration is the thing the user
+# actually runs by hand, so it is code too — and a broken one wastes their
+# time in a place nothing else is watching. Extract it, strip the comment
+# markers, and run it here.
+QFILE() { su "$RUNAS" -s /bin/bash -c "$PGBIN/psql -h $DIR -p $PORT -U postgres -d qf -tA -f $1" 2>&1; }
+awk '/^-- select \* from \(values/,/^-- \) as t\(check_name, ok\)/' \
+  "$ROOT/supabase/migrations/20260925_analytics.sql" | sed -E 's/^--[[:space:]]?//' > "$DIR/verify.sql"
+VOUT=$(QFILE "$DIR/verify.sql")
+check "the migration's verification block runs without error" "" \
+  "$(printf '%s' "$VOUT" | grep -oE 'ERROR:.*' | head -1)"
+check "**every check in it comes back true**"       0 "$(printf '%s' "$VOUT" | grep -c '|f$')"
+check "    and it is not silently empty"            "t" \
+  "$(Q "select $(printf '%s' "$VOUT" | grep -c '|') >= 20")"
+
+# The behavioural probe from the same block: with no auth.uid() — which is
+# exactly the SQL editor's service_role situation — the gate must refuse.
+awk '/^-- do \$\$/,/^-- end \$\$;/' \
+  "$ROOT/supabase/migrations/20260925_analytics.sql" | sed -E 's/^--[[:space:]]?//' > "$DIR/probe.sql"
+POUT=$(QFILE "$DIR/probe.sql")
+check "**the probe confirms the gate refuses a caller with no auth.uid()**" "t" \
+  "$(Q "select '$(printf '%s' "$POUT" | tr -d "'" | tr '\n' ' ')' like '%গার্ড আটকেছে%'")"
+
+echo
 echo "-------------------------------------------"
 printf 'passed: %d   failed: %d\n' "$pass" "$fail"
 [ "$fail" -eq 0 ] || exit 1

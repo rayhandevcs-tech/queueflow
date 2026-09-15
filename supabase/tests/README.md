@@ -27,11 +27,11 @@ bash supabase/tests/run-sprint8-checks.sh
 # Sprint 9 — রিওয়ার্ড ও রিডেম্পশন (২০৪টা চেক)
 bash supabase/tests/run-sprint9-checks.sh
 
-# Sprint 10 — অ্যানালিটিক্স (১৯০টা চেক)
+# Sprint 10 — অ্যানালিটিক্স (১৯৪টা চেক)
 bash supabase/tests/run-sprint10-checks.sh
 ```
 
-**আটটা একসাথে: ৪০ · ৫৪ · ৭৯ · ১২১ · ১১০ · ২১৭ · ২০৪ · ১৯০ = ১০১৫টা চেক।**
+**আটটা একসাথে: ৪০ · ৫৪ · ৭৯ · ১২১ · ১১০ · ২১৭ · ২০৪ · ১৯৪ = ১০১৯টা চেক।**
 
 স্ক্রিপ্টটা একটা **অস্থায়ী লোকাল Postgres ক্লাস্টার** বানায়, `fixture.sql` দিয়ে
 আসল স্কিমার প্রয়োজনীয় অংশটুকু (shops, chairs, services, profiles,
