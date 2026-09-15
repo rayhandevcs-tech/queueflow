@@ -187,8 +187,15 @@ describe("balance == ledger sum (the plan's invariant)", () => {
 });
 
 describe("kinds", () => {
-  it("names the two earning kinds and excludes corrections", () => {
-    const earn: LoyaltyTransactionKind[] = ["EARN_SERIAL", "EARN_APPOINTMENT"];
+  it("names the earning kinds and excludes corrections", () => {
+    // The two referral kinds joined this list in Sprint 8: a referral bonus
+    // is earned, not corrected by hand.
+    const earn: LoyaltyTransactionKind[] = [
+      "EARN_SERIAL",
+      "EARN_APPOINTMENT",
+      "REFERRAL_REFERRER",
+      "REFERRAL_REFERRED",
+    ];
     expect(earn.every(isEarnKind)).toBe(true);
     expect(isEarnKind("ADJUST")).toBe(false);
   });

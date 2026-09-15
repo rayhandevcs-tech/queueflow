@@ -18,6 +18,7 @@ import {
   Radio,
   Receipt,
   Scissors,
+  Share2,
   Settings as SettingsIcon,
   Star,
   Users,
@@ -94,6 +95,9 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     // Loyalty sits next to membership: both are retention programmes the shop
     // opts into, and both are business-scoped rather than model-scoped.
     { href: "/loyalty", label: t("navLoyalty"), icon: Award },
+    // Referral sits under loyalty because it pays in loyalty points — it is
+    // the same programme reached a different way, not a third balance.
+    { href: "/referrals", label: t("navReferrals"), icon: Share2 },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },
     { href: "/income", label: t("navIncome"), icon: Wallet },
     { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },

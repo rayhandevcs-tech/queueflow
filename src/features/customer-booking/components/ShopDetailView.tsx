@@ -43,10 +43,10 @@ import type { AdvancePaymentInfo } from "../api/booking.api";
 /**
  * One extra tab, handed in rather than imported.
  *
- * `null` means this shop runs no membership programme and the tab does not
- * exist at all — not a tab that says "nothing here". The label travels with
- * the content because it lives in the membership feature's dictionary, which
- * this feature cannot read.
+ * `null` means this shop runs no such programme and the tab does not exist at
+ * all — not a tab that says "nothing here". The label travels with the
+ * content because it lives in the other feature's dictionary, which this
+ * feature cannot read.
  */
 export interface ShopDetailExtraTab {
   label: string;
@@ -56,9 +56,11 @@ export interface ShopDetailExtraTab {
 export function ShopDetailView({
   shopId,
   membershipTab,
+  referralTab,
 }: {
   shopId: string;
   membershipTab?: ShopDetailExtraTab | null;
+  referralTab?: ShopDetailExtraTab | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -78,6 +80,10 @@ export function ShopDetailView({
     // no programme (decision 36), so the tab row is unchanged for every shop
     // that never sets one up.
     ...(membershipTab ? [{ id: "membership", label: membershipTab.label }] : []),
+    // Referral arrives the same way and is absent for every shop that runs no
+    // referral programme — so a shop that never sets one up keeps exactly the
+    // tab row it had before this sprint.
+    ...(referralTab ? [{ id: "referral", label: referralTab.label }] : []),
     { id: "gallery", label: t("tabGallery") },
     { id: "reviews", label: t("tabReviews") },
     { id: "details", label: t("tabDetails") },
@@ -366,6 +372,7 @@ export function ShopDetailView({
 
         {tab === "staff" && <StaffTab shopId={shopId} services={services} />}
         {tab === "membership" && membershipTab?.content}
+        {tab === "referral" && referralTab?.content}
         {tab === "gallery" && <GalleryTab shopId={shopId} />}
         {tab === "reviews" && <ReviewsTab shopId={shopId} />}
         {tab === "details" && <DetailsTab shop={shop} />}

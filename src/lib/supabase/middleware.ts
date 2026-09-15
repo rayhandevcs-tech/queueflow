@@ -20,6 +20,8 @@ const PROVIDER_PREFIXES = [
   "/memberships",
   // Loyalty points — likewise both business types.
   "/loyalty",
+  // Referral statistics: who brought whom, for this shop only. Same reason.
+  "/referrals",
   // The AI assistant reads the caller's own shop and spends real money doing
   // it, so it is provider-only for both reasons at once.
   "/ai",

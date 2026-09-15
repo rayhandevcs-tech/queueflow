@@ -88,6 +88,10 @@ export const loyaltyDict = {
   kindEARN_SERIAL: { bn: "সিরিয়াল থেকে", en: "From a queue job" },
   kindEARN_APPOINTMENT: { bn: "অ্যাপয়েন্টমেন্ট থেকে", en: "From an appointment" },
   kindADJUST: { bn: "হাতে সংশোধন", en: "Manual correction" },
+  // Sprint 8 — referral pays into this same ledger, so the two sides need
+  // names here rather than a separate history screen.
+  kindREFERRAL_REFERRER: { bn: "রেফারেল — কাউকে এনেছে", en: "Referral — brought someone" },
+  kindREFERRAL_REFERRED: { bn: "রেফারেল — কোড দিয়ে এসেছে", en: "Referral — arrived with a code" },
   fromBill: {
     bn: (bill: string) => `৳${bill} বিলে`,
     en: (bill: string) => `on a ৳${bill} bill`,

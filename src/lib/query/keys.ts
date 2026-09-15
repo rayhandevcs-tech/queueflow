@@ -84,6 +84,17 @@ export const keys = {
       ["loyalty", "ledger", shopId, customerId] as const,
     myCards: () => ["loyalty", "my-cards"] as const,
   },
+  referral: {
+    /**
+     * Every key carries `shopId`, because a referral code, a referral list
+     * and a referral reward are all shop-scoped — a cache shared across shops
+     * would show one shop's code on another shop's page.
+     */
+    myCode: (shopId: string) => ["referral", "my-code", shopId] as const,
+    mine: (shopId: string) => ["referral", "mine", shopId] as const,
+    claimed: (shopId: string) => ["referral", "claimed", shopId] as const,
+    stats: (shopId: string) => ["referral", "stats", shopId] as const,
+  },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,

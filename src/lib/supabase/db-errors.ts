@@ -213,6 +213,43 @@ const MESSAGES = {
     bn: "অ্যাকাউন্ট ছাড়া কাস্টমারের পয়েন্ট জমানো যায় না।",
     en: "Points need a customer with an account.",
   },
+  // Sprint 8 — referral. Keep in sync with 20260923_referral.sql.
+  referralNotEnabled: {
+    bn: "এই দোকানে রেফারেল এখন চালু নেই।",
+    en: "This shop isn't running referrals right now.",
+  },
+  referralCodeInvalid: {
+    bn: "কোডটা লেখো — খালি রাখা যাবে না।",
+    en: "Type the code — it can't be empty.",
+  },
+  referralCodeNotFound: {
+    bn: "এই দোকানে এই কোডটা নেই। বানানটা আরেকবার দেখো — অন্য দোকানের কোড এখানে চলে না।",
+    en: "No such code at this shop. Check the spelling — a code from another shop won't work here.",
+  },
+  referralSelfNotAllowed: {
+    bn: "নিজের কোড নিজে ব্যবহার করা যায় না।",
+    en: "You can't use your own code.",
+  },
+  referralNotNewCustomer: {
+    bn: "এই দোকানে তোমার কাজ আগেই হয়ে গেছে, তাই রেফারেল কোড আর লাগানো যাবে না — এটা শুধু প্রথমবারের জন্য।",
+    en: "You've already been served here, so a referral code no longer applies — it's for a first visit only.",
+  },
+  referralAlreadyClaimed: {
+    bn: "এই দোকানে তুমি আগেই একটা রেফারেল কোড দিয়েছ — একবারই দেওয়া যায়।",
+    en: "You've already applied a referral code at this shop — only one is allowed.",
+  },
+  referralLoginRequired: {
+    bn: "রেফারেল কোড দিতে বা নিতে লগইন করতে হবে।",
+    en: "Log in to get or apply a referral code.",
+  },
+  referralAlreadyRewarded: {
+    bn: "এই রেফারেলের পয়েন্ট আগেই জমা হয়েছে।",
+    en: "Points for that referral have already been awarded.",
+  },
+  referralCodeUnavailable: {
+    bn: "কোড বানানো গেল না — আরেকবার চেষ্টা করো।",
+    en: "Couldn't mint a code — please try again.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -253,6 +290,44 @@ const RULES: ReadonlyArray<{
     key: "duplicateChair",
     silent: false,
   },
+  // ---------------------------------------------------------------------
+  // Named unique indexes — these MUST stay above the catch-all below.
+  // ---------------------------------------------------------------------
+  // A unique violation arrives carrying `23505`, so the generic rule that
+  // follows matches every one of them. These were originally written below
+  // it, which made them unreachable and turned "you are already a member"
+  // into "two changes collided". Which index fired *is* the message here, so
+  // they are matched first.
+  {
+    match: (t) => t.includes("customer_memberships_one_live_idx"),
+    key: "membershipAlreadyLive",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("membership_tiers_shop_name_idx"),
+    key: "membershipTierNameTaken",
+    silent: false,
+  },
+  {
+    match: (t) =>
+      t.includes("loyalty_tx_one_per_serial_idx") ||
+      t.includes("loyalty_tx_one_per_appointment_idx"),
+    key: "loyaltyAlreadyAwarded",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("loyalty_tx_one_per_referral_side_idx"),
+    key: "referralAlreadyRewarded",
+    silent: false,
+  },
+  {
+    // The one-claim-per-shop index. claim_referral() already translates this
+    // into `referral_already_claimed`, so reaching here means a direct write
+    // or a future caller — either way the message is the same.
+    match: (t) => t.includes("referrals_one_per_shop"),
+    key: "referralAlreadyClaimed",
+    silent: false,
+  },
   {
     // Any other unique violation on a queue write — two people reordering the
     // same lane at once. PostgREST returns it as a bare 409, which reached the
@@ -282,20 +357,9 @@ const RULES: ReadonlyArray<{
   { match: (t) => t.includes("appointment_not_reschedulable"), key: "notReschedulable", silent: false },
   { match: (t) => t.includes("appointment_not_found"), key: "appointmentNotFound", silent: false },
   { match: (t) => t.includes("shop is not active"), key: "shopNotActive", silent: false },
-  // Sprint 6 — membership (20260921_membership.sql). The two index names are
-  // matched before the generic "duplicate key" rules below, because which
-  // unique index was violated is the whole message: one means "already a
-  // member", the other means "you already have a Gold".
-  {
-    match: (t) => t.includes("customer_memberships_one_live_idx"),
-    key: "membershipAlreadyLive",
-    silent: false,
-  },
-  {
-    match: (t) => t.includes("membership_tiers_shop_name_idx"),
-    key: "membershipTierNameTaken",
-    silent: false,
-  },
+  // Sprint 6 — membership (20260921_membership.sql). Its two unique-index
+  // rules live in the named-index block above, because a unique violation
+  // matches the catch-all duplicate-key rule otherwise.
   { match: (t) => t.includes("membership_tier_not_found"), key: "membershipTierGone", silent: false },
   {
     match: (t) => t.includes("membership_tier_wrong_shop"),
@@ -321,16 +385,8 @@ const RULES: ReadonlyArray<{
     key: null,
     silent: true,
   },
-  // Sprint 7 — loyalty (20260922_loyalty.sql). The index names are matched
-  // before the generic duplicate-key rules, because which one fired is the
-  // whole message.
-  {
-    match: (t) =>
-      t.includes("loyalty_tx_one_per_serial_idx") ||
-      t.includes("loyalty_tx_one_per_appointment_idx"),
-    key: "loyaltyAlreadyAwarded",
-    silent: false,
-  },
+  // Sprint 7 — loyalty (20260922_loyalty.sql). Its per-job index rules also
+  // live in the named-index block above, for the same reason.
   {
     match: (t) => t.includes("loyalty_balance_cannot_go_negative"),
     key: "loyaltyBalanceNegative",
@@ -347,6 +403,61 @@ const RULES: ReadonlyArray<{
     match: (t) => t.includes("loyalty_needs_a_customer"),
     key: "loyaltyNeedsCustomer",
     silent: false,
+  },
+  // Sprint 8 — referral (20260923_referral.sql). Every one of these is a
+  // deliberate refusal from claim_referral() or my_referral_code(), and each
+  // one needs its own answer: "wrong shop", "your own code" and "too late"
+  // send the customer to three different places.
+  {
+    match: (t) => t.includes("referral_not_enabled"),
+    key: "referralNotEnabled",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_code_not_found"),
+    key: "referralCodeNotFound",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_code_invalid"),
+    key: "referralCodeInvalid",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_self_not_allowed"),
+    key: "referralSelfNotAllowed",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_not_a_new_customer"),
+    key: "referralNotNewCustomer",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_already_claimed"),
+    key: "referralAlreadyClaimed",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_requires_login"),
+    key: "referralLoginRequired",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("referral_code_generation_failed"),
+    key: "referralCodeUnavailable",
+    silent: false,
+  },
+  {
+    // referral_convert() refusing a second conversion, or referral_award_points
+    // refusing a still-pending one. Both mean the reward is already settled or
+    // not yet due — a racing tap, so nothing useful to say.
+    match: (t) =>
+      t.includes("referral_not_converted") ||
+      t.includes("referral_conversion_is_final") ||
+      t.includes("referral_needs_exactly_one_qualifying_booking"),
+    key: null,
+    silent: true,
   },
   {
     // Same reasoning as the queue's: realtime/refetch has already corrected

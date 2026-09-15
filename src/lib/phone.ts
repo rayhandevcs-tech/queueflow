@@ -12,3 +12,14 @@ export function toWhatsAppLink(phone: string, message?: string): string {
   const query = message ? `?text=${encodeURIComponent(message)}` : "";
   return `https://wa.me/${intl}${query}`;
 }
+
+/**
+ * wa.me link with no recipient — WhatsApp asks who to send it to.
+ *
+ * Separate from `toWhatsAppLink` because there is no number to normalise: a
+ * customer sharing a referral code does not yet know which friend will use
+ * it, so picking the recipient is WhatsApp's job, not ours.
+ */
+export function toWhatsAppShareLink(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}

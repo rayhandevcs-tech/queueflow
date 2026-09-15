@@ -132,8 +132,19 @@ export function lifetimeEarnedFromLedger(rows: readonly LedgerLike[]): number {
   return rows.reduce((total, row) => total + Math.max(0, row.points), 0);
 }
 
-/** Kinds that represent earning rather than a correction. */
-const EARN_KINDS: readonly LoyaltyTransactionKind[] = ["EARN_SERIAL", "EARN_APPOINTMENT"];
+/**
+ * Kinds that represent earning rather than a correction.
+ *
+ * The two referral kinds belong here too, from Sprint 8: a referral bonus is
+ * points the customer earned, not a number an owner fixed by hand. Only
+ * `ADJUST` is a correction.
+ */
+const EARN_KINDS: readonly LoyaltyTransactionKind[] = [
+  "EARN_SERIAL",
+  "EARN_APPOINTMENT",
+  "REFERRAL_REFERRER",
+  "REFERRAL_REFERRED",
+];
 
 export function isEarnKind(kind: LoyaltyTransactionKind): boolean {
   return EARN_KINDS.includes(kind);

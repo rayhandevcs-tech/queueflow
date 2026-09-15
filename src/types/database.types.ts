@@ -444,6 +444,15 @@ export type Database = {
           /** How many taka of bill earn one point. Owner-legible direction. */
           taka_per_point: number;
           min_bill_taka: number;
+          /**
+           * Referral (20260923). A referral reward *is* a loyalty point, so
+           * the programme is live only when `is_enabled` is true as well —
+           * read it through `referral_is_live()` or `isReferralLive()`, never
+           * on its own.
+           */
+          referral_enabled: boolean;
+          referral_referrer_points: number;
+          referral_referred_points: number;
           created_at: string;
           updated_at: string;
         };
@@ -452,11 +461,17 @@ export type Database = {
           is_enabled?: boolean;
           taka_per_point?: number;
           min_bill_taka?: number;
+          referral_enabled?: boolean;
+          referral_referrer_points?: number;
+          referral_referred_points?: number;
         };
         Update: {
           is_enabled?: boolean;
           taka_per_point?: number;
           min_bill_taka?: number;
+          referral_enabled?: boolean;
+          referral_referrer_points?: number;
+          referral_referred_points?: number;
         };
         Relationships: [];
       };
@@ -497,14 +512,80 @@ export type Database = {
           customer_id: string;
           /** Positive = earned, negative = spent or corrected. Never 0. */
           points: number;
-          kind: "EARN_SERIAL" | "EARN_APPOINTMENT" | "ADJUST";
+          /**
+           * The two REFERRAL kinds arrived with 20260923 — referral rewards
+           * live in *this* ledger rather than a parallel one, so the balance
+           * stays exactly `sum(points)`.
+           */
+          kind:
+            | "EARN_SERIAL"
+            | "EARN_APPOINTMENT"
+            | "ADJUST"
+            | "REFERRAL_REFERRER"
+            | "REFERRAL_REFERRED";
           source_serial_id: string | null;
           source_appointment_id: string | null;
+          source_referral_id: string | null;
           /** Snapshot: the bill and the rate that produced these points. */
           bill_amount: number | null;
           taka_per_point: number | null;
           note: string | null;
           created_by: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      /**
+       * A customer's referral code at one shop (20260923).
+       *
+       * The primary key is `(shop_id, customer_id)`, not `customer_id`: the
+       * plan's decision 34 sketched a global code, but a shop-scoped one makes
+       * "shop B's code does nothing at shop A" a fact about the row rather
+       * than a condition inside an RPC, and it keeps the claim step on the
+       * shop's own page so the auth flow needed no redesign.
+       *
+       * `Insert`/`Update` are `never`: there is no write policy at all, and
+       * codes are minted only inside `my_referral_code()`, so nobody can pick
+       * a vanity code or mint one in someone else's name.
+       */
+      referral_codes: {
+        Row: {
+          shop_id: string;
+          customer_id: string;
+          /** Upper-case, 6–12 chars, no 0/O/1/I/L. Globally unique. */
+          code: string;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      /**
+       * Who brought whom, at one shop (20260923).
+       *
+       * `PENDING` until the referred customer actually completes a booking —
+       * entering a code earns nothing. Read-only to every client: `PENDING →
+       * CONVERTED` happens only inside `referral_convert()`, and
+       * `referrals_freeze_history()` makes the conversion final even for a
+       * future DEFINER function.
+       */
+      referrals: {
+        Row: {
+          id: string;
+          shop_id: string;
+          referrer_id: string;
+          referred_id: string;
+          /** Snapshot of the code as used, so history survives a reissue. */
+          code: string;
+          status: Database["public"]["Enums"]["referral_status"];
+          qualifying_serial_id: string | null;
+          qualifying_appointment_id: string | null;
+          /** Null while PENDING; both set, possibly 0, once CONVERTED. */
+          referrer_points: number | null;
+          referred_points: number | null;
+          converted_at: string | null;
           created_at: string;
         };
         Insert: never;
@@ -1202,6 +1283,85 @@ export type Database = {
           last_earned_at: string | null;
         }[];
       };
+      /**
+       * Is this shop's referral programme live? True only when loyalty *and*
+       * referral are both switched on, because a referral reward is a loyalty
+       * point. Mirrored in `src/features/referral/lib/referral.ts`.
+       */
+      referral_is_live: {
+        Args: { p_shop_id: string };
+        Returns: boolean;
+      };
+      /**
+       * The signed-in customer's code at one shop, minted on first ask.
+       * `auth.uid()` is hard-coded, so no code can be created in anyone
+       * else's name.
+       */
+      my_referral_code: {
+        Args: { p_shop_id: string };
+        Returns: string;
+      };
+      /**
+       * Records a PENDING referral. Deliberately awards nothing — the reward
+       * lands only when the referred customer completes a booking. Returns
+       * the new referral's id.
+       */
+      claim_referral: {
+        Args: { p_shop_id: string; p_code: string };
+        Returns: string;
+      };
+      /**
+       * Qualifies a PENDING referral against one completed booking and pays
+       * both sides in the same transaction. The DONE triggers call this; the
+       * app never needs to. Returns the total points awarded.
+       */
+      referral_convert: {
+        Args: {
+          p_referral_id: string;
+          p_serial_id?: string | null;
+          p_appointment_id?: string | null;
+        };
+        Returns: number;
+      };
+      /**
+       * Credits one side of a converted referral. Takes no amount and no
+       * customer — both are read from the referral row, so even the shop
+       * owner cannot inflate or redirect a reward.
+       */
+      referral_award_points: {
+        Args: { p_referral_id: string; p_side: "REFERRER" | "REFERRED" };
+        Returns: number;
+      };
+      /**
+       * The signed-in customer's own referrals at one shop. `auth.uid()` is
+       * hard-coded; the referred person's name comes back shortened to its
+       * first word.
+       */
+      my_referrals: {
+        Args: { p_shop_id: string };
+        Returns: {
+          id: string;
+          referred_name: string;
+          status: Database["public"]["Enums"]["referral_status"];
+          points_earned: number;
+          converted_at: string | null;
+          created_at: string;
+        }[];
+      };
+      /** Who brought how many, for one shop only. Owner-guarded first line. */
+      shop_referral_stats: {
+        Args: { p_shop_id: string };
+        Returns: {
+          referrer_id: string;
+          referrer_name: string;
+          code: string;
+          total_referrals: number;
+          converted_count: number;
+          pending_count: number;
+          points_awarded: number;
+          last_referral_at: string | null;
+        }[];
+      };
       shop_membership_summary: {
         Args: { p_shop_id: string };
         Returns: {
@@ -1685,6 +1845,14 @@ export type Database = {
        * the money and activates.
        */
       membership_status: "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED";
+      /**
+       * `referrals.status` — a text column with a CHECK, like every other
+       * status here (decision 45). Two values, not the plan's four: the
+       * reward is paid in the same transaction as the qualification, so
+       * QUALIFIED and REWARDED could never differ, and nothing in Sprint 8
+       * can set a VOID.
+       */
+      referral_status: "PENDING" | "CONVERTED";
       appointment_status:
         | "BOOKED"
         | "CONFIRMED"

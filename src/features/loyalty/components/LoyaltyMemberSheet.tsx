@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Scissors, Sparkles, Wrench } from "lucide-react";
+import { CalendarClock, Gift, Scissors, Share2, Sparkles, Wrench } from "lucide-react";
 import type { LoyaltyAccount, LoyaltyTransactionKind } from "@/types";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -17,16 +17,24 @@ import type { useLoyaltyActions } from "../hooks/use-loyalty";
 import { loyaltyDict } from "../lib/i18n";
 import { sortLedger } from "../lib/loyalty";
 
+// Both maps are exhaustive over `LoyaltyTransactionKind` on purpose: adding a
+// kind to the ledger is then a compile error here until this sheet can name
+// it, rather than a row that renders with no label. That is exactly what
+// happened when Sprint 8 widened the kind, and exactly what should happen.
 const KIND_ICON: Record<LoyaltyTransactionKind, typeof Scissors> = {
   EARN_SERIAL: Scissors,
   EARN_APPOINTMENT: CalendarClock,
   ADJUST: Wrench,
+  REFERRAL_REFERRER: Share2,
+  REFERRAL_REFERRED: Gift,
 };
 
 const KIND_KEY = {
   EARN_SERIAL: "kindEARN_SERIAL",
   EARN_APPOINTMENT: "kindEARN_APPOINTMENT",
   ADJUST: "kindADJUST",
+  REFERRAL_REFERRER: "kindREFERRAL_REFERRER",
+  REFERRAL_REFERRED: "kindREFERRAL_REFERRED",
 } as const satisfies Record<LoyaltyTransactionKind, string>;
 
 /**
