@@ -196,6 +196,23 @@ const MESSAGES = {
     bn: "এই প্যাকেজে সদস্য আছে, তাই মোছা যাবে না। 'বন্ধ' করে দাও।",
     en: "This package has members, so it can't be deleted. Switch it off instead.",
   },
+  // Sprint 7 — loyalty. Keep in sync with 20260922_loyalty.sql.
+  loyaltyBalanceNegative: {
+    bn: "এতে ব্যালেন্স শূন্যের নিচে চলে যায় — কম পয়েন্ট বাদ দাও।",
+    en: "That would take the balance below zero — remove fewer points.",
+  },
+  loyaltyPointsZero: {
+    bn: "কত পয়েন্ট ঠিক করতে চাও সেটা লেখো (+ বা −)।",
+    en: "Say how many points to change (+ or −).",
+  },
+  loyaltyAlreadyAwarded: {
+    bn: "এই কাজে পয়েন্ট আগেই জমা হয়েছে।",
+    en: "Points for that job have already been awarded.",
+  },
+  loyaltyNeedsCustomer: {
+    bn: "অ্যাকাউন্ট ছাড়া কাস্টমারের পয়েন্ট জমানো যায় না।",
+    en: "Points need a customer with an account.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -303,6 +320,33 @@ const RULES: ReadonlyArray<{
     match: (t) => t.includes("invalid membership status transition"),
     key: null,
     silent: true,
+  },
+  // Sprint 7 — loyalty (20260922_loyalty.sql). The index names are matched
+  // before the generic duplicate-key rules, because which one fired is the
+  // whole message.
+  {
+    match: (t) =>
+      t.includes("loyalty_tx_one_per_serial_idx") ||
+      t.includes("loyalty_tx_one_per_appointment_idx"),
+    key: "loyaltyAlreadyAwarded",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("loyalty_balance_cannot_go_negative"),
+    key: "loyaltyBalanceNegative",
+    silent: false,
+  },
+  {
+    match: (t) =>
+      t.includes("loyalty_points_must_not_be_zero") ||
+      t.includes("loyalty_points_must_be_positive"),
+    key: "loyaltyPointsZero",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("loyalty_needs_a_customer"),
+    key: "loyaltyNeedsCustomer",
+    silent: false,
   },
   {
     // Same reasoning as the queue's: realtime/refetch has already corrected

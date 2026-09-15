@@ -2,16 +2,17 @@
 
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { ProfileView } from "@/features/customer-profile/components/ProfileView";
+import { MyLoyaltyCards } from "@/features/loyalty/components/MyLoyaltyCards";
 import { MyMembershipsCard } from "@/features/membership/components/MyMembershipsCard";
 import { Spinner } from "@/components/ui/Spinner";
 
 /**
  * The customer's profile.
  *
- * The memberships section is composed in here rather than imported by
- * `customer-profile`, because features may not import each other. The card
- * loads and renders nothing at all for a customer with no memberships, so
- * this page is unchanged for everyone who has never joined one.
+ * The memberships and loyalty sections are composed in here rather than
+ * imported by `customer-profile`, because features may not import each other.
+ * Both cards render nothing at all for a customer who holds neither, so this
+ * page is unchanged for everyone who has never joined a programme.
  */
 export default function ProfilePage() {
   const { data: profile, isPending } = useMyProfile();
@@ -30,6 +31,7 @@ export default function ProfilePage() {
       phone={profile?.phone ?? null}
       avatarUrl={profile?.avatar_url ?? null}
       membershipSlot={<MyMembershipsCard />}
+      loyaltySlot={<MyLoyaltyCards />}
     />
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Armchair,
+  Award,
   BarChart3,
   CalendarClock,
   CalendarDays,
@@ -90,6 +91,9 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     // Both business types: membership is a property of the business, not of
     // how it takes bookings, so unlike /appointments this one is unconditional.
     { href: "/memberships", label: t("navMemberships"), icon: Crown },
+    // Loyalty sits next to membership: both are retention programmes the shop
+    // opts into, and both are business-scoped rather than model-scoped.
+    { href: "/loyalty", label: t("navLoyalty"), icon: Award },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },
     { href: "/income", label: t("navIncome"), icon: Wallet },
     { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },

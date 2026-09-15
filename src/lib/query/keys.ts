@@ -76,6 +76,14 @@ export const keys = {
     shopCustomers: (shopId: string) => ["membership", "shop-customers", shopId] as const,
     shops: (shopIds: string[]) => ["membership", "shops", shopIds.slice().sort()] as const,
   },
+  loyalty: {
+    settings: (shopId: string) => ["loyalty", "settings", shopId] as const,
+    accounts: (shopId: string) => ["loyalty", "accounts", shopId] as const,
+    customerNames: (shopId: string) => ["loyalty", "customer-names", shopId] as const,
+    ledger: (shopId: string, customerId: string) =>
+      ["loyalty", "ledger", shopId, customerId] as const,
+    myCards: () => ["loyalty", "my-cards"] as const,
+  },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,

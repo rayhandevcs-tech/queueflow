@@ -18,6 +18,8 @@ const PROVIDER_PREFIXES = [
   // Membership management — both business types, so no model gate here, only
   // the provider one.
   "/memberships",
+  // Loyalty points — likewise both business types.
+  "/loyalty",
   // The AI assistant reads the caller's own shop and spends real money doing
   // it, so it is provider-only for both reasons at once.
   "/ai",

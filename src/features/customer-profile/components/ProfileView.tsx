@@ -20,6 +20,7 @@ export function ProfileView({
   phone,
   avatarUrl,
   membershipSlot,
+  loyaltySlot,
 }: {
   fullName: string;
   phone: string | null;
@@ -30,6 +31,8 @@ export function ProfileView({
    * composes its membership tab. Renders nothing when they hold none.
    */
   membershipSlot?: React.ReactNode;
+  /** Their loyalty point cards, on the same terms. */
+  loyaltySlot?: React.ReactNode;
 }) {
   const { history, shopsById, trust, spending, isPending } = useProfileHistory();
   const { shops: favoriteShops } = useMyFavoriteShops();
@@ -254,6 +257,10 @@ export function ProfileView({
       {/* Above favourites and habits: a membership is money already spent at
           a particular shop, so it outranks a bookmark. */}
       {membershipSlot && <div className="mt-5">{membershipSlot}</div>}
+
+      {/* Points sit just under memberships — both answer "what do I already
+          have at this shop", and both are per-shop rather than a total. */}
+      {loyaltySlot && <div className="mt-5">{loyaltySlot}</div>}
 
       {/* Their own rhythm, and the offer to be reminded of it — placed above
           favourites because it's the thing that brings them back. */}

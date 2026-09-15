@@ -429,6 +429,88 @@ export type Database = {
         };
         Relationships: [];
       };
+      /**
+       * One shop's loyalty programme (20260922).
+       *
+       * `shop_id` is the primary key — one programme per shop, no row means
+       * never configured, and `is_enabled = false` means switched off. Both
+       * read as "invisible" to the UI (decision 36). Absent from Update
+       * because `loyalty_settings_touch()` freezes it.
+       */
+      loyalty_settings: {
+        Row: {
+          shop_id: string;
+          is_enabled: boolean;
+          /** How many taka of bill earn one point. Owner-legible direction. */
+          taka_per_point: number;
+          min_bill_taka: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          shop_id: string;
+          is_enabled?: boolean;
+          taka_per_point?: number;
+          min_bill_taka?: number;
+        };
+        Update: {
+          is_enabled?: boolean;
+          taka_per_point?: number;
+          min_bill_taka?: number;
+        };
+        Relationships: [];
+      };
+      /**
+       * Points, owned by the (shop, customer) pair (decision 33).
+       *
+       * **Insert and Update are `never` on purpose.** The table has no INSERT
+       * or UPDATE RLS policy at all (decision 32): balances move only inside
+       * `loyalty_award()` / `loyalty_adjust()`, each of which writes a ledger
+       * row in the same transaction. Typing them as `never` makes an attempt
+       * to write directly a compile error rather than a silent RLS refusal.
+       */
+      loyalty_accounts: {
+        Row: {
+          shop_id: string;
+          customer_id: string;
+          balance: number;
+          /** Only ever grows — "what they have earned", not what is left. */
+          lifetime_earned: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      /**
+       * The loyalty ledger — the single source of truth (20260922).
+       *
+       * Balance is a cache of `sum(points)` here. Read-only to every client:
+       * no INSERT/UPDATE/DELETE policy, so history can neither be forged nor
+       * dropped, exactly like `appointment_reschedules`.
+       */
+      loyalty_transactions: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string;
+          /** Positive = earned, negative = spent or corrected. Never 0. */
+          points: number;
+          kind: "EARN_SERIAL" | "EARN_APPOINTMENT" | "ADJUST";
+          source_serial_id: string | null;
+          source_appointment_id: string | null;
+          /** Snapshot: the bill and the rate that produced these points. */
+          bill_amount: number | null;
+          taka_per_point: number | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       shop_rating_summary: {
         Row: {
           shop_id: string;
@@ -1065,6 +1147,60 @@ export type Database = {
       expire_memberships: {
         Args: Record<string, never>;
         Returns: number;
+      };
+      /**
+       * Points a bill earns: `floor(bill / taka_per_point)`, 0 below
+       * `min_bill`. Mirrored in `src/features/loyalty/lib/loyalty.ts`.
+       */
+      points_for_bill: {
+        Args: { p_bill: number; p_taka_per_point: number; p_min_bill?: number };
+        Returns: number;
+      };
+      /**
+       * The only door for adding points. Owner-only (checked by hand, since
+       * the tables have no write policy). Returns the new balance.
+       */
+      loyalty_award: {
+        Args: {
+          p_shop_id: string;
+          p_customer_id: string;
+          p_points: number;
+          p_kind: "EARN_SERIAL" | "EARN_APPOINTMENT";
+          p_serial_id?: string | null;
+          p_appointment_id?: string | null;
+          p_bill_amount?: number | null;
+          p_taka_per_point?: number | null;
+          p_note?: string | null;
+        };
+        Returns: number;
+      };
+      /** Owner's manual correction, positive or negative. New balance back. */
+      loyalty_adjust: {
+        Args: {
+          p_shop_id: string;
+          p_customer_id: string;
+          p_points: number;
+          p_note?: string | null;
+        };
+        Returns: number;
+      };
+      /**
+       * The signed-in customer's point cards — one row per shop, never a
+       * total (decision 33). `auth.uid()` is hard-coded inside it.
+       */
+      my_loyalty_accounts: {
+        Args: Record<string, never>;
+        Returns: {
+          shop_id: string;
+          shop_name: string;
+          shop_logo_url: string | null;
+          business_type: string;
+          balance: number;
+          lifetime_earned: number;
+          taka_per_point: number;
+          is_enabled: boolean;
+          last_earned_at: string | null;
+        }[];
       };
       shop_membership_summary: {
         Args: { p_shop_id: string };
