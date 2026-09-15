@@ -110,6 +110,33 @@ export const keys = {
     /** Not shop-scoped on purpose: this one IS the list across shops. */
     myCoupons: () => ["rewards", "my-coupons"] as const,
   },
+  analytics: {
+    /**
+     * Sprint 10's dashboard. Every key is
+     * `["analytics", <metric>, shopId, "from..to"]` — shop **and** range, both
+     * mandatory, because either one missing is a cache leak with a different
+     * shape: without the shop id one owner's cache would answer for another
+     * shop, and without the range last week's numbers would be served under
+     * this week's heading. The range arrives pre-joined by `rangeKey()` so the
+     * key stays a flat tuple of strings rather than an object identity that
+     * changes on every render.
+     */
+    overview: (shopId: string, range: string) => ["analytics", "overview", shopId, range] as const,
+    trend: (shopId: string, range: string, bucket: string) =>
+      ["analytics", "trend", shopId, range, bucket] as const,
+    appointments: (shopId: string, range: string) =>
+      ["analytics", "appointments", shopId, range] as const,
+    queue: (shopId: string, range: string) => ["analytics", "queue", shopId, range] as const,
+    staff: (shopId: string, range: string) => ["analytics", "staff", shopId, range] as const,
+    peak: (shopId: string, range: string) => ["analytics", "peak", shopId, range] as const,
+    loyalty: (shopId: string, range: string) => ["analytics", "loyalty", shopId, range] as const,
+    membership: (shopId: string, range: string) =>
+      ["analytics", "membership", shopId, range] as const,
+    referral: (shopId: string, range: string) => ["analytics", "referral", shopId, range] as const,
+    rewards: (shopId: string, range: string) => ["analytics", "rewards", shopId, range] as const,
+    breakdown: (shopId: string, range: string, dimension: string) =>
+      ["analytics", "breakdown", shopId, range, dimension] as const,
+  },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,

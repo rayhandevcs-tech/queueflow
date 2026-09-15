@@ -6,6 +6,7 @@ import {
   type BriefReview,
   type BriefSerial,
   type BriefService,
+  type ProgrammeBrief,
 } from "./build-shop-brief";
 
 const NOW = new Date("2026-08-20T12:00:00.000Z");
@@ -271,5 +272,119 @@ describe("an empty shop", () => {
     expect(brief.topServices).toEqual([]);
     expect(brief.outstanding).toEqual({ jobs: 0, amount: 0 });
     expect(brief.shopName).toBe("GentleMen");
+  });
+});
+
+describe("the Sprint 10 programme aggregates", () => {
+  const programmes: ProgrammeBrief = {
+    window: { from: "2026-02-20", to: "2026-08-20" },
+    appointments: {
+      total: 4,
+      completed: 2,
+      cancelled: 1,
+      noShow: 1,
+      upcoming: 0,
+      completionRate: 50,
+      noShowRate: 25,
+      cancelRate: 25,
+      avgScheduledMin: 90,
+      avgLeadDays: 3,
+    },
+    queue: {
+      total: 7,
+      completed: 5,
+      cancelled: 1,
+      noShow: 1,
+      completionRate: 71.4,
+      avgServiceMin: 20,
+      avgWaitMin: 30,
+    },
+    loyalty: {
+      enabled: true,
+      accounts: 3,
+      outstandingPoints: 479,
+      earnedPoints: 529,
+      redeemedPoints: 200,
+      referralPoints: 15,
+      transactions: 8,
+    },
+    membership: {
+      tiersActive: 1,
+      activeMembers: 1,
+      pendingMembers: 1,
+      expiredMembers: 0,
+      expiringSoon: 0,
+      newInWindow: 2,
+      revenueCollected: 5000,
+      revenueDue: 5000,
+    },
+    referral: {
+      enabled: true,
+      total: 2,
+      pending: 1,
+      converted: 1,
+      conversionRate: 50,
+      customersBrought: 1,
+      pointsAwarded: 15,
+    },
+    rewards: {
+      total: 1,
+      active: 1,
+      redemptionsIssued: 0,
+      redemptionsUsed: 1,
+      redemptionsExpired: 0,
+      useRate: 100,
+      pointsSpent: 200,
+      discountGiven: 100,
+    },
+  };
+
+  it("**is null when it was not supplied — not a block of zeros**", () => {
+    // A shop whose analytics call failed has not said it has no appointments.
+    expect(build().programmes).toBeNull();
+    expect(build({ programmes: null }).programmes).toBeNull();
+  });
+
+  it("passes the aggregates through untouched", () => {
+    const brief = build({ programmes });
+    expect(brief.programmes).toEqual(programmes);
+    expect(brief.programmes?.appointments?.noShowRate).toBe(25);
+    expect(brief.programmes?.referral?.converted).toBe(1);
+  });
+
+  it("**does not fold them into the serial-derived figures**", () => {
+    // The two cover different windows and different definitions of revenue.
+    // Blending them is how the brief would start contradicting the dashboard.
+    const brief = build({ serials: [serial({ total_amount: 100 })], programmes });
+    expect(brief.months[0].revenue).toBe(100);
+    expect(brief.programmes?.membership?.revenueCollected).toBe(5000);
+  });
+
+  it("keeps a null rate null, so the model cannot read it as zero", () => {
+    const brief = build({
+      programmes: {
+        ...programmes,
+        appointments: {
+          total: 0,
+          completed: 0,
+          cancelled: 0,
+          noShow: 0,
+          upcoming: 0,
+          completionRate: null,
+          noShowRate: null,
+          cancelRate: null,
+          avgScheduledMin: null,
+          avgLeadDays: null,
+        },
+      },
+    });
+    expect(brief.programmes?.appointments?.noShowRate).toBeNull();
+    expect(brief.programmes?.appointments?.total).toBe(0);
+  });
+
+  it("survives a programme block being absent on its own", () => {
+    const brief = build({ programmes: { ...programmes, rewards: null, loyalty: null } });
+    expect(brief.programmes?.rewards).toBeNull();
+    expect(brief.programmes?.queue?.total).toBe(7);
   });
 });

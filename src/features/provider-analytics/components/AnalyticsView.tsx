@@ -63,7 +63,21 @@ function WeeklyBars({ buckets }: { buckets: LoadBucket[] }) {
   );
 }
 
-export function AnalyticsView({ shopId }: { shopId: string | undefined }) {
+/**
+ * The queue-rhythm card: what a normal week looks like, over a fixed 90 days.
+ *
+ * `embedded` drops its own page heading for the case Sprint 10 introduced —
+ * it now sits inside the business dashboard as one section among twelve, and
+ * two `h1`s on one page is both a layout problem and an accessibility one.
+ * Standalone behaviour is unchanged.
+ */
+export function AnalyticsView({
+  shopId,
+  embedded = false,
+}: {
+  shopId: string | undefined;
+  embedded?: boolean;
+}) {
   const { summary, isPending } = useAnalyticsSummary(shopId);
   const t = useT(providerAnalyticsDict);
 
@@ -77,10 +91,21 @@ export function AnalyticsView({ shopId }: { shopId: string | undefined }) {
 
   return (
     <div className="space-y-4.5">
-      <div>
-        <h1 className="font-display text-[27px] font-bold text-ink">{t("customerAnalyticsTitle")}</h1>
-        <p className="mt-1 text-sm text-muted">{t("analyticsSubtitle")}</p>
-      </div>
+      {embedded ? (
+        <div>
+          <p className="font-display text-[17px] font-bold text-ink">
+            {t("customerAnalyticsTitle")}
+          </p>
+          <p className="text-[11px] leading-snug text-muted">{t("analyticsSubtitle")}</p>
+        </div>
+      ) : (
+        <div>
+          <h1 className="font-display text-[27px] font-bold text-ink">
+            {t("customerAnalyticsTitle")}
+          </h1>
+          <p className="mt-1 text-sm text-muted">{t("analyticsSubtitle")}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-line bg-card p-4.5">

@@ -1542,6 +1542,189 @@ export type Database = {
           expires_at: string | null;
         }[];
       };
+      /**
+       * ---------------------------------------------------------------------
+       * Sprint 10 — analytics (20260925_analytics.sql)
+       * ---------------------------------------------------------------------
+       * Eleven read-only aggregates, every one of them SECURITY INVOKER and
+       * every one opening with `analytics_scope()`, which checks
+       * `is_shop_owner(p_shop_id)` and resolves the date pair into an
+       * Asia/Dhaka instant range. `p_from`/`p_to` are inclusive calendar days
+       * ("YYYY-MM-DD"); the server turns them into
+       * `[from 00:00, to+1 00:00)` locally.
+       *
+       * A rate or average comes back **null** when it cannot be calculated —
+       * no appointments to have a no-show rate, no roster to measure a seat
+       * against. Null is not zero, and the dashboard renders it as N/A.
+       */
+      shop_overview_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          jobs_completed: number;
+          serials_total: number;
+          serials_completed: number;
+          serials_cancelled: number;
+          serials_no_show: number;
+          appointments_total: number;
+          appointments_completed: number;
+          appointments_cancelled: number;
+          appointments_no_show: number;
+          manual_entries: number;
+          /** Sprint 5.1's definition, post-reward-discount. */
+          revenue_total: number;
+          revenue_collected: number;
+          revenue_due: number;
+          avg_ticket: number | null;
+          customers_unique: number;
+          customers_new: number;
+          customers_returning: number;
+          customers_repeat: number;
+          walk_ins: number;
+        }[];
+      };
+      shop_revenue_trend: {
+        Args: { p_shop_id: string; p_from: string; p_to: string; p_bucket?: "DAY" | "MONTH" };
+        Returns: {
+          bucket_start: string;
+          revenue_total: number;
+          revenue_collected: number;
+          jobs: number;
+        }[];
+      };
+      shop_appointment_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          total: number;
+          completed: number;
+          cancelled: number;
+          no_show: number;
+          booked: number;
+          confirmed: number;
+          in_progress: number;
+          completion_rate: number | null;
+          no_show_rate: number | null;
+          cancel_rate: number | null;
+          avg_scheduled_min: number | null;
+          avg_lead_days: number | null;
+          walk_ins: number;
+        }[];
+      };
+      shop_queue_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          total: number;
+          completed: number;
+          cancelled: number;
+          no_show: number;
+          walk_ins: number;
+          completion_rate: number | null;
+          no_show_rate: number | null;
+          avg_service_min: number | null;
+          avg_wait_min: number | null;
+          busiest_day: string | null;
+          busiest_day_jobs: number;
+        }[];
+      };
+      shop_staff_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          staff_id: string;
+          staff_label: string;
+          staff_name: string | null;
+          is_active: boolean;
+          serial_jobs: number;
+          appointment_jobs: number;
+          jobs_total: number;
+          revenue_total: number;
+          cancelled: number;
+          no_show: number;
+          booked_minutes: number;
+          /** null = no working hours configured for this seat. */
+          working_minutes: number | null;
+          utilization_pct: number | null;
+        }[];
+      };
+      shop_peak_slots: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          bucket_kind: "HOUR" | "WEEKDAY";
+          source: "SERIAL" | "APPOINTMENT";
+          /** 0–23 for HOUR, isodow 1–7 for WEEKDAY, in Dhaka local time. */
+          bucket: number;
+          jobs: number;
+        }[];
+      };
+      shop_loyalty_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          is_enabled: boolean;
+          accounts: number;
+          accounts_with_balance: number;
+          outstanding_points: number;
+          lifetime_points: number;
+          earned_points: number;
+          redeemed_points: number;
+          adjusted_points: number;
+          referral_points: number;
+          transactions: number;
+          earning_customers: number;
+        }[];
+      };
+      shop_membership_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          tiers_total: number;
+          tiers_active: number;
+          active_members: number;
+          pending_members: number;
+          expired_members: number;
+          cancelled_members: number;
+          expiring_soon: number;
+          new_in_range: number;
+          revenue_collected: number;
+          revenue_due: number;
+          members_unique: number;
+        }[];
+      };
+      shop_referral_summary: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          is_enabled: boolean;
+          codes_issued: number;
+          referrals_total: number;
+          referrals_pending: number;
+          referrals_converted: number;
+          conversion_rate: number | null;
+          referrers_active: number;
+          customers_brought: number;
+          points_awarded: number;
+        }[];
+      };
+      shop_reward_stats: {
+        Args: { p_shop_id: string; p_from: string; p_to: string };
+        Returns: {
+          rewards_total: number;
+          rewards_active: number;
+          rewards_available: number;
+          redemptions_total: number;
+          redemptions_issued: number;
+          redemptions_used: number;
+          redemptions_expired: number;
+          use_rate: number | null;
+          points_spent: number;
+          discount_given: number;
+          redeeming_customers: number;
+        }[];
+      };
+      shop_analytics_breakdown: {
+        Args: {
+          p_shop_id: string;
+          p_from: string;
+          p_to: string;
+          p_dimension: "SERVICE" | "PAYMENT_METHOD" | "MEMBERSHIP_TIER" | "REWARD";
+        };
+        Returns: { key: string; label: string; jobs: number; amount: number }[];
+      };
       shop_membership_summary: {
         Args: { p_shop_id: string };
         Returns: {

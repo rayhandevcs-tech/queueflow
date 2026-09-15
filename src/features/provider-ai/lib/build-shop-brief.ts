@@ -72,6 +72,86 @@ export interface MonthStat {
   expenses: number;
 }
 
+/**
+ * The Sprint 10 aggregates, exactly as the analytics RPCs returned them.
+ *
+ * Every number here was computed **in Postgres**, over the shop's own rows,
+ * behind `is_shop_owner`. The brief carries them through unchanged rather than
+ * recomputing anything: the AI then answers from the same figures the owner is
+ * reading on the analytics page, so the assistant and the dashboard cannot
+ * disagree about last month's no-show rate.
+ *
+ * Every field is `number | null` where the RPC's is, and every block is
+ * nullable. A null is not a zero — it means "this cannot be calculated" (no
+ * appointments to have a no-show rate) or "this programme is off". The prompt
+ * tells the model to treat it that way.
+ */
+export interface ProgrammeBrief {
+  /** The window these aggregates cover, "YYYY-MM-DD", both ends inclusive. */
+  window: { from: string; to: string };
+  appointments: {
+    total: number;
+    completed: number;
+    cancelled: number;
+    noShow: number;
+    upcoming: number;
+    completionRate: number | null;
+    noShowRate: number | null;
+    cancelRate: number | null;
+    avgScheduledMin: number | null;
+    avgLeadDays: number | null;
+  } | null;
+  queue: {
+    total: number;
+    completed: number;
+    cancelled: number;
+    noShow: number;
+    completionRate: number | null;
+    avgServiceMin: number | null;
+    avgWaitMin: number | null;
+  } | null;
+  loyalty: {
+    enabled: boolean;
+    accounts: number;
+    outstandingPoints: number;
+    earnedPoints: number;
+    redeemedPoints: number;
+    referralPoints: number;
+    transactions: number;
+  } | null;
+  membership: {
+    tiersActive: number;
+    activeMembers: number;
+    pendingMembers: number;
+    expiredMembers: number;
+    expiringSoon: number;
+    newInWindow: number;
+    /** Collected only. There is no recurring billing to project from. */
+    revenueCollected: number;
+    revenueDue: number;
+  } | null;
+  referral: {
+    enabled: boolean;
+    total: number;
+    pending: number;
+    /** Sprint 8's definition: a claimed code is not a conversion. */
+    converted: number;
+    conversionRate: number | null;
+    customersBrought: number;
+    pointsAwarded: number;
+  } | null;
+  rewards: {
+    total: number;
+    active: number;
+    redemptionsIssued: number;
+    redemptionsUsed: number;
+    redemptionsExpired: number;
+    useRate: number | null;
+    pointsSpent: number;
+    discountGiven: number;
+  } | null;
+}
+
 export interface ShopBrief {
   shopName: string;
   businessType: string;
@@ -104,6 +184,14 @@ export interface ShopBrief {
     activeStaff: number;
     priceRange: { min: number; max: number } | null;
   };
+  /**
+   * Sprint 10's aggregates, or null when they could not be read.
+   *
+   * Null rather than a block of zeros on purpose: a shop whose analytics call
+   * failed has not told us it has no appointments, and a model shown zeros
+   * would confidently say the parlour side is dead.
+   */
+  programmes: ProgrammeBrief | null;
 }
 
 function monthKey(iso: string): string {
@@ -131,6 +219,8 @@ export function buildShopBrief(input: {
   reviews: readonly BriefReview[];
   chairs: readonly BriefChair[];
   services: readonly BriefService[];
+  /** Pre-computed analytics from the Sprint 10 RPCs. Optional and nullable. */
+  programmes?: ProgrammeBrief | null;
   now?: Date;
 }): ShopBrief {
   const now = input.now ?? new Date();
@@ -288,5 +378,11 @@ export function buildShopBrief(input: {
       priceRange:
         rates.length > 0 ? { min: Math.min(...rates), max: Math.max(...rates) } : null,
     },
+    // Passed straight through. Not merged into the figures above, and not
+    // recomputed from the rows: the serial-derived numbers here and the
+    // RPC-derived ones cover deliberately different windows and definitions,
+    // and quietly blending two definitions of "revenue" is how a brief starts
+    // contradicting the dashboard.
+    programmes: input.programmes ?? null,
   };
 }
