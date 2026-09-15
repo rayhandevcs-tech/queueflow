@@ -9,6 +9,7 @@ import {
   CalendarClock,
   CalendarDays,
   Crown,
+  Gift,
   LifeBuoy,
   LogOut,
   Megaphone,
@@ -98,6 +99,9 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     // Referral sits under loyalty because it pays in loyalty points — it is
     // the same programme reached a different way, not a third balance.
     { href: "/referrals", label: t("navReferrals"), icon: Share2 },
+    // Rewards sit under referral because both spend or pay loyalty points —
+    // the three together are one programme reached three ways.
+    { href: "/rewards", label: t("navRewards"), icon: Gift },
     { href: "/chat", label: t("navChat"), icon: MessageCircle },
     { href: "/income", label: t("navIncome"), icon: Wallet },
     { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },

@@ -95,6 +95,21 @@ export const keys = {
     claimed: (shopId: string) => ["referral", "claimed", shopId] as const,
     stats: (shopId: string) => ["referral", "stats", shopId] as const,
   },
+  rewards: {
+    /**
+     * Every key carries `shopId` — a reward, a coupon and a points balance are
+     * all shop-scoped, so a cache entry shared across shops could offer one
+     * shop's reward against another shop's points.
+     */
+    catalogue: (shopId: string) => ["rewards", "catalogue", shopId] as const,
+    publicCatalogue: (shopId: string) => ["rewards", "public", shopId] as const,
+    redemptions: (shopId: string) => ["rewards", "redemptions", shopId] as const,
+    myBalance: (shopId: string) => ["rewards", "my-balance", shopId] as const,
+    openBookings: (shopId: string, customerId: string) =>
+      ["rewards", "open-bookings", shopId, customerId] as const,
+    /** Not shop-scoped on purpose: this one IS the list across shops. */
+    myCoupons: () => ["rewards", "my-coupons"] as const,
+  },
   reviews: {
     mine: () => ["reviews", "mine"] as const,
     byShop: (shopId: string) => ["reviews", "shop", shopId] as const,

@@ -198,6 +198,9 @@ describe("kinds", () => {
     ];
     expect(earn.every(isEarnKind)).toBe(true);
     expect(isEarnKind("ADJUST")).toBe(false);
+    // REDEEM arrived in Sprint 9 and is deliberately NOT an earning kind:
+    // spending points is the opposite of earning them.
+    expect(isEarnKind("REDEEM")).toBe(false);
   });
 });
 

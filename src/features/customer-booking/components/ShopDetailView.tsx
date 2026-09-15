@@ -56,10 +56,12 @@ export interface ShopDetailExtraTab {
 export function ShopDetailView({
   shopId,
   membershipTab,
+  rewardsTab,
   referralTab,
 }: {
   shopId: string;
   membershipTab?: ShopDetailExtraTab | null;
+  rewardsTab?: ShopDetailExtraTab | null;
   referralTab?: ShopDetailExtraTab | null;
 }) {
   const router = useRouter();
@@ -80,6 +82,9 @@ export function ShopDetailView({
     // no programme (decision 36), so the tab row is unchanged for every shop
     // that never sets one up.
     ...(membershipTab ? [{ id: "membership", label: membershipTab.label }] : []),
+    // Rewards next, because they are what the points bought with a
+    // membership or earned on a visit actually turn into.
+    ...(rewardsTab ? [{ id: "rewards", label: rewardsTab.label }] : []),
     // Referral arrives the same way and is absent for every shop that runs no
     // referral programme — so a shop that never sets one up keeps exactly the
     // tab row it had before this sprint.
@@ -372,6 +377,7 @@ export function ShopDetailView({
 
         {tab === "staff" && <StaffTab shopId={shopId} services={services} />}
         {tab === "membership" && membershipTab?.content}
+        {tab === "rewards" && rewardsTab?.content}
         {tab === "referral" && referralTab?.content}
         {tab === "gallery" && <GalleryTab shopId={shopId} />}
         {tab === "reviews" && <ReviewsTab shopId={shopId} />}

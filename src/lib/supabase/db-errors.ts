@@ -250,6 +250,71 @@ const MESSAGES = {
     bn: "কোড বানানো গেল না — আরেকবার চেষ্টা করো।",
     en: "Couldn't mint a code — please try again.",
   },
+  // Sprint 9 — rewards. Keep in sync with 20260924_rewards.sql.
+  rewardNotFound: {
+    bn: "এই রিওয়ার্ডটা আর নেই — পাতাটা রিফ্রেশ করে দেখো।",
+    en: "That reward no longer exists — refresh the page.",
+  },
+  rewardInactive: {
+    bn: "রিওয়ার্ডটা এখন বন্ধ আছে, তাই নেওয়া যাবে না।",
+    en: "That reward is switched off, so it can't be taken.",
+  },
+  rewardOfferExpired: {
+    bn: "এই অফারের মেয়াদ শেষ হয়ে গেছে।",
+    en: "That offer has expired.",
+  },
+  rewardOutOfStock: {
+    bn: "এই রিওয়ার্ডটা শেষ হয়ে গেছে।",
+    en: "That reward is all gone.",
+  },
+  rewardInsufficientPoints: {
+    bn: "এই দোকানে তোমার পয়েন্ট যথেষ্ট নয়।",
+    en: "You don't have enough points at this shop.",
+  },
+  rewardRequiresLogin: {
+    bn: "রিওয়ার্ড নিতে লগইন করতে হবে।",
+    en: "Log in to take a reward.",
+  },
+  rewardServiceWrongShop: {
+    bn: "সার্ভিসটা এই দোকানের নয় — নিজের দোকানের একটা সার্ভিস বেছে নাও।",
+    en: "That service isn't yours — pick one of your own shop's services.",
+  },
+  rewardNameTaken: {
+    bn: "এই নামে তোমার একটা রিওয়ার্ড আছেই — অন্য নাম দাও।",
+    en: "You already have a reward by that name — pick another.",
+  },
+  rewardHasRedemptions: {
+    bn: "এই রিওয়ার্ড কেউ নিয়েছে, তাই মোছা যাবে না। 'বন্ধ' করে দাও।",
+    en: "Someone has taken this reward, so it can't be deleted. Switch it off instead.",
+  },
+  redemptionNotFound: {
+    bn: "এই দোকানে এই কুপনটা নেই। বানানটা আরেকবার দেখো — অন্য দোকানের কুপন এখানে চলে না।",
+    en: "No such coupon at this shop. Check the spelling — a coupon from another shop won't work here.",
+  },
+  redemptionAlreadyUsed: {
+    bn: "এই কুপনটা আগেই ব্যবহার হয়ে গেছে।",
+    en: "That coupon has already been used.",
+  },
+  redemptionExpired: {
+    bn: "এই কুপনের মেয়াদ শেষ হয়ে গেছে।",
+    en: "That coupon has expired.",
+  },
+  redemptionWrongCustomer: {
+    bn: "কুপনটা এই কাস্টমারের নয় — যার কুপন, তার বিলেই বসবে।",
+    en: "That coupon isn't this customer's — it only applies to its own owner's bill.",
+  },
+  redemptionServiceNotInBooking: {
+    bn: "এই কুপনের সার্ভিসটা ওই বিলে নেই, তাই ছাড় বসবে না।",
+    en: "The coupon's service isn't on that bill, so there's nothing to take off.",
+  },
+  redemptionBookingNotFound: {
+    bn: "কাজটা পাওয়া যায়নি — তালিকাটা রিফ্রেশ করে দেখো।",
+    en: "That job couldn't be found — refresh the list.",
+  },
+  redemptionOnePerBooking: {
+    bn: "এই বিলে আগেই একটা কুপন বসেছে — এক বিলে একটাই।",
+    en: "A coupon is already on that bill — one per bill.",
+  },
   generic: { bn: "কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো।", en: "Something went wrong — try again." },
 } satisfies Dict;
 
@@ -326,6 +391,21 @@ const RULES: ReadonlyArray<{
     // or a future caller — either way the message is the same.
     match: (t) => t.includes("referrals_one_per_shop"),
     key: "referralAlreadyClaimed",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("reward_redemptions_one_per_booking_idx"),
+    key: "redemptionOnePerBooking",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("loyalty_tx_one_per_redemption_idx"),
+    key: "redemptionAlreadyUsed",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("rewards_shop_name_idx"),
+    key: "rewardNameTaken",
     silent: false,
   },
   {
@@ -447,6 +527,71 @@ const RULES: ReadonlyArray<{
     match: (t) => t.includes("referral_code_generation_failed"),
     key: "referralCodeUnavailable",
     silent: false,
+  },
+  // Sprint 9 — rewards (20260924_rewards.sql). Each refusal needs its own
+  // answer: "not enough points", "all gone" and "switched off" send the
+  // customer to three different places, and collapsing them into one message
+  // would send them to the wrong one.
+  {
+    match: (t) => t.includes("reward_insufficient_points"),
+    key: "rewardInsufficientPoints",
+    silent: false,
+  },
+  { match: (t) => t.includes("reward_out_of_stock"), key: "rewardOutOfStock", silent: false },
+  { match: (t) => t.includes("reward_offer_expired"), key: "rewardOfferExpired", silent: false },
+  { match: (t) => t.includes("reward_inactive"), key: "rewardInactive", silent: false },
+  { match: (t) => t.includes("reward_not_found"), key: "rewardNotFound", silent: false },
+  { match: (t) => t.includes("reward_requires_login"), key: "rewardRequiresLogin", silent: false },
+  {
+    match: (t) => t.includes("reward_service_wrong_shop"),
+    key: "rewardServiceWrongShop",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("reward_code_generation_failed"),
+    key: "referralCodeUnavailable",
+    silent: false,
+  },
+  {
+    // The FK's on-delete-restrict firing: a reward somebody has taken cannot
+    // be deleted, only switched off.
+    match: (t) => t.includes("reward_redemptions_reward_id_fkey"),
+    key: "rewardHasRedemptions",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("redemption_service_not_in_booking"),
+    key: "redemptionServiceNotInBooking",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("redemption_wrong_customer"),
+    key: "redemptionWrongCustomer",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("redemption_booking_not_found"),
+    key: "redemptionBookingNotFound",
+    silent: false,
+  },
+  {
+    match: (t) => t.includes("redemption_already_used"),
+    key: "redemptionAlreadyUsed",
+    silent: false,
+  },
+  { match: (t) => t.includes("redemption_expired"), key: "redemptionExpired", silent: false },
+  { match: (t) => t.includes("redemption_not_found"), key: "redemptionNotFound", silent: false },
+  {
+    // `redemption_code_invalid` is caught by the form before it is sent, and
+    // the remaining three are racing taps on a coupon that has already been
+    // settled — the sheet has refetched, so there is nothing useful to say.
+    match: (t) =>
+      t.includes("redemption_code_invalid") ||
+      t.includes("redemption_booking_type_invalid") ||
+      t.includes("redemption_use_is_final") ||
+      t.includes("redemption_expiry_is_final"),
+    key: null,
+    silent: true,
   },
   {
     // referral_convert() refusing a second conversion, or referral_award_points

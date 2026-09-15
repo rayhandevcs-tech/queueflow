@@ -262,6 +262,7 @@ export const providerCatalogDict = {
   navMemberships: { bn: "মেম্বারশিপ", en: "Membership" },
   navLoyalty: { bn: "লয়্যালটি পয়েন্ট", en: "Loyalty points" },
   navReferrals: { bn: "রেফারেল", en: "Referrals" },
+  navRewards: { bn: "রিওয়ার্ড", en: "Rewards" },
   navChat: { bn: "মেসেজ", en: "Messages" },
   navIncome: { bn: "ইনকাম", en: "Income" },
   navTransactions: { bn: "লেনদেন", en: "Transactions" },

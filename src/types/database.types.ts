@@ -522,10 +522,13 @@ export type Database = {
             | "EARN_APPOINTMENT"
             | "ADJUST"
             | "REFERRAL_REFERRER"
-            | "REFERRAL_REFERRED";
+            | "REFERRAL_REFERRED"
+            /** Spending points on a reward (20260924). Always negative. */
+            | "REDEEM";
           source_serial_id: string | null;
           source_appointment_id: string | null;
           source_referral_id: string | null;
+          source_redemption_id: string | null;
           /** Snapshot: the bill and the rate that produced these points. */
           bill_amount: number | null;
           taka_per_point: number | null;
@@ -586,6 +589,107 @@ export type Database = {
           referrer_points: number | null;
           referred_points: number | null;
           converted_at: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      /**
+       * A shop's reward catalogue (20260924).
+       *
+       * Three kinds and no more (the plan's `reward_kind`): flat taka off, a
+       * percentage off, or one named service free. `value` and `service_id`
+       * are constrained per kind, so "50% flat" and "a free service worth
+       * ৳100" are both unrepresentable.
+       *
+       * Writable by the shop's owner through RLS; `shop_id` is frozen by
+       * `rewards_before_write()`, which also refuses a `service_id` belonging
+       * to another shop.
+       */
+      rewards: {
+        Row: {
+          id: string;
+          shop_id: string;
+          name: string;
+          description: string | null;
+          kind: Database["public"]["Enums"]["reward_kind"];
+          points_cost: number;
+          /** Taka for DISCOUNT_FLAT, 1–100 for DISCOUNT_PCT, null otherwise. */
+          value: number | null;
+          /** Set for FREE_SERVICE only, and always a service of this shop. */
+          service_id: string | null;
+          /** null = unlimited. A number is how many more may be issued. */
+          stock: number | null;
+          valid_until: string | null;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          name: string;
+          description?: string | null;
+          kind: Database["public"]["Enums"]["reward_kind"];
+          points_cost: number;
+          value?: number | null;
+          service_id?: string | null;
+          stock?: number | null;
+          valid_until?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        // shop_id is absent on purpose: rewards_before_write() freezes it, so
+        // a reward can never be moved to another shop.
+        Update: {
+          name?: string;
+          description?: string | null;
+          kind?: Database["public"]["Enums"]["reward_kind"];
+          points_cost?: number;
+          value?: number | null;
+          service_id?: string | null;
+          stock?: number | null;
+          valid_until?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      /**
+       * An issued coupon (20260924) — immutable history.
+       *
+       * **Insert and Update are `never` on purpose.** The table has no
+       * INSERT, UPDATE or DELETE policy at all: coupons are issued only
+       * inside `redeem_reward()`, consumed only inside
+       * `mark_redemption_used()` and expired only by `expire_redemptions()`.
+       * Typing them as `never` makes an attempt to write directly a compile
+       * error rather than a silent RLS refusal.
+       *
+       * Three statuses, not the plan's four: nothing in Sprint 9 can cancel a
+       * redemption, and a status nobody can set is worse than none.
+       */
+      reward_redemptions: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string;
+          reward_id: string;
+          /** The reward as it was when redeemed: name, kind, value, cost. */
+          reward_snapshot: Json;
+          points_spent: number;
+          /** Upper-case, 6–12 chars, unique WITHIN the shop. */
+          code: string;
+          status: Database["public"]["Enums"]["redemption_status"];
+          issued_at: string;
+          used_at: string | null;
+          used_on_booking_type: "SERIAL" | "APPOINTMENT" | null;
+          used_on_booking_id: string | null;
+          /** Taka taken off the bill. Set together with USED, never alone. */
+          discount_amount: number | null;
+          /** Inherited from the reward's valid_until. null = never expires. */
+          expires_at: string | null;
           created_at: string;
         };
         Insert: never;
@@ -1362,6 +1466,82 @@ export type Database = {
           last_referral_at: string | null;
         }[];
       };
+      /**
+       * Taka off a bill for one reward. Never more than the bill itself.
+       * Mirrored in `src/features/rewards/lib/rewards.ts`.
+       */
+      reward_discount_for: {
+        Args: {
+          p_kind: string;
+          p_value: number | null;
+          p_service_id: string | null;
+          p_total: number | null;
+          p_snapshot: Json;
+        };
+        Returns: number;
+      };
+      /**
+       * The only door for spending points. One transaction: balance check,
+       * stock, coupon, ledger, balance. `auth.uid()` is hard-coded, so nobody
+       * can spend anyone else's points.
+       */
+      redeem_reward: {
+        Args: { p_shop_id: string; p_reward_id: string };
+        Returns: {
+          redemption_id: string;
+          redemption_code: string;
+          points_spent: number;
+          balance_after: number;
+          valid_until: string | null;
+        }[];
+      };
+      /**
+       * Owner-only verification of a coupon against one booking. A customer
+       * cannot consume their own coupon. The bill itself is reduced by the
+       * zz_reward_discount trigger when the booking reaches DONE.
+       */
+      mark_redemption_used: {
+        Args: {
+          p_shop_id: string;
+          p_code: string;
+          p_booking_type: "SERIAL" | "APPOINTMENT";
+          p_booking_id: string;
+        };
+        Returns: {
+          redemption_id: string;
+          reward_name: string;
+          discount_amount: number;
+          bill_before: number;
+          bill_after: number;
+        }[];
+      };
+      /** Nightly tidy-up — flips lapsed ISSUED coupons to EXPIRED. */
+      expire_redemptions: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      /**
+       * The signed-in customer's coupons, each carrying its shop's name so
+       * "where does this work" is never a question. `auth.uid()` hard-coded.
+       */
+      my_redemptions: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          shop_id: string;
+          shop_name: string;
+          shop_logo_url: string | null;
+          reward_name: string;
+          reward_kind: string;
+          redemption_code: string;
+          status: Database["public"]["Enums"]["redemption_status"];
+          points_spent: number;
+          discount_amount: number | null;
+          issued_at: string;
+          used_at: string | null;
+          expires_at: string | null;
+        }[];
+      };
       shop_membership_summary: {
         Args: { p_shop_id: string };
         Returns: {
@@ -1853,6 +2033,14 @@ export type Database = {
        * can set a VOID.
        */
       referral_status: "PENDING" | "CONVERTED";
+      /** `rewards.kind` — text + CHECK, like every other kind here. */
+      reward_kind: "DISCOUNT_FLAT" | "DISCOUNT_PCT" | "FREE_SERVICE";
+      /**
+       * `reward_redemptions.status` — three values, not the plan's four.
+       * Nothing in Sprint 9 can cancel a redemption, so CANCELLED would be a
+       * status nobody could set.
+       */
+      redemption_status: "ISSUED" | "USED" | "EXPIRED";
       appointment_status:
         | "BOOKED"
         | "CONFIRMED"

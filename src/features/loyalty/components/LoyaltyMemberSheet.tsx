@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Gift, Scissors, Share2, Sparkles, Wrench } from "lucide-react";
+import { CalendarClock, Gift, Scissors, Share2, Sparkles, TicketCheck, Wrench } from "lucide-react";
 import type { LoyaltyAccount, LoyaltyTransactionKind } from "@/types";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -27,6 +27,7 @@ const KIND_ICON: Record<LoyaltyTransactionKind, typeof Scissors> = {
   ADJUST: Wrench,
   REFERRAL_REFERRER: Share2,
   REFERRAL_REFERRED: Gift,
+  REDEEM: TicketCheck,
 };
 
 const KIND_KEY = {
@@ -35,6 +36,7 @@ const KIND_KEY = {
   ADJUST: "kindADJUST",
   REFERRAL_REFERRER: "kindREFERRAL_REFERRER",
   REFERRAL_REFERRED: "kindREFERRAL_REFERRED",
+  REDEEM: "kindREDEEM",
 } as const satisfies Record<LoyaltyTransactionKind, string>;
 
 /**

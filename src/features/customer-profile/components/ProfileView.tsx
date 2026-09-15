@@ -21,6 +21,7 @@ export function ProfileView({
   avatarUrl,
   membershipSlot,
   loyaltySlot,
+  rewardsSlot,
 }: {
   fullName: string;
   phone: string | null;
@@ -33,6 +34,8 @@ export function ProfileView({
   membershipSlot?: React.ReactNode;
   /** Their loyalty point cards, on the same terms. */
   loyaltySlot?: React.ReactNode;
+  /** The coupons they've taken with those points, on the same terms again. */
+  rewardsSlot?: React.ReactNode;
 }) {
   const { history, shopsById, trust, spending, isPending } = useProfileHistory();
   const { shops: favoriteShops } = useMyFavoriteShops();
@@ -261,6 +264,10 @@ export function ProfileView({
       {/* Points sit just under memberships — both answer "what do I already
           have at this shop", and both are per-shop rather than a total. */}
       {loyaltySlot && <div className="mt-5">{loyaltySlot}</div>}
+
+      {/* Coupons follow the points they were bought with, because the first
+          question about a coupon is "how many points did that cost me". */}
+      {rewardsSlot && <div className="mt-5">{rewardsSlot}</div>}
 
       {/* Their own rhythm, and the offer to be reminded of it — placed above
           favourites because it's the thing that brings them back. */}

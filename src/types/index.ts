@@ -32,6 +32,10 @@ export type LoyaltyTransactionKind = LoyaltyTransaction["kind"];
 export type ReferralCode = Tables<"referral_codes">;
 export type Referral = Tables<"referrals">;
 export type ReferralStatus = Database["public"]["Enums"]["referral_status"];
+export type Reward = Tables<"rewards">;
+export type RewardRedemption = Tables<"reward_redemptions">;
+export type RewardKind = Database["public"]["Enums"]["reward_kind"];
+export type RedemptionStatus = Database["public"]["Enums"]["redemption_status"];
 export type ManualEntry = Tables<"manual_entries">;
 export type ShopExpense = Tables<"shop_expenses">;
 export type ExpenseCategory = Database["public"]["Enums"]["expense_category"];
@@ -142,6 +146,40 @@ export function parseBenefits(benefits: Json): MembershipBenefit[] {
       },
     ];
   });
+}
+
+/**
+ * Shape of `reward_redemptions.reward_snapshot`, frozen at redemption.
+ *
+ * The coupon has to be readable years later, after the shop has renamed or
+ * repriced the reward it came from — so the row carries its own copy, exactly
+ * as `tier_snapshot` and `services_snapshot` do.
+ */
+export type RewardSnapshot = {
+  name: string;
+  description: string | null;
+  kind: RewardKind;
+  value: number | null;
+  service_id: string | null;
+  points_cost: number;
+};
+
+/** Safe accessor for `reward_redemptions.reward_snapshot`. */
+export function parseRewardSnapshot(snapshot: Json): RewardSnapshot | null {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
+  const row = snapshot as Record<string, Json>;
+  if (typeof row.name !== "string") return null;
+  const kinds: readonly string[] = ["DISCOUNT_FLAT", "DISCOUNT_PCT", "FREE_SERVICE"];
+  const kind = typeof row.kind === "string" && kinds.includes(row.kind) ? row.kind : null;
+  if (!kind) return null;
+  return {
+    name: row.name,
+    description: typeof row.description === "string" ? row.description : null,
+    kind: kind as RewardKind,
+    value: typeof row.value === "number" ? row.value : null,
+    service_id: typeof row.service_id === "string" ? row.service_id : null,
+    points_cost: typeof row.points_cost === "number" ? row.points_cost : 0,
+  };
 }
 
 /** Safe accessor for `customer_memberships.tier_snapshot`. */

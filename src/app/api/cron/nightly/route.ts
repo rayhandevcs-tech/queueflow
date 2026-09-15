@@ -4,9 +4,10 @@ import { getServiceRoleClient } from "@/lib/supabase/service-role";
 /**
  * The app's one nightly job.
  *
- * Three things run here — the shop owner's end-of-day summary, any customer
- * self-reminders that came due, and tomorrow's parlour appointments — because
- * all three want daily granularity and none has an event that could trigger it. ("The day ended" is not
+ * Five things run here — the shop owner's end-of-day summary, any customer
+ * self-reminders that came due, tomorrow's parlour appointments, and the two
+ * expiry sweeps (memberships and reward coupons) — because all of them want
+ * daily granularity and none has an event that could trigger it. ("The day ended" is not
  * something the queue ever tells us; everything else in this app rides on a
  * queue event instead, per decision 26.)
  *
@@ -40,6 +41,12 @@ export async function GET(req: Request) {
     // `expires_at` itself, so a night this misses costs an owner an accurate
     // list and nothing more. Idempotent — a second run flips zero rows.
     supabase.rpc("expire_memberships", {}),
+    // Lapsed reward coupons, on exactly the same terms as memberships:
+    // tidy-up, not correctness. `mark_redemption_used()` refuses an
+    // out-of-date coupon itself, and `redemptionState()` computes expiry on
+    // the client, so a night this misses costs an accurate list and nothing
+    // more. Idempotent — a second run flips zero rows.
+    supabase.rpc("expire_redemptions", {}),
   ]);
 
   const LABELS = [
@@ -47,6 +54,7 @@ export async function GET(req: Request) {
     "customer reminders",
     "appointment reminders",
     "membership expiry",
+    "redemption expiry",
   ];
   const counts = results.map((result, i) => {
     const label = LABELS[i];
@@ -61,7 +69,8 @@ export async function GET(req: Request) {
     return (result.value.data as number | null) ?? 0;
   });
 
-  const [summaries, reminders, appointmentReminders, expiredMemberships] = counts;
+  const [summaries, reminders, appointmentReminders, expiredMemberships, expiredRedemptions] =
+    counts;
   if (counts.every((c) => c === null)) {
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
@@ -71,5 +80,6 @@ export async function GET(req: Request) {
     reminders,
     appointmentReminders,
     expiredMemberships,
+    expiredRedemptions,
   });
 }

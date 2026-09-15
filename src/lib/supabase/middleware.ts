@@ -22,6 +22,14 @@ const PROVIDER_PREFIXES = [
   "/loyalty",
   // Referral statistics: who brought whom, for this shop only. Same reason.
   "/referrals",
+  // The reward catalogue and the coupon-checking counter flow. The plan's
+  // route table pencilled /rewards in as a *customer* page; it went to the
+  // provider instead, because every provider management screen in this
+  // product is a bare noun in this array (/memberships, /loyalty,
+  // /referrals), and the customer's own side needed no route at all — the
+  // shelf is a tab on the shop page and the coupons are a card on /profile,
+  // exactly as membership and loyalty do it.
+  "/rewards",
   // The AI assistant reads the caller's own shop and spends real money doing
   // it, so it is provider-only for both reasons at once.
   "/ai",

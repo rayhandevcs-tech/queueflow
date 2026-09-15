@@ -241,7 +241,35 @@ check "but the work still counts as income"           2 "$(Q "$INCOME")"
 echo
 echo "== the list query =="
 Q "delete from appointments" >/dev/null
-L1=$(NEW "$S" "$ST" "$C1" "$SV" "$(AT 0 19:00)")   # today, later on
+
+# ---------------------------------------------------------------------------
+# "later today" cannot be BOOKED late in the day — so it is MOVED there
+# ---------------------------------------------------------------------------
+# This used to be `NEW ... (AT 0 19:00)`, and it was a clock-dependent flake:
+# `AT` builds its instant from the server's `current_date` (UTC), so
+# "today 19:00 Asia/Dhaka" is 13:00 UTC. Run the suite after 13:00 UTC and
+# 20260918's insert trigger correctly refuses it as `appointment_in_past` —
+# and after 14:00 UTC there is no bookable slot left today at all, because the
+# shop closes at 20:00 Dhaka. The row silently failed to exist and five checks
+# went red on the hour of day rather than on anything in the schema. (The same
+# bug, in its Sprint 5 form, is what `NOON()` fixes in run-sprint5-checks.sh.)
+#
+# What this section tests is the LIST QUERY's date filtering, not the insert
+# trigger — which has its own past/hours checks above. So the row is booked at
+# a legal time and then moved onto today with the freeze trigger explicitly
+# disabled: a deliberate, visible manoeuvre rather than a hidden dependency on
+# what time it happens to be.
+L1=$(NEW "$S" "$ST" "$C1" "$SV" "$(AT 1 12:00)")
+Q "alter table public.appointments disable trigger appointments_before_update" >/dev/null
+Q "update appointments
+      set starts_at = (current_date::timestamp at time zone 'Asia/Dhaka') + interval '19 hours',
+          ends_at   = (current_date::timestamp at time zone 'Asia/Dhaka') + interval '20 hours'
+    where id='$L1'" >/dev/null
+Q "alter table public.appointments enable trigger appointments_before_update" >/dev/null
+check "the 'later today' row really is on today's local day" 1 \
+  "$(Q "select count(*) from appointments where id='$L1'
+          and starts_at >= (current_date::timestamp at time zone 'Asia/Dhaka')
+          and starts_at <  ((current_date + 1)::timestamp at time zone 'Asia/Dhaka')")"
 L2=$(NEW "$S" "$ST" "$C1" "$SV" "$(AT 2 12:00)")   # a coming day
 L3=$(NEW "$S" "$ST2" "$C1" "$SV" "$(AT 2 15:00)")  # same day, other person
 FINISH_PAID "$L3" cash
@@ -253,8 +281,23 @@ Q "update appointments set status='NO_SHOW' where id='$L5'" >/dev/null
 # 'today' — the local calendar day, in the shop's zone.
 DAY="starts_at >= (current_date::timestamp at time zone 'Asia/Dhaka') and starts_at < ((current_date + 1)::timestamp at time zone 'Asia/Dhaka')"
 check "today shows only today's row"        1 "$(Q "select count(*) from appointments where shop_id='$S' and $DAY")"
-check "upcoming excludes what fell through" 2 \
-  "$(Q "select count(*) from appointments where shop_id='$S' and starts_at >= now() and status in ('BOOKED','CONFIRMED','IN_PROGRESS')")"
+# Asserted by identity, not by a count. "Upcoming" is
+# `starts_at >= now() and status in (live)`, and the 'later today' row above
+# sits at 19:00 local — so whether it falls inside that window depends on the
+# hour the suite runs, which is not what this check is about. What it IS about
+# is that the three rows that fell through are kept out: all three are on
+# FUTURE days, so only the status half of the filter can exclude them. So the
+# claim is exactly that — L3 (done), L4 (cancelled) and L5 (no-show) are
+# absent, and L2 (booked, two days out) is present.
+check "upcoming excludes what fell through" "t" \
+  "$(Q "select (select count(*) from appointments
+                 where shop_id='$S' and starts_at >= now()
+                   and status in ('BOOKED','CONFIRMED','IN_PROGRESS')
+                   and id in ('$L3','$L4','$L5')) = 0
+             and exists (select 1 from appointments
+                          where shop_id='$S' and starts_at >= now()
+                            and status in ('BOOKED','CONFIRMED','IN_PROGRESS')
+                            and id = '$L2')")"
 check "completed shows only finished work"  1 \
   "$(Q "select count(*) from appointments where shop_id='$S' and status='DONE'")"
 check "cancelled covers both ways it fails" 2 \

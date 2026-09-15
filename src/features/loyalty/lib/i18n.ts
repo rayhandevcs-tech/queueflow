@@ -92,6 +92,9 @@ export const loyaltyDict = {
   // names here rather than a separate history screen.
   kindREFERRAL_REFERRER: { bn: "রেফারেল — কাউকে এনেছে", en: "Referral — brought someone" },
   kindREFERRAL_REFERRED: { bn: "রেফারেল — কোড দিয়ে এসেছে", en: "Referral — arrived with a code" },
+  // Sprint 9 — spending points on a reward lands in this same ledger, as the
+  // one kind that is always negative.
+  kindREDEEM: { bn: "রিওয়ার্ড নেওয়া হয়েছে", en: "Reward taken" },
   fromBill: {
     bn: (bill: string) => `৳${bill} বিলে`,
     en: (bill: string) => `on a ৳${bill} bill`,
