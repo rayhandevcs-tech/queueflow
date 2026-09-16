@@ -30,6 +30,14 @@ export const AI_MODELS = {
    * and a wrong number costs a shopkeeper real money.
    */
   ownerCopilot: process.env.AI_MODEL_OWNER_COPILOT || DEFAULT_MODEL,
+  /**
+   * The customer discovery agent. Same endpoint as the copilot, separate entry
+   * because the job is different: pick a tool, read back what it returned, and
+   * resist inventing a price. That is closer to the help desk than to revenue
+   * analysis, so this is the first candidate to move to `FAST_MODEL` once a
+   * real deployment shows what the answers look like — hence its own switch.
+   */
+  customerAgent: process.env.AI_MODEL_CUSTOMER_AGENT || DEFAULT_MODEL,
   /** The pre-tool provider analyst and one-shot insights. */
   shopAnalyst: process.env.AI_MODEL_SHOP_ANALYST || DEFAULT_MODEL,
   /** Customer help desk: short answers from a small brief. */

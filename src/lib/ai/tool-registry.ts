@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import type { AgentRole, ToolDefinition } from "./types";
 import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
+import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
 
 /**
  * The complete, closed list of things the model may do.
@@ -25,10 +26,23 @@ import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
  */
 const ALL_TOOLS: readonly ToolDefinition[] = [
   ...OWNER_ANALYTICS_TOOLS,
-  // AI Sprint 2 will add customer discovery tools (search_shops,
-  // get_available_slots, …) and Sprint 3 the first confirmed action. Neither
-  // exists yet, deliberately — see docs/AI_ARCHITECTURE.md.
+  ...CUSTOMER_DISCOVERY_TOOLS,
+  // Sprint 3 adds the first tool that writes, and it will be the first entry
+  // here with `readOnly: false` — which is why the loop refuses those rather
+  // than trusting this list to contain none. See docs/AI_ARCHITECTURE.md.
 ];
+
+/**
+ * Every tool in the registry is read-only as of Sprint 2, and this is checked
+ * at import time rather than left as a claim in a document. The day a write
+ * tool is added on purpose, this constant is what has to be relaxed, and doing
+ * so will be a visible, reviewable line in a diff.
+ */
+for (const tool of ALL_TOOLS) {
+  if (!tool.readOnly) {
+    throw new Error(`Tool ${tool.name} is not read-only; Sprint 2 permits no write tools`);
+  }
+}
 
 /** Fail loudly at import time rather than mysteriously at request time. */
 const seen = new Set<string>();

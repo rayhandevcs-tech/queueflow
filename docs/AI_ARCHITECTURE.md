@@ -1,9 +1,9 @@
 # QueueFlow AI — আর্কিটেকচার
 
-> **অবস্থা:** AI Sprint 1 সম্পূর্ণ (কোড-স্তরে)। **আসল মডেলে চালিয়ে দেখা হয়নি —
-> `ANTHROPIC_API_KEY` এখনো সেট করা নেই।** নিচের যা কিছু "verified" লেখা, সেটা
-> টুল-লেয়ার, অথরাইজেশন, লুপ আর মক-করা মডেল টার্ন দিয়ে যাচাই — আসল উত্তরের
-> গুণমান নয়।
+> **অবস্থা:** AI Sprint 1 ও Sprint 2 সম্পূর্ণ (কোড-স্তরে)। **আসল মডেলে চালিয়ে
+> দেখা হয়নি — `ANTHROPIC_API_KEY` এখনো সেট করা নেই।** নিচের যা কিছু "verified"
+> লেখা, সেটা টুল-লেয়ার, অথরাইজেশন, লুপ আর মক-করা মডেল টার্ন দিয়ে যাচাই — আসল
+> উত্তরের গুণমান নয়।
 
 ---
 
@@ -27,25 +27,37 @@ Sprint 1 সেটাই বদলায়: মডেল এখন **নিজ�
 ## ২. পথটা
 
 ```
-দোকানদার
-  ↓
-ProviderAssistantWidget / /ai  (বিদ্যমান UI, শুধু endpoint বদলেছে)
-  ↓
-POST /api/ai/agent
-  ↓  auth.getUser()  →  owner_id দিয়ে shop  ← মডেল এখনো একটা কথাও বলেনি
-  ↓
+দোকানদার                                  কাস্টমার
+  ↓                                          ↓
+ProviderAssistantWidget / /ai          CustomerHelpWidget
+  ↓                                          ↓
+      ─────────  POST /api/ai/agent  ─────────
+                        ↓
+        auth.getUser()      ← মডেল এখনো একটা কথাও বলেনি
+                        ↓
+        owner_id দিয়ে shop আছে?
+           আছে → role = owner        নেই → role = customer
+           shopId = shop.id                shopId = null
+                        ↓
 runAgentLoop()        সর্বোচ্চ ৪ iteration, ৮ tool call
-  ↓
+                        ↓
 tool-registry         বন্ধ তালিকা, role-ভিত্তিক
-  ↓
-owner-analytics       ১১টা পাতলা adapter
-  ↓
-বিদ্যমান analytics RPC (Sprint 10)
-  ↓
+           ↓                              ↓
+owner-analytics                  customer-discovery
+১১টা পাতলা adapter                ৫টা পাতলা adapter
+           ↓                              ↓
+analytics RPC (Sprint 10)   shops / services / queue_public /
+                            shop_available_slots() / serials
+                        ↓
 cookie-bound Supabase client  →  RLS + analytics_scope
-  ↓
+                        ↓
 যাচাই করা সারি  →  fence করা  →  মডেল  →  উত্তর
 ```
+
+**role কোনো দাবি নয়, একটা ডেটাবেস-তথ্য।** request body-তে role পাঠানোর কোনো
+ঘর নেই, আর `user_metadata.role` (যেটা middleware UI shell বাছতে ব্যবহার করে,
+আর যেটা অ্যাকাউন্টধারী নিজেই `auth.updateUser()` দিয়ে বদলাতে পারে) এখানে
+**পড়াই হয় না**। প্রশ্নটা শুধু একটাই: *এই uuid-এর নামে কোনো shop সারি আছে কি?*
 
 ## ৩. Tool registry — "বন্ধ" কথাটার মানে
 
@@ -63,9 +75,18 @@ cookie-bound Supabase client  →  RLS + analytics_scope
 এগারোটা adapter লেখাই সস্তা।
 
 প্রতিটা টুলে `readOnly` **ঘোষণা করতে হয়**, আর লুপ `readOnly !== true` হলে
-চালাতে অস্বীকার করে। Sprint 1-এ সবগুলোই `true`। এর ফলে ভবিষ্যতে একটা mutation
-টুল যোগ করলে সেটা **দুর্ঘটনাক্রমে চালু হতে পারে না** — লুপে গিয়ে ইচ্ছাকৃতভাবে
-confirmation পথ বানাতে হবে।
+চালাতে অস্বীকার করে। Sprint 2 পর্যন্ত ষোলোটার সবগুলোই `true`, আর registry
+**import-সময়ে** সেটা যাচাই করে — কোনো টুল `readOnly: false` হলে মডিউল লোডই
+হয় না। এর ফলে ভবিষ্যতে একটা mutation টুল যোগ করলে সেটা **দুর্ঘটনাক্রমে চালু
+হতে পারে না** — লুপে গিয়ে ইচ্ছাকৃতভাবে confirmation পথ বানাতে হবে।
+
+> **Sprint 2-এ যোগ হলো:** ওই অস্বীকারটা এতদিন **কখনো চলেনি** — registry-র
+> সব টুল read-only, তাই branch-টায় পৌঁছানোর উপায় ছিল না। যে পাহারা একবারও
+> চলেনি, সেটা কেউ পরীক্ষা করেনি। `src/lib/ai/agent-readonly.test.ts`
+> registry-টা mock করে একটা ইচ্ছাকৃত writable টুল লুপের সামনে বসায়, আর
+> প্রমাণ করে: `NOT_PERMITTED` ফেরে, handler চলে না, argument যাচাইয়ের
+> **আগেই** থামে, আর একই mock-এ একটা read-only টুল ঠিকই চলে (control)।
+> পাহারাটা সরিয়ে দিলে ৬টার ৫টা টেস্ট ফেল করে — যাচাই করা হয়েছে।
 
 ## ৪. Agent loop — প্রতিটা সীমা একটা নির্দিষ্ট বিপদের জন্য
 
@@ -156,6 +177,51 @@ registry-তে** বন্ধ।
 > cookie-bound client-এ চলে। তাই call site আলাদা, **implementation আলাদা নয়**:
 > একই RPC নাম, একই argument, একই `firstRow` সেমান্টিক্স।
 
+## ৭খ. Customer discovery টুল (Sprint 2)
+
+পাঁচটা, সবগুলোই `readOnly: true` আর `roles: ["customer"]`:
+
+| টুল | উৎস | কী দেয় |
+|---|---|---|
+| `search_shops` | `shops` (`is_open = true`) + `shop_rating_summary` | নাম, ধরন, women-only, ঠিকানা, রেটিং |
+| `search_services` | `services` ⋈ `shops` | আসল দাম, আসল সময়কাল, দোকানের প্রসঙ্গ |
+| `get_queue_status` | `queue_public` | কতজন অপেক্ষায়, আনুমানিক অপেক্ষা |
+| `get_available_slots` | `shop_available_slots()` | একদিনের খালি সময় |
+| `get_customer_history` | `serials` (`customer_id = ctx.userId`) | নিজের অতীত ভিজিট |
+
+**তিনটা জিনিস এখানে দ্বিতীয়বার লেখা হয়নি:**
+
+1. **অপেক্ষার হিসাব** — `chairFreeAtMs()` আর `minutesUntil()`, অর্থাৎ explore
+   কার্ড আর shop পাতা যে ফাংশন দুটো ব্যবহার করে **হুবহু সেগুলোই**। অ্যাসিস্ট্যান্ট
+   যদি কাস্টমারের চোখের সামনের কার্ডের চেয়ে আলাদা সংখ্যা বলে, **দুটোই** আর
+   বিশ্বাসযোগ্য থাকে না।
+2. **খালি সময়** — `shop_available_slots()`, যা দোকানের সময়, স্টাফের রুটিন,
+   ছুটি, বিদ্যমান বুকিং আর `services.default_duration_min` — সব হিসাবে ধরে।
+   দ্বিতীয় কোনো availability হিসাব নেই এবং **কখনো থাকবে না**।
+3. **সেলুন বনাম পার্লার** — `bookingModel()` দিয়ে, তাই `UNISEX` স্বাভাবিকভাবেই
+   সেলুনের সাথে পড়ে। ফাইলে একটাও `if (business_type === "PARLOUR")` নেই।
+
+**দাম কখনো আন্দাজ হয় না।** `price_taka` আসে `services.rate` থেকে; না থাকলে
+`null`, আর prompt-এ স্পষ্ট নিষেধ: *"NEVER estimate"*। `maxPrice` ceiling-টা
+**ডেটাবেসে** `.lte("rate", …)` হিসেবে যায় — মডেল যদি নিজে কাটা-ছাঁটা করত,
+তালিকার শেষে পড়ে যাওয়া সস্তা সার্ভিসটা চুপচাপ হারিয়ে যেত।
+
+**পরিচয় বলার কোনো ঘর নেই।** `get_customer_history`-তে `customer_id`
+argument **নেই** — মডেলের কারও নাম বলার উপায়ই নেই; সে `ctx.userId` পড়ে, যা
+`auth.getUser()` থেকে এসেছে। তার উপরে `serials` policy নিজেই আবার যাচাই করে।
+টেস্টে পুরো argument-তালিকাটা allow-list হিসেবে ধরা আছে, তাই নতুন একটা
+argument যোগ করলে টেস্ট ফেল করে।
+
+**জায়গা/GPS নেই।** কোনো টুল lat/lng/radius নেয় না, `search_shops`-এর
+description আর payload দুটোতেই লেখা আছে location filter হয়নি, আর prompt-এ
+*"near you"* বলা নিষেধ। যেটা নেই সেটা দাবি করার চেয়ে না-বলাটাই সৎ।
+
+**পছন্দ একটা default, filter নয়।** `profiles.preferred_business_type`
+system prompt-এ context হিসেবে যায় (tie-breaker), **কোনো টুলে যায় না** —
+`ToolContext`-এ ওর ঘরই নেই। তাই পার্লার-পছন্দ কাস্টমার "সেলুন" চাইলে সেলুনই
+পায়। এটা Sprint 11-এর হোম-স্ক্রিন hard separation-এর সাথে সঙ্গতিপূর্ণ: ওখানে
+পছন্দ ঠিক করে **কী প্রথমে খোলে**, এখানেও তাই — **কী খুঁজে পাওয়া যায় তা নয়**।
+
 ## ৮. মডেল ও টোকেন
 
 `AI_MODEL` একটা constant ছিল; এখন **purpose-ভিত্তিক map** (`AI_MODELS`), প্রতিটা
@@ -185,15 +251,30 @@ PROPOSE  →  VALIDATE (id whitelist)  →  CONFIRM (মানুষ)  →  EXEC
 
 ## ১০. Sprint-এর সীমানা
 
-### AI Sprint 1 — এখন সম্পূর্ণ ✅
+### AI Sprint 1 — সম্পূর্ণ ✅
 Tool registry · bounded agent loop · fencing · role scoping · ১১টা owner
 analytics টুল · `/api/ai/agent` · model routing · copilot prompt · ৫৩টা টেস্ট।
 **কোনো মাইগ্রেশন নেই** — বিদ্যমান analytics যথেষ্ট।
 
-### AI Sprint 2 — পরিকল্পিত ⬜
+### AI Sprint 2 — এখন সম্পূর্ণ ✅
 কাস্টমারের **read-only** discovery: `search_shops`, `search_services`,
-`get_queue_status`, `get_available_slots`, `get_customer_history`। কোনো
-mutation নয়। (`services` read-এ `rate` যোগ করা লাগবে — এখন নেই।)
+`get_queue_status`, `get_available_slots`, `get_customer_history` ·
+role-ভিত্তিক `/api/ai/agent` (owner/customer একই endpoint) ·
+`CUSTOMER_DISCOVERY_SYSTEM` prompt · `CustomerHelpWidget` → `/api/ai/agent` ·
+৭৪টা নতুন টেস্ট (মোট ৮৩৩)। **কোনো মাইগ্রেশন নেই** — `services.rate` আর
+`default_duration_min` আগে থেকেই আছে; Sprint 1-এর নোটটা ভুল ছিল, কারণ
+`customer-explore`-এর read ওই কলামগুলো চায় না বলেই সেখানে নেই, টেবিলে নেই বলে
+নয়।
+
+**কোনো mutation নেই।** কাস্টমার এজেন্ট queue-এ ঢোকাতে, সিরিয়াল কাটতে,
+অ্যাপয়েন্টমেন্ট নিতে, বাতিল করতে, reward redeem করতে বা মেসেজ পাঠাতে পারে
+না — prompt বলে না করতে বলে নয়, **ওই টুলগুলো নেই** বলে। UI-তেও এখনো কোনো
+"Join Queue"/"Book" বাটন যোগ করা হয়নি; সেটা Sprint 3।
+
+> **`/api/ai/help` ইচ্ছাকৃতভাবে চালু আছে।** widget শুধু endpoint বদলেছে, আর
+> agent prompt-এ একই `APP_KNOWLEDGE` আছে, তাই আগে যা জিজ্ঞেস করা যেত সব যায়।
+> agent যদি help-desk-এর তুলনায় ধীর বা বাচাল প্রমাণিত হয়, ফিরে যাওয়াটা
+> একটা string।
 
 ### AI Sprint 3 — পরিকল্পিত ⬜
 প্রথম confirmed অ্যাকশন: `join_queue`, `voice-intent`-এর propose→confirm ধারায়,
@@ -204,7 +285,18 @@ mutation নয়। (`services` read-এ `rate` যোগ করা লাগ�
 `book_appointment`, `redeem_reward`, আর segmentation → campaign → approval →
 `broadcast_shop_notification`।
 
-**কোনোটাই শুরু হয়নি।** ভবিষ্যতের কিছু "সম্পূর্ণ" চিহ্নিত করা হয়নি।
+**Sprint 3 ও 4 শুরু হয়নি।** ভবিষ্যতের কিছু "সম্পূর্ণ" চিহ্নিত করা হয়নি।
+
+### যা এখনো যাচাই করা হয়নি — Sprint 2 শেষেও
+- **আসল মডেলের উত্তর:** `ANTHROPIC_API_KEY` সেট নেই, তাই কাস্টমার এজেন্ট
+  একটাও আসল উত্তর দেয়নি। টুল-লেয়ার, role gate, cap, fencing আর পাঁচটা
+  flow মক-করা মডেল টার্ন দিয়ে যাচাই — **উত্তরের গুণমান নয়**।
+- **লগইন করা ব্রাউজার:** widget শুধু signed-in shell-এ render হয়
+  (`CustomerShell`: `if (!signedIn) return <GuestShell>`), আর এই পরিবেশে
+  আসল Supabase credential নেই। তাই নতুন chip, নতুন greeting বা চ্যাট
+  ব্রাউজারে **দেখা হয়নি**।
+- **আসল Supabase instance:** মাইগ্রেশনগুলো ব্যবহারকারী নিজে SQL editor-এ
+  চালান; এখান থেকে কিছু যাচাই করা যায়নি।
 
 ### ইচ্ছাকৃতভাবে বাইরে
 Predictive ML (no-show, demand, churn, next-visit) · RAG/vector/embeddings ·

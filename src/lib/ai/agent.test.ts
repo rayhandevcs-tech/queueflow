@@ -7,9 +7,16 @@ import {
   MAX_TOOL_CALLS,
   runAgentLoop,
 } from "./agent-loop";
-import { findTool, toolsForRole, toolSpecsForRole, REGISTRY_TOOL_NAMES } from "./tool-registry";
+import {
+  findTool,
+  toolsForRole,
+  toolSpecsForRole,
+  REGISTRY_TOOL_NAMES,
+  __ALL_TOOLS_FOR_TESTS,
+} from "./tool-registry";
 import { fenceToolError, fenceToolResult, IdWhitelist, safeToolErrorMessage } from "./security";
 import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
+import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
 import type { AgentMessage, CallModel, ModelTurn, ToolContext } from "./types";
 
 /**
@@ -120,12 +127,15 @@ describe("the tool registry is closed", () => {
   });
 
   it("**every registered tool is read-only in this sprint**", () => {
-    for (const tool of toolsForRole("owner")) expect(tool.readOnly).toBe(true);
+    for (const tool of __ALL_TOOLS_FOR_TESTS) expect(tool.readOnly).toBe(true);
   });
 
-  it("registers all eleven analytics tools and nothing else", () => {
-    expect(REGISTRY_TOOL_NAMES).toHaveLength(11);
+  it("registers the eleven analytics tools and the five customer tools, and nothing else", () => {
     expect(OWNER_ANALYTICS_TOOLS).toHaveLength(11);
+    expect(CUSTOMER_DISCOVERY_TOOLS).toHaveLength(5);
+    // The count is asserted so that adding a tool without a test is a failing
+    // build rather than a silently wider assistant.
+    expect(REGISTRY_TOOL_NAMES).toHaveLength(16);
   });
 
   it("**no tool takes an identity argument** — no shop_id, no owner_id, no user id", () => {
@@ -151,7 +161,15 @@ describe("the tool registry is closed", () => {
 
 describe("role scoping", () => {
   it("**a customer sees no owner analytics tools at all**", () => {
-    expect(toolsForRole("customer")).toHaveLength(0);
+    const customerNames = toolsForRole("customer").map((tool) => tool.name);
+    for (const owned of OWNER_ANALYTICS_TOOLS) {
+      expect(customerNames).not.toContain(owned.name);
+    }
+    // And the converse, so neither slice can quietly absorb the other.
+    const ownerNames = toolsForRole("owner").map((tool) => tool.name);
+    for (const discovery of CUSTOMER_DISCOVERY_TOOLS) {
+      expect(ownerNames).not.toContain(discovery.name);
+    }
   });
 
   it("**a customer cannot reach an owner tool even by naming it**", async () => {

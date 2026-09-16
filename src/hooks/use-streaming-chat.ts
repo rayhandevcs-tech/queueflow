@@ -51,8 +51,15 @@ export function useStreamingChat(endpoint: string) {
 
         if (!res.ok || !res.body) {
           const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          // The status is the primary signal and the body's code is the
+          // refinement. The AI routes are not consistent about the code — the
+          // help route says NOT_SIGNED_IN, the agent and the other four say
+          // UNAUTHORIZED — and matching on the code alone turned a 401 from
+          // any of them into "something went wrong", which is the one error
+          // message a customer cannot act on. A 401 means sign in, whatever
+          // the route chose to call it.
           setError(
-            body?.error === "NOT_SIGNED_IN"
+            res.status === 401
               ? "NOT_SIGNED_IN"
               : body?.error === "ANTHROPIC_KEY_MISSING"
                 ? "ANTHROPIC_KEY_MISSING"

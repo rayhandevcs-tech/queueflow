@@ -9,11 +9,25 @@ import {
 import { createServerSupabase } from "@/lib/supabase/server";
 import { runAgentLoop } from "@/lib/ai/agent-loop";
 import { dhakaToday } from "@/lib/ai/tools/owner-analytics";
-import type { AgentMessage, CallModel, ModelTurn } from "@/lib/ai/types";
+import type { AgentMessage, AgentRole, CallModel, ModelTurn } from "@/lib/ai/types";
 import { OWNER_COPILOT_SYSTEM } from "@/features/provider-ai/lib/prompt";
+import {
+  CUSTOMER_DISCOVERY_SYSTEM,
+  customerPreferenceAsPrompt,
+} from "@/features/customer-help/lib/prompt";
+import { parsePreference } from "@/lib/customer-preference";
 
 /**
- * The agent endpoint.
+ * The agent endpoint — one endpoint, two roles.
+ *
+ * A shopkeeper gets the analytics copilot; everyone else gets the customer
+ * discovery assistant. Deliberately the same route rather than
+ * `/api/ai/agent/customer` alongside it: the loop, the caps, the fencing, the
+ * tool-result handling and the response contract are identical, and the only
+ * things that actually differ are three values decided before the loop starts —
+ * which registry slice, which system prompt, which model. A second route would
+ * have duplicated the parts that matter for security in order to vary the parts
+ * that do not, and the duplicate is where the next fix gets forgotten.
  *
  * ---------------------------------------------------------------------------
  * The order of operations is the security model
@@ -22,16 +36,20 @@ import { OWNER_COPILOT_SYSTEM } from "@/features/provider-ai/lib/prompt";
  * resolved from the session cookie:
  *
  *   1. `auth.getUser()` — who is this really
- *   2. the shop they own — which shop's figures may be read
+ *   2. do they own a shop — which decides the role, and which shop's figures
+ *      may be read
  *   3. only then does the model get asked anything
  *
- * So there is no point in the request at which a model-supplied `shop_id` or
- * `owner_id` could be consulted, because by the time the model speaks the
- * context is already fixed and the tools take no identity arguments.
+ * The role is a fact about the database, not a field in the request. There is
+ * nothing to send that would make a customer an owner, and the tools take no
+ * identity arguments at all — `get_customer_history` has no `customer_id`
+ * parameter, so the model cannot name anybody, and the owner tools read
+ * `ctx.shopId`, which is null for a customer.
  *
  * Everything downstream then uses the cookie-bound client, which means RLS is
- * live on every query, and `analytics_scope` re-checks `is_shop_owner` inside
- * each RPC. The service-role client is deliberately absent from this whole
+ * live on every query, `analytics_scope` re-checks `is_shop_owner` inside each
+ * analytics RPC, and the `serials` policy re-checks the customer on their own
+ * history. The service-role client is deliberately absent from this whole
  * path: a request made on behalf of one shopkeeper has no business holding a
  * key that can read every shop on the platform. A test in
  * `src/lib/ai/agent.test.ts` asserts that no AI module imports or calls it —
@@ -78,18 +96,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
-  // Sprint 1 is the owner copilot. A customer reaching this endpoint is not an
-  // error to explain in detail — they are told it is not for them, and no
-  // customer-role registry slice is built, so there is nothing for a model to
-  // be pointed at even by accident.
+  // The role is DERIVED, never claimed.
+  //
+  // Nothing in the request body says which role the caller wants, and adding
+  // such a field would be the whole vulnerability: a customer posting
+  // `{"role":"owner"}` would be handed the analytics registry. Instead the
+  // question asked is "does a shop row exist whose owner_id is this uuid" —
+  // a database fact about the authenticated session, checked under RLS.
+  //
+  // So `role` below is not a preference. It is the answer to a query, and
+  // there is no code path by which a model, a prompt or a body field can
+  // change it. Note what is NOT consulted: `user_metadata.role`, which the
+  // middleware uses to pick a UI shell. That claim is writable by the account
+  // holder via `auth.updateUser()` — its own comment says so — and it gates
+  // which screens render, nothing more. Reading it here would make "which
+  // tools may I call" a self-declared field.
+  //
+  // One consequence, chosen rather than tolerated: a provider account that
+  // has not created its shop yet is "customer" here, and gets the discovery
+  // assistant inside the provider shell. That is the accurate answer — with
+  // no shop there are no figures to analyse — and it is friendlier than the
+  // 403 this route used to return, which told a new shopkeeper nothing.
   const { data: shop } = await supabase
     .from("shops")
     .select("id")
     .eq("owner_id", user.id)
     .maybeSingle();
 
-  if (!shop) {
-    return NextResponse.json({ error: "NO_SHOP" }, { status: 403 });
+  const role: AgentRole = shop ? "owner" : "customer";
+
+  // Everything role-dependent is resolved here, once, before the model exists.
+  // `shopId` is null for a customer, which is the second gate the owner tools
+  // hit (`requireShop` raises SHOP_REQUIRED) if role scoping were ever wrong —
+  // and `analytics_scope` in the RPC is the third.
+  const shopId = shop?.id ?? null;
+
+  let system: string;
+  let model: string;
+
+  if (role === "owner") {
+    system = OWNER_COPILOT_SYSTEM;
+    model = AI_MODELS.ownerCopilot;
+  } else {
+    // The preference is read here rather than accepted as an argument, for the
+    // same reason the role is. It is appended to the system prompt as a
+    // tie-breaker for unqualified questions and is NOT passed to any tool, so
+    // it cannot narrow what the customer is able to find.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("preferred_business_type")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    system = `${CUSTOMER_DISCOVERY_SYSTEM}\n\n${customerPreferenceAsPrompt(
+      parsePreference(profile?.preferred_business_type),
+    )}`;
+    model = AI_MODELS.customerAgent;
   }
 
   let client;
@@ -113,11 +175,11 @@ export async function POST(request: Request) {
    */
   const callModel: CallModel = async ({ system, messages, tools }) => {
     const response = await client.messages.create({
-      model: AI_MODELS.ownerCopilot,
+      model,
       max_tokens: AI_MAX_TOKENS.copilot,
       system: [
         { type: "text", text: system, cache_control: { type: "ephemeral" } },
-        { type: "text", text: `Today in the shop's timezone is ${dhakaToday(now)}.` },
+        { type: "text", text: `Today in Bangladesh is ${dhakaToday(now)}.` },
       ],
       tools: tools.map((tool) => ({
         name: tool.name,
@@ -140,10 +202,10 @@ export async function POST(request: Request) {
 
   try {
     const result = await runAgentLoop({
-      role: "owner",
-      system: OWNER_COPILOT_SYSTEM,
+      role,
+      system,
       messages: parsed.data.messages.map((m) => ({ role: m.role, content: m.content })),
-      ctx: { supabase, userId: user.id, shopId: shop.id, now },
+      ctx: { supabase, userId: user.id, shopId, now },
       callModel,
       // Names and outcomes only. No arguments, no returned rows, no prompt —
       // enough to see which tools a question used and where it stopped,

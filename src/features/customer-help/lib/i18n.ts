@@ -7,14 +7,16 @@ export const customerHelpDict = {
   closeLabel: { bn: "বন্ধ করো", en: "Close" },
 
   greeting: {
-    bn: "হ্যালো! সিরিয়াল, বাকি টাকা বা অ্যাপ নিয়ে যা জানার আছে জিজ্ঞেস করো।",
-    en: "Hi! Ask me anything about your booking, your dues, or how the app works.",
+    bn: "হ্যালো! দোকান খুঁজতে, সার্ভিসের দাম বা লাইনে কত সময় লাগবে জানতে — অথবা অ্যাপ নিয়ে যেকোনো প্রশ্ন করতে পারো।",
+    en: "Hi! Ask me to find a shop, check a price or a wait time — or anything about how the app works.",
   },
 
-  suggestion1: { bn: "আমার সিরিয়াল কত দূর?", en: "Where's my place in the queue?" },
-  suggestion2: { bn: "সিরিয়াল বাতিল করব কিভাবে?", en: "How do I cancel?" },
-  suggestion3: { bn: "আমার কত টাকা বাকি?", en: "How much do I owe?" },
-  suggestion4: { bn: "দোকান ডাকলে কী করব?", en: "What if the shop calls me?" },
+  // Two discovery prompts and two help prompts: the assistant now does both,
+  // and the chips are how a customer finds out it can search at all.
+  suggestion1: { bn: "কোন সেলুনে লাইন কম?", en: "Which salon has a shorter queue?" },
+  suggestion2: { bn: "১৫০০ টাকার মধ্যে ফেসিয়াল", en: "Facial under ৳1500" },
+  suggestion3: { bn: "গতবার কী করিয়েছিলাম?", en: "What did I get last time?" },
+  suggestion4: { bn: "সিরিয়াল বাতিল করব কিভাবে?", en: "How do I cancel?" },
 
   placeholder: { bn: "লিখো…", en: "Type a message…" },
   sendLabel: { bn: "পাঠাও", en: "Send" },
