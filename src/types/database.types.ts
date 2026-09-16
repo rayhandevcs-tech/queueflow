@@ -1373,9 +1373,107 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+
+      /**
+       * AI Sprint 3 — the audit trail and confirmation store for AI-initiated
+       * customer actions (20260930_ai_actions.sql).
+       *
+       * `Insert` and `Update` are `never`, and that is the table's actual
+       * shape rather than a convention: it has a SELECT policy for its owner
+       * and NO write policy for anybody, so every transition goes through the
+       * `ai_action_*` functions below. A client write is refused by RLS, which
+       * is what makes `status = 'EXECUTED'` unassertable from outside.
+       */
+      ai_actions: {
+        Row: {
+          id: string;
+          /** From auth.uid() at propose time. Never from a model or a body. */
+          user_id: string;
+          action_type: Database["public"]["Enums"]["ai_action_type"];
+          status: Database["public"]["Enums"]["ai_action_status"];
+          shop_id: string | null;
+          service_ids: string[];
+          /** Proof-of-read, alongside RLS rather than instead of it. */
+          nonce: string;
+          /**
+           * What the customer was SHOWN, frozen — never what they are charged.
+           * The amount recorded against the serial is computed by
+           * `serial_before_insert` from `services.rate` at insert time.
+           */
+          display: Json;
+          created_at: string;
+          expires_at: string;
+          confirmed_at: string | null;
+          settled_at: string | null;
+          serial_id: string | null;
+          /** A short code, never a Postgres message. */
+          failure_code: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
+      // -----------------------------------------------------------------
+      // AI Sprint 3 — the ai_actions lifecycle (20260930_ai_actions.sql)
+      // -----------------------------------------------------------------
+      // Five SECURITY DEFINER functions, each a single guarded statement on
+      // `ai_actions` and nothing else. None of them writes a serial: the queue
+      // join stays a plain INSERT into `public.serials` under its own policy.
+
+      /** Create the PROPOSED row the customer will be asked to confirm. */
+      ai_action_propose: {
+        Args: {
+          p_action_type: Database["public"]["Enums"]["ai_action_type"];
+          p_shop_id: string | null;
+          p_service_ids: string[];
+          p_nonce: string;
+          p_display: Json;
+          /** Bounded 30..1800 by the function; `expires_at` uses server now(). */
+          p_ttl_seconds: number;
+        };
+        Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
+      };
+
+      /**
+       * PROPOSED → CONFIRMED, exactly once. The replay guard: a second call
+       * raises `ai_action_not_claimable` rather than confirming again.
+       */
+      ai_action_claim: {
+        Args: { p_action_id: string; p_nonce: string };
+        Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
+      };
+
+      /** CONFIRMED → EXECUTED or FAILED. The only way EXECUTED is written. */
+      ai_action_settle: {
+        Args: {
+          p_action_id: string;
+          p_status: Database["public"]["Enums"]["ai_action_status"];
+          p_serial_id: string | null;
+          p_failure_code: string | null;
+        };
+        Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
+      };
+
+      /** PROPOSED → CANCELLED. The customer said no. */
+      ai_action_cancel: {
+        Args: { p_action_id: string };
+        Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
+      };
+
+      /**
+       * Sweep the caller's own lapsed proposals to EXPIRED. Separate because a
+       * `raise` inside plpgsql rolls back any UPDATE in the same call, so
+       * `ai_action_claim` cannot both mark and refuse.
+       */
+      ai_action_expire_mine: {
+        Args: Record<string, never>;
+        /** How many rows were moved. */
+        Returns: number;
+      };
+
       shop_available_slots: {
         Args: {
           p_shop_id: string;
@@ -2285,6 +2383,15 @@ export type Database = {
       serial_status: "WAITING" | "IN_PROGRESS" | "DONE" | "CANCELLED" | "NO_SHOW";
       assignment_mode: "AUTO" | "CHOSEN" | "MANUAL";
       business_type: "SALON" | "PARLOUR" | "UNISEX";
+      /** AI Sprint 3. One action type; Sprint 4's are an ALTER TYPE away. */
+      ai_action_type: "JOIN_QUEUE";
+      ai_action_status:
+        | "PROPOSED"
+        | "CONFIRMED"
+        | "EXECUTED"
+        | "CANCELLED"
+        | "EXPIRED"
+        | "FAILED";
       expense_category: "RENT" | "UTILITY" | "SUPPLIES" | "STAFF" | "OTHER";
       notification_type:
         | "SERIAL_CONFIRMED"

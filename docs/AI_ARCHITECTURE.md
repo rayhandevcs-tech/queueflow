@@ -1,9 +1,13 @@
 # QueueFlow AI — আর্কিটেকচার
 
-> **অবস্থা:** AI Sprint 1 ও Sprint 2 সম্পূর্ণ (কোড-স্তরে)। **আসল মডেলে চালিয়ে
+> **অবস্থা:** AI Sprint 1, 2 ও 3 সম্পূর্ণ (কোড-স্তরে)। **আসল মডেলে চালিয়ে
 > দেখা হয়নি — `ANTHROPIC_API_KEY` এখনো সেট করা নেই।** নিচের যা কিছু "verified"
-> লেখা, সেটা টুল-লেয়ার, অথরাইজেশন, লুপ আর মক-করা মডেল টার্ন দিয়ে যাচাই — আসল
-> উত্তরের গুণমান নয়।
+> লেখা, সেটা টুল-লেয়ার, অথরাইজেশন, লুপ, RLS আর মক-করা মডেল টার্ন দিয়ে যাচাই —
+> আসল উত্তরের গুণমান নয়।
+>
+> Sprint 3-এ প্রথম AI mutation এসেছে: **কনফার্ম করা queue join**। মডেল
+> **প্রস্তাব** করতে পারে; কাস্টমার বাটনে চাপ দেয়; লেখাটা হয় বিদ্যমান
+> `serials` INSERT-এ, RLS আর trigger-এর নিচে। মডেল execution পথে **নেই**।
 
 ---
 
@@ -43,8 +47,8 @@ runAgentLoop()        সর্বোচ্চ ৪ iteration, ৮ tool call
                         ↓
 tool-registry         বন্ধ তালিকা, role-ভিত্তিক
            ↓                              ↓
-owner-analytics                  customer-discovery
-১১টা পাতলা adapter                ৫টা পাতলা adapter
+owner-analytics            customer-discovery + prepare_join_queue
+১১টা পাতলা adapter          ৫টা পাতলা adapter + ১টা proposal-builder
            ↓                              ↓
 analytics RPC (Sprint 10)   shops / services / queue_public /
                             shop_available_slots() / serials
@@ -52,6 +56,12 @@ analytics RPC (Sprint 10)   shops / services / queue_public /
 cookie-bound Supabase client  →  RLS + analytics_scope
                         ↓
 যাচাই করা সারি  →  fence করা  →  মডেল  →  উত্তর
+                        ↓
+        (Sprint 3) draft থাকলে → PROPOSED সারি → X-Ai-Proposal-Id
+                        ↓
+        কাস্টমারের চাপ  →  POST /api/ai/actions/confirm
+                        ↓            ← এই রিকোয়েস্টে কোনো মডেল নেই
+        serials INSERT  →  RLS + serial_before_insert
 ```
 
 **role কোনো দাবি নয়, একটা ডেটাবেস-তথ্য।** request body-তে role পাঠানোর কোনো
@@ -75,10 +85,15 @@ cookie-bound Supabase client  →  RLS + analytics_scope
 এগারোটা adapter লেখাই সস্তা।
 
 প্রতিটা টুলে `readOnly` **ঘোষণা করতে হয়**, আর লুপ `readOnly !== true` হলে
-চালাতে অস্বীকার করে। Sprint 2 পর্যন্ত ষোলোটার সবগুলোই `true`, আর registry
+চালাতে অস্বীকার করে। Sprint 3-এর পরেও **সতেরোটার সবগুলোই `true`**, আর registry
 **import-সময়ে** সেটা যাচাই করে — কোনো টুল `readOnly: false` হলে মডিউল লোডই
 হয় না। এর ফলে ভবিষ্যতে একটা mutation টুল যোগ করলে সেটা **দুর্ঘটনাক্রমে চালু
 হতে পারে না** — লুপে গিয়ে ইচ্ছাকৃতভাবে confirmation পথ বানাতে হবে।
+
+> **Sprint 3-এ এটাই পরীক্ষা হয়ে গেল।** প্রথম mutation যোগ করার স্প্রিন্টেও
+> গার্ডটা একটুও বদলাতে হয়নি — কারণ mutation-টা টুল হিসেবে বানানোই হয়নি।
+> `prepare_join_queue` সত্যিই read-only, আর queue join হয় লুপের বাইরে একটা
+> আলাদা endpoint-এ। §৯খ দেখো।
 
 > **Sprint 2-এ যোগ হলো:** ওই অস্বীকারটা এতদিন **কখনো চলেনি** — registry-র
 > সব টুল read-only, তাই branch-টায় পৌঁছানোর উপায় ছিল না। যে পাহারা একবারও
@@ -245,9 +260,52 @@ PROPOSE  →  VALIDATE (id whitelist)  →  CONFIRM (মানুষ)  →  EXEC
 ```
 
 তার নিজের মন্তব্যেই কথাটা আছে: *"ভয়েস একই বাটনে পৌঁছানোর দ্রুততর উপায়, একই
-সারি লেখার দ্বিতীয় উপায় নয়।"* Sprint 1-এ কোনো mutation টুল নেই, কিন্তু
-`security.ts`-এ `IdWhitelist` আছে — Sprint 2/3-এ লাগবে, আর গ্যারান্টিটা
-**অ্যাকশন তাড়া দেওয়ার আগে** বানানো অনেক সহজ।
+সারি লেখার দ্বিতীয় উপায় নয়।"* Sprint 1-এ `security.ts`-এ `IdWhitelist`
+বসানো হয়েছিল কোনো ব্যবহারকারী ছাড়াই — গ্যারান্টিটা **অ্যাকশন তাড়া দেওয়ার
+আগে** বানানো অনেক সহজ। Sprint 3 সেটাই ব্যবহার করে।
+
+### ৯খ. Sprint 3 — প্রথম mutation, আর কেন generic loop সেটা চালাতে পারে না
+
+```
+কাস্টমার: "আজ haircut করতে চাই"
+  ↓
+search_services / search_shops / get_queue_status      (read-only)
+  ↓  যা ফেরত এসেছে তার id গুলো → DiscoveryLedger
+প্রস্তাব চাইলে: prepare_join_queue                     (read-only — কিছুই লেখে না)
+  ↓  1. id গুলো কি এই রিকোয়েস্টে OFFER করা হয়েছিল?  ← কোনো query-র আগে
+  ↓  2. shop আছে? queue shop? (bookingModel) নিচ্ছে? (canBookNow)
+  ↓  3. service গুলো এই shop-এর আর active?
+  ↓  4. কাস্টমারের আগে সিরিয়াল নেই?
+  ↓  5. আসল দাম (services.rate) + আসল অপেক্ষা (queue_public)
+  ↓  draft → ledger
+রুট (লুপের বাইরে): ai_action_propose()  →  PROPOSED সারি
+  ↓  X-Ai-Proposal-Id header → শুধু id
+AiProposalCard  ← RLS-এর নিচে নিজেই সারিটা পড়ে
+  ↓  কাস্টমার বাটনে চাপ দেয়
+POST /api/ai/actions/confirm            ← এখানে কোনো মডেল নেই
+  ↓  1. auth.getUser()                  → 401
+  ↓  2. ai_action_expire_mine()
+  ↓  3. ai_action_claim()               → PROPOSED→CONFIRMED, atomically
+  ↓  4. buildJoinQueueDraft()           → আবার যাচাই, live state-এ
+  ↓  5. joinQueue() → serials INSERT    → RLS + serial_before_insert
+  ↓  6. ai_action_settle()              → EXECUTED / FAILED
+```
+
+**কেন generic loop এটা চালায় না, আর চালাবে না।** লুপ `readOnly !== true` হলে
+টুল চালাতে অস্বীকার করে, আর Sprint 3-এ **সেই গার্ড একটুও দুর্বল করা হয়নি** —
+registry-র ষোলোটা টুলের সবগুলোই এখনো `readOnly: true`, আর registry import-সময়ে
+সেটা যাচাই করে।
+
+`prepare_join_queue`-এ `readOnly: true` লেখাটা তাই সত্যি কথা, কারণ সেটা
+**কিছুই লেখে না**: id যাচাই করে, সারি পড়ে, একটা বর্ণনা ফেরত দেয়। PROPOSED
+সারিটা লেখে **রুট**, লুপ শেষ হওয়ার পরে — এমন কোডে যেটা মডেল ডাকতে পারে না,
+যার argument-এ প্রভাব ফেলতে পারে না, আর যার ফলাফল কখনো দেখে না।
+
+**তার মানে:** মডেলের আউটপুটের এমন কোনো ক্রম নেই যা এমন একটা proposal বানায়
+যার সংখ্যাগুলো মডেল নিজে বেছেছে। nonce রুটে তৈরি হয়; `user_id` আর
+`expires_at` ডেটাবেস `auth.uid()` আর `now()` থেকে বসায়; দাম আসে
+`services.rate` থেকে; আর যে টাকাটা আসলে রেকর্ড হয় সেটা `serial_before_insert`
+INSERT-এর ভেতরে হিসাব করে।
 
 ## ১০. Sprint-এর সীমানা
 
@@ -276,27 +334,70 @@ role-ভিত্তিক `/api/ai/agent` (owner/customer একই endpoint) �
 > agent যদি help-desk-এর তুলনায় ধীর বা বাচাল প্রমাণিত হয়, ফিরে যাওয়াটা
 > একটা string।
 
-### AI Sprint 3 — পরিকল্পিত ⬜
-প্রথম confirmed অ্যাকশন: `join_queue`, `voice-intent`-এর propose→confirm ধারায়,
-`IdWhitelist` দিয়ে যাচাই করে, বিদ্যমান `useCreateBooking` দিয়ে চালিয়ে।
-তখন `ai_actions` audit টেবিল লাগবে।
+### AI Sprint 3 — এখন সম্পূর্ণ ✅
+
+প্রথম AI mutation: **কনফার্ম করা `JOIN_QUEUE`**। `src/lib/ai/proposals.ts`
+(`DiscoveryLedger` + refusal vocabulary) · `prepare_join_queue` (read-only) ·
+`src/lib/queue-join.ts` (একটাই queue-লেখার implementation) ·
+`POST /api/ai/actions/confirm` · `POST /api/ai/actions/cancel` ·
+`AiProposalCard` (৮টা state) · `20260930_ai_actions.sql` ·
+৬২টা নতুন ইউনিট টেস্ট (মোট **৮৯৬**) + Postgres হার্নেসে **৮৫/৮৫**।
+
+**নিরাপত্তার মূল কথাগুলো, এক জায়গায়:**
+
+| দাবি | কোথায় enforce হয় |
+|---|---|
+| মডেল mutation-এ পৌঁছাতে পারে না | registry-তে কোনো write টুল নেই; লুপ `readOnly:false` অস্বীকার করে |
+| invent করা id চলবে না | `DiscoveryLedger` — **কোনো query-র আগে** |
+| পরিচয় মডেল দিতে পারে না | কোনো টুলে/body-তে ঘর নেই; `auth.uid()` |
+| অন্য কাস্টমারের proposal ছোঁয়া যাবে না | RLS + পাঁচটা function-এ `user_id = auth.uid()` |
+| `status = EXECUTED` জাল করা যাবে না | টেবিলে **কোনো client write policy নেই** |
+| দুবার confirm = দুটো সিরিয়াল নয় | `ai_action_claim()`-এর একটাই conditional UPDATE, **+** `one_active_serial_per_customer` |
+| বাসি তথ্যে execute হবে না | `expires_at` (server clock) + confirm-এ পুরো revalidation |
+| দাম AI ঠিক করে না | `serial_before_insert` `services.rate` থেকে হিসাব করে |
+| PARLOUR queue-এ ঢুকবে না | `bookingModel()` → `NOT_A_QUEUE_SHOP` |
+| RLS bypass নেই | cookie-bound client; service-role import নেই (টেস্টে পাহারা) |
+
+**যা ইচ্ছাকৃতভাবে করা হয়নি:** কোনো privileged `ai_join_queue()` RPC নেই।
+`ai_action_*` পাঁচটা function **শুধু** `ai_actions` টেবিল ছোঁয়, আর একটা টেস্ট
+(H1/H2) প্রমাণ করে তাদের কোনোটা `serials`-এ লেখে না। queue-র নিয়ম যেখানে
+থাকার কথা সেখানেই থাকে — trigger-এ।
+
+> **পারমাণবিকতার সীমানা, ঢেকে না রেখে।** serial INSERT আর audit settle
+> **দুটো আলাদা রাইট, এবং atomic নয়**। একটাকে atomic করতে হলে এমন একটা
+> DEFINER function লাগত যেটা serial-ও লেখে — অর্থাৎ queue-র নিয়মের দ্বিতীয়
+> একটা implementation। তাই সীমানাটা রেখে **লিখে রাখা হলো**: INSERT সফল হয়ে
+> settle হারালে কাস্টমার **লাইনে আছেই**, শুধু সারিটা `CONFIRMED`-এ আটকে
+> থাকে। বুকিং ভুল হয় না — `one_active_serial_per_customer` ডুপ্লিকেট
+> আটকায়, আর claim দ্বিতীয় confirm আটকায়। পরের চেষ্টায়
+> `reconcile()` সারিটা সারিয়ে দেয়।
 
 ### AI Sprint 4 — পরিকল্পিত ⬜
 `book_appointment`, `redeem_reward`, আর segmentation → campaign → approval →
 `broadcast_shop_notification`।
 
-**Sprint 3 ও 4 শুরু হয়নি।** ভবিষ্যতের কিছু "সম্পূর্ণ" চিহ্নিত করা হয়নি।
+**Sprint 4 শুরু হয়নি।** ভবিষ্যতের কিছু "সম্পূর্ণ" চিহ্নিত করা হয়নি।
+`ai_action_type` enum-এ এখন **শুধু `JOIN_QUEUE`** — Sprint 4-এর অ্যাকশনগুলো
+একটা `ALTER TYPE` আর তাদের **নিজেদের** confirmed পথ নিয়ে আসতে হবে; confirm
+endpoint অন্য কোনো action_type পেলে refuse করে।
 
-### যা এখনো যাচাই করা হয়নি — Sprint 2 শেষেও
-- **আসল মডেলের উত্তর:** `ANTHROPIC_API_KEY` সেট নেই, তাই কাস্টমার এজেন্ট
-  একটাও আসল উত্তর দেয়নি। টুল-লেয়ার, role gate, cap, fencing আর পাঁচটা
-  flow মক-করা মডেল টার্ন দিয়ে যাচাই — **উত্তরের গুণমান নয়**।
-- **লগইন করা ব্রাউজার:** widget শুধু signed-in shell-এ render হয়
-  (`CustomerShell`: `if (!signedIn) return <GuestShell>`), আর এই পরিবেশে
-  আসল Supabase credential নেই। তাই নতুন chip, নতুন greeting বা চ্যাট
-  ব্রাউজারে **দেখা হয়নি**।
-- **আসল Supabase instance:** মাইগ্রেশনগুলো ব্যবহারকারী নিজে SQL editor-এ
-  চালান; এখান থেকে কিছু যাচাই করা যায়নি।
+### যা এখনো যাচাই করা হয়নি — Sprint 3 শেষেও
+- **আসল মডেলের উত্তর:** `ANTHROPIC_API_KEY` সেট নেই, তাই এজেন্ট একটাও আসল
+  উত্তর দেয়নি। অর্থাৎ মডেল সত্যিই আগে search করে কিনা, `prepare_join_queue`
+  ঠিক সময়ে ডাকে কিনা, আর সবচেয়ে গুরুত্বপূর্ণ — কার্ড দেখানোর পর
+  **"তোমাকে লাইনে ঢুকিয়ে দিয়েছি" বলে ফেলে কিনা** — কিছুই জানা নেই। ওই
+  একটা ব্যর্থতা কোডের কোনো গার্ড ধরতে পারবে না, কারণ ওটা নিরাপত্তার ব্যর্থতা
+  নয়; কার্ড নিজের গলায় "এখনো লাইনে ঢোকানো হয়নি" বলে সেজন্যই।
+- **লগইন করা ব্রাউজার:** widget আর proposal card শুধু signed-in shell-এ
+  render হয় (`CustomerShell`: `if (!signedIn) return <GuestShell>`), আর এই
+  পরিবেশে আসল Supabase credential নেই। তাই **কার্ডটা ব্রাউজারে কেউ দেখেনি**,
+  আর confirm বাটনে কেউ চাপ দেয়নি।
+- **আসল Supabase instance:** `20260930_ai_actions.sql` ইনস্ট্যান্সে **চালানো
+  হয়নি**। লোকালে PostgreSQL 16-এ আসল migration ফাইল দিয়ে ৮৫/৮৫ — সেটা
+  "আসল schema-র মতো একটা schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়।
+- **আসল end-to-end join:** কোনো আসল কাস্টমার AI দিয়ে কোনো আসল দোকানের লাইনে
+  ঢোকেনি। পুরো ধারাটা মক-করা মডেল টার্ন + আসল Postgres দিয়ে যাচাই, আলাদা
+  আলাদা স্তরে।
 
 ### ইচ্ছাকৃতভাবে বাইরে
 Predictive ML (no-show, demand, churn, next-visit) · RAG/vector/embeddings ·

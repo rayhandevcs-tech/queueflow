@@ -40,6 +40,32 @@ export interface ToolContext {
   shopId: string | null;
   /** Server "now", so a tool can resolve "this week" without asking the model. */
   now: Date;
+  /**
+   * What THIS request's tools have actually returned, and the action draft they
+   * produced. Present for a customer request in AI Sprint 3; absent for the
+   * owner copilot, which proposes nothing.
+   *
+   * Typed loosely here on purpose. `proposals.ts` imports `security.ts` and
+   * nothing else, and importing `DiscoveryLedger` into this file would put a
+   * class in the module every tool already depends on. The customer tools
+   * narrow it where they use it.
+   *
+   * Notice what is NOT on this context, in Sprint 3 as in Sprint 2: no
+   * customer id a tool could be pointed at, no shop the model chose, and no
+   * stored preference. `userId` is from `auth.getUser()` and stays that way.
+   */
+  discovery?: DiscoveryLedgerLike;
+}
+
+/**
+ * The ledger's surface as the tools use it — offer ids, require ids, leave a
+ * draft. The implementation is `DiscoveryLedger` in `proposals.ts`.
+ */
+export interface DiscoveryLedgerLike {
+  offer(kind: "shop" | "service", ids: readonly string[]): void;
+  has(kind: "shop" | "service", id: string): boolean;
+  requireOffered(kind: "shop" | "service", ids: readonly string[]): void;
+  draft: unknown;
 }
 
 /**

@@ -26,6 +26,16 @@ export function useStreamingChat(endpoint: string) {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<ChatErrorCode | null>(null);
+  /**
+   * AI Sprint 3. The id of a confirmable proposal, when the turn produced one.
+   *
+   * Only the id travels — the card reads the row itself from `ai_actions` under
+   * RLS, so what the customer is asked to agree to is what the server stored,
+   * not a payload that came back through the client. Cleared at the start of
+   * every send: a card from a previous question must not sit under a new answer
+   * it has nothing to do with.
+   */
+  const [proposalId, setProposalId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const send = useCallback(
@@ -34,6 +44,7 @@ export function useStreamingChat(endpoint: string) {
       if (!question || streaming) return;
 
       setError(null);
+      setProposalId(null);
       const history: ChatTurn[] = [...turns, { role: "user", content: question }];
       setTurns([...history, { role: "assistant", content: "" }]);
       setStreaming(true);
@@ -69,6 +80,10 @@ export function useStreamingChat(endpoint: string) {
           return;
         }
 
+        // Read before the body is consumed. Absent on every endpoint except
+        // the agent, and absent there too unless the turn prepared something.
+        setProposalId(res.headers.get("X-Ai-Proposal-Id"));
+
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let answer = "";
@@ -101,5 +116,5 @@ export function useStreamingChat(endpoint: string) {
 
   const stop = useCallback(() => abortRef.current?.abort(), []);
 
-  return { turns, streaming, error, send, stop };
+  return { turns, streaming, error, send, stop, proposalId };
 }

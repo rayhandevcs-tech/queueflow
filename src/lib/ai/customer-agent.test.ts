@@ -232,17 +232,26 @@ const SHOP_UNISEX = {
 // ---------------------------------------------------------------------------
 
 describe("role separation is enforced in the registry, not the interface", () => {
-  it("**SEC-1 a customer is offered exactly the five discovery tools**", () => {
+  it("**SEC-1 a customer is offered exactly the discovery tools plus prepare**", () => {
     const names = toolsForRole("customer").map((t) => t.name).sort();
     expect(names).toEqual(
       [
         "get_available_slots",
         "get_customer_history",
         "get_queue_status",
+        "prepare_join_queue",
         "search_services",
         "search_shops",
       ].sort(),
     );
+  });
+
+  it("**SEC-1b and every one of them is read-only, prepare included**", () => {
+    // Sprint 3 added a mutation to the product and NOT to the registry. The
+    // join happens in /api/ai/actions/confirm, so this stays true.
+    for (const tool of toolsForRole("customer")) {
+      expect(tool.readOnly, tool.name).toBe(true);
+    }
   });
 
   it("**SEC-2 a customer naming an owner analytics tool reaches no database at all**", async () => {
@@ -1056,9 +1065,21 @@ describe("the stored preference does not restrict the search", () => {
     // `ctx`, a tool could act on it — and `ToolContext` has no field for it.
     expect(route).toContain("preferred_business_type");
     expect(route).toContain("customerPreferenceAsPrompt");
+    // Asserted over FIELD NAMES, not the file's text. The first version of
+    // this grepped the whole of types.ts, which meant a comment explaining
+    // that the preference must not reach a tool could fail the test — an
+    // incentive to delete the explanation. What matters is that ToolContext
+    // declares no such property.
     const ctxTypes = readFileSync(join(process.cwd(), "src/lib/ai/types.ts"), "utf8");
-    expect(ctxTypes).not.toContain("preferred_business_type");
-    expect(ctxTypes).not.toContain("preference");
+    const contextBody = ctxTypes.slice(
+      ctxTypes.indexOf("export interface ToolContext"),
+      ctxTypes.indexOf("export interface DiscoveryLedgerLike"),
+    );
+    const fields = [...contextBody.matchAll(/^\s{2}(\w+)\??:/gm)].map((m) => m[1]);
+    expect(fields.sort()).toEqual(["discovery", "now", "shopId", "supabase", "userId"]);
+    expect(fields).not.toContain("preference");
+    expect(fields).not.toContain("preferredBusinessType");
+    expect(fields).not.toContain("customerId");
   });
 
   it("defaults to both kinds when the customer did not say", async () => {
@@ -1124,9 +1145,14 @@ describe("the five customer flows", () => {
     expect(result.toolsUsed).toEqual(["search_shops"]);
     expect(result.stopReason).toBe("answered");
     // The model was offered only the customer slice.
-    expect(model.seen[0].toolNames.sort()).toEqual(
-      ["get_available_slots", "get_customer_history", "get_queue_status", "search_services", "search_shops"],
-    );
+    expect(model.seen[0].toolNames.sort()).toEqual([
+      "get_available_slots",
+      "get_customer_history",
+      "get_queue_status",
+      "prepare_join_queue",
+      "search_services",
+      "search_shops",
+    ]);
     // Only open shops were asked for.
     expect(model.seen[1].messages.at(-1)?.toolResults?.[0].isError).toBe(false);
   });
@@ -1280,7 +1306,20 @@ describe("the customer system prompt", () => {
   );
 
   it("**forbids claiming a booking, a queue join or any action**", () => {
-    for (const phrase of ["cannot book", "join a queue", "never say or imply"]) {
+    // Updated in Sprint 3. This used to assert the prompt said the assistant
+    // "cannot ... join a queue", which was true when it had no way to set one
+    // up. It now can PREPARE one, so asserting the old sentence would have
+    // meant keeping a rule the product had outgrown.
+    //
+    // The replacement is a stronger claim, not a weaker one: preparing is
+    // permitted, and CLAIMING is forbidden in the two specific forms that
+    // actually hurt a customer.
+    expect(prompt).toContain("NEVER say they are in the queue");
+    expect(prompt).toContain("NEVER give them a serial number");
+    expect(prompt).toContain("It does NOT join");
+    expect(prompt.toLowerCase()).toContain("never say or imply");
+    // And everything it still cannot do is still listed.
+    for (const phrase of ["cancel", "reschedule", "redeem a reward", "change a membership"]) {
       expect(prompt.toLowerCase()).toContain(phrase.toLowerCase());
     }
   });

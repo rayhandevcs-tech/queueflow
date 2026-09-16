@@ -17,6 +17,7 @@ import {
 import { fenceToolError, fenceToolResult, IdWhitelist, safeToolErrorMessage } from "./security";
 import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
 import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
+import { JOIN_QUEUE_TOOLS } from "./tools/join-queue-prepare";
 import type { AgentMessage, CallModel, ModelTurn, ToolContext } from "./types";
 
 /**
@@ -130,12 +131,13 @@ describe("the tool registry is closed", () => {
     for (const tool of __ALL_TOOLS_FOR_TESTS) expect(tool.readOnly).toBe(true);
   });
 
-  it("registers the eleven analytics tools and the five customer tools, and nothing else", () => {
+  it("registers eleven analytics tools, five discovery tools and one prepare tool", () => {
     expect(OWNER_ANALYTICS_TOOLS).toHaveLength(11);
     expect(CUSTOMER_DISCOVERY_TOOLS).toHaveLength(5);
+    expect(JOIN_QUEUE_TOOLS).toHaveLength(1);
     // The count is asserted so that adding a tool without a test is a failing
     // build rather than a silently wider assistant.
-    expect(REGISTRY_TOOL_NAMES).toHaveLength(16);
+    expect(REGISTRY_TOOL_NAMES).toHaveLength(17);
   });
 
   it("**no tool takes an identity argument** — no shop_id, no owner_id, no user id", () => {

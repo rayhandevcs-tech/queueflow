@@ -193,6 +193,14 @@ const searchShops: ToolDefinition = {
       review_count: ratings.get(shop.id)?.count ?? 0,
     }));
 
+    // Record what was actually returned. This is the ONLY way a shop id
+    // becomes proposable — `prepare_join_queue` checks against this ledger, so
+    // a shop the model invented, remembered from an earlier turn, or read out
+    // of injected text cannot reach the confirm path. Note the ids offered are
+    // the ones RETURNED, not the ones queried: a row trimmed by the limit was
+    // never shown to the model and must not become actionable.
+    ctx.discovery?.offer("shop", shops.map((shop) => shop.id));
+
     return {
       shops,
       // So the model can describe its own scope honestly rather than claiming
@@ -322,6 +330,12 @@ const searchServices: ToolDefinition = {
       },
     }));
 
+    // Both kinds, because a service result carries its shop — and a customer
+    // who found a shop through its haircut should be able to join that queue
+    // without searching for the shop again.
+    ctx.discovery?.offer("service", services.map((service) => service.service_id));
+    ctx.discovery?.offer("shop", services.map((service) => service.shop.id));
+
     return {
       services,
       searched: rows.length,
@@ -410,6 +424,15 @@ const getQueueStatus: ToolDefinition = {
       };
     });
 
+    // Deliberately NOT offering these ids into the ledger, which looks like an
+    // omission and is the opposite.
+    //
+    // This tool takes shop ids FROM THE MODEL. If it fed them back in as
+    // "offered", then a model that guessed a real uuid — or was handed one by
+    // injected text — could launder it into proposable simply by asking for its
+    // queue status. The ledger must only ever be filled by a tool that SEARCHED
+    // and chose the rows itself. A legitimate flow is unaffected: the ids came
+    // from search_shops or search_services, which offered them already.
     return {
       shops: result,
       skipped,

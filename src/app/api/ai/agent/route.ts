@@ -16,6 +16,14 @@ import {
   customerPreferenceAsPrompt,
 } from "@/features/customer-help/lib/prompt";
 import { parsePreference } from "@/lib/customer-preference";
+import type { Json } from "@/types/database.types";
+import {
+  AI_ACTION_JOIN_QUEUE,
+  AI_PROPOSAL_TTL_SECONDS,
+  DiscoveryLedger,
+  newProposalNonce,
+  type JoinQueueDraft,
+} from "@/lib/ai/proposals";
 
 /**
  * The agent endpoint — one endpoint, two roles.
@@ -169,6 +177,22 @@ export async function POST(request: Request) {
   const now = new Date();
 
   /**
+   * What this request's tools actually returned.
+   *
+   * Built here, per request, and handed to the loop on the context. Two things
+   * follow from its lifetime being one request:
+   *
+   *   · `prepare_join_queue` can only propose ids that a search tool returned
+   *     during THIS request, so a remembered or invented id is refused;
+   *   · nothing survives to be replayed, because the chat history posted on
+   *     each turn carries user and assistant TEXT only — never tool results.
+   *
+   * Owners get no ledger. They have nothing to propose, and omitting it means
+   * `prepare_join_queue` would refuse even if role scoping were somehow wrong.
+   */
+  const ledger = role === "customer" ? new DiscoveryLedger() : undefined;
+
+  /**
    * The Anthropic-backed model call, adapting the SDK's block shapes to the
    * loop's own `ModelTurn`. Keeping the adaptation here is what lets the loop
    * be tested with no SDK and no key.
@@ -205,7 +229,7 @@ export async function POST(request: Request) {
       role,
       system,
       messages: parsed.data.messages.map((m) => ({ role: m.role, content: m.content })),
-      ctx: { supabase, userId: user.id, shopId, now },
+      ctx: { supabase, userId: user.id, shopId, now, discovery: ledger },
       callModel,
       // Names and outcomes only. No arguments, no returned rows, no prompt —
       // enough to see which tools a question used and where it stopped,
@@ -231,12 +255,20 @@ export async function POST(request: Request) {
     //
     // The diagnostics ride along as headers: names and an outcome, never
     // arguments or rows.
+    //
+    // And, from Sprint 3, the id of a proposal if the turn produced one. Only
+    // the id: the card fetches the row itself from `ai_actions` under RLS, so
+    // what it displays is what the server stored rather than a payload that
+    // passed through the client on its way to a confirm button.
+    const proposalId = await persistProposal(supabase, ledger?.draft ?? null);
+
     return new Response(result.text, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-store",
         "X-Ai-Stop-Reason": result.stopReason,
         "X-Ai-Tools-Used": result.toolsUsed.join(",") || "none",
+        ...(proposalId ? { "X-Ai-Proposal-Id": proposalId } : {}),
       },
     });
   } catch {
@@ -245,6 +277,60 @@ export async function POST(request: Request) {
     // gets a code the UI already knows; nothing internal is echoed back.
     return NextResponse.json({ error: "AGENT_FAILED" }, { status: 500 });
   }
+}
+
+/**
+ * Turn a draft into a PROPOSED row, or do nothing.
+ *
+ * ---------------------------------------------------------------------------
+ * Why this is here and not in the tool
+ * ---------------------------------------------------------------------------
+ * `prepare_join_queue` is read-only and must stay that way: the agent loop
+ * refuses a tool that declares otherwise, and that refusal is what Sprints 1
+ * and 2 rest on. So the tool validates and assembles, and the write happens
+ * here — after the loop has finished, in code the model cannot call, whose
+ * arguments it cannot influence, and whose result it never sees.
+ *
+ * The consequence is worth stating plainly: there is no sequence of model
+ * outputs that creates a proposal with figures the model chose. The draft it
+ * left came from `services.rate` and `queue_public`; the nonce is generated
+ * here; `user_id` and `expires_at` are stamped by the database from
+ * `auth.uid()` and `now()`.
+ *
+ * A failure to persist is swallowed to a null. The customer then gets the
+ * assistant's text with no card, which reads as "it described something but
+ * did not offer a button" — mildly confusing, and much better than a 500 that
+ * throws away a perfectly good answer. Nothing was written, so nothing is
+ * half-done.
+ */
+async function persistProposal(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  draft: unknown,
+): Promise<string | null> {
+  if (!draft || typeof draft !== "object") return null;
+  const join = draft as JoinQueueDraft;
+  if (join.action !== AI_ACTION_JOIN_QUEUE || join.services.length === 0) return null;
+
+  const { data, error } = await supabase.rpc("ai_action_propose", {
+    p_action_type: AI_ACTION_JOIN_QUEUE,
+    p_shop_id: join.shopId,
+    p_service_ids: join.services.map((service) => service.serviceId),
+    p_nonce: newProposalNonce(),
+    // The figures the customer is about to be shown, frozen. NOT what they are
+    // charged: `serial_before_insert` prices the booking from `services.rate`
+    // at insert time, so a shop that reprices in between bills its own current
+    // rate. This column answers "what were they looking at when they agreed?".
+    // Cast to the generated `Json` type. The draft is a plain object of
+    // strings, numbers and nulls by construction — there is nothing in
+    // `JoinQueueDraft` that does not serialise — but the structural type does
+    // not know that, and widening `Json` to accommodate it would weaken it
+    // everywhere else.
+    p_display: join as unknown as Json,
+    p_ttl_seconds: AI_PROPOSAL_TTL_SECONDS,
+  });
+
+  if (error || !data) return null;
+  return (data as { id?: string }).id ?? null;
 }
 
 /** Our message shape → the SDK's blocks. */

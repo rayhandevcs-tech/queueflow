@@ -41,12 +41,25 @@ export interface FloatingChatLabels {
 export function FloatingChatWidget({
   endpoint,
   labels,
+  renderProposal,
 }: {
   endpoint: string;
   labels: FloatingChatLabels;
+  /**
+   * AI Sprint 3. Renders the confirmation card when a turn produced a
+   * confirmable action, and is given nothing but the action's id.
+   *
+   * A render prop rather than an import, for two reasons. The boundary rule
+   * (`shared → [shared]`) forbids this file importing a feature at all; and
+   * beyond the lint rule, it would be wrong for the widget both apps share to
+   * know that the customer app has proposals and the provider app does not.
+   * The widget's job is the conversation. What may be confirmed inside one is
+   * the caller's business.
+   */
+  renderProposal?: (proposalId: string) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const { turns, streaming, error, send, stop } = useStreamingChat(endpoint);
+  const { turns, streaming, error, send, stop, proposalId } = useStreamingChat(endpoint);
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -158,6 +171,15 @@ export function FloatingChatWidget({
                   {turn.content || <TypingDots />}
                 </div>
               ))}
+
+              {/* After the answer, never instead of it. The assistant's words
+                  explain the card, and the card is the thing that acts —
+                  showing one without the other loses half the exchange.
+                  `!streaming` keeps it from appearing under a half-written
+                  sentence. */}
+              {proposalId && renderProposal && !streaming && (
+                <div className="w-full">{renderProposal(proposalId)}</div>
+              )}
 
               {error && (
                 <p className="rounded-xl bg-live-soft px-3.5 py-2.5 text-[12px] text-live">

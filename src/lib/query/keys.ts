@@ -246,6 +246,17 @@ export const keys = {
     ticket: (ticketId: string) => ["support", "ticket", ticketId] as const,
     messages: (ticketId: string) => ["support", "messages", ticketId] as const,
   },
+  /**
+   * AI Sprint 3. One proposal, fetched by id.
+   *
+   * No "mine" listing key on purpose: the card only ever renders the proposal
+   * the assistant just produced, and the id arrives in a response header. A
+   * list would be a screen nobody asked for, holding a log of what somebody
+   * said to an AI.
+   */
+  aiActions: {
+    proposal: (actionId: string) => ["ai-actions", "proposal", actionId] as const,
+  },
   chatThreads: {
     mine: () => ["chat-threads", "mine"] as const,
     byShop: (shopId: string) => ["chat-threads", "shop", shopId] as const,

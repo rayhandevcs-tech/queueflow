@@ -1,5 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
 import { withDbErrors } from "@/lib/supabase/db-errors";
+import { joinQueue } from "@/lib/queue-join";
 import { ACTIVE_STATUSES } from "@/config/constants";
 import type { ReviewRow } from "@/lib/reviews";
 import type { Chair, ChairServiceStat, QueuePublicRow, Serial, Service, Shop, ShopGalleryImage } from "@/types";
@@ -94,6 +95,12 @@ export interface CreateBookingOptions {
  * BEFORE INSERT trigger the provider's walk-in flow uses (chair_id passthrough
  * mirrors WalkInPayload in provider-queue). The DB rejects a second active
  * booking (one_active_serial_per_customer) or a closed shop.
+ *
+ * The insert itself moved to `@/lib/queue-join` in AI Sprint 3, when the AI's
+ * confirm endpoint became a second caller. Same row, same trigger, same
+ * policies — the only difference between the two callers is which Supabase
+ * client they hold, and keeping the payload in one place is what stops the two
+ * paths drifting into two subtly different kinds of booking.
  */
 export async function createBooking(
   shopId: string,
@@ -107,30 +114,15 @@ export async function createBooking(
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not logged in");
 
-    const fullName =
-      (user.user_metadata?.full_name as string | undefined)?.trim() || "Customer";
-
-    const { data, error } = await supabase
-      .from("serials")
-      .insert({
-        shop_id: shopId,
-        customer_id: user.id,
-        customer_name: fullName,
-        service_ids: serviceIds,
-        is_walk_in: false,
-        chair_id: opts?.chairId ?? null,
-        travel_min: opts?.travelMin ?? null,
-        ...(opts?.advance
-          ? {
-              advance_paid: true,
-              advance_method: opts.advance.method,
-              advance_txn_id: opts.advance.transactionId,
-              payment_status: "ADVANCE" as const,
-            }
-          : {}),
-      })
-      .select()
-      .single();
+    const { data, error } = await joinQueue(supabase, {
+      shopId,
+      serviceIds,
+      customerId: user.id,
+      customerName: (user.user_metadata?.full_name as string | undefined) ?? "",
+      chairId: opts?.chairId,
+      travelMin: opts?.travelMin,
+      advance: opts?.advance,
+    });
 
     if (error) throw error;
     return data;

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { AgentRole, ToolDefinition } from "./types";
 import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
 import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
+import { JOIN_QUEUE_TOOLS } from "./tools/join-queue-prepare";
 
 /**
  * The complete, closed list of things the model may do.
@@ -27,20 +28,34 @@ import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
 const ALL_TOOLS: readonly ToolDefinition[] = [
   ...OWNER_ANALYTICS_TOOLS,
   ...CUSTOMER_DISCOVERY_TOOLS,
-  // Sprint 3 adds the first tool that writes, and it will be the first entry
-  // here with `readOnly: false` — which is why the loop refuses those rather
-  // than trusting this list to contain none. See docs/AI_ARCHITECTURE.md.
+  // Sprint 3's `prepare_join_queue`. It is in this list and it is read-only,
+  // which is the whole shape of that sprint: the model can ask for a queue
+  // join to be PREPARED, and the join itself happens in
+  // `/api/ai/actions/confirm` after the customer presses a button — outside
+  // the loop, outside the registry, and outside anything a model can call.
+  ...JOIN_QUEUE_TOOLS,
 ];
 
 /**
- * Every tool in the registry is read-only as of Sprint 2, and this is checked
- * at import time rather than left as a claim in a document. The day a write
- * tool is added on purpose, this constant is what has to be relaxed, and doing
- * so will be a visible, reviewable line in a diff.
+ * **Every tool in the registry is read-only, including in Sprint 3.**
+ *
+ * Checked at import time rather than left as a claim in a document, and it
+ * survived the sprint that introduced the first mutation — because that
+ * mutation was deliberately not built as a tool. The generic loop still
+ * refuses `readOnly: false` (see `agent-readonly.test.ts`, which proves the
+ * refusal by mocking a writable tool in front of it), and nothing about the
+ * confirmed-action path required relaxing either guard.
+ *
+ * If a future sprint does need a write tool, this is the line that has to
+ * change, and changing it will be a visible, reviewable diff next to a
+ * confirmation path that had better already exist.
  */
 for (const tool of ALL_TOOLS) {
   if (!tool.readOnly) {
-    throw new Error(`Tool ${tool.name} is not read-only; Sprint 2 permits no write tools`);
+    throw new Error(
+      `Tool ${tool.name} is not read-only. The agent loop refuses write tools; ` +
+        `a mutation belongs behind the confirmed-action endpoint, not in the registry.`,
+    );
   }
 }
 

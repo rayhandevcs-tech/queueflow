@@ -2,6 +2,7 @@ import "server-only";
 import { findTool, toolSpecsForRole } from "./tool-registry";
 import { fenceToolError, fenceToolResult, safeToolErrorMessage } from "./security";
 import { ToolArgumentError } from "./tools/owner-analytics";
+import { ProposalError } from "./proposals";
 import type {
   AgentMessage,
   AgentResult,
@@ -190,13 +191,32 @@ export async function runAgentLoop(input: {
       args.onEvent?.({ type: "tool_ok", tool: tool.name });
       return { id: call.id, content: fenceToolResult(tool.name, payload), isError: false };
     } catch (err) {
-      // An argument problem the schema could not catch — a reversed range, a
-      // window wider than analytics covers — is worth passing back in full,
-      // because the model can fix it. Anything else is reduced to a code by
-      // `safeToolErrorMessage`, so no SQL, table name or constraint reaches
-      // the model or the owner.
+      // Two kinds of failure are worth passing back in full, because the model
+      // can do something useful with them:
+      //
+      //   ToolArgumentError  an argument problem zod could not catch — a
+      //                      reversed range, a window wider than analytics
+      //                      covers. The model can correct it and retry.
+      //   ProposalError      a refusal with a REASON the customer needs to
+      //                      hear. "That shop is a parlour, so it has no queue
+      //                      — here are its free appointment times" is only
+      //                      possible if the model is told NOT_A_QUEUE_SHOP.
+      //
+      // Both carry a closed vocabulary of codes and no database text, which is
+      // what makes passing them through safe. Everything else is reduced by
+      // `safeToolErrorMessage`, so no SQL, table name or constraint name
+      // reaches the model or the person reading its answer.
+      //
+      // ProposalError was missing from this list at first, and the effect was
+      // exactly the sort of thing a test catches and a code read does not: the
+      // model was told "UNAVAILABLE" for a parlour, so instead of redirecting
+      // the customer to appointments it could only say something had gone
+      // wrong. Refusing for the right reason is worth nothing if the reason is
+      // discarded on the way out.
       const message =
-        err instanceof ToolArgumentError ? err.message : safeToolErrorMessage(err);
+        err instanceof ToolArgumentError || err instanceof ProposalError
+          ? err.message
+          : safeToolErrorMessage(err);
       args.onEvent?.({
         type: "tool_error",
         tool: tool.name,
