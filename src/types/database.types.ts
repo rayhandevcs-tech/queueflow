@@ -1405,7 +1405,33 @@ export type Database = {
           expires_at: string;
           confirmed_at: string | null;
           settled_at: string | null;
+
+          // -----------------------------------------------------------------
+          // AI Sprint 4 — the appointment and redemption columns
+          // (20261001_ai_actions_sprint4.sql). All nullable; which ones may be
+          // set is decided by `ai_actions_params_match_type` per action type,
+          // so a JOIN_QUEUE row cannot carry a slot and a REDEEM_REWARD row
+          // cannot carry services.
+          // -----------------------------------------------------------------
+
+          /**
+           * The staff member (`chairs.id`) for BOOK_APPOINTMENT. Travels with
+           * `starts_at` — `ai_actions_slot_shape` requires both or neither.
+           */
+          staff_id: string | null;
+          /**
+           * The appointment start, from a slot `shop_available_slots()`
+           * actually returned. Never a time the model produced.
+           */
+          starts_at: string | null;
+          /** The reward for REDEEM_REWARD. Always read back with `shop_id`. */
+          reward_id: string | null;
+
+          // --- results: at most one, and only on an EXECUTED row ------------
           serial_id: string | null;
+          appointment_id: string | null;
+          redemption_id: string | null;
+
           /** A short code, never a Postgres message. */
           failure_code: string | null;
         };
@@ -1423,16 +1449,28 @@ export type Database = {
       // `ai_actions` and nothing else. None of them writes a serial: the queue
       // join stays a plain INSERT into `public.serials` under its own policy.
 
-      /** Create the PROPOSED row the customer will be asked to confirm. */
+      /**
+       * Create the PROPOSED row the customer will be asked to confirm.
+       *
+       * Widened in Sprint 4 (20261001). The last three are optional in SQL and
+       * optional here: a JOIN_QUEUE proposal omits all of them, an appointment
+       * sends the slot, a redemption sends the reward. The function refuses any
+       * other combination by name (`ai_action_slot_required`,
+       * `ai_action_reward_required`, `ai_action_bad_shape`).
+       */
       ai_action_propose: {
         Args: {
           p_action_type: Database["public"]["Enums"]["ai_action_type"];
-          p_shop_id: string | null;
+          /** Required since Sprint 4 — every action is scoped to one business. */
+          p_shop_id: string;
           p_service_ids: string[];
           p_nonce: string;
           p_display: Json;
           /** Bounded 30..1800 by the function; `expires_at` uses server now(). */
           p_ttl_seconds: number;
+          p_staff_id?: string | null;
+          p_starts_at?: string | null;
+          p_reward_id?: string | null;
         };
         Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
       };
@@ -1446,12 +1484,20 @@ export type Database = {
         Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
       };
 
-      /** CONFIRMED → EXECUTED or FAILED. The only way EXECUTED is written. */
+      /**
+       * CONFIRMED → EXECUTED or FAILED. The only way EXECUTED is written.
+       *
+       * `p_result_id` replaced Sprint 3's `p_serial_id` in 20261001. ONE
+       * argument for all three actions, because the function reads
+       * `action_type` off the row being settled to decide which result column
+       * the id lands in — so a caller cannot settle an appointment against a
+       * serial id. A caller does not choose the column.
+       */
       ai_action_settle: {
         Args: {
           p_action_id: string;
           p_status: Database["public"]["Enums"]["ai_action_status"];
-          p_serial_id: string | null;
+          p_result_id: string | null;
           p_failure_code: string | null;
         };
         Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
@@ -2384,7 +2430,13 @@ export type Database = {
       assignment_mode: "AUTO" | "CHOSEN" | "MANUAL";
       business_type: "SALON" | "PARLOUR" | "UNISEX";
       /** AI Sprint 3. One action type; Sprint 4's are an ALTER TYPE away. */
-      ai_action_type: "JOIN_QUEUE";
+      /**
+       * Three members after 20261001. Not four: CANCEL_APPOINTMENT,
+       * RESCHEDULE_APPOINTMENT and SEND_CAMPAIGN are deliberately absent from
+       * the Postgres enum too, so the confirm endpoint refusing an unknown type
+       * is a guarantee rather than a hope.
+       */
+      ai_action_type: "JOIN_QUEUE" | "BOOK_APPOINTMENT" | "REDEEM_REWARD";
       ai_action_status:
         | "PROPOSED"
         | "CONFIRMED"

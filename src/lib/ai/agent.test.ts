@@ -18,6 +18,8 @@ import { fenceToolError, fenceToolResult, IdWhitelist, safeToolErrorMessage } fr
 import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
 import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
 import { JOIN_QUEUE_TOOLS } from "./tools/join-queue-prepare";
+import { APPOINTMENT_TOOLS } from "./tools/appointment-prepare";
+import { REWARD_TOOLS } from "./tools/reward-prepare";
 import type { AgentMessage, CallModel, ModelTurn, ToolContext } from "./types";
 
 /**
@@ -131,13 +133,19 @@ describe("the tool registry is closed", () => {
     for (const tool of __ALL_TOOLS_FOR_TESTS) expect(tool.readOnly).toBe(true);
   });
 
-  it("registers eleven analytics tools, five discovery tools and one prepare tool", () => {
+  it("registers eleven analytics tools, five discovery tools and four action tools", () => {
     expect(OWNER_ANALYTICS_TOOLS).toHaveLength(11);
     expect(CUSTOMER_DISCOVERY_TOOLS).toHaveLength(5);
     expect(JOIN_QUEUE_TOOLS).toHaveLength(1);
+    // Sprint 4: one appointment prepare, and a reward pair — `get_my_rewards`
+    // is discovery for the redemption flow and lives with it rather than in
+    // CUSTOMER_DISCOVERY_TOOLS, because it is the tool that fills the ledger
+    // the prepare beside it reads.
+    expect(APPOINTMENT_TOOLS).toHaveLength(1);
+    expect(REWARD_TOOLS).toHaveLength(2);
     // The count is asserted so that adding a tool without a test is a failing
     // build rather than a silently wider assistant.
-    expect(REGISTRY_TOOL_NAMES).toHaveLength(17);
+    expect(REGISTRY_TOOL_NAMES).toHaveLength(20);
   });
 
   it("**no tool takes an identity argument** — no shop_id, no owner_id, no user id", () => {

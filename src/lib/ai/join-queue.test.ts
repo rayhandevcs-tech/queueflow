@@ -889,25 +889,43 @@ describe("expiry, replay and revalidation", () => {
     // Anchored on CALL SITES, not on the first mention. The first attempt used
     // `indexOf("buildJoinQueueDraft")`, which found the import at the top of
     // the file and reported the order backwards.
+    //
+    // Sprint 4 split the three actions into their own executors, so the order
+    // now spans two files: the route claims and then calls the executor, and
+    // the executor revalidates and then writes. The invariant is unchanged —
+    // nothing is revalidated or written before the claim — and it is asserted
+    // in both halves rather than relaxed to fit the new layout.
     const body = confirmRoute.slice(confirmRoute.indexOf("export async function POST"));
     const claimAt = body.indexOf('rpc("ai_action_claim"');
-    const revalidateAt = body.indexOf("await buildJoinQueueDraft(");
-    const insertAt = body.indexOf("await joinQueue(supabase");
+    const executeAt = body.indexOf("await executor.execute(");
     expect(claimAt).toBeGreaterThan(-1);
-    expect(revalidateAt).toBeGreaterThan(-1);
-    expect(insertAt).toBeGreaterThan(-1);
+    expect(executeAt).toBeGreaterThan(-1);
     // If validation came first, two simultaneous requests would both validate
     // and both try to insert.
-    expect(revalidateAt).toBeGreaterThan(claimAt);
+    expect(executeAt).toBeGreaterThan(claimAt);
+
+    const executor = codeOf("src/lib/ai/actions/join-queue-action.ts");
+    const revalidateAt = executor.indexOf("await buildJoinQueueDraft(");
+    const insertAt = executor.indexOf("await joinQueue(");
+    expect(revalidateAt).toBeGreaterThan(-1);
     expect(insertAt).toBeGreaterThan(revalidateAt);
   });
 
   it("**SEC-23 revalidation uses live state, never the stored display**", () => {
     // The same function `prepare_join_queue` used, run again. "Revalidated"
     // only means something if the second check IS the first check.
-    expect(confirmRoute).toContain("buildJoinQueueDraft(ctx, action.shop_id, action.service_ids)");
-    // And the frozen snapshot is not consulted for the decision.
-    expect(confirmRoute).not.toContain("action.display");
+    const executor = codeOf("src/lib/ai/actions/join-queue-action.ts");
+    expect(executor).toContain(
+      "buildJoinQueueDraft(ctx, action.shopId, action.serviceIds)",
+    );
+    // And the frozen snapshot is not consulted, for a queue join, at all.
+    //
+    // Sprint 4's appointment and reward executors DO read `display`, but only
+    // to compare a price or a points cost against the freshly read one and
+    // refuse if it moved — they never take a value from it. The queue join
+    // reads it for nothing, which is why the absence can still be asserted
+    // outright here.
+    expect(executor).not.toContain("action.display");
   });
 
   it("**EXECUTED is only reachable through settle, with a serial**", () => {
@@ -936,15 +954,25 @@ describe("expiry, replay and revalidation", () => {
 
   it("**SEC-25 the final write is the ordinary RLS-bound insert**", () => {
     // Not an RPC, not service-role, not a second implementation. `joinQueue`
-    // from @/lib/queue-join is the same call the booking screen makes.
-    expect(confirmRoute).toContain('from "@/lib/queue-join"');
-    expect(confirmRoute).toContain("joinQueue(supabase");
+    // from @/lib/queue-join is the same call the booking screen makes. It moved
+    // from the route into the executor in Sprint 4; the claim is the same one.
+    const executor = codeOf("src/lib/ai/actions/join-queue-action.ts");
+    expect(executor).toContain('from "@/lib/queue-join"');
+    expect(executor).toContain("joinQueue(ctx.supabase");
     // And there is no privileged AI-specific queue function anywhere. Checked
-    // against the migration's CODE: its prose explains at length why an
+    // against the migrations' CODE: their prose explains at length why an
     // `ai_join_queue()` must not exist, and matching that would have made the
     // explanation the thing to delete.
-    expect(codeOf("supabase/migrations/20260930_ai_actions.sql")).not.toContain("ai_join_queue");
-    expect(confirmRoute).not.toMatch(/rpc\(\s*"(ai_)?join_queue"/);
+    for (const migrationFile of [
+      "supabase/migrations/20260930_ai_actions.sql",
+      "supabase/migrations/20261001_ai_actions_sprint4.sql",
+    ]) {
+      expect(codeOf(migrationFile), migrationFile).not.toContain("ai_join_queue");
+    }
+    expect(executor).not.toMatch(/rpc\(\s*"(ai_)?join_queue"/);
+    // The route itself performs no write of its own — it claims, dispatches
+    // and settles. Nothing in it touches a business table.
+    expect(confirmRoute).not.toContain("queue-join");
   });
 });
 
@@ -1169,9 +1197,13 @@ describe("end to end, with mocked model turns", () => {
 
 describe("one queue-writing implementation", () => {
   it("**both callers go through @/lib/queue-join**", () => {
+    // The AI-side caller moved from the confirm route into
+    // `join-queue-action.ts` in Sprint 4. The invariant — ONE queue-writing
+    // implementation, used by both the booking screen and the assistant — is
+    // exactly the Sprint 3 one; only the file holding the AI's call changed.
     for (const file of [
       "src/features/customer-booking/api/booking.api.ts",
-      "src/app/api/ai/actions/confirm/route.ts",
+      "src/lib/ai/actions/join-queue-action.ts",
     ]) {
       const source = codeOf(file);
       expect(source, file).toContain("queue-join");
@@ -1179,6 +1211,17 @@ describe("one queue-writing implementation", () => {
       // Neither writes `serials` directly any more.
       expect(source, file).not.toMatch(/from\("serials"\)\s*\.insert/);
     }
+
+    // And nothing ELSE in the AI tree imports it, so there is no third caller.
+    const callers = [
+      "src/lib/ai/actions/join-queue-action.ts",
+      "src/lib/ai/actions/book-appointment-action.ts",
+      "src/lib/ai/actions/redeem-reward-action.ts",
+      "src/lib/ai/actions/index.ts",
+      "src/app/api/ai/actions/confirm/route.ts",
+      "src/app/api/ai/actions/cancel/route.ts",
+    ].filter((file) => codeOf(file).includes("queue-join"));
+    expect(callers).toEqual(["src/lib/ai/actions/join-queue-action.ts"]);
   });
 
   it("**no AI module inserts into serials itself**", () => {
@@ -1234,14 +1277,37 @@ describe("the customer prompt", () => {
     expect(prompt).toContain("ids you were not given will be rejected");
   });
 
-  it("**routes a parlour to the appointment flow without booking it**", () => {
-    expect(prompt).toContain("you cannot book it");
+  it("**routes a parlour to the appointment flow rather than the queue**", () => {
+    // Rewritten in Sprint 4, and the old assertion is worth recording because
+    // it was asserting something that has since become FALSE. It read:
+    //
+    //   expect(prompt).toContain("you cannot book it");
+    //
+    // The assistant can now set up a parlour booking, so keeping that line
+    // would have pinned the prompt to a limitation the product no longer has —
+    // and the only way to keep it green would have been to leave a sentence in
+    // the prompt telling the model it cannot do something it can.
+    //
+    // What survives is the part that is still true and still load-bearing: a
+    // parlour must not be sent down the queue path.
     expect(prompt).toContain("Do not call prepare_join_queue for a parlour");
+    expect(prompt).toContain("NOT_A_QUEUE_SHOP");
+    // And the mirror image, which Sprint 4 needed for the first time.
+    expect(prompt).toContain("Do not call prepare_book_appointment for a salon");
+    expect(prompt).toContain("NOT_AN_APPOINTMENT_SHOP");
   });
 
   it("**still forbids every other action**", () => {
-    for (const phrase of ["cancel", "reschedule", "redeem a reward", "change a membership"]) {
+    // "redeem a reward" left this list in Sprint 4 — it can now be prepared —
+    // and "book an appointment" left it too. Both were removed because they
+    // became untrue, not to make a test pass; the replacement list is what the
+    // assistant genuinely still has no tool for.
+    for (const phrase of ["cancel", "reschedule", "claim a referral", "change a membership"]) {
       expect(prompt.toLowerCase()).toContain(phrase.toLowerCase());
     }
+    // And the two new capabilities carry the same "do not claim it happened"
+    // rule the queue join has.
+    expect(prompt).toContain("It does NOT book");
+    expect(prompt).toContain("It does NOT spend points");
   });
 });

@@ -4,6 +4,8 @@ import type { AgentRole, ToolDefinition } from "./types";
 import { OWNER_ANALYTICS_TOOLS } from "./tools/owner-analytics";
 import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
 import { JOIN_QUEUE_TOOLS } from "./tools/join-queue-prepare";
+import { APPOINTMENT_TOOLS } from "./tools/appointment-prepare";
+import { REWARD_TOOLS } from "./tools/reward-prepare";
 
 /**
  * The complete, closed list of things the model may do.
@@ -34,17 +36,24 @@ const ALL_TOOLS: readonly ToolDefinition[] = [
   // `/api/ai/actions/confirm` after the customer presses a button — outside
   // the loop, outside the registry, and outside anything a model can call.
   ...JOIN_QUEUE_TOOLS,
+  // Sprint 4's two, on exactly the same terms. `prepare_book_appointment` and
+  // `prepare_redeem_reward` write nothing: they validate, read real figures and
+  // leave a draft. `book_appointment()` and `redeem_reward()` — the app's own
+  // business functions, unchanged — are called by the confirm endpoint, which
+  // has no model in its request at all.
+  ...APPOINTMENT_TOOLS,
+  ...REWARD_TOOLS,
 ];
 
 /**
- * **Every tool in the registry is read-only, including in Sprint 3.**
+ * **Every tool in the registry is read-only, and still is after Sprint 4.**
  *
- * Checked at import time rather than left as a claim in a document, and it
- * survived the sprint that introduced the first mutation — because that
- * mutation was deliberately not built as a tool. The generic loop still
- * refuses `readOnly: false` (see `agent-readonly.test.ts`, which proves the
- * refusal by mocking a writable tool in front of it), and nothing about the
- * confirmed-action path required relaxing either guard.
+ * Checked at import time rather than left as a claim in a document, and it has
+ * now survived three sprints that added a mutation each — because none of those
+ * mutations was built as a tool. The generic loop still refuses
+ * `readOnly: false` (see `agent-readonly.test.ts`, which proves the refusal by
+ * mocking a writable tool in front of it), and nothing about the three
+ * confirmed-action paths required relaxing either guard.
  *
  * If a future sprint does need a write tool, this is the line that has to
  * change, and changing it will be a visible, reviewable diff next to a

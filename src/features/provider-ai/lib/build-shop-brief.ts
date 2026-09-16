@@ -6,7 +6,7 @@
  * one place the number comes from, and a pure function is something we can test
  * without spending money on a model call.
  *
- * It is deliberately numbers, not prose. Handing Claude a paragraph of our own
+ * It is deliberately numbers, not prose. Handing the model a paragraph of our own
  * interpretation would mean it is analysing our summary rather than the shop —
  * and any mistake in that summary becomes a confident mistake in the answer.
  *

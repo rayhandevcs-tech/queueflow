@@ -10,8 +10,10 @@ import {
   draftTotal,
   ProposalError,
   type JoinQueueDraft,
-  type ProposalService,
 } from "../proposals";
+// The services read, shared with the appointment path since Sprint 4. Same
+// rule, same columns, one implementation — see `shop-reads.ts`.
+import { loadActiveServices } from "./shop-reads";
 
 /**
  * `prepare_join_queue` — the assistant asking, never acting.
@@ -115,51 +117,6 @@ export async function loadJoinableShop(ctx: ToolContext, shopId: string) {
 }
 
 /**
- * Read the services, and refuse any that is not this shop's and active.
- *
- * The prices come back with them, from `services.rate`. There is no argument
- * through which a caller could supply one, and the amount recorded against the
- * serial is computed by the insert trigger in any case — so the figure on the
- * card is the shop's, and the figure in the ledger is the shop's, and neither
- * passed through the model.
- */
-export async function loadJoinableServices(
-  ctx: ToolContext,
-  shopId: string,
-  serviceIds: readonly string[],
-): Promise<ProposalService[]> {
-  const { data, error } = await ctx.supabase
-    .from("services")
-    .select("id, shop_id, name, rate, default_duration_min, is_active")
-    .in("id", [...serviceIds]);
-
-  if (error) throw new ProposalError("UNAVAILABLE");
-
-  const rows = data ?? [];
-  // Every requested id must resolve. A missing one means the service was
-  // deleted, or RLS will not show it — either way the booking the customer is
-  // being asked to confirm is not the booking they would get.
-  for (const id of serviceIds) {
-    const row = rows.find((service) => service.id === id);
-    if (!row) throw new ProposalError("SERVICE_NOT_FOUND");
-    if (row.shop_id !== shopId) throw new ProposalError("SERVICE_WRONG_SHOP");
-    if (!row.is_active) throw new ProposalError("SERVICE_INACTIVE");
-  }
-
-  // Ordered as the customer asked, not as Postgres returned them, so the card
-  // lists them in the order the conversation established.
-  return serviceIds.map((id) => {
-    const row = rows.find((service) => service.id === id)!;
-    return {
-      serviceId: row.id,
-      name: row.name,
-      priceTaka: row.rate ?? null,
-      durationMin: row.default_duration_min ?? null,
-    };
-  });
-}
-
-/**
  * Is this customer free to take a serial?
  *
  * The queue permits one active booking at a time
@@ -218,7 +175,7 @@ export async function buildJoinQueueDraft(
   serviceIds: readonly string[],
 ): Promise<JoinQueueDraft> {
   const shop = await loadJoinableShop(ctx, shopId);
-  const services = await loadJoinableServices(ctx, shopId, serviceIds);
+  const services = await loadActiveServices(ctx, shopId, serviceIds);
   await assertCustomerFree(ctx);
   const { estimatedWaitMin, waitingCount } = await readQueueWait(ctx, shopId);
 

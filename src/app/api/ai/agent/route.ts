@@ -18,11 +18,13 @@ import {
 import { parsePreference } from "@/lib/customer-preference";
 import type { Json } from "@/types/database.types";
 import {
+  AI_ACTION_BOOK_APPOINTMENT,
   AI_ACTION_JOIN_QUEUE,
-  AI_PROPOSAL_TTL_SECONDS,
+  AI_ACTION_REDEEM_REWARD,
   DiscoveryLedger,
   newProposalNonce,
-  type JoinQueueDraft,
+  ttlForAction,
+  type AiProposalDraft,
 } from "@/lib/ai/proposals";
 
 /**
@@ -285,17 +287,27 @@ export async function POST(request: Request) {
  * ---------------------------------------------------------------------------
  * Why this is here and not in the tool
  * ---------------------------------------------------------------------------
- * `prepare_join_queue` is read-only and must stay that way: the agent loop
+ * Every `prepare_*` tool is read-only and must stay that way: the agent loop
  * refuses a tool that declares otherwise, and that refusal is what Sprints 1
- * and 2 rest on. So the tool validates and assembles, and the write happens
+ * and 2 rest on. So the tools validate and assemble, and the write happens
  * here — after the loop has finished, in code the model cannot call, whose
  * arguments it cannot influence, and whose result it never sees.
  *
  * The consequence is worth stating plainly: there is no sequence of model
  * outputs that creates a proposal with figures the model chose. The draft it
- * left came from `services.rate` and `queue_public`; the nonce is generated
- * here; `user_id` and `expires_at` are stamped by the database from
- * `auth.uid()` and `now()`.
+ * left came from `services.rate`, `services.default_duration_min`,
+ * `queue_public`, `shop_available_slots()`, `rewards` and `loyalty_accounts`;
+ * the nonce is generated here; `user_id` and `expires_at` are stamped by the
+ * database from `auth.uid()` and `now()`.
+ *
+ * ---------------------------------------------------------------------------
+ * Three action types, one function, and the switch is exhaustive
+ * ---------------------------------------------------------------------------
+ * The `action` discriminant decides which arguments are sent, and the `default`
+ * refuses anything else — so a draft shape this function does not recognise
+ * produces no proposal rather than a half-filled row. `ai_action_propose` then
+ * checks the same shape rules again, and `ai_actions_params_match_type` checks
+ * them a third time in the table itself.
  *
  * A failure to persist is swallowed to a null. The customer then gets the
  * assistant's text with no card, which reads as "it described something but
@@ -308,25 +320,78 @@ async function persistProposal(
   draft: unknown,
 ): Promise<string | null> {
   if (!draft || typeof draft !== "object") return null;
-  const join = draft as JoinQueueDraft;
-  if (join.action !== AI_ACTION_JOIN_QUEUE || join.services.length === 0) return null;
+  const proposal = draft as AiProposalDraft;
+
+  // The arguments beyond the shared six, per type. Assembled here so the RPC
+  // call below is one statement and the per-type shape is one object — and so
+  // that a type with no case produces nothing at all.
+  //
+  // `p_display` is cast to the generated `Json` type. A draft is a plain object
+  // of strings, numbers, nulls and arrays by construction — nothing in the
+  // union fails to serialise — but the structural type does not know that, and
+  // widening `Json` to accommodate it would weaken it everywhere else.
+  let args: {
+    p_service_ids: string[];
+    p_staff_id: string | null;
+    p_starts_at: string | null;
+    p_reward_id: string | null;
+  };
+
+  switch (proposal.action) {
+    case AI_ACTION_JOIN_QUEUE:
+      if (proposal.services.length === 0) return null;
+      args = {
+        p_service_ids: proposal.services.map((service) => service.serviceId),
+        p_staff_id: null,
+        p_starts_at: null,
+        p_reward_id: null,
+      };
+      break;
+
+    case AI_ACTION_BOOK_APPOINTMENT:
+      if (proposal.services.length === 0) return null;
+      args = {
+        p_service_ids: proposal.services.map((service) => service.serviceId),
+        // The slot, exactly as the availability engine gave it. These two are
+        // what the confirm endpoint revalidates from — they are not on the
+        // card for decoration.
+        p_staff_id: proposal.staffId,
+        p_starts_at: proposal.startsAt,
+        p_reward_id: null,
+      };
+      break;
+
+    case AI_ACTION_REDEEM_REWARD:
+      args = {
+        // Empty on purpose: points buy a coupon, not a service. The table's
+        // `ai_actions_params_match_type` requires it to be empty for this type.
+        p_service_ids: [],
+        p_staff_id: null,
+        p_starts_at: null,
+        p_reward_id: proposal.rewardId,
+      };
+      break;
+
+    default:
+      return null;
+  }
 
   const { data, error } = await supabase.rpc("ai_action_propose", {
-    p_action_type: AI_ACTION_JOIN_QUEUE,
-    p_shop_id: join.shopId,
-    p_service_ids: join.services.map((service) => service.serviceId),
+    p_action_type: proposal.action,
+    p_shop_id: proposal.shopId,
     p_nonce: newProposalNonce(),
-    // The figures the customer is about to be shown, frozen. NOT what they are
-    // charged: `serial_before_insert` prices the booking from `services.rate`
-    // at insert time, so a shop that reprices in between bills its own current
-    // rate. This column answers "what were they looking at when they agreed?".
-    // Cast to the generated `Json` type. The draft is a plain object of
-    // strings, numbers and nulls by construction — there is nothing in
-    // `JoinQueueDraft` that does not serialise — but the structural type does
-    // not know that, and widening `Json` to accommodate it would weaken it
-    // everywhere else.
-    p_display: join as unknown as Json,
-    p_ttl_seconds: AI_PROPOSAL_TTL_SECONDS,
+    // The figures the customer is about to be shown, frozen. For a queue join
+    // this is NOT what they are charged — `serial_before_insert` prices the
+    // booking from `services.rate` at insert time. For an appointment and a
+    // redemption it is also the comparison the confirm endpoint makes, so a
+    // price or a points cost that moved is refused rather than applied
+    // silently. Either way the column answers "what were they looking at when
+    // they agreed?".
+    p_display: proposal as unknown as Json,
+    // Shorter for the two Sprint 4 actions, because a slot is contended and a
+    // balance moves. `ttlForAction` is the single place that decides.
+    p_ttl_seconds: ttlForAction(proposal.action),
+    ...args,
   });
 
   if (error || !data) return null;

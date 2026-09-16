@@ -307,6 +307,71 @@ registry-র ষোলোটা টুলের সবগুলোই এখন�
 `services.rate` থেকে; আর যে টাকাটা আসলে রেকর্ড হয় সেটা `serial_before_insert`
 INSERT-এর ভেতরে হিসাব করে।
 
+### ৯গ. Sprint 4 — আরো দুটো কনফার্ম করা অ্যাকশন, একই সীমানায়
+
+Sprint 3-এর আকৃতিটা বদলায়নি; শুধু তিনটে হয়েছে। প্রতিটার **নিজের** validator,
+**নিজের** revalidation, আর **অ্যাপের নিজের** business function।
+
+```
+APPOINTMENT (শুধু PARLOUR)
+কাস্টমার: "কাল বিকেলে facial করতে চাই"
+  ↓
+search_services → get_available_slots                  (read-only)
+  ↓  যা ফেরত এসেছে সেই slot গুলোর key → ledger("slot")
+prepare_book_appointment                               (read-only — কিছুই লেখে না)
+  ↓  1. shop / service / SLOT কি OFFER করা হয়েছিল?  ← কোনো query-র আগে
+  ↓  2. shop আছে? appointment shop? (isAppointmentModel) ACTIVE?
+  ↓  3. service গুলো এই shop-এর আর active?
+  ↓  4. duration = services.default_duration_min (যোগফল) — না থাকলে refuse
+  ↓  5. staff এই shop-এর, active, এই কাজ করে?
+  ↓  6. এই বুকিং আগেই আছে?  → ALREADY_BOOKED
+  ↓  7. slot এখনো খালি?  → shop_available_slots() আবার
+  ↓  draft → ledger
+রুট (লুপের বাইরে): ai_action_propose(BOOK_APPOINTMENT, …, staff_id, starts_at)
+  ↓  কাস্টমার বাটনে চাপ দেয়
+POST /api/ai/actions/confirm            ← এখানে কোনো মডেল নেই
+  ↓  claim → executorFor("BOOK_APPOINTMENT") → switch, default: refuse
+  ↓  আবার পুরো যাচাই + দাম/সময় বদলেছে কিনা  → PRICE_CHANGED / SLOT_UNAVAILABLE
+  ↓  book_appointment()  → RLS + appointment_before_insert + appointments_no_overlap
+  ↓  ai_action_settle(EXECUTED, appointment_id)
+
+REWARD (পয়েন্ট যে দোকানের, সেই দোকানেই)
+কাস্টমার: "আমার ৫০০ পয়েন্ট দিয়ে reward নিতে চাই"
+  ↓
+get_my_rewards                                         (read-only)
+  ↓  my_loyalty_accounts() → **প্রতি দোকানে আলাদা** ব্যালেন্স, কোনো মোট নয়
+  ↓  reward id গুলো → ledger("reward")
+prepare_redeem_reward                                  (read-only — পয়েন্ট কাটে না)
+  ↓  1. shop / reward কি OFFER করা হয়েছিল?  ← কোনো query-র আগে
+  ↓  2. reward **এই** shop-এর?  → না হলে REWARD_WRONG_SHOP
+  ↓  3. active? মেয়াদ আছে? stock আছে?
+  ↓  4. এই দোকানের ব্যালেন্স যথেষ্ট? (canRedeem — UI-র একই function)
+  ↓  draft → ledger
+রুট: ai_action_propose(REDEEM_REWARD, …, reward_id)     services_ids খালি
+  ↓  কাস্টমার বাটনে চাপ দেয়
+POST /api/ai/actions/confirm
+  ↓  claim → executorFor("REDEEM_REWARD")
+  ↓  আবার যাচাই + points_cost বদলেছে কিনা  → PRICE_CHANGED
+  ↓  redeem_reward()  → reward lock → account lock → ledger → balance
+  ↓  ai_action_settle(EXECUTED, redemption_id)
+```
+
+**generic loop আবারও ছোঁয়া হয়নি।** registry-র **কুড়িটা** টুলের সবগুলোই এখনো
+`readOnly: true`, import-সময়ে যাচাই হয়, আর লুপের `if (!tool.readOnly)` গার্ড
+হুবহু আগের মতো — একটা টেস্ট প্রমাণ করে ওই ফাইলে `BOOK_APPOINTMENT` বা
+`REDEEM_REWARD` শব্দটাও নেই।
+
+**dispatch বন্ধ, নাম দিয়ে নয়।** `executorFor()` একটা `switch`, তিনটে `case`,
+`default: return null`। কোনো function-name টেবিল নেই, আর request body-তে
+action বাছার কোনো ঘর নেই — branch আসে **সার্ভার-লেখা সারির একটা কলাম** থেকে।
+body-তে শুধু `actionId` আর `nonce`।
+
+**কোনো দ্বিতীয় engine নেই।** appointment লেখে `book_appointment()` (INVOKER,
+তাই RLS বহাল), redemption লেখে `redeem_reward()` (DEFINER, `auth.uid()`
+hard-coded)। AI স্তরে কোনো points-এর হিসাব নেই, `loyalty_transactions`-এ
+কোনো লেখা নেই, `reward_redemptions`-এ কোনো লেখা নেই। `20261001`-এর দুটো
+function **শুধু** `ai_actions` ছোঁয় — হার্নেসের H1–H6 সেটা প্রমাণ করে।
+
 ## ১০. Sprint-এর সীমানা
 
 ### AI Sprint 1 — সম্পূর্ণ ✅
@@ -372,16 +437,81 @@ role-ভিত্তিক `/api/ai/agent` (owner/customer একই endpoint) �
 > আটকায়, আর claim দ্বিতীয় confirm আটকায়। পরের চেষ্টায়
 > `reconcile()` সারিটা সারিয়ে দেয়।
 
-### AI Sprint 4 — পরিকল্পিত ⬜
-`book_appointment`, `redeem_reward`, আর segmentation → campaign → approval →
+### AI Sprint 4 — এখন সম্পূর্ণ ✅
+
+দুটো নতুন কনফার্ম করা অ্যাকশন: **`BOOK_APPOINTMENT`** আর **`REDEEM_REWARD`**।
+`prepare_book_appointment` · `get_my_rewards` + `prepare_redeem_reward` ·
+`src/lib/ai/actions/` (তিনটে executor + বন্ধ dispatch) ·
+`src/lib/reward-eligibility.ts` (eligibility shared-এ উঠল) ·
+`src/lib/ai/tools/shop-reads.ts` (services পড়া একটাই) ·
+`AiProposalCard` তিন ধরনের কার্ড ও তিনটে success state রেন্ডার করে ·
+`20261001_ai_actions_sprint4.sql` ·
+**১০৯টা** নতুন ইউনিট টেস্ট (মোট **১০০৫**) + Postgres হার্নেসে **১৪২/১৪২**।
+
+| দাবি | কোথায় enforce হয় |
+|---|---|
+| মডেল সময় invent করতে পারে না | `slotKey()` whitelist — **কোনো query-র আগে**; তারপর `shop_available_slots()` আবার |
+| মডেল staff বাছতে পারে না | staff আসে slot-এর সঙ্গে; key-তে shop+staff+instant একসাথে বাঁধা |
+| duration কখনো queue-average নয় | `services.default_duration_min` যোগফল; না থাকলে `DURATION_UNAVAILABLE` |
+| দাম/points মডেল ঠিক করে না | `services.rate` / `rewards.points_cost`; trigger আর RPC নিজেরা হিসাব করে |
+| দাম বদলালে চুপচাপ চার্জ হয় না | confirm-এ `display` বনাম live তুলনা → `PRICE_CHANGED` |
+| SALON-এ appointment হবে না | `isAppointmentModel()` → `NOT_AN_APPOINTMENT_SHOP` |
+| PARLOUR queue-এ ঢুকবে না | `bookingModel()` → `NOT_A_QUEUE_SHOP` (Sprint 3, অপরিবর্তিত) |
+| এক দোকানের পয়েন্ট অন্য দোকানে চলবে না | `REWARD_WRONG_SHOP`; `redeem_reward()`-এ `and shop_id = p_shop_id`; ব্যালেন্স পড়া `(shop_id, customer_id)` |
+| কোনো cross-shop মোট দেখানো যাবে না | `RewardDraft`-এ ঘরই নেই; `get_my_rewards` তালিকা ফেরায় |
+| একই slot দুজন পাবে না | `appointments_no_overlap` (EXCLUDE, GiST) — হার্নেস J1 |
+| পয়েন্ট negative হবে না | reward lock → account lock → `balance >= 0` CHECK — হার্নেস J3 |
+| দুবার confirm = দুটো কিছু নয় | `ai_action_claim()` conditional UPDATE — হার্নেস J2, J4 |
+| ভুল কলামে result বসবে না | `ai_action_settle()` সারির `action_type` থেকে কলাম বাছে; caller বাছে না |
+| জাল result id বসবে না | `appointment_id`/`redemption_id`-এ আসল FK — হার্নেস C8, C11, C14 |
+| একটা booking-এ দুটো audit সারি নয় | `ai_actions_one_per_appointment_idx` / `_per_redemption_idx` |
+
+**পয়েন্টের concurrency-তে এই স্প্রিন্টে কিছু যোগ করা হয়নি — কারণ দরকার ছিল
+না।** `redeem_reward()` আগে থেকেই reward সারি, তারপর account সারি লক করে
+(সবসময় এই ক্রমে, তাই deadlock নয়), একই ট্রানজেকশনে লেজার ও ব্যালেন্স লেখে,
+আর `balance >= 0` CHECK শেষ রক্ষাকবচ। ৫০০ পয়েন্টে দুটো সমান্তরাল ৩০০-পয়েন্টের
+রিডেম্পশনে **একটাই** সফল হয় — সমান্তরাল psql ক্লায়েন্ট দিয়ে যাচাই (J3)।
+"দেখে নিশ্চিত হলাম যে বিদ্যমান ব্যবস্থাই যথেষ্ট" আর "নিরাপদ ব্যবস্থা যোগ করলাম"
+এক কথা নয়, তাই আলাদা করে লেখা হলো।
+
+**idempotency-ও তাই।** `redeem_reward()` ইচ্ছাকৃতভাবে idempotent নয় — যথেষ্ট
+পয়েন্ট থাকলে একই reward দুবার নেওয়া বৈধ, আর `reward_redemptions`-এ unique
+constraint বসালে সেই বৈধ ব্যবহারটাই ভাঙত। **একটা proposal** দুটো কুপন বানাতে
+পারে না, সেটা আটকায় `ai_action_claim()` — J4 চারটে সমান্তরাল tap দিয়ে দেখায়।
+appointment-এ `appointments_no_overlap` নিজেই ডুপ্লিকেট আটকায়।
+
+> **পারমাণবিকতার সীমানা, এখানেও ঢেকে না রেখে।** business write আর audit settle
+> দুটো আলাদা রাইট, atomic নয় — Sprint 3-এর একই কারণে। হারালে কাস্টমার জিনিসটা
+> **পেয়েই গেছে**, শুধু সারিটা `CONFIRMED`-এ আটকে থাকে। serial আর appointment
+> পরের চেষ্টায় `reconcile()` **হুবহু** মিলিয়ে সারিয়ে দেয় — appointment মেলে
+> `(customer, shop, staff, starts_at)`-এ, আর `appointments_no_overlap` বলে
+> ওতে একটার বেশি active সারি থাকতেই পারে না।
+>
+> **কুপনে reconcile ইচ্ছাকৃতভাবে করা হয় না।** একটা কুপনের সঙ্গে তার
+> proposal-এর কোনো লিংক নেই, তাই মেলানো মানে অনুমান — আর ভুল অনুমান করলে
+> `ai_actions_one_per_redemption_idx` সেই কুপনটাকে স্থায়ীভাবে ভুল সারিতে
+> বেঁধে দিয়ে আসল সারিটাকে আটকে দেবে। **audit-এ ফাঁক থাকা সৎ; বিশ্বাসযোগ্য
+> ভুল উত্তর নয়।** তাই settle হারালে সারিটা `CONFIRMED` থেকে যায়: পয়েন্ট খরচ
+> হয়েছে, কুপন আছে, কাস্টমারের কুপনের পাতায় দেখা যায় — শুধু "কেন" টুকু নেই।
+
+**একটা জানা অসঙ্গতি, লিখে রাখা।** `PRICE_CHANGED` আছে appointment আর reward-এ,
+**JOIN_QUEUE-এ নেই**। Sprint 3 queue-র জন্য উল্টোটা ঠিক করেছিল — সিরিয়ালের দাম
+`serial_before_insert` চলতি `services.rate` থেকে বসায়, আর কার্ডের সংখ্যাটা
+"যা দেখানো হয়েছিল, যা চার্জ হবে তা নয়" বলে নথিবদ্ধ। এই স্প্রিন্টে Sprint 3-এর
+আচরণ বদলানো উচিত নয়, তাই বদলানো হয়নি। এটা একটা অসঙ্গতি — নীতি নয় — আর পরের
+কোনো স্প্রিন্টে একদিকে মিলিয়ে দেওয়া উচিত।
+
+### AI Sprint 5 — পরিকল্পিত ⬜
+**RETENTION + MARKETING**: segmentation → campaign → approval →
 `broadcast_shop_notification`।
 
-**Sprint 4 শুরু হয়নি।** ভবিষ্যতের কিছু "সম্পূর্ণ" চিহ্নিত করা হয়নি।
-`ai_action_type` enum-এ এখন **শুধু `JOIN_QUEUE`** — Sprint 4-এর অ্যাকশনগুলো
-একটা `ALTER TYPE` আর তাদের **নিজেদের** confirmed পথ নিয়ে আসতে হবে; confirm
-endpoint অন্য কোনো action_type পেলে refuse করে।
+**Sprint 5 শুরু হয়নি।** `ai_action_type` enum-এ এখন **তিনটে**:
+`JOIN_QUEUE`, `BOOK_APPOINTMENT`, `REDEEM_REWARD`। `SEND_CAMPAIGN`,
+`CANCEL_APPOINTMENT` আর `RESCHEDULE_APPOINTMENT` ইচ্ছাকৃতভাবে **নেই** — যে
+action_type সংরক্ষণই করা যায় না, confirm endpoint-এর তাকে refuse করা তখন
+প্রতিশ্রুতি নয়, গ্যারান্টি।
 
-### যা এখনো যাচাই করা হয়নি — Sprint 3 শেষেও
+### যা এখনো যাচাই করা হয়নি — Sprint 4 শেষেও
 - **আসল মডেলের উত্তর:** `ANTHROPIC_API_KEY` সেট নেই, তাই এজেন্ট একটাও আসল
   উত্তর দেয়নি। অর্থাৎ মডেল সত্যিই আগে search করে কিনা, `prepare_join_queue`
   ঠিক সময়ে ডাকে কিনা, আর সবচেয়ে গুরুত্বপূর্ণ — কার্ড দেখানোর পর
@@ -392,12 +522,23 @@ endpoint অন্য কোনো action_type পেলে refuse করে।
   render হয় (`CustomerShell`: `if (!signedIn) return <GuestShell>`), আর এই
   পরিবেশে আসল Supabase credential নেই। তাই **কার্ডটা ব্রাউজারে কেউ দেখেনি**,
   আর confirm বাটনে কেউ চাপ দেয়নি।
-- **আসল Supabase instance:** `20260930_ai_actions.sql` ইনস্ট্যান্সে **চালানো
-  হয়নি**। লোকালে PostgreSQL 16-এ আসল migration ফাইল দিয়ে ৮৫/৮৫ — সেটা
-  "আসল schema-র মতো একটা schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়।
-- **আসল end-to-end join:** কোনো আসল কাস্টমার AI দিয়ে কোনো আসল দোকানের লাইনে
-  ঢোকেনি। পুরো ধারাটা মক-করা মডেল টার্ন + আসল Postgres দিয়ে যাচাই, আলাদা
-  আলাদা স্তরে।
+- **আসল Supabase instance:** `20260930_ai_actions.sql` **আর**
+  `20261001_ai_actions_sprint4.sql` — দুটোর একটাও ইনস্ট্যান্সে **চালানো
+  হয়নি**। লোকালে PostgreSQL 16-এ আসল migration ফাইল দিয়ে ৮৫/৮৫ আর ১৪২/১৪২ —
+  সেটা "আসল schema-র মতো একটা schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়।
+- **আসল end-to-end:** কোনো আসল কাস্টমার AI দিয়ে কোনো আসল দোকানের লাইনে
+  ঢোকেনি, কোনো আসল appointment বুক হয়নি, কোনো আসল পয়েন্ট খরচ হয়নি। পুরো
+  ধারাটা মক-করা মডেল টার্ন + আসল Postgres দিয়ে যাচাই, আলাদা আলাদা স্তরে।
+- **appointment/reward কার্ড ব্রাউজারে:** তিন ধরনের কার্ডের একটাও আসল
+  ব্রাউজারে render হয়নি, একই কারণে — signed-in shell লাগে।
+- **deadlock-এর বার্তা booking sheet-এ:** সমান্তরাল হার্নেস একটা আসল জিনিস
+  ধরেছে — দুটো একসঙ্গে একই slot চাইলে Postgres মাঝে মাঝে `deadlock detected`
+  (40P01) দেয়, `exclusion_violation` (23P01) নয়, আর `book_appointment()`
+  শুধু দ্বিতীয়টা ধরে। **বুকিং সবসময় ঠিক** (একটাই সারি হয়) — ভুল হয় শুধু
+  বার্তাটা। AI পথে সেটা `SLOT_UNAVAILABLE`-এ ম্যাপ করা হয়েছে, কিন্তু
+  **booking sheet-এ এখনো সাধারণ বার্তাটাই দেখাবে**। ঠিক করতে
+  `book_appointment()`-এ একটা `when deadlock_detected` শাখা লাগবে — সেটা একটা
+  shared core RPC বদলানো, তাই না-বলে করা হয়নি।
 
 ### ইচ্ছাকৃতভাবে বাইরে
 Predictive ML (no-show, demand, churn, next-visit) · RAG/vector/embeddings ·

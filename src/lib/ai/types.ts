@@ -58,13 +58,26 @@ export interface ToolContext {
 }
 
 /**
+ * The kinds of identifier a discovery tool can vouch for.
+ *
+ * Mirrors `LedgerKind` in `proposals.ts`. Spelled out again here rather than
+ * imported for the reason the interface below exists at all: this module is
+ * depended on by every tool, and `proposals.ts` imports `security.ts`, so
+ * importing it the other way would make the dependency circular.
+ *
+ * "slot" and "reward" joined the list in Sprint 4. `IdWhitelist` needed no
+ * change to accept them — it has always keyed by an arbitrary string.
+ */
+export type LedgerKindLike = "shop" | "service" | "slot" | "reward";
+
+/**
  * The ledger's surface as the tools use it — offer ids, require ids, leave a
  * draft. The implementation is `DiscoveryLedger` in `proposals.ts`.
  */
 export interface DiscoveryLedgerLike {
-  offer(kind: "shop" | "service", ids: readonly string[]): void;
-  has(kind: "shop" | "service", id: string): boolean;
-  requireOffered(kind: "shop" | "service", ids: readonly string[]): void;
+  offer(kind: LedgerKindLike, ids: readonly string[]): void;
+  has(kind: LedgerKindLike, id: string): boolean;
+  requireOffered(kind: LedgerKindLike, ids: readonly string[]): void;
   draft: unknown;
 }
 

@@ -2113,6 +2113,182 @@ nonce, non-uuid) সবই **৪০০** · guest পাতা ৩২০px আ�
 
 ---
 
+### সিদ্ধান্ত ৮৫ — নতুন enum মান আর CHECK constraint একই ট্রানজেকশনে থাকতে পারে না
+
+`20261001`-এর প্রতিটা shape CHECK `action_type::text` লেখা, আর এটা স্টাইল নয়।
+
+Postgres একই ট্রানজেকশনে যোগ করা enum মান **ব্যবহার** করতে দেয় না:
+
+```
+ERROR:  unsafe use of new value "BOOK_APPOINTMENT" of enum type ai_action_type
+HINT:   New enum values must be committed before they can be used.
+```
+
+`ALTER TYPE ... ADD VALUE` নিজে ট্রানজেকশনের ভেতরে চলে (PG 12+), আর psql
+প্রতিটা স্টেটমেন্ট আলাদা commit করে বলে ওখানে সমস্যাই ধরা পড়ে না। কিন্তু
+**Supabase SQL এডিটর পুরো স্ক্রিপ্টটা একটা implicit ট্রানজেকশন হিসেবে পাঠায়** —
+আর মাইগ্রেশনটা আসলে ওভাবেই চালানো হবে। তাই
+`action_type = 'BOOK_APPOINTMENT'` লেখা একটা CHECK **এডিটরে পুরো মাইগ্রেশন
+ফেল করাত আর অন্য সবখানে কাজ করত**, যেটা সমস্যা ধরা পড়ার সবচেয়ে খারাপ উপায়।
+
+`action_type::text`-এ কোনো enum literal resolve হয় না, তাই uncommitted কিছু
+ব্যবহারও হয় না। আসল PostgreSQL 16-এ দুভাবেই পরীক্ষা করে তারপর ফাইলটা লেখা
+হয়েছে, আর হার্নেসের section A মাইগ্রেশনটা **স্পষ্ট `BEGIN/COMMIT`-এর ভেতরে**
+চালায় — যাতে এটা ফেরত এলে একটা টেস্ট ফেল করে, কারও SQL এডিটর নয়।
+
+plpgsql function body-তে সমস্যা নেই — CREATE-এর সময় ওগুলো স্ট্রিং, resolve হয়
+প্রথম কলে, অর্থাৎ commit-এর পরে।
+
+---
+
+### সিদ্ধান্ত ৮৬ — result কলাম caller বাছে না, সারি বাছে
+
+Sprint 3-এর `ai_action_settle()` নিত `p_serial_id`। তিনটে result কলামের জন্য
+তিনটে আর্গুমেন্ট হতে পারত — কিন্তু তখন একজন caller একটা `BOOK_APPOINTMENT`
+সারিকে serial id দিয়ে settle করতে পারত, আর সেই ভুলটা এমন একটা audit trail
+বানাত যেটা চুপচাপ ভুল কথা বলে।
+
+তাই **একটাই `p_result_id`**, আর function সারিটার নিজের `action_type` পড়ে
+কলামটা বাছে। caller ভুল জায়গায় result বসাতে পারে না, কারণ caller জায়গাটা
+বাছেই না। প্যারামিটারের নাম বদলাতে DROP লাগে (`create or replace` নাম
+বদলাতে দেয় না), তাই ফাইলে DROP-টা স্পষ্ট করে লেখা — ডেটা যায় না, কিন্তু
+মাইগ্রেশনটা পুরো চালাতে হয়।
+
+---
+
+### সিদ্ধান্ত ৮৭ — reward eligibility shared-এ উঠল, কপি করা হলো না
+
+`canRedeem()` ছিল `src/features/rewards/lib/rewards.ts`-এ, আর সেটা ঠিক জায়গাই
+ছিল যতদিন শুধু redeem বাটন প্রশ্নটা করত। Sprint 4-এ assistant দ্বিতীয় caller
+হলো — আর `src/lib` কোনো feature import করতে পারে না
+(`eslint-plugin-boundaries`: `shared → shared`)।
+
+দুটো পথ ছিল: নিয়মগুলো AI স্তরে **কপি** করা, বা **উপরে তোলা**। কপি করা মানে
+দ্বিতীয় eligibility implementation — যেটা এই স্প্রিন্টের ব্রিফ স্পষ্ট করে
+নিষেধ করেছে, আর যেটা একদিন দ্বিমত করত: assistant এমন reward অফার করত যা বাটন
+refuse করে, বা উল্টোটা — আর কাস্টমার তখন দুটোকেই অবিশ্বাস করত, ঠিকই করত।
+
+তাই `src/lib/reward-eligibility.ts`, আর feature সেটা **re-export** করে। সব
+পুরনো import অপরিবর্তিত, feature-এর নিজের ৪৪টা টেস্টও, আর "এটা redeem করা
+যাবে?" প্রশ্নের উত্তর **একটাই**। একই কারণে `loadActiveServices()`
+`shop-reads.ts`-এ উঠল — queue আর appointment একই দুটো প্রশ্ন করে।
+
+---
+
+### AI Sprint 4 — AI Appointment + AI Reward ✅
+
+> **কোড সম্পূর্ণ। আসল মডেলে চালিয়ে দেখা হয়নি — `ANTHROPIC_API_KEY` এখনো নেই,
+> আর ব্রিফেই বলা ছিল লাগবে না।**
+> বিস্তারিত: [`docs/AI_ARCHITECTURE.md`](docs/AI_ARCHITECTURE.md) §৯গ ও §১০।
+> **মাইগ্রেশন:** `20261001_ai_actions_sprint4.sql` — **ইনস্ট্যান্সে চালানো
+> বাকি**, আর `20260930`-এর **পরে** চালাতে হবে।
+
+**প্রথমে যা খুঁজে বের করতে হলো: আসল mutation দুটো কোথায়।** দুটোই আগে থেকেই
+ছিল, আর দুটোই নিজের জায়গায় সঠিক:
+
+- **`book_appointment(shop, staff, services[], starts_at, …)`** — **SECURITY
+  INVOKER**, ইচ্ছাকৃতভাবে, তাই RLS বহাল থাকে। `appointment_before_insert`
+  `ends_at` হিসাব করে `services.default_duration_min` থেকে, দাম
+  `services.rate` থেকে, snapshot নেয়, staff দোকানের কিনা আর কাজটা করে কিনা
+  দেখে, আর `staff_is_available()`-কে সময়/ছুটি জিজ্ঞেস করে। RPC-র একমাত্র
+  বাড়তি কাজ: `23P01`-কে `slot_taken` নামে অনুবাদ করা।
+- **`redeem_reward(shop, reward)`** — **SECURITY DEFINER**, `auth.uid()`
+  hard-coded, একটাই ট্রানজেকশনে ব্যালেন্স চেক → stock → কুপন → লেজার →
+  ব্যালেন্স। লক সবসময় reward → account ক্রমে, তাই deadlock নয়।
+
+**তাই AI কিছু নতুন লেখেনি — শুধু অর্কেস্ট্রেট করেছে।** কোনো
+`ai_book_appointment()` নেই, কোনো `ai_redeem_reward()` নেই, AI স্তরে কোনো
+points-এর হিসাব নেই।
+
+**slot whitelist — মডেল সময় বানাতে পারে না।** `shop_available_slots()` slot
+id ফেরায় না (slot একটা সারি নয়, ১৫ মিনিটের গ্রিড থেকে বাদ-দেওয়া একটা ফাঁক),
+তাই `slotKey()` = `shop|staff|instant(epoch ms)`। `get_available_slots` যা
+**ফেরত দিয়েছে** সেগুলোই ledger-এ যায়; `prepare_book_appointment` **কোনো
+query-র আগে** key মেলায়। এঞ্জিন ১৭:০০ দিলে মডেল ১৭:৩০ চাইলে উত্তর
+`SLOT_NOT_OFFERED` — lookup নয়, "প্রায় ঠিক" নয়, বুকিং নয়।
+
+epoch ms-এ normalise করা কেন: একই মুহূর্ত Postgres, JS client আর মডেল তিনভাবে
+লেখে (`+06:00`, `Z`, `+00`), আর টেক্সট থেকে বানানো key তিনটে বানান তিনটে slot
+ভাবত — আর সেটা **ভুল দিকে** fail করত: বৈধ confirm refuse হতো, আর পরে কেউ
+তুলনাটা "ঢিলে" করে ঠিক করত।
+
+**পয়েন্ট প্রতি ব্যবসার — আর সেটা টাইপেই।** `RewardDraft`-এ কোনো মোটের ঘর নেই,
+`get_my_rewards` তালিকা ফেরায় (`points_balance_at_this_shop`, নাম করেই),
+`canRedeem` একটাই ব্যালেন্স নেয়, আর নিচে `redeem_reward()`
+`(shop_id, customer_id)` জোড়ায় সারি লক করে। এই ফাইলের প্রতিটা লাইন ভুল হলেও
+এক দোকানের পয়েন্ট অন্য দোকানে চলত না।
+
+**নতুন যা যোগ হলো:**
+- `20261001_ai_actions_sprint4.sql` — enum-এ দুটো মান, পাঁচটা nullable কলাম
+  (`staff_id`, `starts_at`, `reward_id`, `appointment_id`, `redemption_id`),
+  পাঁচটা shape CHECK, দুটো unique partial index, আর propose/settle চওড়া করা।
+  **কোনো নতুন টেবিল নেই, কোনো নতুন policy নেই।**
+- `src/lib/ai/tools/appointment-prepare.ts`, `reward-prepare.ts`,
+  `shop-reads.ts`
+- `src/lib/ai/actions/` — তিনটে executor + `contract.ts` + বন্ধ `switch`
+- `src/lib/reward-eligibility.ts` (সিদ্ধান্ত ৮৭)
+- `src/lib/day-key.ts`-এ `dhakaDayKey()` — সার্ভার UTC-তে চলে, তাই slot-এর
+  তারিখ দোকানের timezone-এ বের করতে হয়; নইলে সন্ধ্যার একটা slot ভুল দিনে
+  খোঁজা হতো আর "কেউ নিয়ে নিয়েছে" বলে refuse হতো
+- `AiProposalCard` — তিন ধরনের কার্ড, তিনটে success state, প্রতিটার নিজের
+  "এখনো হয়নি" বাক্য
+
+**যা ধরা পড়ল (বাগ):**
+1. **হার্নেস একটা আসল deadlock ধরেছে।** দুজন একসঙ্গে একই slot চাইলে Postgres
+   মাঝে মাঝে `deadlock detected` (40P01) দেয়, `exclusion_violation` (23P01)
+   নয় — GiST constraint যাচাই করতে দুটো ট্রানজেকশনের পরস্পরের উপর ShareLock
+   লাগে, সেটা একটা চক্র। **বুকিং সবসময় ঠিক** (একটাই সারি), ভুল হয় শুধু
+   বার্তা। AI executor-এ `SLOT_UNAVAILABLE`-এ ম্যাপ করা হলো; **booking
+   sheet-এ এখনো সাধারণ বার্তা** — ঠিক করতে shared `book_appointment()`
+   বদলাতে হবে, তাই না-বলে করা হয়নি। এক রানে তিনবারের মধ্যে একবার হয়, কোড
+   পড়ে কোনোভাবেই ধরা যেত না।
+2. **Sprint 3-এর একটা সংশোধন:** confirm route
+   `user.user_metadata.full_name` পাঠাত queue join-এ, আর
+   `serial_before_insert` সেটা **ফেলে দেয়** — `is_walk_in = false` হলে
+   trigger `profiles` থেকে নাম/ফোন বসায়। অর্থাৎ মানটা কোনো সারিতে পৌঁছাতই
+   না, আর এসেছিল user-writable metadata থেকে, যেটা বুকিংয়ের ধারেকাছে
+   থাকারই কথা নয়। এখন খালি পাঠানো হয়।
+3. **queue আর appointment-এর `chair_service_stats` default উল্টো।**
+   `assign_best_chair()` (queue) `can_perform = true`-র একটা **সারি থাকা
+   বাধ্যতামূলক` ধরে; `appointment_before_insert` শুধু `can_perform = false`
+   দেখলে refuse করে। দুটোই নিজের ফাইলে ইচ্ছাকৃত, কিন্তু উল্টো — হার্নেসের
+   fixture-এ লিখে রাখা হলো, কোড বদলানো হয়নি।
+4. **নিজের তিনটে টেস্ট নিজের prose-এ ম্যাচ করেছিল** — আবার। একটা "nearby"
+   খুঁজতে গিয়ে আমার নিজের "or pick a nearby time" বর্ণনা ধরেছে; একটা
+   "combined" খুঁজতে গিয়ে tool-এর নিজের "cannot be combined" সতর্কবাণী
+   ধরেছে। দুটোতেই deny-list **টেক্সটের** বদলে **নামের** উপর সরানো হলো, আর
+   `search_shops`-এর বর্ণনায় "near you" নিষেধাজ্ঞা হিসেবে আছে বলে prose-এ
+   deny-list চালানো **নীতিগতভাবেই** সম্ভব নয় — সেটাও লিখে রাখা হলো।
+5. **একটা assertion ভুল প্রশ্ন করছিল:** `ai_action_propose`-এ
+   `user_id = v_uid` খুঁজছিল, কিন্তু propose তো INSERT করে, WHERE নেই।
+   settle-এর জন্য ঠিক, propose-এর জন্য নয় — দুটোর জন্য আলাদা করে লেখা হলো।
+   আর দুটো chunk বাছতে `includes()` ব্যবহার করায় দুবারই propose-এর body
+   আসছিল (মাঝের `drop function ... ai_action_settle` লাইনটার কারণে) — settle-এর
+   assertion গুলো **চুপচাপ ভুল function-এ** চলছিল।
+
+**যাচাই:** ইউনিট **১০০৫/১০০৫** (৪৫ ফাইল, ১০৯টা নতুন) · Postgres হার্নেস
+**১৪২/১৪২** (তিনবার চালিয়ে স্থিতিশীল) · `tsc` ক্লিন · build সফল, ৯টা AI রুট ·
+lint **২ error / ১৮ warning — হুবহু baseline** · রানটাইম প্রোব: ৯টা রুটের
+একটাও 500 নয়, confirm/cancel unauthenticated 401, body-তে জাল
+`shopId`/`staffId`/`startsAt`/`rewardId`/`customer_id` দিলেও 401 (zod ফেলে
+দেয়), সব malformed input 400 · ব্রাউজার ৩২০px ও ডেস্কটপে 0 pageerror, কোনো
+horizontal overflow নেই।
+
+**মিউটেশন-যাচাই:** slot whitelist সরালে ৪টা টেস্ট ফেল, cross-shop reward চেক
+সরালে ২টা, price-change গার্ড সরালে ২টা — অর্থাৎ তিনটেই সত্যিই ভার বহন করছে।
+
+**⚠️ যা যাচাই হয়নি:**
+- **আসল AI উত্তর একবারও দেখা হয়নি** — key নেই। বিশেষ করে **মডেল কার্ড
+  দেখানোর পর "বুক হয়ে গেছে" বা "পয়েন্ট কেটে নিয়েছি" বলে ফেলে কিনা**, আর
+  **দুই দোকানের পয়েন্ট যোগ করে বলে ফেলে কিনা** — জানা নেই। শেষটা এই
+  স্প্রিন্টের সবচেয়ে বিপজ্জনক ব্যর্থতা, আর কোনো গার্ড ওটা ধরবে না।
+- **তিন ধরনের কার্ডের একটাও ব্রাউজারে render হয়নি** — signed-in shell লাগে।
+- **`20261001` ইনস্ট্যান্সে চালানো হয়নি।** লোকালে ১৪২/১৪২ মানে "আসল
+  schema-র মতো schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়।
+- **কোনো আসল appointment বুক হয়নি, কোনো আসল পয়েন্ট খরচ হয়নি।**
+
+---
+
 ### মাইগ্রেশন যাচাইয়ের খতিয়ান (Sprint 6 ক্লোজআউট, ১১ সেপ্টেম্বর ২০২৬)
 
 মাইগ্রেশন হাতে চালানো হয়, তাই "চালানো হয়েছে" আর "যাচাই করা হয়েছে" আলাদা
@@ -2135,6 +2311,7 @@ nonce, non-uuid) সবই **৪০০** · guest পাতা ৩২০px আ�
 | `20260928_platform_settings.sql` | ⬜ **বকেয়া** — পলিশ স্প্রিন্টে নতুন; লোকালে যাচাইকৃত, ইনস্ট্যান্সে চালানো হয়নি |
 | `20260929_service_styles.sql` | ⬜ **বকেয়া** — পলিশ স্প্রিন্টে নতুন; লোকালে যাচাইকৃত, ইনস্ট্যান্সে চালানো হয়নি |
 | `20260930_ai_actions.sql` | ⬜ **বকেয়া** — AI Sprint 3-এ নতুন; লোকালে ৮৫/৮৫ (আসল queue engine migration সহ), ইনস্ট্যান্সে চালানো হয়নি |
+| `20261001_ai_actions_sprint4.sql` | ⬜ **বকেয়া** — AI Sprint 4-এ নতুন; লোকালে **১৪২/১৪২** (আসল appointment, loyalty ও rewards migration সহ, এক ট্রানজেকশনে), ইনস্ট্যান্সে চালানো হয়নি। **`20260930`-এর পরে চালাতে হবে** |
 
 **উপরের শেষ ছয়টা সারি নিয়ে একটা স্পষ্টতা দরকার।** চূড়ান্ত অডিটের ব্রিফে ইউজার লিখেছেন
 “all migration are implement completed” আর `20260922`–`20260926` নাম ধরে তালিকা করেছেন।
