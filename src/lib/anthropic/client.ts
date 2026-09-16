@@ -5,13 +5,73 @@ import Anthropic from "@anthropic-ai/sdk";
 export const ANTHROPIC_KEY_MISSING = "ANTHROPIC_KEY_MISSING";
 
 /**
- * The model every AI feature in this project runs on.
+ * Which model each AI feature runs on.
  *
- * One constant rather than a string per route: when the model changes it
- * changes everywhere at once, and nobody has to remember which screen was
- * pinned to what.
+ * It began as one constant for every route, and the reasoning was sound: a
+ * model name per file is a model name somebody forgets to change. What that
+ * missed is that the tasks are not alike. Extracting "সাদিয়াকে দুই নম্বর
+ * চেয়ারে বসাও" into a small JSON object and investigating why a shop's
+ * revenue moved are not the same problem, and paying the same per-token rate
+ * for both is a choice rather than a default.
+ *
+ * So: still one place, now with one entry per purpose. Each is overridable by
+ * environment variable so a deployment can move a single feature without a
+ * release, and each falls back to a real model id that exists today — no
+ * invented names.
  */
-export const AI_MODEL = "claude-opus-5";
+const DEFAULT_MODEL = "claude-opus-5";
+/** Cheap and quick. Suits extraction and short help-desk answers. */
+const FAST_MODEL = "claude-haiku-4-5-20251001";
+
+export const AI_MODELS = {
+  /**
+   * The owner copilot. Reasoning over several tool results and comparing two
+   * periods is the one job here that genuinely benefits from the strong model,
+   * and a wrong number costs a shopkeeper real money.
+   */
+  ownerCopilot: process.env.AI_MODEL_OWNER_COPILOT || DEFAULT_MODEL,
+  /** The pre-tool provider analyst and one-shot insights. */
+  shopAnalyst: process.env.AI_MODEL_SHOP_ANALYST || DEFAULT_MODEL,
+  /** Customer help desk: short answers from a small brief. */
+  help: process.env.AI_MODEL_HELP || DEFAULT_MODEL,
+  /** Voice → structured intent. Extraction, not reasoning. */
+  intent: process.env.AI_MODEL_INTENT || DEFAULT_MODEL,
+  /** Style advice and shop-setup suggestions. */
+  suggest: process.env.AI_MODEL_SUGGEST || DEFAULT_MODEL,
+} as const;
+
+/**
+ * The original single constant, kept so the five existing routes did not all
+ * have to change in the same commit as the agent work.
+ *
+ * Every default above is still this value, so **nothing has moved model yet** —
+ * this sprint put the switch in place without flipping it. Routing a route to
+ * `FAST_MODEL` is a decision with quality consequences and it deserves its own
+ * change, where the effect can be looked at rather than bundled in.
+ *
+ * @deprecated Prefer `AI_MODELS.<purpose>`.
+ */
+export const AI_MODEL = DEFAULT_MODEL;
+
+/** Exported so a future routing change has the id to hand. */
+export const AI_FAST_MODEL = FAST_MODEL;
+
+/**
+ * Output ceilings, per purpose.
+ *
+ * `chat` was on 64000. Nobody reads sixty-four thousand tokens of Bangla, and
+ * with adaptive thinking on the strong model that ceiling is also a licence to
+ * spend a long time before saying anything. A business answer is a few
+ * paragraphs; 2000 is generous for one.
+ */
+export const AI_MAX_TOKENS = {
+  /** A few paragraphs of analysis, with room for a short table. */
+  copilot: 2000,
+  /** Help-desk replies are two or three sentences by instruction. */
+  help: 1200,
+  /** A small structured object. */
+  intent: 2000,
+} as const;
 
 /**
  * Server-only Claude client.

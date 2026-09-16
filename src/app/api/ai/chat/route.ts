@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { AI_MODEL, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
+import {
+  AI_MAX_TOKENS,
+  AI_MODELS,
+  ANTHROPIC_KEY_MISSING,
+  getAnthropicClient,
+} from "@/lib/anthropic/client";
 import { gatherShopBrief, NO_SHOP } from "@/features/provider-ai/api/gather-brief";
 import { briefAsPrompt, CHAT_SYSTEM } from "@/features/provider-ai/lib/prompt";
 
@@ -55,8 +60,10 @@ export async function POST(request: Request) {
   // ahead of the messages. Later turns then re-read it at a tenth of the cost
   // instead of paying full price for the same JSON again.
   const stream = client.messages.stream({
-    model: AI_MODEL,
-    max_tokens: 64000,
+    model: AI_MODELS.shopAnalyst,
+    // Was 64000. A business answer is a few paragraphs; the old ceiling
+    // mostly bought latency and thinking tokens nobody read.
+    max_tokens: AI_MAX_TOKENS.copilot,
     system: [
       { type: "text", text: CHAT_SYSTEM },
       { type: "text", text: briefAsPrompt(brief), cache_control: { type: "ephemeral" } },

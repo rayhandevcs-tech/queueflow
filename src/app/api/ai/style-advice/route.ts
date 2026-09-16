@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { AI_MODEL, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
+import { AI_MODELS, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { StyleAdviceSchema } from "@/features/customer-style/lib/advice-schema";
 import { catalogueAsPrompt, STYLE_ADVISOR_SYSTEM } from "@/features/customer-style/lib/prompt";
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   }
 
   const response = await client.messages.parse({
-    model: AI_MODEL,
+    model: AI_MODELS.suggest,
     max_tokens: 16000,
     system: STYLE_ADVISOR_SYSTEM,
     thinking: { type: "adaptive" },

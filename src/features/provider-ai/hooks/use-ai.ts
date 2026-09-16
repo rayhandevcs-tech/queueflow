@@ -66,7 +66,10 @@ export function useShopChat() {
       abortRef.current = controller;
 
       try {
-        const res = await fetch("/api/ai/chat", {
+        // AI Sprint 1: the agent endpoint, which can fetch a window the old
+        // fixed brief did not contain. `/api/ai/chat` still works and is the
+        // one-line rollback.
+        const res = await fetch("/api/ai/agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history }),

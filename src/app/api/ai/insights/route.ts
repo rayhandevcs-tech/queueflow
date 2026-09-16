@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { AI_MODEL, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
+import { AI_MODELS, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
 import { gatherShopBrief, NO_SHOP } from "@/features/provider-ai/api/gather-brief";
 import { briefAsPrompt, SHOP_ANALYST_SYSTEM } from "@/features/provider-ai/lib/prompt";
 import { InsightsSchema } from "@/features/provider-ai/lib/insights-schema";
@@ -25,7 +25,7 @@ export async function POST() {
     const client = getAnthropicClient();
 
     const response = await client.messages.parse({
-      model: AI_MODEL,
+      model: AI_MODELS.shopAnalyst,
       max_tokens: 16000,
       system: SHOP_ANALYST_SYSTEM,
       thinking: { type: "adaptive" },

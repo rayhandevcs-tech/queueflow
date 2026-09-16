@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { AI_MODEL, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
+import {
+  AI_MAX_TOKENS,
+  AI_MODELS,
+  ANTHROPIC_KEY_MISSING,
+  getAnthropicClient,
+} from "@/lib/anthropic/client";
 import { gatherCustomerBrief, NOT_SIGNED_IN } from "@/features/customer-help/api/gather-brief";
 import {
   CUSTOMER_HELP_SYSTEM,
@@ -54,8 +59,10 @@ export async function POST(request: Request) {
   // them. The customer's own brief is stable within one conversation and gets
   // the second breakpoint. Only the questions after it are ever new tokens.
   const stream = client.messages.stream({
-    model: AI_MODEL,
-    max_tokens: 64000,
+    model: AI_MODELS.help,
+    // Was 64000. A business answer is a few paragraphs; the old ceiling
+    // mostly bought latency and thinking tokens nobody read.
+    max_tokens: AI_MAX_TOKENS.help,
     system: [
       { type: "text", text: CUSTOMER_HELP_SYSTEM, cache_control: { type: "ephemeral" } },
       {

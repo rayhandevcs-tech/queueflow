@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { AI_MODEL, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
+import { AI_MODELS, ANTHROPIC_KEY_MISSING, getAnthropicClient } from "@/lib/anthropic/client";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { VoiceIntentSchema } from "@/features/provider-voice/lib/intent-schema";
 import {
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
   }
 
   const response = await client.messages.parse({
-    model: AI_MODEL,
+    model: AI_MODELS.intent,
     max_tokens: 8000,
     system: VOICE_INTENT_SYSTEM,
     thinking: { type: "adaptive" },
