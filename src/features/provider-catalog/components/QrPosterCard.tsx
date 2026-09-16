@@ -52,7 +52,7 @@ async function buildPoster(shopName: string, url: string, qrDataUrl: string): Pr
   ctx.fillRect(0, 0, W, H);
 
   // Accent band behind the headline so a photocopy still reads as branded.
-  ctx.fillStyle = "#db4a4a";
+  ctx.fillStyle = "#c43f3f";
   ctx.fillRect(0, 0, W, 330);
 
   ctx.textAlign = "center";

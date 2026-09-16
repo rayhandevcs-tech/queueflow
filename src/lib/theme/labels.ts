@@ -25,7 +25,7 @@ export const THEME_LABEL = {
  * written twice, and it is commented in both.
  */
 export const THEME_SWATCH: Record<Theme, string> = {
-  red: "#db4a4a",
+  red: "#c43f3f",
   black: "#1b1d22",
   green: "#15803d",
   blue: "#1d4ed8",

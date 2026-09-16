@@ -31,7 +31,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#db4a4a",
+  // The browser-chrome colour, kept in step with --qf-accent in globals.css.
+  // Static on purpose: this is read from the served HTML before any script
+  // runs, so it cannot follow a theme stored in localStorage, and the default
+  // theme is the honest answer for it.
+  themeColor: "#c43f3f",
 };
 
 export default function RootLayout({

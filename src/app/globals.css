@@ -60,15 +60,31 @@
 
 :root,
 :root[data-theme="red"] {
-  /* Theme 1 — Signature red on warm cream. The original, unchanged. */
+  /* Theme 1 — Signature red on warm cream. The original.
+   *
+   * One value moved in Sprint 11's final audit, and only this one: the accent
+   * went from #db4a4a to #c43f3f. The old value put white 15px/600 button text
+   * at a measured **4.13:1**, under the 4.5 that WCAG AA asks for normal text
+   * — and 15px semibold is normal text, not large (large starts at 18.66px
+   * bold). That was the colour of every primary action in the product: sign
+   * up, sign in, join the queue, book, pay. The new value measures **5.09:1**.
+   *
+   * #c43f3f is not a new colour: it was already this theme's hover shade, so
+   * the palette gained nothing and lost nothing but the failure. The hover step
+   * moved down to #ad3737 to keep the press feedback visible. The other three
+   * themes were already clear (black 16.86:1, green 5.02:1, blue 6.70:1).
+   *
+   * To put the old red back, set --qf-accent to #db4a4a and --qf-accent-hover
+   * to #c43f3f, and raise the red floor in scripts/verify-browser.mjs back to
+   * 4.1 — the check will then tell you the same thing it used to. */
   --qf-paper: #f7f5f1;
   --qf-card: #ffffff;
   --qf-soft: #f2efea;
   --qf-ink: #1b1812;
   --qf-muted: #6b6355;
   --qf-line: #eae4dc;
-  --qf-accent: #db4a4a;
-  --qf-accent-hover: #c43f3f;
+  --qf-accent: #c43f3f;
+  --qf-accent-hover: #ad3737;
   --qf-accent-soft: #fbe9e9;
   --qf-accent-ink: #ffffff;
   --qf-brass: #b5852f;
@@ -80,9 +96,9 @@
   /* Elevation and the two ambient washes behind the page, both tinted to
      the palette so depth reads as part of it rather than bolted on. */
   --qf-shadow-rgb: 27, 24, 18;
-  --qf-glow-rgb: 219, 74, 74;
+  --qf-glow-rgb: 196, 63, 63;
   --qf-wash-1: rgba(181, 133, 47, 0.1);
-  --qf-wash-2: rgba(219, 74, 74, 0.08);
+  --qf-wash-2: rgba(196, 63, 63, 0.08);
   /* The vignette over the auth screen's brand panel: a deepened version
      of the brand itself, so it darkens the corners rather than tinting
      them with some unrelated hue. */

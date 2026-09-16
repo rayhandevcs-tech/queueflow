@@ -27,7 +27,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3111";
+const BASE = process.env.QF_BASE ?? "http://localhost:3111";
 const results = [];
 const ok = (name, pass, detail = "") =>
   results.push({ name, pass, detail: String(detail).slice(0, 160) });
@@ -209,14 +209,15 @@ for (const theme of THEMES) {
   const inkOnAccent = ratio(hexToRgb(vars.accentInk), hexToRgb(vars.accent));
   ok(`contrast ${theme}: body text on card ≥ 7 (AAA)`, inkOnCard >= 7, `${inkOnCard.toFixed(2)} ink=${vars.ink} card=${vars.card}`);
   ok(`contrast ${theme}: muted text on card ≥ 4.5 (AA)`, mutedOnCard >= 4.5, mutedOnCard.toFixed(2));
-  // The original red theme's white-on-#db4a4a button measures 4.13:1 — below
-  // AA for 14–15px text. That is PRE-EXISTING (Sprint 1 set this red) and this
-  // sprint was told the red theme must remain as it is, so it is reported
-  // rather than silently "fixed" by changing the brand. The three new themes
-  // are held to AA.
-  const floor = theme === "red" ? 4.1 : 4.5;
+  // All four themes are held to AA now. The red theme used to be exempted at a
+  // 4.1 floor because its #db4a4a button measured 4.13:1 and the brand was not
+  // ours to change; Sprint 11's final audit was asked to look again, found the
+  // failure sitting on every primary action in the product, and moved the
+  // accent one step to #c43f3f (5.09:1). With the exception gone, there is no
+  // theme-specific floor left to carry — which is the point of fixing it.
+  const floor = 4.5;
   ok(
-    `contrast ${theme}: button label on brand ≥ ${floor}${theme === "red" ? " (pre-existing exception)" : " (AA)"}`,
+    `contrast ${theme}: button label on brand ≥ ${floor} (AA)`,
     inkOnAccent >= floor,
     `${inkOnAccent.toFixed(2)} accentInk=${vars.accentInk} accent=${vars.accent}`,
   );
