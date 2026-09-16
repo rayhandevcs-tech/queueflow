@@ -85,6 +85,27 @@ export function ServiceCard({
           <span className="grid h-full w-full place-items-center text-muted">{fallbackIcon}</span>
         )}
 
+        {/* The tick sits on the photo again, and this time that is the right
+            answer. It spent one iteration beside the name, where it was
+            certainly more legible — but it also stole ~24px of a ~140px card,
+            which is why "Hair Cutting" was still arriving as "Hair Cu…". Up
+            here it takes the top-left corner, which is the least interesting
+            part of a service photo, and sits on a solid chip so it stays
+            readable over a light image. The name gets the full width. */}
+        {selectable && (
+          <span
+            aria-hidden
+            className={cn(
+              "absolute top-1.5 left-1.5 grid h-5.5 w-5.5 place-items-center rounded-lg border shadow-xs transition-colors",
+              selected
+                ? "border-accent bg-accent text-accent-ink"
+                : "border-card/70 bg-card/85 text-transparent backdrop-blur-sm",
+            )}
+            style={{ borderWidth: 1.5 }}
+          >
+            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+          </span>
+        )}
       </span>
 
       <span className="mt-3 block min-w-0 px-0.5">
@@ -97,36 +118,21 @@ export function ServiceCard({
             {categoryLabel}
           </span>
         )}
-        <span className="flex items-start gap-1.5">
-          {selectable && (
-            <span
-              aria-hidden
-              className={cn(
-                "mt-0.5 grid h-4.5 w-4.5 shrink-0 place-items-center rounded-md border transition-colors",
-                selected
-                  ? "border-accent bg-accent text-accent-ink"
-                  : "border-line bg-card text-transparent",
-              )}
-              style={{ borderWidth: 1.5 }}
-            >
-              <Check className="h-3 w-3" strokeWidth={3} />
-            </span>
+        {/* `hyphens-auto` with `break-words` rather than `break-all`: a long
+            name should break at a sensible point, not mid-syllable. Bangla
+            service names are frequently two long words and this is what keeps
+            "হেয়ার কালারিং" from splitting into nonsense. */}
+        <span
+          className={cn(
+            "block text-[15px] leading-[1.3] font-bold break-words hyphens-auto text-ink",
+            // Two lines, always: without a floor the price jumps up and down
+            // between neighbouring cards, and without a ceiling one wordy
+            // service makes the whole row tall.
+            "line-clamp-2 min-h-[2.6em]",
+            dimmed && "text-muted line-through",
           )}
-          {/* Wraps rather than truncates: at two cards across, "Hair Cutting"
-              was being cut to "Hair …" — a service you cannot read is not a
-              service you can choose. */}
-          <span
-            className={cn(
-              "min-w-0 flex-1 text-[15px] leading-[1.3] font-bold break-words text-ink",
-              // Two lines, always: without a floor the price jumps up and down
-              // between neighbouring cards, and without a ceiling one wordy
-              // service makes the whole row tall.
-              "line-clamp-2 min-h-[2.6em]",
-              dimmed && "text-muted line-through",
-            )}
-          >
-            {name}
-          </span>
+        >
+          {name}
         </span>
         <span className="mt-2 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
           <span className="font-number text-[17px] leading-none font-bold text-ink tabular-nums">
@@ -178,14 +184,16 @@ export function ServiceCard({
  * tablet each card was about 100px wide and the name broke across three lines.
  * That is the cramped look, and it came from the container, not the card.
  *
- * So the columns now widen with the screen instead of multiplying as soon as
- * they can: two until there is genuinely room for three at `md`, and a fourth
- * only on a proper desktop. The gap grows with them, because cards that are
- * bigger need more space between them to still read as separate things.
+ * So the columns widen with the screen instead of multiplying as soon as they
+ * can. The breakpoints moved out a second time after seeing it in place: this
+ * grid usually sits INSIDE the shop panel, not across the viewport, so at
+ * `md:` three columns still produced ~140px cards. Three now waits for `lg`
+ * and four for `2xl`. The gap grows with them, because bigger cards need more
+ * space between them to still read as separate things.
  */
 export function ServiceCardGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4 2xl:grid-cols-4">
       {children}
     </div>
   );

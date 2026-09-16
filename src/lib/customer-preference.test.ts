@@ -9,7 +9,7 @@ import {
   sortByPreference,
   type CustomerPreference,
   effectiveTypeFilter,
-  showingPreferenceDefault,
+  filterByPreference,
 } from "./customer-preference";
 
 describe("parsePreference", () => {
@@ -218,14 +218,58 @@ describe("the explore list opens on the customer's own ecosystem", () => {
     expect(effectiveTypeFilter("ALL", "SALON")).toBe("ALL");
   });
 
-  it("says when the preference is the one deciding, so the UI can explain itself", () => {
-    expect(showingPreferenceDefault(null, "PARLOUR")).toBe(true);
-    expect(showingPreferenceDefault(null, "SALON")).toBe(true);
-    // Touched: the customer is driving, so there is nothing to explain.
-    expect(showingPreferenceDefault("ALL", "PARLOUR")).toBe(false);
-    expect(showingPreferenceDefault("PARLOUR", "PARLOUR")).toBe(false);
-    // No preference to attribute it to.
-    expect(showingPreferenceDefault(null, null)).toBe(false);
-    expect(showingPreferenceDefault(null, "UNISEX" as unknown as CustomerPreference)).toBe(false);
+});
+
+describe("the ecosystem gate — a preference now REMOVES the other kind", () => {
+  const salon = { id: "s", business_type: "SALON" };
+  const parlour = { id: "p", business_type: "PARLOUR" };
+  const unisex = { id: "u", business_type: "UNISEX" };
+  const unknown = { id: "x", business_type: null };
+  const all = [salon, parlour, unisex, unknown];
+
+  it("**a salon customer sees no parlour at all**", () => {
+    const out = filterByPreference(all, "SALON");
+    expect(out.map((s) => s.id)).not.toContain("p");
+  });
+
+  it("**a parlour customer sees no salon at all**", () => {
+    const out = filterByPreference(all, "PARLOUR");
+    expect(out.map((s) => s.id)).toEqual(["p"]);
+  });
+
+  it("a unisex shop counts as a salon, because it runs the queue", () => {
+    // `bookingModel("UNISEX")` has always been QUEUE. Handing a unisex shop to
+    // a parlour customer would drop them into a queue they did not ask for.
+    expect(filterByPreference(all, "SALON").map((s) => s.id)).toContain("u");
+    expect(filterByPreference(all, "PARLOUR").map((s) => s.id)).not.toContain("u");
+  });
+
+  it("an unknown or missing type falls in with the salons, like bookingModel", () => {
+    expect(filterByPreference(all, "SALON").map((s) => s.id)).toContain("x");
+    expect(filterByPreference(all, "PARLOUR").map((s) => s.id)).not.toContain("x");
+  });
+
+  it("**a legacy account with no preference still sees everything**", () => {
+    expect(filterByPreference(all, null)).toHaveLength(4);
+    expect(filterByPreference(all, undefined)).toHaveLength(4);
+  });
+
+  it("junk in the column does not hide the whole platform", () => {
+    // The failure mode to avoid: an unrecognised value narrowing to nothing
+    // and the customer seeing an empty app.
+    expect(filterByPreference(all, "UNISEX" as unknown as CustomerPreference)).toHaveLength(4);
+    expect(filterByPreference(all, "" as unknown as CustomerPreference)).toHaveLength(4);
+  });
+
+  it("preserves the caller's order, so a distance sort survives the gate", () => {
+    const ordered = [unisex, salon, unknown];
+    expect(filterByPreference(ordered, "SALON").map((s) => s.id)).toEqual(["u", "s", "x"]);
+  });
+
+  it("copes with an empty list and never mutates its input", () => {
+    expect(filterByPreference([], "SALON")).toEqual([]);
+    const input = [...all];
+    filterByPreference(input, "PARLOUR");
+    expect(input).toHaveLength(4);
   });
 });

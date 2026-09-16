@@ -33,10 +33,14 @@ import {
   type ShopFilters,
 } from "@/features/customer-explore/components/FilterSheet";
 import { AvatarChip } from "@/components/ui/AvatarChip";
-import { usePreferredExperience } from "@/features/account/hooks/use-preferred-experience";
+import {
+  usePreferredExperience,
+  useSetPreferredExperience,
+} from "@/features/account/hooks/use-preferred-experience";
+import { EcosystemPicker } from "@/features/customer-explore/components/EcosystemPicker";
 import {
   effectiveTypeFilter,
-  showingPreferenceDefault,
+  filterByPreference,
   sortByPreference,
 } from "@/lib/customer-preference";
 import { distanceKm as computeDistanceKm } from "@/lib/geo";
@@ -65,7 +69,8 @@ export function ExploreScreen() {
   const { byShopId: ratingByShopId } = useShopRatings();
   const { categoriesByShopId, serviceNamesByShopId, presentCategories } = useServiceCategories();
 
-  const { preference } = usePreferredExperience();
+  const { preference, isPending: preferencePending } = usePreferredExperience();
+  const setPreference = useSetPreferredExperience();
 
   // `null` means "the customer has not touched the chips", which is different
   // from them having chosen "All" — and the difference matters, because the
@@ -76,11 +81,34 @@ export function ExploreScreen() {
   // would rightly complain about).
   const [typeChoice, setTypeChoice] = useState<BusinessTypeFilter | null>(null);
   const typeFilter: BusinessTypeFilter = effectiveTypeFilter(typeChoice, preference);
-  const preferenceIsDeciding = showingPreferenceDefault(typeChoice, preference);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ServiceCategory | null>(null);
   const [filters, setFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+
+  /**
+   * **The ecosystem gate. Everything below this line sees only these shops.**
+   *
+   * A customer who registered for salon service gets a salon app: the list,
+   * the map, the rails, the counts and the category shortcuts are all built
+   * from this array, so a parlour cannot appear in any of them. A parlour
+   * customer gets the mirror image.
+   *
+   * Applied once, here, rather than at each of the five places that render a
+   * shop — that is the difference between a rule and five chances to forget
+   * it. `filterByPreference` matches on booking MODEL, so a unisex shop lands
+   * with the salons exactly as `bookingModel()` has always said it should.
+   *
+   * A legacy account with no preference, and every guest, sees everything —
+   * there is no ecosystem to narrow to. Those customers get the picker below
+   * instead of being left on a mixed list.
+   */
+  const ecosystemShops = useMemo(
+    () => filterByPreference(shops ?? [], preference),
+    [shops, preference],
+  );
+  /** Once they have chosen, the type chips have nothing left to choose from. */
+  const lockedToEcosystem = !!preference;
 
   // Live GPS wins when granted; otherwise fall back to the customer's saved
   // profile address (Sprint 22) so distance-sort/badges still work without
@@ -92,41 +120,41 @@ export function ExploreScreen() {
       : null);
 
   const distanceKm = useMemo(() => {
-    if (!shops || !effectiveLocation) return {};
+    if (!effectiveLocation) return {};
     const { lat, lng } = effectiveLocation;
     const result: Record<string, number> = {};
-    for (const shop of shops) {
+    for (const shop of ecosystemShops) {
       if (shop.latitude == null || shop.longitude == null) continue;
       result[shop.id] = computeDistanceKm(lat, lng, shop.latitude, shop.longitude);
     }
     return result;
-  }, [shops, effectiveLocation]);
+  }, [ecosystemShops, effectiveLocation]);
 
   const sortedShops = useMemo(() => {
-    if (!shops) return shops;
+    // Distance only. Sorting by preference used to happen here too, but once
+    // the list is already one ecosystem there is nothing left to sort to the
+    // top — every row matches. It is still applied for the no-preference case,
+    // where the list really is mixed.
     const byDistance = effectiveLocation
-      ? [...shops].sort((a, b) => {
+      ? [...ecosystemShops].sort((a, b) => {
           const da = distanceKm[a.id] ?? Infinity;
           const db = distanceKm[b.id] ?? Infinity;
           return da - db;
         })
-      : shops;
-    // Preference last, distance first: `sortByPreference` is stable, so
-    // within "the kind you came for" the nearest is still nearest. Nothing is
-    // removed — the other kind follows immediately after.
-    return sortByPreference(byDistance, preference);
-  }, [shops, distanceKm, effectiveLocation, preference]);
+      : ecosystemShops;
+    return lockedToEcosystem ? byDistance : sortByPreference(byDistance, preference);
+  }, [ecosystemShops, distanceKm, effectiveLocation, preference, lockedToEcosystem]);
 
   // Counted before any filtering, so "Salon 3" means three salons exist —
   // not three that survive whatever else is switched on.
   const typeCounts = useMemo(() => {
-    const all = shops ?? [];
+    const all = ecosystemShops;
     return {
       ALL: all.length,
       SALON: all.filter((shop) => matchesTypeFilter(shop.business_type, "SALON")).length,
       PARLOUR: all.filter((shop) => matchesTypeFilter(shop.business_type, "PARLOUR")).length,
     };
-  }, [shops]);
+  }, [ecosystemShops]);
 
   const filteredShops = useMemo(() => {
     let list = sortedShops ?? [];
@@ -177,10 +205,27 @@ export function ExploreScreen() {
   ]);
 
   // Used by the rails below, which are not subject to the type filter.
-  const preferenceOrdered = useMemo(
-    () => sortByPreference(shops ?? [], preference),
-    [shops, preference],
+  // The rails are inside the ecosystem too. A "top rated" list that surfaced
+  // the other kind of business would reintroduce exactly what the gate is for.
+  const railShops = useMemo(
+    () => (lockedToEcosystem ? ecosystemShops : sortByPreference(ecosystemShops, preference)),
+    [ecosystemShops, preference, lockedToEcosystem],
   );
+
+  /**
+   * Category chips for the shops actually on screen. `presentCategories` is
+   * computed across the whole platform, so before the gate a salon customer
+   * was being offered "Facial" and "Nail" — categories no shop they can see
+   * offers. Tapping one emptied the list.
+   */
+  const ecosystemCategories = useMemo(() => {
+    if (!lockedToEcosystem) return presentCategories;
+    const present = new Set<ServiceCategory>();
+    for (const shop of ecosystemShops) {
+      for (const category of categoriesByShopId.get(shop.id) ?? []) present.add(category);
+    }
+    return new Set([...presentCategories].filter((category) => present.has(category)));
+  }, [presentCategories, ecosystemShops, categoriesByShopId, lockedToEcosystem]);
 
   return (
     <div className="animate-fade-up">
@@ -222,6 +267,17 @@ export function ExploreScreen() {
         </div>
       )}
 
+      {/* Only for an account that can save an answer, and only once there is
+          an answer to save — `preferencePending` avoids flashing the card at
+          somebody who has a preference the profile query has not returned
+          yet. */}
+      {signedIn && !preference && !preferencePending && (
+        <EcosystemPicker
+          isSaving={setPreference.isPending}
+          onChoose={setPreference.setPreference}
+        />
+      )}
+
       <SearchFilterBar
         value={search}
         onChange={setSearch}
@@ -229,20 +285,20 @@ export function ExploreScreen() {
         filtersActive={hasActiveFilters(filters)}
       />
 
-      <div className="mb-3">
-        <BusinessTypeFilterRow
-          value={typeFilter}
-          onChange={setTypeChoice}
-          counts={typeCounts}
-        />
-        {preferenceIsDeciding && (
-          <p className="mt-2 text-[11px] leading-snug text-muted">
-            {preference === "PARLOUR"
-              ? t("preferenceDefaultNoteParlour")
-              : t("preferenceDefaultNoteSalon")}
-          </p>
-        )}
-      </div>
+      {/* Hidden once an ecosystem is chosen. With the list already narrowed to
+          one kind, "All / Salon / Parlour" would offer two choices that return
+          nothing and one that changes nothing — a control that lies about what
+          it does is worse than no control. Legacy accounts and guests still
+          get it, because for them the list genuinely is mixed. */}
+      {!lockedToEcosystem && (
+        <div className="mb-3">
+          <BusinessTypeFilterRow
+            value={typeFilter}
+            onChange={setTypeChoice}
+            counts={typeCounts}
+          />
+        </div>
+      )}
 
       <div className="mb-4">
         <LocationPrompt
@@ -256,7 +312,7 @@ export function ExploreScreen() {
       <OfferCarousel offers={offers} />
 
       <CategoryShortcutRow
-        categories={presentCategories}
+        categories={ecosystemCategories}
         active={activeCategory}
         onSelect={setActiveCategory}
       />
@@ -265,6 +321,9 @@ export function ExploreScreen() {
         {/* Named after what the list is actually showing. "Nearby shops" over
             a list of only parlours is a small lie that makes the filter above
             look broken. */}
+        {/* Driven by the ecosystem once one is chosen, and by the chips
+            otherwise. "Nearby shops" over a list of only parlours is a small
+            lie that makes the screen look broken. */}
         {typeFilter === "SALON"
           ? t("nearbySalonHeading")
           : typeFilter === "PARLOUR"
@@ -295,13 +354,13 @@ export function ExploreScreen() {
             ecosystem. `sortByPreference` reorders and provably drops nothing,
             so this changes which card is first and not which cards exist. */}
         <TopRatedSection
-          shops={preferenceOrdered}
+          shops={railShops}
           ratingByShopId={ratingByShopId}
           waitMin={waitMin}
         />
         {signedIn && (
           <FavouriteShopsSection
-            shops={preferenceOrdered}
+            shops={railShops}
             ratingByShopId={ratingByShopId}
             waitMin={waitMin}
           />

@@ -59,11 +59,15 @@ export function ServicesTab({
                   fallbackIcon={<CategoryIcon className="h-7 w-7" />}
                   durationLabel={formatDuration(s.default_duration_min)}
                   priceLabel={`৳${s.rate}`}
-                  // Only when the shop actually said which category this is.
-                  // "OTHER" on every card would be noise pretending to be
-                  // information.
+                  // Only when the shop actually said which category this is,
+                  // and only when that says something. Most of this shop's
+                  // services are tagged OTHER, so the kicker was rendering
+                  // "অন্যান্য" over every single card — a row of identical
+                  // labels is noise pretending to be information.
                   categoryLabel={
-                    isServiceCategory(s.category) ? SERVICE_CATEGORY_LABEL[category][language] : null
+                    isServiceCategory(s.category) && s.category !== "OTHER"
+                      ? SERVICE_CATEGORY_LABEL[category][language]
+                      : null
                   }
                   selectable
                   selected={on}

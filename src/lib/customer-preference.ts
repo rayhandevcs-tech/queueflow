@@ -1,4 +1,5 @@
-import type { BookingModel } from "./business-model";
+import { bookingModel, type BookingModel } from "./business-model";
+import type { BusinessType } from "@/types";
 
 /**
  * What kind of place a customer came here for.
@@ -151,10 +152,59 @@ export function effectiveTypeFilter(
   return parsePreference(preference) ?? "ALL";
 }
 
-/** Is the view the preference's doing rather than the customer's own? */
-export function showingPreferenceDefault(
-  choice: ExploreTypeFilter | null,
+/**
+ * The shops that belong to a customer's chosen ecosystem.
+ *
+ * ---------------------------------------------------------------------------
+ * This is a FILTER, and that is a reversal worth being explicit about
+ * ---------------------------------------------------------------------------
+ * Sprint 11 built `sortByPreference`, which reordered and provably dropped
+ * nothing, because the rule then was "a preference is a default, never a
+ * restriction". The product owner has since decided the opposite, in plain
+ * terms: a customer who registered for salon service should see a salon app
+ * with no parlour in it, and a customer who registered for parlour service
+ * should never be shown a salon. So this removes rows, on purpose.
+ *
+ * Consequences, so nobody is surprised later:
+ *   · a salon-preferring customer will not find a parlour by browsing, and
+ *     vice versa — the chips that used to let them cross over are hidden once
+ *     a preference exists
+ *   · the two ecosystems now look like two apps sharing an account system
+ *
+ * What this is NOT, and must never become: a security boundary. It runs in the
+ * client over rows RLS already allowed. No policy reads
+ * `preferred_business_type`, no query is scoped by it, and a shop page reached
+ * by link, QR poster or search still loads. If access control is ever actually
+ * wanted, it belongs in RLS and needs its own migration and harness — not this
+ * function.
+ *
+ * ---------------------------------------------------------------------------
+ * Matched by MODEL, not by string
+ * ---------------------------------------------------------------------------
+ * A `UNISEX` shop runs the queue, which `bookingModel()` has always said, so
+ * it belongs with the salons: a salon customer expects to find it, and showing
+ * it to a parlour customer would drop them into a queue they did not ask for.
+ * Comparing booking models rather than `business_type` values is what makes
+ * that fall out correctly instead of needing a special case — and it is what
+ * lets a future vertical inherit the rule for free.
+ *
+ * No preference (a legacy account, or a guest) means no ecosystem to narrow
+ * to, so everything is returned. The caller is expected to ask those customers
+ * to choose rather than leaving them on a mixed list forever.
+ */
+export function filterByPreference<T extends { business_type?: string | null }>(
+  shops: readonly T[],
   preference: StoredPreference,
-): boolean {
-  return choice === null && parsePreference(preference) !== null;
+): T[] {
+  const pref = parsePreference(preference);
+  if (!pref) return [...shops];
+
+  const wanted = preferredBookingModel(pref);
+  return shops.filter(
+    // The cast mirrors what `shopMatchesPreference` above already does: the
+    // generic accepts a plain string because callers pass rows straight from
+    // the query cache, and `bookingModel()` is written to treat anything it
+    // does not recognise as a queue shop anyway.
+    (shop) => bookingModel(shop.business_type as BusinessType | null | undefined) === wanted,
+  );
 }

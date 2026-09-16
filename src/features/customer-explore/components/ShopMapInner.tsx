@@ -13,6 +13,8 @@ import { shopAvailability } from "@/lib/shop-availability";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
+import { mapTiles } from "@/config/map";
+import { spreadOverlapping } from "@/lib/geo";
 
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
@@ -406,15 +408,25 @@ function FitToShops({
     if (points.length === 0) return;
 
     if (points.length === 1) {
-      map.setView(points[0], 15, { animate: true });
+      // 16 rather than 15: with one shop the question is "which street is it
+      // on", and a step closer answers it without losing the neighbourhood.
+      map.setView(points[0], 16, { animate: true });
       return;
     }
 
     map.fitBounds(points, {
-      // Room for the popup and the control stack, and a ceiling so two shops
-      // in the same street don't zoom to rooftops.
-      padding: [48, 48],
-      maxZoom: 16,
+      // Asymmetric on purpose. A popup opens UPWARDS from its pin and the
+      // zoom stack sits bottom-right, so equal padding left a popup for a
+      // northern pin clipped off the top while wasting space at the bottom.
+      // [top, right, bottom, left] is not a thing Leaflet takes, so this is
+      // the [y, x] pair plus a nudge: generous vertically for the popup,
+      // tighter horizontally so the shops fill the width they are given.
+      paddingTopLeft: [28, 88],
+      paddingBottomRight: [72, 28],
+      // 17 rather than 16: two shops on the same road were being held at a
+      // zoom where their pins overlapped, which is exactly when you most want
+      // to tell them apart.
+      maxZoom: 17,
       animate: true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -456,17 +468,15 @@ export default function ShopMapInner({
       className="h-[26rem] w-full sm:h-[30rem]"
       scrollWheelZoom={false}
     >
-      {/* Voyager, label-free.
-          OSM's place names around Dhaka are Bengali, and the raster tiles bake
-          them in at a size and weight chosen for Latin script — conjuncts and
-          matras came out broken and unreadable, which looked like a rendering
-          fault in our app. There is no per-language raster to switch to, so
-          the labels go: the basemap becomes roads, water and parks, and the
-          only text on the map is ours, on the pins. */}
+      {/* The basemap now comes from config — see src/config/map.ts for what
+          changed and why. Short version: the CARTO style this used to hardcode
+          began stamping "KEY REQUIRED" across every tile, so the default is a
+          provider that needs no key, and swapping in a paid one is an env var
+          rather than an edit here. */}
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
-        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-        maxZoom={20}
+        url={mapTiles.url}
+        attribution={mapTiles.attribution}
+        maxZoom={mapTiles.maxZoom}
       />
 
       <FitToShops points={points} signature={signature} />
@@ -474,13 +484,16 @@ export default function ShopMapInner({
 
       {userLocation && <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />}
 
-      {shops.map((shop) => {
+      {spreadOverlapping(shops).map((shop) => {
         const count = counts[shop.id] ?? 0;
         const availability = shopAvailability(shop);
         return (
           <Marker
             key={shop.id}
-            position={[shop.latitude, shop.longitude]}
+            // The nudged position, so co-located shops are each tappable. The
+            // popup below still gets the real row, and its directions link
+            // still uses the real coordinates.
+            position={[shop.displayLat, shop.displayLng]}
             icon={shopPinIcon({
               photoUrl: shop.logo_url ?? shop.cover_image_url ?? null,
               initial: shopInitial(shop.name),

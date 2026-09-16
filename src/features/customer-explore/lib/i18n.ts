@@ -129,6 +129,22 @@ export const customerExploreDict = {
     bn: "তোমার পছন্দ অনুযায়ী পার্লার দেখানো হচ্ছে — সেলুন দেখতে “সব” চাপো।",
     en: "Showing parlours, the way you chose — tap “All” for salons too.",
   },
+  // The one-time ecosystem picker, for accounts that predate the question.
+  pickTitle: { bn: "তুমি কোন সেবা নিতে চাও?", en: "Which service are you here for?" },
+  pickBody: {
+    bn: "একবার বেছে নাও — তারপর অ্যাপটা শুধু সেটাই দেখাবে, এলোমেলো মিশিয়ে নয়।",
+    en: "Choose once, and the app will show you just that instead of a mix of both.",
+  },
+  pickSalon: { bn: "সেলুন", en: "Salon" },
+  pickSalonHint: { bn: "সিরিয়াল নিয়ে চুল-দাড়ি", en: "Take a serial, walk in" },
+  pickParlour: { bn: "বিউটি পার্লার", en: "Beauty parlour" },
+  pickParlourHint: { bn: "সময় বুক করে সেবা", en: "Book an appointment" },
+  pickSaving: { bn: "সেভ হচ্ছে…", en: "Saving…" },
+  pickChangeable: {
+    bn: "পরে সেটিংস থেকে বদলাতে পারবে।",
+    en: "You can change this later in Settings.",
+  },
+
   /** The nearby heading, named after whatever the list is actually showing. */
   nearbySalonHeading: { bn: "আশেপাশের সেলুন", en: "Nearby salons" },
   nearbyParlourHeading: { bn: "আশেপাশের পার্লার", en: "Nearby parlours" },
