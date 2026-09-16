@@ -4,6 +4,11 @@ import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
 import {
+  AI_ACTION_BOOK_APPOINTMENT,
+  AI_ACTION_REDEEM_REWARD,
+  type AiActionType,
+} from "@/lib/ai/proposals";
+import {
   cancelProposal,
   confirmProposal,
   getProposal,
@@ -51,6 +56,42 @@ export type ProposalStage =
  * the derived stage unstable. The card supplies a ticking clock from `useNowMs`,
  * which is the app's existing helper for exactly this.
  */
+/**
+ * What is now out of date, per action.
+ *
+ * Broad rather than surgical: this runs once per confirmation, never on a hot
+ * path, and the cost of missing a key is a screen that quietly shows yesterday.
+ * Keyed by the action so a redemption does not refetch the queue and a queue
+ * join does not refetch coupons.
+ */
+function invalidateFor(
+  queryClient: ReturnType<typeof useQueryClient>,
+  actionType: AiActionType | undefined,
+): void {
+  if (actionType === AI_ACTION_BOOK_APPOINTMENT) {
+    // Their own list, and the slot grids — the time they just took is no
+    // longer free, so any cached day for that shop is now wrong. `["appointments"]`
+    // as a prefix covers both `mine()` and every `slots(...)` key.
+    void queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    return;
+  }
+
+  if (actionType === AI_ACTION_REDEEM_REWARD) {
+    // Points left, the coupon list, and the per-shop balance the reward
+    // screens read. `["rewards"]` covers `myCoupons()` and `myBalance(...)`;
+    // the loyalty cards are a separate root.
+    void queryClient.invalidateQueries({ queryKey: ["rewards"] });
+    void queryClient.invalidateQueries({ queryKey: keys.loyalty.myCards() });
+    return;
+  }
+
+  // JOIN_QUEUE. The customer's own queue view and serial list, plus the shop's
+  // live queue — `["queue-public"]` as a prefix because the explore list keys
+  // by shop and the counts key is separate, and both are now one behind.
+  void queryClient.invalidateQueries({ queryKey: keys.serials.mine() });
+  void queryClient.invalidateQueries({ queryKey: ["queue-public"] });
+}
+
 export function useProposal(actionId: string | null, nowMs: number) {
   const queryClient = useQueryClient();
   const [result, setResult] = useState<ConfirmSuccess | null>(null);
@@ -79,15 +120,7 @@ export function useProposal(actionId: string | null, nowMs: number) {
       if (answer.ok) {
         setResult(answer);
         setFailure(null);
-        // A serial now exists, so every screen that counts them is stale: the
-        // customer's own queue view, their serial list, and the shop's live
-        // queue. Broad rather than surgical — this runs once per confirmation,
-        // not on a hot path.
-        void queryClient.invalidateQueries({ queryKey: keys.serials.mine() });
-        // The shop's live queue got a row. `["queue-public"]` as a prefix
-        // rather than a specific shop: the customer's explore list keys by
-        // shop and the counts key is separate, and both are now one behind.
-        void queryClient.invalidateQueries({ queryKey: ["queue-public"] });
+        invalidateFor(queryClient, query.data?.actionType);
       } else {
         setFailure(answer);
       }

@@ -232,14 +232,17 @@ const SHOP_UNISEX = {
 // ---------------------------------------------------------------------------
 
 describe("role separation is enforced in the registry, not the interface", () => {
-  it("**SEC-1 a customer is offered exactly the discovery tools plus prepare**", () => {
+  it("**SEC-1 a customer is offered exactly the discovery tools plus the three prepares**", () => {
     const names = toolsForRole("customer").map((t) => t.name).sort();
     expect(names).toEqual(
       [
         "get_available_slots",
         "get_customer_history",
+        "get_my_rewards",
         "get_queue_status",
+        "prepare_book_appointment",
         "prepare_join_queue",
+        "prepare_redeem_reward",
         "search_services",
         "search_shops",
       ].sort(),
@@ -339,10 +342,17 @@ describe("the customer's identity comes from the session", () => {
       "limit",
       "maxprice",
       "query",
+      // Sprint 4. `rewardid` and `startsat` are the only two names the two new
+      // actions needed, and neither is an identity: a reward is shop-scoped and
+      // re-read under RLS, and a start time is checked against the slots the
+      // availability engine actually returned. `staffid` was already here from
+      // `get_available_slots` and `prepare_book_appointment` reuses it.
+      "rewardid",
       "serviceids",
       "shopid",
       "shopids",
       "staffid",
+      "startsat",
       "womenonly",
     ]);
   });
@@ -1106,10 +1116,37 @@ describe("the stored preference does not restrict the search", () => {
 
 describe("there is no location capability to claim", () => {
   it("**no customer tool takes coordinates or a radius**", () => {
+    // Argument NAMES, not the serialised schema.
+    //
+    // This used to scan `JSON.stringify(spec.input_schema)`, which includes
+    // every `describe()` string — and it failed the day a description said
+    // "or pick a nearby time", about a TIME, not a place. That is the Sprint 2
+    // lesson repeating: a test that greps prose creates pressure to soften the
+    // prose to keep the test green, which is exactly backwards.
+    //
+    // And the prose cannot be checked this way even in principle here, because
+    // `search_shops`' own description contains the phrase "near you" — in the
+    // sentence forbidding it. A deny-list over descriptions would demand the
+    // deletion of the prohibition. So what is asserted is the thing that
+    // actually matters: no tool has a location PARAMETER. The positive
+    // assertions below cover what the descriptions must SAY.
+    const names: string[] = [];
     for (const spec of toolSpecsForRole("customer")) {
-      const schema = JSON.stringify(spec.input_schema).toLowerCase();
-      for (const key of ["lat", "lng", "longitude", "latitude", "radius", "distance", "nearby"]) {
-        expect(schema, `${spec.name} exposes ${key}`).not.toContain(key);
+      names.push(...argumentNames(spec.input_schema));
+    }
+    for (const key of [
+      "lat",
+      "lng",
+      "longitude",
+      "latitude",
+      "radius",
+      "distance",
+      "nearby",
+      "coord",
+      "geo",
+    ]) {
+      for (const name of names) {
+        expect(name, `a customer tool exposes ${key}`).not.toContain(key);
       }
     }
   });
@@ -1148,8 +1185,11 @@ describe("the five customer flows", () => {
     expect(model.seen[0].toolNames.sort()).toEqual([
       "get_available_slots",
       "get_customer_history",
+      "get_my_rewards",
       "get_queue_status",
+      "prepare_book_appointment",
       "prepare_join_queue",
+      "prepare_redeem_reward",
       "search_services",
       "search_shops",
     ]);
@@ -1318,8 +1358,17 @@ describe("the customer system prompt", () => {
     expect(prompt).toContain("NEVER give them a serial number");
     expect(prompt).toContain("It does NOT join");
     expect(prompt.toLowerCase()).toContain("never say or imply");
-    // And everything it still cannot do is still listed.
-    for (const phrase of ["cancel", "reschedule", "redeem a reward", "change a membership"]) {
+    // Sprint 4 added two more things it can PREPARE, so the same rule is
+    // asserted for each of them: a coupon code and a booking reference are the
+    // two values that would read as a receipt.
+    expect(prompt).toContain("It does NOT book");
+    expect(prompt).toContain("It does NOT spend points");
+    expect(prompt).toContain("NEVER give them a coupon code");
+    expect(prompt).toContain("Never give them a booking reference");
+    // And everything it still cannot do is still listed. "redeem a reward"
+    // left this list in Sprint 4 — it can now set one up — and keeping it
+    // would have been asserting a rule the product had outgrown.
+    for (const phrase of ["cancel", "reschedule", "claim a referral", "change a membership"]) {
       expect(prompt.toLowerCase()).toContain(phrase.toLowerCase());
     }
   });

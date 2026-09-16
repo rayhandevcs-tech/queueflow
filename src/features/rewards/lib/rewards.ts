@@ -1,4 +1,14 @@
-import type { Reward, RewardKind, RewardRedemption, RedemptionStatus } from "@/types";
+import type { RewardKind, RewardRedemption, RedemptionStatus } from "@/types";
+import {
+  canRedeem,
+  DISCOUNT_PCT_MAX,
+  isRewardAvailable,
+  POINTS_COST_MAX,
+  POINTS_COST_MIN,
+  pointsShort,
+  type RedeemBlock,
+  type RewardLike,
+} from "@/lib/reward-eligibility";
 
 /**
  * Everything about rewards that can be decided without asking the database.
@@ -14,21 +24,34 @@ import type { Reward, RewardKind, RewardRedemption, RedemptionStatus } from "@/t
  * you ৳80 on today's bill" without a round trip.
  */
 
+/**
+ * Eligibility moved to `@/lib/reward-eligibility` in AI Sprint 4 and is
+ * re-exported here, so every existing import keeps working and there is still
+ * exactly ONE implementation of "can this be redeemed".
+ *
+ * It had to move because the assistant asks the same question, and `src/lib`
+ * may not import a feature (`eslint-plugin-boundaries`). Copying the rules into
+ * the AI layer would have been the second eligibility implementation this
+ * sprint's brief forbids — and the two would have drifted, which is how an
+ * assistant ends up offering a reward the button refuses.
+ */
+export {
+  canRedeem,
+  DISCOUNT_PCT_MAX,
+  isRewardAvailable,
+  POINTS_COST_MAX,
+  POINTS_COST_MIN,
+  pointsShort,
+  type RedeemBlock,
+  type RewardLike,
+};
+
 /** Bounds mirrored from the CHECK constraints, so the form refuses first. */
-export const POINTS_COST_MIN = 1;
-export const POINTS_COST_MAX = 1_000_000;
 export const REWARD_NAME_MAX = 60;
 export const REWARD_DESCRIPTION_MAX = 300;
-export const DISCOUNT_PCT_MAX = 100;
 
 /** The three kinds the plan specifies. Not four, not five. */
 export const REWARD_KINDS = ["DISCOUNT_FLAT", "DISCOUNT_PCT", "FREE_SERVICE"] as const;
-
-/** The shape these helpers need — a real `rewards` row satisfies it. */
-export type RewardLike = Pick<
-  Reward,
-  "kind" | "value" | "service_id" | "points_cost" | "is_active" | "stock" | "valid_until"
->;
 
 /** One entry of a booking's `services_snapshot`. */
 export interface SnapshotService {
@@ -82,75 +105,6 @@ function round2(value: number): number {
 /** What the bill becomes. Never negative. */
 export function billAfter(total: number, discount: number): number {
   return round2(Math.max(0, total - discount));
-}
-
-// ---------------------------------------------------------------------------
-// availability and eligibility
-// ---------------------------------------------------------------------------
-
-/**
- * Is this reward offerable at all, regardless of who is looking?
- *
- * Three independent reasons a reward is not on the shelf: switched off, past
- * its `valid_until`, or out of stock. A customer's balance has nothing to do
- * with it — that is `canRedeem` below.
- */
-export function isRewardAvailable(
-  reward: RewardLike | null | undefined,
-  now: Date = new Date(),
-): boolean {
-  if (!reward) return false;
-  if (!reward.is_active) return false;
-  if (reward.valid_until && new Date(reward.valid_until).getTime() < now.getTime()) return false;
-  if (reward.stock != null && reward.stock <= 0) return false;
-  return true;
-}
-
-/** Why a reward cannot be redeemed right now, or null when it can. */
-export type RedeemBlock =
-  | "INACTIVE"
-  | "OFFER_EXPIRED"
-  | "OUT_OF_STOCK"
-  | "NOT_ENOUGH_POINTS";
-
-/**
- * Can this customer redeem this reward, and if not, why not?
- *
- * One function, because the button's disabled state and the sentence
- * explaining it must never disagree. The order of the checks matters: a
- * switched-off reward is not "too expensive", and an out-of-stock one is not
- * "expired" — the customer is told the thing that is actually true.
- *
- * Mirrors the order `redeem_reward()` checks in, so the UI never promises
- * something the server would refuse for a different stated reason.
- */
-export function canRedeem(
-  reward: RewardLike | null | undefined,
-  balance: number | null | undefined,
-  now: Date = new Date(),
-): { ok: boolean; block: RedeemBlock | null } {
-  if (!reward) return { ok: false, block: "INACTIVE" };
-  if (!reward.is_active) return { ok: false, block: "INACTIVE" };
-  if (reward.valid_until && new Date(reward.valid_until).getTime() < now.getTime()) {
-    return { ok: false, block: "OFFER_EXPIRED" };
-  }
-  if (reward.stock != null && reward.stock <= 0) return { ok: false, block: "OUT_OF_STOCK" };
-  if ((balance ?? 0) < reward.points_cost) return { ok: false, block: "NOT_ENOUGH_POINTS" };
-  return { ok: true, block: null };
-}
-
-/**
- * How many more points this customer needs. 0 when they can already afford it.
- *
- * The one number that turns "you can't have this" into "you're 30 points
- * away", which is the difference between a dead end and a reason to come back.
- */
-export function pointsShort(
-  reward: Pick<RewardLike, "points_cost"> | null | undefined,
-  balance: number | null | undefined,
-): number {
-  if (!reward) return 0;
-  return Math.max(0, reward.points_cost - (balance ?? 0));
 }
 
 // ---------------------------------------------------------------------------

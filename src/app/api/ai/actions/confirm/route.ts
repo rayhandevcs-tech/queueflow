@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { joinQueue } from "@/lib/queue-join";
-import { translateDbError } from "@/lib/supabase/db-errors";
-import {
-  AI_ACTION_JOIN_QUEUE,
-  ProposalError,
-  type ProposalRefusal,
-} from "@/lib/ai/proposals";
-import { buildJoinQueueDraft } from "@/lib/ai/tools/join-queue-prepare";
+import { ProposalError, type AiProposalDraft, type ProposalRefusal } from "@/lib/ai/proposals";
+import { executorFor, type ActionOutcome, type ConfirmedAction } from "@/lib/ai/actions";
 import type { ToolContext } from "@/lib/ai/types";
 
 /**
- * The confirmed action endpoint — where, and only where, the AI's queue join
- * actually happens.
+ * The confirmed action endpoint — where, and only where, the AI's mutations
+ * actually happen.
  *
  * ---------------------------------------------------------------------------
  * The model is not in this request
@@ -25,15 +19,34 @@ import type { ToolContext } from "@/lib/ai/types";
  *
  * So the chain of custody for every value that matters is:
  *
- *   shopId, serviceIds  →  the stored PROPOSED row, written by the agent route
- *                          from ids that a discovery tool returned in that
- *                          request and that `prepare_join_queue` re-verified
+ *   which action        →  `action_type` on the stored row, a Postgres enum
+ *                          with three members, written by
+ *                          `ai_action_propose()`
+ *   shopId, serviceIds, →  the stored PROPOSED row, written from ids a
+ *   staffId, startsAt,     discovery tool RETURNED in that request and that a
+ *   rewardId               `prepare_*` tool re-verified against the ledger
  *   customerId          →  auth.getUser() here, in this request
- *   price, position,    →  serial_before_insert, inside the write
- *   chair, status
+ *   price, duration,    →  the insert trigger / the RPC, inside the write
+ *   position, chair,
+ *   points, coupon code
  *
- * The client cannot substitute a shop or a service, because it does not send
- * them. It sends an id, and the row that id names was written server-side.
+ * The client cannot substitute a shop, a service, a slot, a staff member or a
+ * reward, because it does not send them. It sends an id, and the row that id
+ * names was written server-side.
+ *
+ * ---------------------------------------------------------------------------
+ * One endpoint, three explicit paths — not one generic one
+ * ---------------------------------------------------------------------------
+ * There is no `POST /api/ai/do-anything`, and the difference is not cosmetic.
+ * The route claims a proposal, switches on the claimed row's action type, and
+ * hands off to that type's executor. `executorFor` is a `switch` whose default
+ * returns null, so an action type with no executor is settled FAILED rather
+ * than being dispatched to whatever came first. Each executor has its own
+ * revalidation and calls exactly one existing business function.
+ *
+ * What makes this closed rather than merely tidy: nothing in the request
+ * selects the branch. A body field naming an action, a function or a table
+ * would be the vulnerability; the branch comes from a column.
  *
  * ---------------------------------------------------------------------------
  * The order of operations, and why each step is where it is
@@ -46,46 +59,48 @@ import type { ToolContext } from "@/lib/ai/types";
  *                                         the replay guard, and it comes BEFORE
  *                                         revalidation so that a double-tap
  *                                         cannot have two requests both pass
- *                                         validation and both insert
- *   4. revalidate against live state    — the same rules `prepare_join_queue`
- *                                         used, run again, because the shop may
- *                                         have closed in the meantime
- *   5. the ordinary queue INSERT        — under RLS, through the trigger
- *   6. settle the audit row             — EXECUTED with the serial, or FAILED
- *                                         with a code
+ *                                         validation and both write
+ *   4. pick the executor                — from the row's type, or refuse
+ *   5. revalidate, then the ONE write   — inside the executor
+ *   6. settle the audit row             — EXECUTED with the result id, or
+ *                                         FAILED with a code
  *
  * Step 3 before step 4 is deliberate and was the other way round first. With
  * validation first, two simultaneous confirmations would both validate, both
- * try to insert, and the second would be stopped only by
- * `one_active_serial_per_customer` — which does stop it, but leaves an audit
- * row claiming a failure that was really a duplicate. Claiming first means the
- * second request never gets as far as looking.
+ * try to write, and the second would be stopped only by a database constraint
+ * — which does stop it, but leaves an audit row claiming a failure that was
+ * really a duplicate. Claiming first means the second request never gets as far
+ * as looking.
  *
  * ---------------------------------------------------------------------------
  * The atomicity boundary, stated rather than glossed
  * ---------------------------------------------------------------------------
  * Steps 5 and 6 are two separate writes and they are NOT atomic. There is no
  * transaction spanning them, because the alternative would be a SECURITY
- * DEFINER function that inserts the serial AND updates the audit — and that
- * function would become a second implementation of the queue's rules, outside
- * the trigger that owns them.
+ * DEFINER function that performs the booking AND updates the audit — and that
+ * function would become a second implementation of rules the triggers and RPCs
+ * already own.
  *
  * So the honest description of the window: if step 5 succeeds and step 6 is
- * lost (a crash, a dropped connection), the customer IS in the queue and the
+ * lost (a crash, a dropped connection), the customer HAS the thing and the
  * audit row stays CONFIRMED rather than EXECUTED. What that costs is accuracy
- * of the record. What it does NOT cost is correctness of the booking:
+ * of the record. What it does NOT cost is correctness of the action:
  *
- *   · the serial exists and is visible in the customer's own queue screen;
- *   · a retry cannot double-book, because `one_active_serial_per_customer`
- *     refuses a second active serial — the guarantee does not depend on the
- *     audit row at all;
- *   · and step 3's claim already refuses a second confirmation.
+ *   · the serial / appointment / coupon exists and is visible on the
+ *     customer's own screens;
+ *   · a retry cannot duplicate it. `one_active_serial_per_customer` refuses a
+ *     second serial and `appointments_no_overlap` refuses a second booking at
+ *     the same time, independently of the audit; and step 3's claim already
+ *     refuses a second confirmation of the same proposal, which is what stops a
+ *     second COUPON, since coupons have no natural uniqueness;
+ *   · so the failure mode is a missing explanation, never a missing booking or
+ *     a double one.
  *
- * The reconciliation below closes most of that gap: a confirmation arriving for
- * a row that is already CONFIRMED looks for the customer's active serial at
- * that shop, and if it finds one, settles the row as EXECUTED against it and
- * reports success. So the stuck state heals on the next attempt rather than
- * needing a sweeper.
+ * Reconciliation closes most of that gap for the two actions where the created
+ * row can be identified EXACTLY — a serial by (customer, shop, active) and an
+ * appointment by (customer, shop, staff, start). It deliberately does not for a
+ * redemption, because a coupon carries no link back to its proposal and
+ * matching one would be a guess; see `redeem-reward-action.ts`.
  */
 
 const MAX_NONCE = 128;
@@ -109,25 +124,62 @@ interface ConfirmFailure {
   message: string;
 }
 
-/** Map a refusal to a sentence the customer can act on. */
-const REFUSAL_MESSAGES: Record<ProposalRefusal, string> = {
+/**
+ * Map a refusal to a sentence the customer can act on.
+ *
+ * One entry per code, and the compiler requires it — a new refusal cannot be
+ * added without deciding what the customer is told, which is the point of
+ * keeping this a `Record` rather than a lookup with a fallback.
+ */
+export const REFUSAL_MESSAGES: Record<ProposalRefusal, string> = {
+  // --- shared ---------------------------------------------------------------
   SHOP_NOT_OFFERED: "দোকানটা আর পাওয়া যাচ্ছে না — আবার খুঁজে দেখো।",
   SERVICE_NOT_OFFERED: "সার্ভিসটা আর পাওয়া যাচ্ছে না — আবার খুঁজে দেখো।",
   SHOP_NOT_FOUND: "দোকানটা আর পাওয়া যাচ্ছে না — আবার খুঁজে দেখো।",
-  NOT_A_QUEUE_SHOP:
-    "এই দোকান লাইনে সিরিয়াল নেয় না, অ্যাপয়েন্টমেন্ট নেয় — দোকানের পাতা থেকে সময় বেছে নাও।",
-  SHOP_NOT_ACCEPTING: "এই দোকান এখন নতুন সিরিয়াল নিচ্ছে না।",
   SERVICE_NOT_FOUND: "সার্ভিসটা আর নেই — তালিকা রিফ্রেশ করে দেখো।",
   SERVICE_WRONG_SHOP: "সার্ভিসটা এই দোকানের নয় — আবার বেছে নাও।",
   SERVICE_INACTIVE: "সার্ভিসটা এখন বন্ধ আছে — অন্যটা বেছে নাও।",
-  ALREADY_IN_QUEUE: "তোমার আগে থেকেই একটা সিরিয়াল চলছে — একসাথে একটাই রাখা যায়।",
-  EXPIRED: "সময় পেরিয়ে গেছে, তাই লাইনের হিসাবটা আর ঠিক নেই — আরেকবার জিজ্ঞেস করো।",
-  ALREADY_EXECUTED: "এটা আগেই নিশ্চিত করা হয়েছে — তোমার সিরিয়াল পাতায় দেখো।",
+  EXPIRED: "সময় পেরিয়ে গেছে, তাই হিসাবটা আর ঠিক নেই — আরেকবার জিজ্ঞেস করো।",
+  ALREADY_EXECUTED: "এটা আগেই নিশ্চিত করা হয়েছে — নিজের পাতায় দেখে নাও।",
   CANCELLED: "এটা বাতিল করা হয়েছে।",
   NOT_FOUND: "অনুরোধটা পাওয়া যায়নি — আরেকবার জিজ্ঞেস করো।",
   BAD_NONCE: "অনুরোধটা পাওয়া যায়নি — আরেকবার জিজ্ঞেস করো।",
-  QUEUE_REFUSED: "সিরিয়াল নেওয়া গেল না।",
   UNAVAILABLE: "এখন কাজটা করা গেল না — আরেকবার চেষ্টা করো।",
+
+  // --- JOIN_QUEUE -----------------------------------------------------------
+  NOT_A_QUEUE_SHOP:
+    "এই দোকান লাইনে সিরিয়াল নেয় না, অ্যাপয়েন্টমেন্ট নেয় — সময় দেখে বুক করতে বলো।",
+  SHOP_NOT_ACCEPTING: "এই দোকান এখন নতুন সিরিয়াল নিচ্ছে না।",
+  ALREADY_IN_QUEUE: "তোমার আগে থেকেই একটা সিরিয়াল চলছে — একসাথে একটাই রাখা যায়।",
+  QUEUE_REFUSED: "সিরিয়াল নেওয়া গেল না।",
+
+  // --- BOOK_APPOINTMENT -----------------------------------------------------
+  NOT_AN_APPOINTMENT_SHOP:
+    "এই দোকান অ্যাপয়েন্টমেন্ট নেয় না, লাইনে সিরিয়াল দেয় — লাইনে ঢুকতে চাইলে বলো।",
+  SHOP_NOT_ACTIVE: "এই দোকান এখন বুকিং নিচ্ছে না।",
+  SLOT_NOT_OFFERED: "এই সময়টা খালি সময়ের তালিকায় ছিল না — আবার সময় দেখে নাও।",
+  SLOT_UNAVAILABLE: "এই সময়টা এইমাত্র কেউ নিয়ে নিয়েছে — আরেকটা সময় বেছে নাও।",
+  SLOT_IN_PAST: "সময়টা পেরিয়ে গেছে — নতুন সময় বেছে নাও।",
+  STAFF_NOT_FOUND: "যাঁর কাছে সময় নেওয়া হয়েছিল তাঁকে আর পাওয়া যাচ্ছে না — আবার সময় দেখো।",
+  STAFF_WRONG_SHOP: "এই কর্মী এই দোকানের নন — আবার সময় দেখে নাও।",
+  STAFF_INACTIVE: "যাঁর কাছে সময় নেওয়া হয়েছিল তিনি এখন নেই — অন্য সময় বেছে নাও।",
+  STAFF_CANNOT_PERFORM: "এই সার্ভিসটা তিনি করেন না — অন্য কারো সময় বেছে নাও।",
+  DURATION_UNAVAILABLE: "সার্ভিসটার সময় কত লাগবে দোকান লিখে রাখেনি, তাই বুক করা গেল না।",
+  PRICE_CHANGED: "দাম বদলে গেছে, তাই আগের হিসাবে করা গেল না — আরেকবার জিজ্ঞেস করো।",
+  ALREADY_BOOKED: "এই সময়ে তোমার বুকিং আগেই আছে — অ্যাপয়েন্টমেন্ট পাতায় দেখো।",
+  APPOINTMENT_REFUSED: "অ্যাপয়েন্টমেন্ট নেওয়া গেল না।",
+
+  // --- REDEEM_REWARD --------------------------------------------------------
+  REWARD_NOT_OFFERED: "রিওয়ার্ডটা তালিকায় ছিল না — আবার দেখে নাও।",
+  REWARD_NOT_FOUND: "রিওয়ার্ডটা আর নেই — তালিকা রিফ্রেশ করে দেখো।",
+  REWARD_WRONG_SHOP:
+    "এই রিওয়ার্ড অন্য দোকানের — পয়েন্ট যে দোকানে জমেছে, সেই দোকানেই খরচ হয়।",
+  REWARD_INACTIVE: "রিওয়ার্ডটা এখন বন্ধ আছে।",
+  REWARD_EXPIRED: "রিওয়ার্ডটার মেয়াদ শেষ।",
+  REWARD_OUT_OF_STOCK: "রিওয়ার্ডটা শেষ হয়ে গেছে।",
+  INSUFFICIENT_POINTS: "এই দোকানে তোমার পয়েন্ট যথেষ্ট নেই।",
+  NO_LOYALTY_ACCOUNT: "এই দোকানে তোমার এখনো কোনো পয়েন্ট জমেনি।",
+  REDEMPTION_REFUSED: "রিওয়ার্ডটা নেওয়া গেল না।",
 };
 
 function refuse(code: ProposalRefusal, status = 409, message?: string) {
@@ -144,7 +196,10 @@ function refuse(code: ProposalRefusal, status = 409, message?: string) {
  * reach a customer.
  */
 function claimRefusal(err: unknown): ProposalRefusal {
-  const raw = err instanceof Error ? err.message : String((err as { message?: string })?.message ?? err ?? "");
+  const raw =
+    err instanceof Error
+      ? err.message
+      : String((err as { message?: string })?.message ?? err ?? "");
   if (raw.includes("ai_action_expired")) return "EXPIRED";
   if (raw.includes("ai_action_already_executed")) return "ALREADY_EXECUTED";
   if (raw.includes("ai_action_cancelled")) return "CANCELLED";
@@ -155,6 +210,35 @@ function claimRefusal(err: unknown): ProposalRefusal {
   // genuinely spent proposal.
   if (raw.includes("ai_action_not_claimable")) return "ALREADY_EXECUTED";
   return "UNAVAILABLE";
+}
+
+/** The claimed row, narrowed to what an executor is allowed to see. */
+type ClaimedRow = {
+  id: string;
+  action_type: string;
+  shop_id: string | null;
+  service_ids: string[];
+  staff_id: string | null;
+  starts_at: string | null;
+  reward_id: string | null;
+  display: unknown;
+};
+
+function toConfirmedAction(row: ClaimedRow, shopId: string): ConfirmedAction {
+  return {
+    id: row.id,
+    actionType: row.action_type as ConfirmedAction["actionType"],
+    shopId,
+    serviceIds: row.service_ids ?? [],
+    staffId: row.staff_id,
+    startsAt: row.starts_at,
+    rewardId: row.reward_id,
+    // The stored snapshot, used only for the changed-terms comparison. The
+    // shape was written by this server from a verified draft, but it is still
+    // treated as data: each executor checks `display.action` matches its own
+    // type before reading a field off it.
+    display: (row.display as AiProposalDraft | null) ?? null,
+  };
 }
 
 export async function POST(request: Request) {
@@ -174,6 +258,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, code: "NOT_FOUND" }, { status: 401 });
   }
 
+  // Everything downstream runs on this: the cookie-bound client, so RLS is
+  // live on every read and every write, and the user id from the session. The
+  // service-role client is deliberately absent from this whole path, and a
+  // test asserts no module in it imports one.
+  const ctx: ToolContext = {
+    supabase,
+    userId: user.id,
+    shopId: null,
+    now: new Date(),
+  };
+
   // Lapsed proposals become EXPIRED here rather than inside the claim, because
   // a `raise` in plpgsql rolls back the UPDATE that preceded it. Best-effort:
   // if the sweep fails the claim below still refuses an expired row, it just
@@ -191,119 +286,76 @@ export async function POST(request: Request) {
   if (claim.error) {
     const code = claimRefusal(claim.error);
 
-    // Reconciliation. A row already CONFIRMED means an earlier attempt claimed
-    // it; if that attempt's insert actually succeeded but its settle was lost,
-    // the customer IS in the queue and deserves to be told so rather than shown
-    // a failure. Look for the serial, and heal the record if it is there.
+    // Reconciliation. A row already past PROPOSED means an earlier attempt
+    // claimed it; if that attempt's write actually succeeded but its settle was
+    // lost, the customer HAS the thing and deserves to be told so rather than
+    // shown a failure.
     if (code === "ALREADY_EXECUTED") {
-      const healed = await reconcile(supabase, actionId, user.id);
+      const healed = await reconcile(ctx, actionId);
       if (healed) return healed;
     }
     return refuse(code);
   }
 
-  const action = claim.data;
-  if (!action || action.action_type !== AI_ACTION_JOIN_QUEUE) {
-    // The enum has one member, so this is unreachable today. It is here so that
-    // Sprint 4's action types cannot be executed by this endpoint the moment
-    // they exist — a new action must bring its own confirmed path.
+  const action = claim.data as ClaimedRow | null;
+  if (!action) {
     await settleFailed(supabase, actionId, "UNAVAILABLE");
     return refuse("UNAVAILABLE");
   }
   if (!action.shop_id) {
+    // `ai_action_propose` now refuses a shopless proposal outright, so this is
+    // unreachable for anything created after 20261001. Kept because an older
+    // row could still exist, and because "the row is malformed" must not become
+    // "the executor got a null and did something creative with it".
     await settleFailed(supabase, actionId, "SHOP_NOT_FOUND");
     return refuse("SHOP_NOT_FOUND");
   }
 
   // ---------------------------------------------------------------------
-  // 2) Revalidate against live state
+  // 2) Which action is this, and who performs it?
   // ---------------------------------------------------------------------
-  // The SAME rules `prepare_join_queue` ran, from the same functions, because
-  // "revalidated" only means something if the second check is the first check.
-  // The figures in the stored `display` are NOT consulted: the shop may have
-  // closed, the service may have been switched off, the price may have moved,
-  // and the customer may have taken a serial elsewhere since they were asked.
-  const ctx: ToolContext = {
-    supabase,
-    userId: user.id,
-    shopId: null,
-    now: new Date(),
-  };
-
-  let fresh;
-  try {
-    fresh = await buildJoinQueueDraft(ctx, action.shop_id, action.service_ids);
-  } catch (err) {
-    const code = err instanceof ProposalError ? err.code : "UNAVAILABLE";
-    await settleFailed(supabase, actionId, code);
-    return refuse(code);
+  const executor = executorFor(action.action_type);
+  if (!executor) {
+    // The enum has exactly three members and all three have an executor, so
+    // this is unreachable today. It is here so that a FUTURE action type cannot
+    // be executed by this endpoint the moment it exists — a new action must
+    // bring its own confirmed path, and until it does, confirming one fails
+    // loudly and writes nothing.
+    await settleFailed(supabase, actionId, "UNAVAILABLE");
+    return refuse("UNAVAILABLE");
   }
 
   // ---------------------------------------------------------------------
-  // 3) The ordinary queue insert
+  // 3) Revalidate against live state, then perform the ONE write
   // ---------------------------------------------------------------------
-  // `joinQueue` from @/lib/queue-join — the exact call the booking screen
-  // makes, with this request's cookie-bound client. Not a privileged RPC, not
-  // service-role, not a second implementation: the same row, the same
-  // `serials: customer insert` policy, the same `serial_before_insert` trigger
-  // computing the chair, the position, the snapshot and the amount.
-  const { data: serial, error: insertError } = await joinQueue(supabase, {
-    shopId: action.shop_id,
-    serviceIds: action.service_ids,
-    // From the session. There is no body field for this and no argument on any
-    // tool — and RLS re-checks it against auth.uid() regardless.
-    customerId: user.id,
-    customerName: (user.user_metadata?.full_name as string | undefined) ?? "",
-  });
-
-  if (insertError || !serial) {
-    // The queue refused it. Which refusal is recorded in the audit as a code,
-    // and the customer gets the app's own sentence for it — the same one the
-    // booking screen would have shown, from `translateDbError`, so a closed
-    // shop reads the same however they arrived at it.
-    const friendly = translateDbError(insertError);
-    await settleFailed(supabase, actionId, "QUEUE_REFUSED");
-    return refuse(
-      "QUEUE_REFUSED",
-      409,
-      friendly.message || REFUSAL_MESSAGES.QUEUE_REFUSED,
-    );
+  let outcome: ActionOutcome;
+  try {
+    outcome = await executor.execute(ctx, toConfirmedAction(action, action.shop_id));
+  } catch (err) {
+    const code = err instanceof ProposalError ? err.code : "UNAVAILABLE";
+    await settleFailed(supabase, actionId, code);
+    // A ProposalError's `detail` is the app's own Bangla for a refusal the
+    // database produced — already scrubbed by `translateDbError`, so a slot
+    // somebody just took reads the same however the customer arrived at it.
+    const detail = err instanceof ProposalError ? err.detail : undefined;
+    return refuse(code, 409, detail || REFUSAL_MESSAGES[code]);
   }
 
   // ---------------------------------------------------------------------
   // 4) Settle the audit row
   // ---------------------------------------------------------------------
-  // The only place `EXECUTED` is written, and it needs the serial to do it.
+  // The only place `EXECUTED` is written, and it needs a result id to do it.
+  // Which COLUMN that id lands in is decided by `ai_action_settle()` from the
+  // row's own action type — not by this caller.
   await supabase.rpc("ai_action_settle", {
     p_action_id: actionId,
     p_status: "EXECUTED",
-    p_serial_id: serial.id,
+    p_result_id: outcome.resultId,
     p_failure_code: null,
   });
 
-  // Real figures from the real row. `position` and `total_amount` were computed
-  // by the trigger; the wait is re-read from the live queue. Nothing here is
-  // the proposal's stored copy, and nothing is invented — §38's rule against
-  // inventing a queue position is satisfied structurally, because the position
-  // is a column.
   return NextResponse.json(
-    {
-      ok: true,
-      serial: {
-        id: serial.id,
-        position: serial.position,
-        chairId: serial.chair_id,
-        status: serial.status,
-        totalTaka: serial.total_amount,
-        estimatedStartAt: serial.estimated_start_at,
-      },
-      shop: { id: fresh.shopId, name: fresh.shopName },
-      services: fresh.services.map((service) => ({
-        name: service.name,
-        priceTaka: service.priceTaka,
-      })),
-      estimatedWaitMin: fresh.estimatedWaitMin,
-    },
+    { ok: true, actionType: action.action_type, ...outcome.payload },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
@@ -317,77 +369,78 @@ async function settleFailed(
   await supabase.rpc("ai_action_settle", {
     p_action_id: actionId,
     p_status: "FAILED",
-    p_serial_id: null,
+    p_result_id: null,
     p_failure_code: code,
   });
 }
 
 /**
- * Heal a CONFIRMED row whose settle was lost.
+ * Heal a CONFIRMED row whose settle was lost, or report one already settled.
  *
- * Only called when the claim reported the proposal was already spent. If the
- * customer has an active serial at that shop, the earlier attempt's insert
- * landed — so the record is completed against it and the customer is told they
- * are in the queue, which is true.
+ * Only called when the claim reported the proposal was already spent. Two
+ * cases, and only the second involves looking anything up:
  *
- * Returns null when there is no such serial, in which case the proposal really
- * is spent and the caller refuses normally. Deliberately narrow: it matches on
- * the shop AND an active status AND `auth.uid()`'s own rows (RLS would give it
- * nothing else), so it cannot attach an unrelated booking to an audit row.
+ *   EXECUTED   the outcome is already recorded — report it from the row,
+ *              without re-running anything;
+ *   CONFIRMED  an earlier attempt claimed it and may or may not have completed.
+ *              The executor is asked whether it can identify what that attempt
+ *              created, and it answers only when it can do so exactly.
+ *
+ * Anything else — CANCELLED, EXPIRED, FAILED — returns null and the caller
+ * refuses normally. Note that the read is under RLS on the customer's own rows,
+ * so a proposal belonging to somebody else is invisible here too.
  */
 async function reconcile(
-  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  ctx: ToolContext,
   actionId: string,
-  userId: string,
 ): Promise<NextResponse | null> {
-  const { data: action } = await supabase
+  const { data: action } = await ctx.supabase
     .from("ai_actions")
-    .select("id, status, shop_id, serial_id")
+    .select(
+      "id, status, action_type, shop_id, service_ids, nonce, display, staff_id, starts_at, reward_id, serial_id, appointment_id, redemption_id",
+    )
     .eq("id", actionId)
     .maybeSingle();
 
   if (!action) return null;
 
-  // Already settled — report the outcome it settled to rather than re-running.
   if (action.status === "EXECUTED") {
+    // Whichever result column the type uses. Reported as the id alone: the
+    // action is finished, the customer's own screens hold the detail, and
+    // re-reading a row to decorate a duplicate confirmation would be work done
+    // for a request that changed nothing.
     return NextResponse.json(
-      { ok: true, alreadyExecuted: true, serial: { id: action.serial_id } },
+      {
+        ok: true,
+        alreadyExecuted: true,
+        actionType: action.action_type,
+        resultId:
+          action.serial_id ?? action.appointment_id ?? action.redemption_id ?? null,
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   }
+
   if (action.status !== "CONFIRMED" || !action.shop_id) return null;
 
-  const { data: serials } = await supabase
-    .from("serials")
-    .select("id, position, chair_id, status, total_amount, estimated_start_at")
-    .eq("customer_id", userId)
-    .eq("shop_id", action.shop_id)
-    .in("status", ["WAITING", "IN_PROGRESS"])
-    .limit(1);
+  const executor = executorFor(action.action_type);
+  if (!executor) return null;
 
-  const serial = (serials ?? [])[0];
-  if (!serial) return null;
+  const healed = await executor.reconcile(
+    ctx,
+    toConfirmedAction(action as ClaimedRow, action.shop_id),
+  );
+  if (!healed) return null;
 
-  await supabase.rpc("ai_action_settle", {
+  await ctx.supabase.rpc("ai_action_settle", {
     p_action_id: actionId,
     p_status: "EXECUTED",
-    p_serial_id: serial.id,
+    p_result_id: healed.resultId,
     p_failure_code: null,
   });
 
   return NextResponse.json(
-    {
-      ok: true,
-      alreadyExecuted: true,
-      serial: {
-        id: serial.id,
-        position: serial.position,
-        chairId: serial.chair_id,
-        status: serial.status,
-        totalTaka: serial.total_amount,
-        estimatedStartAt: serial.estimated_start_at,
-      },
-    },
+    { ok: true, alreadyExecuted: true, actionType: action.action_type, ...healed.payload },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

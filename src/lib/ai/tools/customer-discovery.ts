@@ -5,6 +5,7 @@ import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { SERVICE_CATEGORIES } from "@/config/constants";
 import type { BusinessType } from "@/types";
 import type { ToolContext, ToolDefinition } from "../types";
+import { slotKey } from "../proposals";
 import { ToolArgumentError } from "./owner-analytics";
 
 /**
@@ -507,6 +508,25 @@ const getAvailableSlots: ToolDefinition = {
       ends_at: slot.slot_end,
     }));
 
+    // Record the slots actually RETURNED, as the deterministic tuple
+    // shop|staff|instant. This is the ONLY way a time becomes proposable —
+    // `prepare_book_appointment` checks against this ledger before it queries
+    // anything, so a time the model rounded, adjusted, remembered from an
+    // earlier turn or read out of injected text cannot reach the confirm path.
+    //
+    // The ones RETURNED, not the ones found: a slot trimmed by MAX_SLOTS was
+    // never shown to the model and must not become actionable.
+    //
+    // Unlike `search_shops`, this tool does NOT offer the shop id, for the same
+    // reason `get_queue_status` does not — the shop id came FROM the model, so
+    // feeding it back would let a guessed uuid launder itself into proposable
+    // simply by asking for its free times. A legitimate flow is unaffected:
+    // the id came from a search, which offered it already.
+    ctx.discovery?.offer(
+      "slot",
+      slots.map((slot) => slotKey(shop.id, slot.staff_id, slot.starts_at)),
+    );
+
     return {
       shop: { id: shop.id, name: shop.name },
       date,
@@ -514,7 +534,9 @@ const getAvailableSlots: ToolDefinition = {
       total_found: (data ?? []).length,
       truncated: (data ?? []).length > slots.length,
       // Said explicitly so the model does not imply it has reserved anything.
-      note: "These are currently free times. Nothing has been booked or held.",
+      note:
+        "These are currently free times. Nothing has been booked or held. " +
+        "To offer one to the customer, call prepare_book_appointment with a staff_id and starts_at copied exactly from this list.",
     };
   },
 };
