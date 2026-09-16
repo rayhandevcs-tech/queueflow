@@ -111,6 +111,31 @@ export const accountDict = {
   dangerZoneSection: { bn: "ডেঞ্জার জোন", en: "Danger zone" },
   languageBn: { bn: "বাংলা", en: "বাংলা" },
   languageEn: { bn: "English", en: "English" },
+
+  themeLabel: { bn: "থিম", en: "Theme" },
+  themeHint: {
+    bn: "রং বদলায়, আর কিছু না — লেখা, মাপ, সাজসজ্জা সব একই থাকে। পছন্দটা এই ডিভাইসে সেভ থাকে, তাই ফোনে আর দোকানের ট্যাবে আলাদা থিম রাখা যায়।",
+    en: "Only the colours change — type, spacing and layout stay exactly as they are. The choice is saved on this device, so your phone and the shop tablet can each have their own.",
+  },
+
+  // The customer's preferred experience, changeable after signup. The hint
+  // repeats the "not a restriction" point, because Settings is where someone
+  // goes when they are worried they picked wrong.
+  experienceLabel: { bn: "ডিফল্ট অভিজ্ঞতা", en: "Default experience" },
+  experienceHint: {
+    bn: "অ্যাপ খুললে প্রথমে কী দেখবে। দুই ধরনের দোকানই সবসময় খুঁজতে ও বুক করতে পারবে — এটা শুধু শুরুর পর্দা ঠিক করে।",
+    en: "What you see first when you open the app. You can always find and book both kinds of shop — this only sets the starting screen.",
+  },
+  experienceSalon: { bn: "সেলুন", en: "Salon" },
+  experienceParlour: { bn: "বিউটি পার্লার", en: "Beauty parlour" },
+  experienceUnset: {
+    bn: "এখনো বাছাই করা হয়নি — আপাতত সেলুনের সিরিয়াল দিয়ে শুরু হচ্ছে।",
+    en: "Not chosen yet — starting on the salon queue for now.",
+  },
+  experienceSaveFailed: {
+    bn: "পছন্দটা সেভ করা যায়নি। আবার চেষ্টা করো।",
+    en: "Could not save that preference. Try again.",
+  },
   notificationSettings: { bn: "নোটিফিকেশন সেটিংস", en: "Notification settings" },
   helpCenter: { bn: "হেল্প সেন্টার", en: "Help center" },
   privacyPolicy: { bn: "গোপনীয়তা নীতি", en: "Privacy policy" },

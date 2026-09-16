@@ -218,3 +218,85 @@ export async function getMyClaimedReferral(shopId: string): Promise<Referral | n
   if (error) throw error;
   return data ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// across every shop — the customer's own referral page (Sprint 11)
+// ---------------------------------------------------------------------------
+
+export interface MyReferralShop {
+  shopId: string;
+  shopName: string;
+  shopLogoUrl: string | null;
+  code: string;
+  referrerPoints: number;
+  referredPoints: number;
+}
+
+/**
+ * Every shop where this customer already holds a code.
+ *
+ * Three narrow reads rather than one join, because each answers to a different
+ * policy and PostgREST would need an FK relationship this schema does not
+ * declare between `referral_codes` and `loyalty_settings`:
+ *
+ *   · `referral_codes` — `customer_id = auth.uid()` is one half of its only
+ *     SELECT policy, so this returns exactly the caller's own rows and no
+ *     `customer_id` filter in JavaScript is load-bearing.
+ *   · `shops` — for the name and logo, so a code is never shown as a bare
+ *     UUID.
+ *   · `loyalty_settings` — for the two point values, readable by a customer
+ *     only for active shops whose programme is on ("browse enabled").
+ *
+ * A shop whose programme has since been switched off drops out here rather
+ * than being listed with invented rewards: the settings row is unreadable, so
+ * there is nothing honest to print next to the code.
+ *
+ * It deliberately does NOT mint anything. A customer gets a code by asking for
+ * it on a shop's own page; this page shows the ones that exist.
+ */
+export async function getMyReferralShops(): Promise<MyReferralShop[]> {
+  const supabase = getBrowserClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return [];
+
+  const { data: codes, error } = await supabase
+    .from("referral_codes")
+    .select("shop_id, code, created_at")
+    .eq("customer_id", auth.user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  const rows = codes ?? [];
+  if (rows.length === 0) return [];
+
+  const shopIds = [...new Set(rows.map((row) => row.shop_id))];
+
+  const [shopsResult, settingsResult] = await Promise.all([
+    supabase.from("shops").select("id, name, logo_url").in("id", shopIds),
+    supabase
+      .from("loyalty_settings")
+      .select("shop_id, referral_enabled, referral_referrer_points, referral_referred_points")
+      .in("shop_id", shopIds),
+  ]);
+
+  const shopById = new Map((shopsResult.data ?? []).map((shop) => [shop.id, shop]));
+  const settingsByShop = new Map((settingsResult.data ?? []).map((row) => [row.shop_id, row]));
+
+  return rows.flatMap((row) => {
+    const shop = shopById.get(row.shop_id);
+    const settings = settingsByShop.get(row.shop_id);
+    // No shop (deleted/suspended) or no readable, switched-on programme means
+    // there is nothing truthful to show for this code.
+    if (!shop || !settings?.referral_enabled) return [];
+    return [
+      {
+        shopId: row.shop_id,
+        shopName: shop.name,
+        shopLogoUrl: shop.logo_url,
+        code: row.code,
+        referrerPoints: settings.referral_referrer_points ?? 0,
+        referredPoints: settings.referral_referred_points ?? 0,
+      },
+    ];
+  });
+}

@@ -6,6 +6,7 @@ import { LifeBuoy, LogOut, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
@@ -13,7 +14,8 @@ import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useLanguage, useT } from "@/lib/i18n";
 import { supportDict } from "@/features/support/lib/i18n";
-import { CUSTOMER_NAV_ITEMS, CUSTOMER_SIDEBAR_EXTRA_ITEMS } from "./customer-nav-items";
+import { usePreferredExperience } from "@/features/account/hooks/use-preferred-experience";
+import { CUSTOMER_SIDEBAR_EXTRA_ITEMS, customerNavItems } from "./customer-nav-items";
 import { customerShellDict } from "./i18n";
 
 /**
@@ -30,6 +32,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
   const { language } = useLanguage();
   const t = useT(customerShellDict);
   const supportT = useT(supportDict);
+  const { model } = usePreferredExperience();
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink lg:w-59 lg:border-l-0 lg:border-r">
@@ -43,7 +46,10 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
         {/* Under the brand rather than beside it: at this width the wordmark
             already fills the row, and a control alongside it squeezed the name
             it was meant to accompany. */}
-        <LanguageToggle className="mt-2.5" />
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle compact />
+        </div>
       </div>
 
       <div className="flex items-center gap-2.75 border-t border-line px-2 pt-4 pb-5.5">
@@ -71,7 +77,7 @@ export function CustomerSidebarPanel({ onNavigate }: { onNavigate?: () => void }
       </div>
 
       <nav className="flex flex-col gap-0.75">
-        {[...CUSTOMER_NAV_ITEMS, ...CUSTOMER_SIDEBAR_EXTRA_ITEMS].map((item) => {
+        {[...customerNavItems(model), ...CUSTOMER_SIDEBAR_EXTRA_ITEMS].map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link

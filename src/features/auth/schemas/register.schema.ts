@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ROLES, SELECTABLE_BUSINESS_TYPES } from "@/config/constants";
+import { CUSTOMER_PREFERENCES } from "@/lib/customer-preference";
 import { BD_PHONE_REGEX } from "@/lib/phone";
 import type { Language } from "@/lib/i18n";
 import { resolveDict } from "@/lib/i18n";
@@ -21,7 +22,14 @@ export function registerSchema(lang: Language) {
       role: z.enum([ROLES.CUSTOMER, ROLES.PROVIDER], {
         message: m("account_type_required"),
       }),
+      /** The shop's own kind — what it runs. Providers only. */
       businessType: z.enum(SELECTABLE_BUSINESS_TYPES).optional(),
+      /**
+       * The customer's preferred experience — which dashboard opens first.
+       * A different thing from `businessType` above, on purpose: one is a
+       * business fact about a shop, the other a default for a person.
+       */
+      preferredBusinessType: z.enum(CUSTOMER_PREFERENCES).optional(),
     })
     .refine((v) => v.password === v.confirmPassword, {
       message: m("passwords_dont_match"),
@@ -30,6 +38,15 @@ export function registerSchema(lang: Language) {
     .refine((v) => v.role !== ROLES.PROVIDER || !!v.businessType, {
       message: m("business_type_required"),
       path: ["businessType"],
+    })
+    // Required of a customer for the same reason the shop's type is required
+    // of an owner: the answer decides which experience they land in, and
+    // guessing on their behalf is exactly what the nullable column exists to
+    // avoid. A legacy account may have no preference; a new one should not
+    // start life that way.
+    .refine((v) => v.role !== ROLES.CUSTOMER || !!v.preferredBusinessType, {
+      message: m("preferred_business_type_required"),
+      path: ["preferredBusinessType"],
     });
 }
 

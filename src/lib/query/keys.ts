@@ -94,6 +94,8 @@ export const keys = {
     mine: (shopId: string) => ["referral", "mine", shopId] as const,
     claimed: (shopId: string) => ["referral", "claimed", shopId] as const,
     stats: (shopId: string) => ["referral", "stats", shopId] as const,
+    /** Not shop-scoped on purpose: this one IS the list across shops. */
+    myShops: () => ["referral", "my-shops"] as const,
   },
   rewards: {
     /**

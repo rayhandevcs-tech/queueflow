@@ -38,6 +38,7 @@ import { useToast } from "@/components/ui/Toast";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Switch } from "@/components/ui/Switch";
 import { useT, useLanguage } from "@/lib/i18n";
@@ -120,8 +121,12 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink md:border-l-0 md:border-r"
       style={{ paddingBottom: "max(1.375rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="mb-3.5 flex items-center justify-between px-2">
+      {/* The two "how this app looks and reads to me" controls, together:
+          language and theme. Both are device-local preferences, so they sit
+          in the chrome rather than behind Settings. */}
+      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 px-2">
         <LanguageToggle />
+        <ThemeToggle compact />
       </div>
 
       {/* Brand above the shop identity: the sidebar used to open with the

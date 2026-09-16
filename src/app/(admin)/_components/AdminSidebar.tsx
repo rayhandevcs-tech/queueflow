@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ADMIN_LEVEL_LABEL, ADMIN_LOGIN } from "@/config/constants";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import {
@@ -53,8 +54,9 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
       className="flex h-full w-59 shrink-0 flex-col overflow-y-auto border-l border-line bg-card px-4 py-5.5 text-ink md:border-l-0 md:border-r"
       style={{ paddingBottom: "max(1.375rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="mb-3.5 flex items-center justify-between px-2">
+      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 px-2">
         <LanguageToggle />
+        <ThemeToggle compact />
       </div>
 
       {/* The brand leads and the panel name qualifies it underneath. The old

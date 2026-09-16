@@ -1,5 +1,6 @@
 import { getBrowserClient } from "@/lib/supabase/client";
-import type { UserRole } from "@/types";
+import type { TablesUpdate, UserRole } from "@/types";
+import { parsePreference } from "@/lib/customer-preference";
 import type { LoginFormValues } from "../schemas/login.schema";
 import type { RegisterFormValues } from "../schemas/register.schema";
 import type { ForgotPasswordFormValues } from "../schemas/forgot-password.schema";
@@ -61,20 +62,40 @@ export async function signInAdmin(values: LoginFormValues): Promise<void> {
 }
 
 /**
- * Applies the phone number carried in user_metadata to the profiles row.
+ * Applies the fields carried in user_metadata to the profiles row.
+ *
  * Called right after signUp() when a session comes back immediately (email
  * confirmation disabled on this project), and again after verifyEmailCode()
  * when confirmation is required — whichever path actually yields a session
- * does the write, so phone lands on profiles.phone exactly once either way.
+ * does the write, so these land on `profiles` exactly once either way.
+ *
+ * Sprint 11 added the customer's preferred experience here rather than to the
+ * provisioning trigger, for two reasons: the trigger is baseline SQL this
+ * project deliberately does not rewrite, and this helper already solves the
+ * exact problem (a value known at signup that has to survive an email
+ * round trip). It is written only when present, so a provider signup sends no
+ * such key at all.
  */
-async function applyPendingPhone(
+async function applyPendingProfileFields(
   supabase: ReturnType<typeof getBrowserClient>,
   user: { id: string; user_metadata?: Record<string, unknown> } | null | undefined,
 ) {
-  const phone = user?.user_metadata?.phone as string | undefined;
-  if (phone && user) {
-    await supabase.from("profiles").update({ phone }).eq("id", user.id);
-  }
+  if (!user) return;
+
+  const patch: TablesUpdate<"profiles"> = {};
+  const phone = user.user_metadata?.phone as string | undefined;
+  if (phone) patch.phone = phone;
+
+  const preference = parsePreference(user.user_metadata?.preferred_business_type);
+  if (preference) patch.preferred_business_type = preference;
+
+  if (Object.keys(patch).length === 0) return;
+
+  // Not fatal if it fails: the account exists and the person is signed in, and
+  // an unset preference simply falls back to the queue-first experience, which
+  // they can change in Settings. Losing the whole signup over a preference
+  // would be the worse trade.
+  await supabase.from("profiles").update(patch).eq("id", user.id);
 }
 
 /**
@@ -101,24 +122,28 @@ export async function signUp(
     options: {
       emailRedirectTo: authCallbackUrl(),
       // Read by the DB trigger that provisions the (role-immutable) profile row.
-      // phone/business_type aren't consumed by that trigger yet — they're carried
-      // in user_metadata and applied below (or after verify-email, see verifyEmailCode).
+      // phone/business_type/preferred_business_type aren't consumed by that
+      // trigger — they're carried in user_metadata and applied below (or after
+      // verify-email, see verifyEmailCode).
       data: {
         role: values.role,
         full_name: values.fullName,
         phone: values.phone,
+        // The shop's kind (providers) and the customer's preferred
+        // experience (customers) — never both, and never the same thing.
         business_type: values.businessType ?? null,
+        preferred_business_type: values.preferredBusinessType ?? null,
       },
     },
   });
   if (error) throw error;
 
-  if (data.session) await applyPendingPhone(supabase, data.user);
+  if (data.session) await applyPendingProfileFields(supabase, data.user);
 
   return { role: values.role, needsEmailConfirmation: !data.session };
 }
 
-/** Verifies the 6-digit signup code and applies the phone number carried in user_metadata. */
+/** Verifies the 6-digit signup code and applies the fields carried in user_metadata. */
 export async function verifyEmailCode({
   email,
   token,
@@ -134,7 +159,7 @@ export async function verifyEmailCode({
   });
   if (error) throw error;
 
-  await applyPendingPhone(supabase, data.user);
+  await applyPendingProfileFields(supabase, data.user);
 
   const role = (data.user?.user_metadata?.role as UserRole | undefined) ?? "customer";
   return { role };

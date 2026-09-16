@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Clock3, MapPin, Users } from "lucide-react";
 import { site } from "@/config/site";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useT } from "@/lib/i18n";
 import { authDict } from "../lib/i18n";
 
@@ -39,12 +41,12 @@ export function AuthShell({
       <aside className="relative hidden overflow-hidden lg:block">
         {/* Layered light rather than a flat fill: a diagonal base, two blurred
             sources, and a fine dot grid to give the surface some tooth. */}
-        <div className="absolute inset-0 bg-gradient-to-br from-accent via-accent to-[#c03d47]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-accent via-accent to-accent-hover" />
         <div className="absolute -top-40 -left-32 h-[34rem] w-[34rem] rounded-full bg-white/20 blur-[100px]" />
         <div className="absolute -right-32 -bottom-48 h-[38rem] w-[38rem] rounded-full bg-brass/30 blur-[110px]" />
         <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:24px_24px]" />
         {/* A soft vignette keeps the corners from feeling brighter than the middle. */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(120,25,30,0.28)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,var(--qf-vignette)_100%)]" />
 
         <div className="relative flex h-full flex-col justify-center px-14 py-16 xl:px-20">
           <Link href="/" className="absolute top-14 left-14 xl:left-20">
@@ -88,6 +90,16 @@ export function AuthShell({
           <Link href="/" className="mb-9 inline-block lg:hidden">
             <Wordmark size="lg" />
           </Link>
+
+          {/* Language and theme, before you have an account.
+              Both are device-local, so they work perfectly well for someone
+              who has not signed up yet — and this is the first screen a new
+              user sees, which makes it the right place to let them set how the
+              app reads and looks rather than making them find Settings after. */}
+          <div className="mb-7 flex flex-wrap items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle compact />
+          </div>
 
           <header className="mb-8">
             <h1 className="font-display text-[2rem] leading-[1.15] font-bold tracking-tight text-ink">

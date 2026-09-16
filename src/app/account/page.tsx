@@ -10,6 +10,7 @@ import { useUpdateMyAvatar } from "@/features/account/hooks/use-profile-mutation
 import { ProfileForm } from "@/features/account/components/ProfileForm";
 import { ChangePasswordForm } from "@/features/account/components/ChangePasswordForm";
 import { DeleteAccountSection } from "@/features/account/components/DeleteAccountSection";
+import { ExperiencePreferenceField } from "@/features/account/components/ExperiencePreferenceField";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { ROLES, ROLE_LABEL } from "@/config/constants";
 import { Badge } from "@/components/ui/Badge";
@@ -18,6 +19,7 @@ import { ProfileHeaderCard } from "@/components/ui/ProfileHeaderCard";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { SettingsRow } from "@/components/ui/SettingsRow";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import { useT, useLanguage } from "@/lib/i18n";
@@ -136,6 +138,23 @@ function AccountContent({ backHref }: { backHref: string }) {
             {t("languageEn")}
           </button>
         </div>
+        {/* Customers only: this is the customer's default experience, and a
+            shop owner's equivalent (`shops.business_type`) is a different
+            thing living in shop settings. */}
+        {profile.role === ROLES.CUSTOMER && (
+          <div className="mt-4">
+            <ExperiencePreferenceField />
+          </div>
+        )}
+
+        {/* Theme sits with language, not on a page of its own: both are
+            "how this app looks and reads to me", both are stored on this
+            device, and the sidebars carry a compact copy of each for the
+            times you want to change one without coming here. */}
+        <p className="mt-4 mb-2 text-[13px] font-semibold text-ink">{t("themeLabel")}</p>
+        <ThemeToggle />
+        <p className="mt-1.5 text-xs leading-relaxed text-muted">{t("themeHint")}</p>
+
         <div className="mt-2">
           <SettingsRow href="/notification-settings" icon={<Bell className="h-4.5 w-4.5" />} label={t("notificationSettings")} />
         </div>

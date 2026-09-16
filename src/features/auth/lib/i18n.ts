@@ -118,6 +118,20 @@ export const authDict = {
     en: "This decides your dashboard — a salon gets \"Chairs & Staff\", a parlour gets \"Seats & Beauticians\". You can change it later in settings.",
   },
 
+  // The customer's preferred experience. A different question from the one
+  // above, and the hint has to make the "not a restriction" part obvious —
+  // that is the single most likely misunderstanding on this screen.
+  preferredTypeLabel: {
+    bn: "তুমি কোন ধরনের সেবা নিতে চাও?",
+    en: "Which kind of service are you here for?",
+  },
+  preferredTypeHint: {
+    bn: "এটা শুধু ঠিক করে অ্যাপ খুললে প্রথমে কী দেখবে — সেলুনের লাইভ সিরিয়াল, না পার্লারের অ্যাপয়েন্টমেন্ট। দুই ধরনের দোকানই সবসময় খুঁজতে ও বুক করতে পারবে, আর পরে সেটিংস থেকে বদলানো যাবে।",
+    en: "This only decides what you see first — a salon's live queue or a parlour's appointments. You can always find and book both kinds, and you can change it later in settings.",
+  },
+  prefSalonOption: { bn: "সেলুন", en: "Salon" },
+  prefParlourOption: { bn: "বিউটি পার্লার", en: "Beauty parlour" },
+
   authPointNearby: {
     bn: "আশেপাশের দোকানের লাইভ সিরিয়াল এক নজরে",
     en: "Live queues at nearby shops, at a glance",

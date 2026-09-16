@@ -6,18 +6,23 @@ import { cn } from "@/lib/utils";
 import { useMyActiveSerial } from "@/features/customer-booking/hooks/use-my-serial";
 import { useMyUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { useLanguage } from "@/lib/i18n";
-import { CUSTOMER_NAV_ITEMS } from "./customer-nav-items";
+import { usePreferredExperience } from "@/features/account/hooks/use-preferred-experience";
+import { customerNavItems } from "./customer-nav-items";
 
 export function CustomerBottomNav({ className }: { className?: string }) {
   const pathname = usePathname();
   const { data: activeSerial } = useMyActiveSerial();
   const unreadChatCount = useMyUnreadChatCount();
   const { language } = useLanguage();
+  // The bookings slot reads "সিরিয়াল" or "অ্যাপয়েন্টমেন্ট" depending on what
+  // this customer came for. One list, built once, shared with the drawer.
+  const { model } = usePreferredExperience();
+  const items = customerNavItems(model);
 
   return (
     <nav className={cn("fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card lg:hidden", className)}>
       <div className="mx-auto flex max-w-md px-6 pb-6 pt-2.5">
-        {CUSTOMER_NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link

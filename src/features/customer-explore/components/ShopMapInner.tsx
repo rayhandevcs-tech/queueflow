@@ -26,10 +26,22 @@ import { customerExploreDict } from "../lib/i18n";
 const DEFAULT_CENTER: [number, number] = [23.8103, 90.4125]; // Dhaka
 
 /** Brand red, and the two availability tones, as literals the SVG can use. */
-const PIN_ACCENT = "#b8323c";
-const PIN_FREE = "#2e7d5b";
-const PIN_BUSY = "#db4a4a";
-const PIN_CLOSED = "#8b8178";
+/*
+ * Pin colours, as CSS variables rather than hex.
+ *
+ * These end up inside SVG `fill` attributes in a Leaflet `divIcon`, which is
+ * still part of the document — so a custom property resolves there exactly as
+ * it would anywhere else, and the map follows a theme change along with the
+ * rest of the app. Sprint 11's whole point: one attribute on <html>, and
+ * nothing is left painted in the old palette.
+ *
+ * `PIN_FREE` stays the success colour and `PIN_BUSY` the brand, because that
+ * is what those two states mean; the theme decides what those colours ARE.
+ */
+const PIN_ACCENT = "var(--qf-accent-hover)";
+const PIN_FREE = "var(--qf-good)";
+const PIN_BUSY = "var(--qf-accent)";
+const PIN_CLOSED = "var(--qf-muted)";
 
 /**
  * "You are here."
@@ -44,8 +56,8 @@ const userIcon = L.divIcon({
   className: "",
   html: `
     <div style="position:relative;width:26px;height:26px">
-      <div class="ss-locate-halo" style="position:absolute;inset:0;border-radius:50%;background:rgba(46,125,214,.35)"></div>
-      <div style="position:absolute;top:6px;left:6px;width:14px;height:14px;border-radius:50%;background:#2e7dd6;border:3px solid #fff;box-shadow:0 2px 8px rgba(27,24,18,.4)"></div>
+      <div class="ss-locate-halo" style="position:absolute;inset:0;border-radius:50%;background:color-mix(in srgb, var(--qf-accent) 35%, transparent)"></div>
+      <div style="position:absolute;top:6px;left:6px;width:14px;height:14px;border-radius:50%;background:var(--qf-accent);border:3px solid var(--qf-card);box-shadow:0 2px 8px rgba(var(--qf-shadow-rgb),.4)"></div>
     </div>`,
   iconSize: [26, 26],
   iconAnchor: [13, 13],
@@ -80,29 +92,29 @@ function shopPinIcon({
     ? `<image href="${photoUrl}" x="8" y="7" width="30" height="30" clip-path="url(#ss-pin-clip)" preserveAspectRatio="xMidYMid slice" />`
     : `<circle cx="23" cy="22" r="15" fill="${fallbackColor}" />
        <text x="23" y="28" text-anchor="middle" font-size="16" font-weight="800"
-             fill="#fff" font-family="system-ui,sans-serif">${initial}</text>`;
+             fill="var(--qf-card)" font-family="system-ui,sans-serif">${initial}</text>`;
 
   // The count badge is only drawn when there is a queue — an empty shop gets a
   // clean pin rather than a "0" the eye has to read and discard.
   const badge =
     state !== "unavailable" && count > 0
       ? `<g>
-           <circle cx="38" cy="9" r="9" fill="${dot}" stroke="#fff" stroke-width="2"/>
+           <circle cx="38" cy="9" r="9" fill="${dot}" stroke="var(--qf-card)" stroke-width="2"/>
            <text x="38" y="13" text-anchor="middle" font-size="10" font-weight="800"
-                 fill="#fff" font-family="system-ui,sans-serif">${count > 9 ? "9+" : count}</text>
+                 fill="var(--qf-card)" font-family="system-ui,sans-serif">${count > 9 ? "9+" : count}</text>
          </g>`
-      : `<circle cx="38" cy="9" r="6" fill="${dot}" stroke="#fff" stroke-width="2"/>`;
+      : `<circle cx="38" cy="9" r="6" fill="${dot}" stroke="var(--qf-card)" stroke-width="2"/>`;
 
   return L.divIcon({
     className: "",
     html: `
-      <div class="ss-pin" style="width:48px;height:58px;filter:drop-shadow(0 4px 8px rgba(27,24,18,.34))">
+      <div class="ss-pin" style="width:48px;height:58px;filter:drop-shadow(0 4px 8px rgba(var(--qf-shadow-rgb),.34))">
         <svg width="48" height="58" viewBox="0 0 48 58" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <clipPath id="ss-pin-clip"><circle cx="23" cy="22" r="15" /></clipPath>
           </defs>
           <path d="M23 1C11.4 1 2 10.4 2 22c0 14.6 21 34 21 34s21-19.4 21-34C44 10.4 34.6 1 23 1z"
-                fill="${PIN_ACCENT}" stroke="#fff" stroke-width="2.5"/>
+                fill="${PIN_ACCENT}" stroke="var(--qf-card)" stroke-width="2.5"/>
           ${inner}
           ${badge}
         </svg>
@@ -180,7 +192,7 @@ function MapControls({ userLocation }: { userLocation?: { lat: number; lng: numb
             onClick={() => map.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 0.8 })}
             className={cn(
               "grid h-13 w-13 place-items-center rounded-full text-accent-ink",
-              "bg-gradient-to-br from-accent to-[#c03d47] shadow-md ring-4 ring-card/70",
+              "bg-gradient-to-br from-accent to-accent-hover shadow-md ring-4 ring-card/70",
               "transition-[box-shadow,transform] duration-150 hover:shadow-glow active:scale-95",
               "focus-visible:ring-4 focus-visible:ring-accent/40 focus-visible:outline-none",
             )}

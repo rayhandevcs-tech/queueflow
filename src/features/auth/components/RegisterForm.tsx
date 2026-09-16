@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Mail, Phone, Scissors, Sparkles, User } from "lucide-react";
+import { Flower2, Lock, Mail, Phone, Scissors, Sparkles, User } from "lucide-react";
 import { ROLES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
@@ -36,6 +36,15 @@ export function RegisterForm() {
     { value: "PARLOUR" as const, label: t("parlourOption") },
   ];
 
+  // Same two words, a different question. For an owner it asks what the shop
+  // is; for a customer it asks what they came here for. They are kept as two
+  // separate fields all the way down to two separate columns, because one of
+  // them is a business fact and the other is a starting screen.
+  const PREFERENCE_OPTIONS = [
+    { value: "SALON" as const, label: t("prefSalonOption"), icon: Scissors },
+    { value: "PARLOUR" as const, label: t("prefParlourOption"), icon: Flower2 },
+  ];
+
   const schema = useMemo(() => registerSchema(language), [language]);
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(schema),
@@ -47,6 +56,7 @@ export function RegisterForm() {
       confirmPassword: "",
       role: ROLES.CUSTOMER,
       businessType: undefined,
+      preferredBusinessType: undefined,
     },
   });
 
@@ -92,6 +102,25 @@ export function RegisterForm() {
             value={form.watch("businessType")}
             onChange={(v) => form.setValue("businessType", v, { shouldDirty: true })}
             ariaLabel={t("businessTypeLabel")}
+          />
+        </Field>
+      )}
+
+      {/* The customer's side of the same choice. It decides which experience
+          opens first — queue or appointments — and the hint says so plainly,
+          because the one thing a customer must not think is that picking a
+          parlour here locks them out of salons. It does not. */}
+      {!isProvider && (
+        <Field
+          label={t("preferredTypeLabel")}
+          hint={t("preferredTypeHint")}
+          error={err.preferredBusinessType?.message}
+        >
+          <ChipGroup
+            options={PREFERENCE_OPTIONS}
+            value={form.watch("preferredBusinessType")}
+            onChange={(v) => form.setValue("preferredBusinessType", v, { shouldDirty: true })}
+            ariaLabel={t("preferredTypeLabel")}
           />
         </Field>
       )}

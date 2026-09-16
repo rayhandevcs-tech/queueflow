@@ -6,6 +6,7 @@ import {
   claimReferral,
   getMyClaimedReferral,
   getMyReferralCode,
+  getMyReferralShops,
   getMyReferrals,
   getShopReferralStats,
   mintMyReferralCode,
@@ -39,6 +40,20 @@ export function useMyReferralCode(shopId: string | undefined, enabled = true) {
     queryKey: keys.referral.myCode(shopId ?? ""),
     queryFn: () => getMyReferralCode(shopId!),
     enabled: !!shopId && enabled,
+  });
+}
+
+/**
+ * Every shop where this customer holds a code — the `/referral` page's list.
+ *
+ * Not shop-scoped, on purpose: this one IS the list across shops, the same
+ * exception `keys.rewards.myCoupons()` makes for coupons. The per-shop keys
+ * above stay per-shop.
+ */
+export function useMyReferralShops() {
+  return useQuery({
+    queryKey: keys.referral.myShops(),
+    queryFn: getMyReferralShops,
   });
 }
 

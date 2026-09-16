@@ -23,6 +23,18 @@ export type Database = {
           address_lng: number | null;
           onboarding_completed_at: string | null;
           notification_prefs: Json;
+          /**
+           * Sprint 11 (20260926): the customer's DEFAULT experience —
+           * "SALON" (queue-first) or "PARLOUR" (appointment-first).
+           *
+           * A preference, never a permission: nothing filters shops by it.
+           * `null` means the customer never chose, which is every account
+           * that existed before this column — deliberately not backfilled.
+           *
+           * Not `business_type`: that enum carries UNISEX, which a shop can
+           * be but a customer cannot sensibly prefer.
+           */
+          preferred_business_type: "SALON" | "PARLOUR" | null;
           /** Moderation — admin-controlled (see 20260825_admin_users_moderation.sql). */
           blocked_at: string | null;
           blocked_reason: string | null;
@@ -43,6 +55,7 @@ export type Database = {
           address_lng?: number | null;
           onboarding_completed_at?: string | null;
           notification_prefs?: Json;
+          preferred_business_type?: "SALON" | "PARLOUR" | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -57,6 +70,7 @@ export type Database = {
           address_lng?: number | null;
           onboarding_completed_at?: string | null;
           notification_prefs?: Json;
+          preferred_business_type?: "SALON" | "PARLOUR" | null;
         };
         Relationships: [];
       };

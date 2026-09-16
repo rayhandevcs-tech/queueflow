@@ -72,6 +72,19 @@ export const referralDict = {
   // ---- Customer: the share card ----
   shopTabLabel: { bn: "রেফারেল", en: "Refer" },
   shareHeading: { bn: "বন্ধুকে আনো, দুজনেই পয়েন্ট পাও", en: "Bring a friend, both get points" },
+
+  /** The `/referral` page's own copy — heading, and the empty case. */
+  myPageTitle: { bn: "আমার রেফারেল", en: "My referrals" },
+  myPageSubtitle: {
+    bn: "যে দোকানগুলোতে তোমার কোড আছে — কোড শেয়ার করো, বন্ধু কাজ করালে দুজনেই পয়েন্ট পাও।",
+    en: "The shops where you have a code — share it, and when a friend gets served you both earn points.",
+  },
+  myEmptyTitle: { bn: "এখনো কোনো কোড নেই", en: "No codes yet" },
+  myEmptyBody: {
+    bn: "যে দোকানে রেফারেল চালু আছে, তার পাতার “রেফারেল” ট্যাব থেকে নিজের কোড নিতে পারো।",
+    en: "Shops running a referral programme have a “Referral” tab on their page where you can get your code.",
+  },
+  myEmptyCta: { bn: "দোকান খুঁজি", en: "Find a shop" },
   shareIntro: {
     bn: (referrer: string, referred: string) =>
       `তোমার কোডে কেউ প্রথমবার কাজ করালে তুমি ${referrer} পয়েন্ট পাবে, আর সে পাবে ${referred}।`,

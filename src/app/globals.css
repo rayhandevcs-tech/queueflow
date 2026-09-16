@@ -13,21 +13,180 @@
  *                 Sprint 20 scope) and tracked in DEVELOPMENT.md.
  */
 
+/*
+ * ===========================================================================
+ * Themes (Sprint 11)
+ * ===========================================================================
+ * Four complete palettes, one design. Nothing about spacing, radius,
+ * typography, elevation shape or layout changes between them — only colour.
+ *
+ * How it works, and why it has to work this way:
+ *
+ *   :root[data-theme="…"]   defines the raw --qf-* values
+ *           ↓
+ *   @theme inline           maps every --color-* token onto var(--qf-*)
+ *           ↓
+ *   utilities               compile to `var(--qf-accent)`, not to `#db4a4a`
+ *           ↓
+ *   one attribute swap on <html> repaints the entire application
+ *
+ * The middle step is the whole trick. `@theme inline` INLINES its values into
+ * the utilities it generates: with a literal hex, `bg-accent` compiled to
+ * `background-color:#db4a4a` and no amount of re-defining a CSS variable at
+ * runtime could move it. Pointing the token at a variable instead compiles it
+ * to `background-color:var(--qf-accent)` — so the same utility follows the
+ * theme, and not one component needs a colour prop, a class branch or any
+ * awareness that themes exist.
+ *
+ * Bare `:root` carries the red palette as well as `[data-theme="red"]`, so a
+ * page renders correctly before any script has run and for anyone with
+ * JavaScript off.
+ *
+ * ---------------------------------------------------------------------------
+ * The rule about semantic colour
+ * ---------------------------------------------------------------------------
+ * `live` (attention/danger), `good` (success) and `brass` (caution/premium)
+ * are the SAME hues in all four themes. A theme changes the brand, the
+ * neutrals and the depth; it must not change what a colour means. A red
+ * "cancelled" pill that turned green in the green theme would be a bug that
+ * looks like a feature.
+ *
+ * The one exception is deliberate, and it is the green theme: its brand green
+ * would sit right next to the success green, so `good` there is a teal.
+ * Success stays in the blue-green family — still read as positive — while the
+ * brand keeps the only strong green on the screen.
+ * ===========================================================================
+ */
+
+:root,
+:root[data-theme="red"] {
+  /* Theme 1 — Signature red on warm cream. The original, unchanged. */
+  --qf-paper: #f7f5f1;
+  --qf-card: #ffffff;
+  --qf-soft: #f2efea;
+  --qf-ink: #1b1812;
+  --qf-muted: #6b6355;
+  --qf-line: #eae4dc;
+  --qf-accent: #db4a4a;
+  --qf-accent-hover: #c43f3f;
+  --qf-accent-soft: #fbe9e9;
+  --qf-accent-ink: #ffffff;
+  --qf-brass: #b5852f;
+  --qf-brass-soft: #f3e7cc;
+  --qf-live: #f97316;
+  --qf-live-soft: #fef0e0;
+  --qf-good: #2e7d5b;
+  --qf-good-soft: #dcefe4;
+  /* Elevation and the two ambient washes behind the page, both tinted to
+     the palette so depth reads as part of it rather than bolted on. */
+  --qf-shadow-rgb: 27, 24, 18;
+  --qf-glow-rgb: 219, 74, 74;
+  --qf-wash-1: rgba(181, 133, 47, 0.1);
+  --qf-wash-2: rgba(219, 74, 74, 0.08);
+  /* The vignette over the auth screen's brand panel: a deepened version
+     of the brand itself, so it darkens the corners rather than tinting
+     them with some unrelated hue. */
+  --qf-vignette: rgba(120, 25, 30, 0.28);
+}
+
+:root[data-theme="black"] {
+  /* Theme 2 — Black on white. Neutral greys, no warmth: the brand is the
+     ink itself, so any tint in the surfaces fights it. */
+  --qf-paper: #f6f6f7;
+  --qf-card: #ffffff;
+  --qf-soft: #f1f1f3;
+  --qf-ink: #101114;
+  --qf-muted: #5c5f66;
+  --qf-line: #e3e4e7;
+  --qf-accent: #1b1d22;
+  --qf-accent-hover: #000000;
+  --qf-accent-soft: #eceded;
+  --qf-accent-ink: #ffffff;
+  --qf-brass: #b5852f;
+  --qf-brass-soft: #f4ead4;
+  --qf-live: #f97316;
+  --qf-live-soft: #fdeee1;
+  --qf-good: #2e7d5b;
+  --qf-good-soft: #dceee5;
+  --qf-shadow-rgb: 16, 17, 20;
+  /* A black button cannot "glow" in its own colour without disappearing, so
+     its hover shadow is a deeper neutral lift instead. */
+  --qf-glow-rgb: 16, 17, 20;
+  --qf-wash-1: rgba(16, 17, 20, 0.05);
+  --qf-wash-2: rgba(16, 17, 20, 0.03);
+  --qf-vignette: rgba(16, 17, 20, 0.30);
+}
+
+:root[data-theme="green"] {
+  /* Theme 3 — Forest green on white, black text. */
+  --qf-paper: #f5f8f6;
+  --qf-card: #ffffff;
+  --qf-soft: #eef3f0;
+  --qf-ink: #12171a;
+  --qf-muted: #566360;
+  --qf-line: #e0e8e3;
+  --qf-accent: #15803d;
+  --qf-accent-hover: #116932;
+  --qf-accent-soft: #e2f3e7;
+  --qf-accent-ink: #ffffff;
+  --qf-brass: #b5852f;
+  --qf-brass-soft: #f4ead4;
+  --qf-live: #f97316;
+  --qf-live-soft: #fdeee1;
+  /* Success moves to teal here — see the note above. It is the only token
+     that changes meaning-family in any theme, and it changes so that
+     "success" stays distinguishable from "brand". */
+  --qf-good: #0f766e;
+  --qf-good-soft: #d8f0ed;
+  --qf-shadow-rgb: 18, 23, 26;
+  --qf-glow-rgb: 21, 128, 61;
+  --qf-wash-1: rgba(21, 128, 61, 0.08);
+  --qf-wash-2: rgba(15, 118, 110, 0.06);
+  --qf-vignette: rgba(8, 60, 32, 0.28);
+}
+
+:root[data-theme="blue"] {
+  /* Theme 4 — Deep blue on white, black text. */
+  --qf-paper: #f5f7fb;
+  --qf-card: #ffffff;
+  --qf-soft: #eef2f8;
+  --qf-ink: #101320;
+  --qf-muted: #575e73;
+  --qf-line: #e1e6f0;
+  --qf-accent: #1d4ed8;
+  --qf-accent-hover: #1740b4;
+  --qf-accent-soft: #e5ebfb;
+  --qf-accent-ink: #ffffff;
+  --qf-brass: #b5852f;
+  --qf-brass-soft: #f4ead4;
+  --qf-live: #f97316;
+  --qf-live-soft: #fdeee1;
+  --qf-good: #2e7d5b;
+  --qf-good-soft: #dceee5;
+  --qf-shadow-rgb: 16, 19, 32;
+  --qf-glow-rgb: 29, 78, 216;
+  --qf-wash-1: rgba(29, 78, 216, 0.08);
+  --qf-wash-2: rgba(16, 19, 32, 0.04);
+  --qf-vignette: rgba(12, 32, 92, 0.28);
+}
+
 @theme inline {
-  --color-paper: #f7f5f1;
-  --color-card: #ffffff;
-  --color-soft: #f2efea;
-  --color-ink: #1b1812;
-  --color-muted: #6b6355;
-  --color-line: #eae4dc;
-  --color-accent: #db4a4a;
-  --color-accent-ink: #ffffff;
-  --color-brass: #b5852f;
-  --color-brass-soft: #f3e7cc;
-  --color-live: #f97316;
-  --color-live-soft: #fef0e0;
-  --color-good: #2e7d5b;
-  --color-good-soft: #dcefe4;
+  --color-paper: var(--qf-paper);
+  --color-card: var(--qf-card);
+  --color-soft: var(--qf-soft);
+  --color-ink: var(--qf-ink);
+  --color-muted: var(--qf-muted);
+  --color-line: var(--qf-line);
+  --color-accent: var(--qf-accent);
+  --color-accent-hover: var(--qf-accent-hover);
+  --color-accent-soft: var(--qf-accent-soft);
+  --color-accent-ink: var(--qf-accent-ink);
+  --color-brass: var(--qf-brass);
+  --color-brass-soft: var(--qf-brass-soft);
+  --color-live: var(--qf-live);
+  --color-live-soft: var(--qf-live-soft);
+  --color-good: var(--qf-good);
+  --color-good-soft: var(--qf-good-soft);
 
   /* font-sans = body copy (Bangla primary), font-display = headings,
      font-number = timers/money/stat digits (Space Grotesk, monospace feel). */
@@ -35,13 +194,17 @@
   --font-display: var(--font-anek-bangla);
   --font-number: var(--font-space-grotesk);
 
-  /* Warm-tinted elevation — replaces the default neutral-gray shadow scale
-     so depth reads as part of the paper/ink palette, not a bolt-on. */
-  --shadow-xs: 0 1px 2px rgba(27, 24, 18, 0.05);
-  --shadow-sm: 0 1px 3px rgba(27, 24, 18, 0.07), 0 1px 2px rgba(27, 24, 18, 0.05);
-  --shadow-md: 0 6px 16px rgba(27, 24, 18, 0.09), 0 2px 6px rgba(27, 24, 18, 0.05);
-  --shadow-lg: 0 16px 40px rgba(27, 24, 18, 0.14), 0 4px 10px rgba(27, 24, 18, 0.06);
-  --shadow-glow: 0 8px 28px rgba(219, 74, 74, 0.28);
+  /* Palette-tinted elevation — depth reads as part of the surface colour
+     rather than a bolt-on grey. Tinted from the theme's own ink, so the
+     shadow scale follows a theme change along with everything else. */
+  --shadow-xs: 0 1px 2px rgba(var(--qf-shadow-rgb), 0.05);
+  --shadow-sm:
+    0 1px 3px rgba(var(--qf-shadow-rgb), 0.07), 0 1px 2px rgba(var(--qf-shadow-rgb), 0.05);
+  --shadow-md:
+    0 6px 16px rgba(var(--qf-shadow-rgb), 0.09), 0 2px 6px rgba(var(--qf-shadow-rgb), 0.05);
+  --shadow-lg:
+    0 16px 40px rgba(var(--qf-shadow-rgb), 0.14), 0 4px 10px rgba(var(--qf-shadow-rgb), 0.06);
+  --shadow-glow: 0 8px 28px rgba(var(--qf-glow-rgb), 0.28);
 
   /* Design-handoff motion (design/design_handoff_palaa/README.md → Animations) */
   --animate-pulse-live: pulse-live 1.4s ease-in-out infinite;
@@ -112,11 +275,15 @@
 
 body {
   background:
-    radial-gradient(ellipse 900px 500px at 8% -8%, rgba(181, 133, 47, 0.10), transparent 60%),
-    radial-gradient(ellipse 900px 600px at 100% 0%, rgba(219, 74, 74, 0.08), transparent 55%),
+    radial-gradient(ellipse 900px 500px at 8% -8%, var(--qf-wash-1), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 100% 0%, var(--qf-wash-2), transparent 55%),
     var(--color-paper);
   background-attachment: fixed;
   color: var(--color-ink);
+  /* The page itself is the last thing to change on a theme switch, so easing
+     it stops the swap reading as a flash. Cards and text follow their own
+     `transition-colors`; this is only the backdrop. */
+  transition: background-color 0.2s ease;
 }
 
 ::selection {

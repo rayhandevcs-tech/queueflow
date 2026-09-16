@@ -4,7 +4,7 @@ import type { Database } from "@/types/database.types";
 import { ADMIN_HOME, ADMIN_LOGIN, ROLE_HOME } from "@/config/constants";
 import type { UserRole } from "@/types";
 
-const PROVIDER_PREFIXES = [
+export const PROVIDER_PREFIXES = [
   "/dashboard",
   "/services",
   "/chairs",
@@ -43,7 +43,20 @@ const PROVIDER_PREFIXES = [
   "/regulars",
   "/reviews",
 ];
-const CUSTOMER_PREFIXES = ["/my-serial", "/history", "/profile", "/chats", "/transactions", "/style"];
+export const CUSTOMER_PREFIXES = [
+  "/my-serial",
+  "/history",
+  "/profile",
+  "/chats",
+  "/transactions",
+  "/style",
+  // Sprint 11 gave the customer's own memberships and referral codes their own
+  // routes so they could be navigated to. Singular, and deliberately not the
+  // provider's plurals: `/memberships` and `/referrals` are the owner's
+  // management screens and are already in PROVIDER_PREFIXES above.
+  "/membership",
+  "/referral",
+];
 /**
  * Customer pages that are one exact path, because a child of theirs belongs to
  * someone else: /notifications is the customer's inbox, while
@@ -69,7 +82,12 @@ const AUTH_REQUIRED_PREFIXES = [
   "/notification-settings",
 ];
 
-function startsWithAny(path: string, prefixes: string[]) {
+/**
+ * Exported so the route lists can be asserted in a unit test — Sprint 11 added
+ * two customer routes, and a page in `src/app` with no matching prefix here is
+ * a page anyone can open. That is the kind of gap nothing else notices.
+ */
+export function startsWithAny(path: string, prefixes: string[]) {
   return prefixes.some((p) => path === p || path.startsWith(p + "/"));
 }
 

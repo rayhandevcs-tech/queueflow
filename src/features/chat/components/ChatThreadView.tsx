@@ -21,7 +21,7 @@ import { MessageImageGrid } from "./MessageImageGrid";
 /** A barely-there dot weave: enough tooth that white bubbles sit *on* the
  *  thread rather than dissolving into it, not enough to read as a pattern. */
 const THREAD_TEXTURE =
-  "bg-[radial-gradient(circle_at_1px_1px,rgba(27,24,18,0.055)_1px,transparent_0)] bg-[length:22px_22px]";
+  "bg-[radial-gradient(circle_at_1px_1px,rgba(var(--qf-shadow-rgb),0.055)_1px,transparent_0)] bg-[length:22px_22px]";
 
 function dateLabel(dateStr: string): string {
   const date = new Date(dateStr);
@@ -342,7 +342,7 @@ export function ChatThreadView({
             aria-busy={send.isPending || undefined}
             className={cn(
               "grid h-11 w-11 shrink-0 place-items-center rounded-full text-accent-ink",
-              "bg-gradient-to-br from-accent to-[#c03d47] shadow-sm",
+              "bg-gradient-to-br from-accent to-accent-hover shadow-sm",
               "transition-[box-shadow,transform,opacity] duration-150",
               "hover:shadow-glow active:scale-95",
               "focus-visible:ring-4 focus-visible:ring-accent/35 focus-visible:outline-none",

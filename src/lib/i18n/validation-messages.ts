@@ -38,6 +38,11 @@ export const VALIDATION = {
     bn: "ব্যবসার ধরন বেছে নাও",
     en: "Choose a business type",
   },
+  /** The customer's side of the same question — a default, not a shop's type. */
+  preferred_business_type_required: {
+    bn: "কোন ধরনের সেবা নিতে চাও বেছে নাও",
+    en: "Choose which kind of service you want",
+  },
   label_required: { bn: "লেবেল লিখো", en: "Enter a label" },
   invalid_color: { bn: "সঠিক রং বেছে নাও", en: "Not a valid color" },
   commission_range: { bn: "কমিশন ০ থেকে ১০০-এর মধ্যে হতে হবে", en: "Commission must be between 0 and 100" },

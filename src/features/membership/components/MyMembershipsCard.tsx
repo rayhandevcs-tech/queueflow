@@ -6,6 +6,7 @@ import { CalendarClock, ChevronRight, Crown } from "lucide-react";
 import type { Shop } from "@/types";
 import { cn } from "@/lib/utils";
 import { AvatarChip } from "@/components/ui/AvatarChip";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { formatBanglaDate, formatMoney, toBanglaDigits } from "@/lib/format-wait";
 import { useT } from "@/lib/i18n";
@@ -33,7 +34,19 @@ import { daysLeft, effectiveStatus, isLiveStatus, soldAs } from "../lib/membersh
  * map is built from *visit* history, and a customer can hold a membership
  * somewhere they have not been served yet.
  */
-export function MyMembershipsCard() {
+export function MyMembershipsCard({
+  /**
+   * Sprint 11: on its own page (`/membership`) an empty list has to say
+   * something, where as a section on `/profile` it should stay silent — a
+   * blank card between two full ones is noise, but a blank page is a dead
+   * end. Same component, one flag, no second copy of the list.
+   */
+  showEmptyState = false,
+  hideHeading = false,
+}: {
+  showEmptyState?: boolean;
+  hideHeading?: boolean;
+} = {}) {
   const t = useT(membershipDict);
   const [now] = useState(() => new Date());
   const { data: memberships } = useMyMemberships();
@@ -59,13 +72,30 @@ export function MyMembershipsCard() {
     [memberships, now],
   );
 
-  if (rows.length === 0) return null;
+  if (rows.length === 0) {
+    if (!showEmptyState) return null;
+    return (
+      <EmptyState
+        icon={<Crown className="h-6 w-6" />}
+        title={t("myEmptyTitle")}
+        description={t("myEmptyBody")}
+        dashed
+        action={
+          <Link href="/explore" className="text-sm font-semibold text-accent hover:underline">
+            {t("myEmptyCta")}
+          </Link>
+        }
+      />
+    );
+  }
 
   return (
     <section className="space-y-2.5">
-      <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">
-        {t("profileHeading")}
-      </p>
+      {!hideHeading && (
+        <p className="text-[13px] font-semibold tracking-wide text-muted uppercase">
+          {t("profileHeading")}
+        </p>
+      )}
 
       <ul className="space-y-2.5">
         {rows.map((membership) => {

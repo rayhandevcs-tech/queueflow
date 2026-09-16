@@ -22,12 +22,19 @@ import { FavouriteShopsSection } from "@/features/customer-explore/components/Fa
 import { StyleStudioBanner } from "@/features/customer-style/components/StyleStudioBanner";
 import { SearchFilterBar } from "@/features/customer-explore/components/SearchFilterBar";
 import {
+  BusinessTypeFilterRow,
+  matchesTypeFilter,
+  type BusinessTypeFilter,
+} from "@/features/customer-explore/components/BusinessTypeFilterRow";
+import {
   DEFAULT_FILTERS,
   FilterSheet,
   hasActiveFilters,
   type ShopFilters,
 } from "@/features/customer-explore/components/FilterSheet";
 import { AvatarChip } from "@/components/ui/AvatarChip";
+import { usePreferredExperience } from "@/features/account/hooks/use-preferred-experience";
+import { sortByPreference } from "@/lib/customer-preference";
 import { distanceKm as computeDistanceKm } from "@/lib/geo";
 import type { ServiceCategory } from "@/config/constants";
 import { useT } from "@/lib/i18n";
@@ -54,6 +61,12 @@ export function ExploreScreen() {
   const { byShopId: ratingByShopId } = useShopRatings();
   const { categoriesByShopId, serviceNamesByShopId, presentCategories } = useServiceCategories();
 
+  // The customer's own default, which here changes the ORDER of the list and
+  // nothing else — see BusinessTypeFilterRow for why it is deliberately not a
+  // pre-selected filter.
+  const { preference } = usePreferredExperience();
+
+  const [typeFilter, setTypeFilter] = useState<BusinessTypeFilter>("ALL");
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ServiceCategory | null>(null);
   const [filters, setFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
@@ -80,13 +93,30 @@ export function ExploreScreen() {
   }, [shops, effectiveLocation]);
 
   const sortedShops = useMemo(() => {
-    if (!shops || !effectiveLocation) return shops;
-    return [...shops].sort((a, b) => {
-      const da = distanceKm[a.id] ?? Infinity;
-      const db = distanceKm[b.id] ?? Infinity;
-      return da - db;
-    });
-  }, [shops, distanceKm, effectiveLocation]);
+    if (!shops) return shops;
+    const byDistance = effectiveLocation
+      ? [...shops].sort((a, b) => {
+          const da = distanceKm[a.id] ?? Infinity;
+          const db = distanceKm[b.id] ?? Infinity;
+          return da - db;
+        })
+      : shops;
+    // Preference last, distance first: `sortByPreference` is stable, so
+    // within "the kind you came for" the nearest is still nearest. Nothing is
+    // removed — the other kind follows immediately after.
+    return sortByPreference(byDistance, preference);
+  }, [shops, distanceKm, effectiveLocation, preference]);
+
+  // Counted before any filtering, so "Salon 3" means three salons exist —
+  // not three that survive whatever else is switched on.
+  const typeCounts = useMemo(() => {
+    const all = shops ?? [];
+    return {
+      ALL: all.length,
+      SALON: all.filter((shop) => matchesTypeFilter(shop.business_type, "SALON")).length,
+      PARLOUR: all.filter((shop) => matchesTypeFilter(shop.business_type, "PARLOUR")).length,
+    };
+  }, [shops]);
 
   const filteredShops = useMemo(() => {
     let list = sortedShops ?? [];
@@ -118,8 +148,14 @@ export function ExploreScreen() {
       list = list.filter((shop) => (shop.women_only ?? false) === true);
     }
 
+    // The customer's own tap, never their stored preference.
+    if (typeFilter !== "ALL") {
+      list = list.filter((shop) => matchesTypeFilter(shop.business_type, typeFilter));
+    }
+
     return list;
   }, [
+    typeFilter,
     sortedShops,
     search,
     activeCategory,
@@ -176,6 +212,21 @@ export function ExploreScreen() {
         onOpenFilters={() => setFilterSheetOpen(true)}
         filtersActive={hasActiveFilters(filters)}
       />
+
+      <div className="mb-3">
+        <BusinessTypeFilterRow
+          value={typeFilter}
+          onChange={setTypeFilter}
+          counts={typeCounts}
+        />
+        {preference && typeFilter === "ALL" && (
+          <p className="mt-2 text-[11px] leading-snug text-muted">
+            {preference === "PARLOUR"
+              ? t("preferenceOrderNoteParlour")
+              : t("preferenceOrderNoteSalon")}
+          </p>
+        )}
+      </div>
 
       <div className="mb-4">
         <LocationPrompt

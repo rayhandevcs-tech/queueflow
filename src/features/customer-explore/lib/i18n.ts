@@ -109,6 +109,20 @@ export const customerExploreDict = {
   lowestWaitLabel: { bn: "সবচেয়ে কম ওয়েট", en: "Lowest wait" },
   nearbyShopsHeading: { bn: "আশেপাশের দোকান", en: "Nearby shops" },
 
+  typeFilterAria: { bn: "দোকানের ধরন", en: "Shop type" },
+  typeFilterAll: { bn: "সব", en: "All" },
+  typeFilterSalon: { bn: "সেলুন", en: "Salon" },
+  typeFilterParlour: { bn: "পার্লার", en: "Parlour" },
+  /** Shown once, under the filter row, when the list is ordered by a preference. */
+  preferenceOrderNoteSalon: {
+    bn: "তোমার পছন্দ অনুযায়ী সেলুনগুলো আগে দেখানো হচ্ছে — পার্লারও নিচে আছে।",
+    en: "Salons are listed first, the way you chose — parlours are below.",
+  },
+  preferenceOrderNoteParlour: {
+    bn: "তোমার পছন্দ অনুযায়ী পার্লারগুলো আগে দেখানো হচ্ছে — সেলুনও নিচে আছে।",
+    en: "Parlours are listed first, the way you chose — salons are below.",
+  },
+
   // First-run intro (Sprint 32)
   introTitle: { bn: "কীভাবে কাজ করে", en: "How it works" },
   introStep1Title: { bn: "আশেপাশের দোকান দেখো", en: "Find shops near you" },

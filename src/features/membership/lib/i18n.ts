@@ -203,6 +203,18 @@ export const membershipDict = {
 
   // ---- Customer: profile ----
   profileHeading: { bn: "মেম্বারশিপ", en: "Memberships" },
+  /** The `/membership` page's own copy — heading, and the empty case. */
+  myPageTitle: { bn: "আমার মেম্বারশিপ", en: "My memberships" },
+  myPageSubtitle: {
+    bn: "কোন দোকানে তোমার প্যাকেজ চালু আছে, কত দিন বাকি — সব এক জায়গায়।",
+    en: "Which shops you hold a package at, and how long is left on each.",
+  },
+  myEmptyTitle: { bn: "এখনো কোনো মেম্বারশিপ নেই", en: "No memberships yet" },
+  myEmptyBody: {
+    bn: "যে দোকানে প্যাকেজ আছে, তার পাতায় “মেম্বারশিপ” ট্যাব থেকে নেওয়া যায়।",
+    en: "Shops that offer packages have a “Membership” tab on their own page.",
+  },
+  myEmptyCta: { bn: "দোকান খুঁজি", en: "Find a shop" },
   profileEmpty: {
     bn: "এখনো কোনো দোকানের সদস্য হও নি। দোকানের পাতায় 'মেম্বারশিপ' ট্যাবে দেখে নিতে পারো।",
     en: "You're not a member anywhere yet. Look for the Membership tab on a shop's page.",
