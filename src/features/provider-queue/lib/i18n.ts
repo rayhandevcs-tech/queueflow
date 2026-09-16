@@ -25,6 +25,12 @@ export const providerQueueDict = {
     en: (n: number) => `+${n} min added`,
   },
   extendCustomLabel: { bn: "কাস্টম", en: "Custom" },
+  // The three chips under the ring used to be bare "+৫ / +১০ / কাস্টম" with
+  // nothing saying what they added. Minutes, as it turns out — but an owner
+  // had to press one to find out.
+  extendGroupLabel: { bn: "সময় বাড়াও", en: "Add time" },
+  extendMinutesSuffix: { bn: (n: string) => `+${n} মিনিট`, en: (n: string) => `+${n} min` },
+  billLabel: { bn: "বিল", en: "Bill" },
   extendCustomPlaceholder: { bn: "মিনিট", en: "Minutes" },
   extendConfirm: { bn: "যোগ করো", en: "Add" },
   extendCancel: { bn: "বাতিল", en: "Cancel" },

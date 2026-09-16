@@ -3,11 +3,11 @@
 import { Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Chair, Service } from "@/types";
-import { isServiceCategory } from "@/config/constants";
+import { isServiceCategory, SERVICE_CATEGORY_LABEL } from "@/config/constants";
 import { formatDuration } from "@/lib/duration";
 import { SERVICE_CATEGORY_ICON } from "@/lib/service-category-icon";
 import { ServiceCard, ServiceCardGrid } from "@/components/ui/ServiceCard";
-import { useT } from "@/lib/i18n";
+import { useLanguage, useT } from "@/lib/i18n";
 import { customerBookingDict } from "../lib/i18n";
 
 interface Props {
@@ -35,6 +35,7 @@ export function ServicesTab({
   onAdvanceChange,
 }: Props) {
   const t = useT(customerBookingDict);
+  const { language } = useLanguage();
   return (
     <div className="space-y-4">
       <div>
@@ -48,8 +49,8 @@ export function ServicesTab({
           <ServiceCardGrid>
             {services.map((s) => {
               const on = selected.has(s.id);
-              const CategoryIcon =
-                SERVICE_CATEGORY_ICON[isServiceCategory(s.category) ? s.category : "OTHER"];
+              const category = isServiceCategory(s.category) ? s.category : "OTHER";
+              const CategoryIcon = SERVICE_CATEGORY_ICON[category];
               return (
                 <ServiceCard
                   key={s.id}
@@ -58,6 +59,12 @@ export function ServicesTab({
                   fallbackIcon={<CategoryIcon className="h-7 w-7" />}
                   durationLabel={formatDuration(s.default_duration_min)}
                   priceLabel={`৳${s.rate}`}
+                  // Only when the shop actually said which category this is.
+                  // "OTHER" on every card would be noise pretending to be
+                  // information.
+                  categoryLabel={
+                    isServiceCategory(s.category) ? SERVICE_CATEGORY_LABEL[category][language] : null
+                  }
                   selectable
                   selected={on}
                   onClick={() => onToggle(s.id)}

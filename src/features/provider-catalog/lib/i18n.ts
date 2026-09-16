@@ -190,6 +190,31 @@ export const providerCatalogDict = {
   noShopTitle: { bn: "আগে তোমার শপ সেট আপ করো", en: "Set up your shop first" },
   goToSettings: { bn: "সেটিংসে যাও →", en: "Go to settings →" },
   canPerformHeading: { bn: "কে কোন সার্ভিস করতে পারে", en: "Who can perform which service" },
+
+  // Service styles (20260929)
+  stylesHeading: { bn: "সার্ভিসের স্টাইল", en: "Service styles" },
+  stylesDesc: {
+    bn: "কোন সার্ভিসে তোমার দোকান কোন স্টাইলগুলো করে, বেছে দাও। কাস্টমার সিরিয়াল নেওয়ার সময় শুধু এগুলোই দেখবে — যে সার্ভিসে কিছু বাছা নেই, সেটা আগের মতোই চলবে।",
+    en: "Pick which styles your shop does for each service. A customer joining the queue sees only these — a service with none selected keeps working exactly as before.",
+  },
+  stylesCatalogueNote: {
+    bn: "স্টাইলের তালিকাটা পুরো প্ল্যাটফর্মের, তাই নামগুলো সব দোকানে এক থাকে — তুমি বেছে নাও কোনগুলো তোমার দোকান করে।",
+    en: "The style list is platform-wide so names stay consistent across shops — you choose which ones your shop does.",
+  },
+  stylesNoneChosen: { bn: "কোনো স্টাইল বাছা হয়নি", en: "No styles selected" },
+  stylesChosenCount: {
+    bn: (n: string) => `${n}টা স্টাইল`,
+    en: (n: string) => `${n} styles`,
+  },
+  stylesSaved: { bn: "স্টাইল সেভ হয়েছে", en: "Styles saved" },
+  stylesEmptyCatalogue: {
+    bn: "স্টাইলের তালিকা এখনো খালি — এডমিন যোগ করলে এখানে দেখা যাবে।",
+    en: "The style catalogue is empty — styles will appear here once an admin adds them.",
+  },
+  stylesNoServices: {
+    bn: "আগে সার্ভিস যোগ করো, তারপর প্রতিটার স্টাইল বেছে দিতে পারবে।",
+    en: "Add a service first, then you can choose its styles.",
+  },
   canPerformDesc: {
     bn: "এখানে কোনো সার্ভিস বন্ধ রাখলে সেটা ওই চেয়ারে কখনো অ্যাসাইন হবে না।",
     en: "Turning a service off here means it will never be assigned to that chair.",

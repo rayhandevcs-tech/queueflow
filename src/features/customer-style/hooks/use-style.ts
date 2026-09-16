@@ -9,7 +9,7 @@ import {
   getStylePick,
   saveStylePick,
   type StyleKind,
-  type StylePick,
+  type StylePickInput,
 } from "../api/style.api";
 import type { StyleAdvice } from "../lib/advice-schema";
 
@@ -106,7 +106,10 @@ export function useSaveStylePick(serialId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: Omit<StylePick, "serial_id">) =>
+    // `StylePickInput`, not `Omit<StylePick, "serial_id">`: reading a pick can
+    // return a null style (the catalogue row was withdrawn) but choosing one
+    // cannot, and the snapshot names are the trigger's to write, not ours.
+    mutationFn: (input: Omit<StylePickInput, "serial_id">) =>
       saveStylePick({ ...input, serial_id: serialId! }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: keys.stylePick.bySerial(serialId ?? "") }),

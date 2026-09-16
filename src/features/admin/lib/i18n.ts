@@ -604,4 +604,43 @@ export const adminDict = {
   saveNote: { bn: "নোট রাখো", en: "Save note" },
   changeStatusLabel: { bn: "অবস্থা", en: "Status" },
   staffLabel: { bn: "সাপোর্ট", en: "Support" },
+
+  // --- platform settings (20260928) ---------------------------------------
+  navSettings: { bn: "প্ল্যাটফর্ম সেটিংস", en: "Platform settings" },
+  settingsTitle: { bn: "প্ল্যাটফর্ম সেটিংস", en: "Platform settings" },
+  settingsSubtitle: {
+    bn: "পুরো প্ল্যাটফর্মের ডিফল্ট — কোনো নির্দিষ্ট দোকানের সেটিং নয়।",
+    en: "Platform-wide defaults — not any one shop's settings.",
+  },
+  loyaltyCardTitle: { bn: "লয়্যালটির ডিফল্ট হার", en: "Default loyalty rate" },
+  loyaltyCardBody: {
+    bn: "নতুন দোকান এই হার থেকে শুরু করবে। যে দোকান নিজের হার আগেই ঠিক করে নিয়েছে, তার কিছুই বদলাবে না — আর আগে দেওয়া কোনো পয়েন্টও আবার হিসাব হবে না।",
+    en: "A new shop starts at this rate. A shop that has already set its own keeps it — and no points already awarded are ever recalculated.",
+  },
+  loyaltyCurrentLabel: { bn: "এখনকার ডিফল্ট", en: "Current default" },
+  loyaltyRateLabel: { bn: "কত টাকায় ১ পয়েন্ট", en: "Taka per point" },
+  loyaltyRatePreview: {
+    bn: (n: string) => `৳${n} = ১ পয়েন্ট`,
+    en: (n: string) => `৳${n} = 1 point`,
+  },
+  loyaltyRateHelp: {
+    bn: `১ থেকে ${"১,০০,০০০"} এর মধ্যে একটা পূর্ণসংখ্যা।`,
+    en: "A whole number between 1 and 100,000.",
+  },
+  loyaltySave: { bn: "ডিফল্ট সেভ করো", en: "Save default" },
+  loyaltySaved: { bn: "ডিফল্ট হার সেভ হয়েছে", en: "Default rate saved" },
+  loyaltyErrRequired: { bn: "একটা সংখ্যা দাও", en: "Enter a number" },
+  loyaltyErrInteger: { bn: "পূর্ণসংখ্যা দাও — আধা টাকা হিসাব হয় না", en: "Whole numbers only" },
+  loyaltyErrRange: {
+    bn: "১ থেকে ১,০০,০০০ এর মধ্যে হতে হবে",
+    en: "Must be between 1 and 100,000",
+  },
+  loyaltyErrNotAllowed: {
+    bn: "এটা বদলানোর অনুমতি তোমার নেই — শুধু SUPER_ADMIN পারে।",
+    en: "You are not allowed to change this — SUPER_ADMIN only.",
+  },
+  loyaltyNoteHistorical: {
+    bn: "পুরনো হিসাব অপরিবর্তিত",
+    en: "History untouched",
+  },
 } satisfies Dict;

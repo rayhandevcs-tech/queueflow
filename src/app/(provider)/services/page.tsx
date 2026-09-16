@@ -5,12 +5,14 @@ import { Settings } from "lucide-react";
 import { useMyShop } from "@/features/provider-catalog/hooks/use-my-shop";
 import { ServicesManager } from "@/features/provider-catalog/components/ServicesManager";
 import { CanPerformMatrix } from "@/features/provider-catalog/components/CanPerformMatrix";
+import { ServiceStylesManager } from "@/features/provider-catalog/components/ServiceStylesManager";
 import { ShopSetupCard } from "@/features/provider-setup/components/ShopSetupCard";
 import { useServices } from "@/features/provider-catalog/hooks/use-services";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/lib/i18n";
+import { isAppointmentModel } from "@/lib/business-model";
 
 export default function ServicesPage() {
   const { data: shop, isPending } = useMyShop();
@@ -52,6 +54,15 @@ export default function ServicesPage() {
         <p className="mb-3 text-sm text-muted">{t("canPerformDesc")}</p>
         <CanPerformMatrix shopId={shop.id} />
       </div>
+
+      {/* Queue shops only, which is what the brief scoped: the style step
+          lives in the serial-taking flow, and a parlour's appointment sheet
+          has nothing to feed it. Decided through the business-model helper
+          rather than by comparing `business_type` here, so a third vertical
+          inherits the rule instead of needing this line edited. */}
+      {!isAppointmentModel(shop.business_type) && (
+        <ServiceStylesManager shopId={shop.id} services={services} />
+      )}
     </div>
   );
 }

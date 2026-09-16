@@ -304,3 +304,84 @@ export async function markArrived(serialId: string): Promise<void> {
     if (error) throw error;
   });
 }
+
+// ---------------------------------------------------------------------------
+// Style options for the services a customer has picked (20260929)
+// ---------------------------------------------------------------------------
+
+export interface ServiceStyleOption {
+  service_id: string;
+  hairstyle_id: string;
+  sort_order: number;
+  name_bn: string;
+  name_en: string;
+  reference_image_url: string | null;
+}
+
+/**
+ * The styles this shop offers for these services, in the shop's own order.
+ *
+ * Shop-specific by construction: `service_styles` rows belong to a service,
+ * and a service belongs to one shop, so asking for shop A's service ids can
+ * only ever return shop A's offerings. There is nothing to filter and nothing
+ * to get wrong.
+ *
+ * Returns `[]` for a service with no styles configured, which is the normal
+ * case for every service that existed before this feature — the caller treats
+ * an empty list as "do not ask", never as an error.
+ */
+export async function getServiceStyleOptions(
+  serviceIds: string[],
+): Promise<ServiceStyleOption[]> {
+  if (serviceIds.length === 0) return [];
+
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase
+    .from("service_styles")
+    .select("service_id, hairstyle_id, sort_order, hairstyles(name_bn, name_en, reference_image_url)")
+    .in("service_id", serviceIds)
+    .order("sort_order");
+
+  if (error) throw error;
+
+  type Joined = {
+    service_id: string;
+    hairstyle_id: string;
+    sort_order: number;
+    hairstyles: { name_bn: string; name_en: string; reference_image_url: string | null } | null;
+  };
+
+  return ((data ?? []) as unknown as Joined[])
+    // A row whose catalogue entry has gone is dropped rather than rendered
+    // nameless. It cannot normally happen — the delete cascades — but the
+    // alternative is a blank chip nobody can choose.
+    .filter((row) => row.hairstyles !== null)
+    .map((row) => ({
+      service_id: row.service_id,
+      hairstyle_id: row.hairstyle_id,
+      sort_order: row.sort_order,
+      name_bn: row.hairstyles!.name_bn,
+      name_en: row.hairstyles!.name_en,
+      reference_image_url: row.hairstyles!.reference_image_url,
+    }));
+}
+
+/**
+ * Record the style a customer asked for, against the serial they just took.
+ *
+ * Separate from `createBooking` on purpose. The booking is the thing that must
+ * not fail; a preference is a nicety on top of it. If this write is refused,
+ * the customer still has their place in the queue — see the caller, which
+ * swallows the error deliberately rather than rolling anything back.
+ *
+ * The name snapshot is not sent: a trigger fills it from the catalogue, so the
+ * stored name can never disagree with the stored id.
+ */
+export async function saveSerialStyle(serialId: string, hairstyleId: string): Promise<void> {
+  const supabase = getBrowserClient();
+  const { error } = await supabase
+    .from("serial_style_preferences")
+    .upsert({ serial_id: serialId, hairstyle_id: hairstyleId }, { onConflict: "serial_id" });
+
+  if (error) throw error;
+}

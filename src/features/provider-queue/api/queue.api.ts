@@ -141,7 +141,13 @@ export async function getQueueStylePicks(
   const supabase = getBrowserClient();
   const { data, error } = await supabase
     .from("serial_style_preferences")
-    .select("serial_id, note, hairstyles(name_bn, name_en, reference_image_url)")
+    // The snapshot columns come FIRST because they are the authority: since
+    // 20260929 each pick stores the style's name as it read when the customer
+    // chose it. The join is still worth doing for the reference photo, and as
+    // a fallback for rows written before the snapshot existed.
+    .select(
+      "serial_id, note, style_name_bn, style_name_en, hairstyles(name_bn, name_en, reference_image_url)",
+    )
     .in("serial_id", [...serialIds]);
 
   if (error) throw error;
@@ -150,13 +156,25 @@ export async function getQueueStylePicks(
   for (const row of data ?? []) {
     // The embed is typed as an array by supabase-js even for a to-one FK.
     const style = Array.isArray(row.hairstyles) ? row.hairstyles[0] : row.hairstyles;
-    if (!style) continue;
+
+    // What the customer asked for, in preference to what the catalogue calls
+    // it now. These differ exactly when the shop or an admin has changed the
+    // catalogue since — which is the case this is here to get right.
+    const nameBn = row.style_name_bn ?? style?.name_bn;
+    const nameEn = row.style_name_en ?? style?.name_en;
+
+    // No name from either source means a pre-snapshot row whose style has
+    // since been deleted. Nothing truthful left to show, so skip it rather
+    // than render a nameless chip.
+    if (!nameBn || !nameEn) continue;
+
     out.set(row.serial_id, {
       serialId: row.serial_id,
-      nameBn: style.name_bn,
-      nameEn: style.name_en,
+      nameBn,
+      nameEn,
       note: row.note,
-      referenceImageUrl: style.reference_image_url,
+      // Null when the style is gone: the name survives, the picture does not.
+      referenceImageUrl: style?.reference_image_url ?? null,
     });
   }
   return out;

@@ -5,16 +5,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  Clock3,
-  LocateFixed,
-  Minus,
-  Navigation,
-  Plus,
-  Star,
-  Users,
-} from "lucide-react";
+import { ArrowUpRight, Clock3, LocateFixed, MapPin, Minus, Navigation, Plus, ShieldCheck, Star, Users } from "lucide-react";
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
@@ -231,11 +222,14 @@ function ShopPopupCard({
   const photo = shop.cover_image_url ?? shop.logo_url;
 
   return (
-    <div className="w-72 overflow-hidden">
+    // 288px on a phone so it clears a 320px viewport with room either side,
+    // and wider once there is screen to spend — the photo and the name are
+    // what make this a preview rather than a tooltip.
+    <div className="w-72 overflow-hidden sm:w-80">
       {/* A photo band when the shop has one: it is the fastest way to know
           whether this is the place you meant. */}
       {photo ? (
-        <div className="relative h-28 w-full bg-soft">
+        <div className="relative h-32 w-full bg-soft">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photo} alt="" className="h-full w-full object-cover" />
           <span className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-ink/55 to-transparent" />
@@ -256,7 +250,7 @@ function ShopPopupCard({
         </div>
       ) : null}
 
-      <div className="p-3.5">
+      <div className="p-4">
         <div className="flex items-start gap-3">
           {!photo && (
             <div
@@ -271,16 +265,35 @@ function ShopPopupCard({
             <p className="truncate font-display text-[16px] leading-tight font-bold text-ink">
               {shop.name}
             </p>
-            <p className="mt-0.5 truncate text-[12px] text-muted">
-              {businessTypeT(shop.business_type)}
-              {shop.address ? ` · ${shop.address.split(",")[0].trim()}` : ""}
+            <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-muted">
+              <span className="shrink-0 font-semibold text-accent">
+                {businessTypeT(shop.business_type)}
+              </span>
+              {shop.women_only && (
+                <span className="flex shrink-0 items-center gap-0.5 font-semibold text-accent">
+                  <ShieldCheck className="h-3 w-3" />
+                  {t("womenOnlyBadge")}
+                </span>
+              )}
             </p>
+            {shop.address && (
+              <p className="mt-1 flex items-start gap-1 text-[12px] leading-snug text-muted">
+                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                {/* Two lines of a real address, not one truncated fragment.
+                    "Afroza Begum Road, Block F" tells you where you are
+                    going; "Afroza Begum Road…" does not. */}
+                <span className="line-clamp-2">{shop.address}</span>
+              </p>
+            )}
           </div>
 
           {rating && rating.review_count > 0 && (
             <span className="flex shrink-0 items-center gap-1 rounded-full bg-brass-soft px-2 py-1 text-[11px] font-bold text-brass">
               <Star className="h-3 w-3 fill-current" />
               <span className="font-number">{rating.avg_rating}</span>
+              <span className="font-number font-semibold opacity-70">
+                ({rating.review_count})
+              </span>
             </span>
           )}
         </div>
@@ -289,7 +302,7 @@ function ShopPopupCard({
             "০ / মিন" needed reading twice to become "no wait" — an icon and a
             whole phrase say it once. The wait leads and carries the colour,
             because it is the fact that decides whether to set off. */}
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <div className="mt-3.5 flex flex-wrap items-center gap-2">
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold",
@@ -334,7 +347,7 @@ function ShopPopupCard({
         )}
       </div>
 
-      <div className="flex gap-2 border-t border-line px-3.5 py-3">
+      <div className="flex gap-2 border-t border-line px-4 py-3.5">
         <Link
           href={`/explore/${shop.id}`}
           // The colours live in globals.css under .ss-map-cta, not here:

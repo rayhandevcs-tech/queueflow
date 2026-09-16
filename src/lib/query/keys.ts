@@ -183,6 +183,19 @@ export const keys = {
   stylePick: {
     bySerial: (serialId: string) => ["style-pick", serialId] as const,
   },
+  serviceStyles: {
+    /** The whole shop's offerings, for the provider's editor. */
+    byShop: (shopId: string) => ["service-styles", "shop", shopId] as const,
+    /**
+     * What a customer sees for the services they have selected. Keyed on the
+     * sorted id list so picking the same two services in either order hits one
+     * cache entry rather than two.
+     */
+    forServices: (serviceIds: string[]) =>
+      ["service-styles", "services", serviceIds.slice().sort()] as const,
+    /** The platform catalogue. Not shop-scoped — it is the same for everyone. */
+    catalogue: () => ["service-styles", "catalogue"] as const,
+  },
   ratingSummary: {
     all: () => ["rating-summary", "all"] as const,
   },
@@ -221,6 +234,12 @@ export const keys = {
     tickets: (filters: { status: string | null; search: string }) =>
       ["admin", "tickets", filters] as const,
     ticketCounts: () => ["admin", "ticket-counts"] as const,
+    /**
+     * Not admin-scoped in the key, because the value is not admin-only: the
+     * provider's loyalty form reads the same platform default to show what it
+     * is starting from. One key so both screens share one cache entry.
+     */
+    platformLoyaltyDefault: () => ["platform-settings", "loyalty-default"] as const,
   },
   support: {
     myTickets: () => ["support", "my-tickets"] as const,

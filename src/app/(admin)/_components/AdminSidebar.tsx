@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   LogOut,
   ScrollText,
+  SlidersHorizontal,
   Scissors,
   Store,
   Users,
@@ -38,6 +39,9 @@ const NAV = [
   { href: "/admin/team", label: "navTeam", icon: UsersRound, exact: false },
   { href: "/admin/styles", label: "navStyles", icon: Scissors, exact: false },
   { href: "/admin/audit", label: "navAudit", icon: ScrollText, exact: false },
+  // Platform-wide defaults. Last in the list because it is the least-visited
+  // and the most consequential — nothing here belongs to one shop.
+  { href: "/admin/settings", label: "navSettings", icon: SlidersHorizontal, exact: false },
 ] as const;
 
 export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {

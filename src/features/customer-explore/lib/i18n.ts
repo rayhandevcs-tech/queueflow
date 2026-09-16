@@ -113,15 +113,25 @@ export const customerExploreDict = {
   typeFilterAll: { bn: "সব", en: "All" },
   typeFilterSalon: { bn: "সেলুন", en: "Salon" },
   typeFilterParlour: { bn: "পার্লার", en: "Parlour" },
-  /** Shown once, under the filter row, when the list is ordered by a preference. */
-  preferenceOrderNoteSalon: {
-    bn: "তোমার পছন্দ অনুযায়ী সেলুনগুলো আগে দেখানো হচ্ছে — পার্লারও নিচে আছে।",
-    en: "Salons are listed first, the way you chose — parlours are below.",
+  /**
+   * Shown under the filter row while the customer's OWN preference is still
+   * deciding the view — that is, until they touch a chip themselves.
+   *
+   * The wording carries a job: the list is genuinely filtered now, not merely
+   * reordered, so this line has to say so AND say how to see everything.
+   * A default nobody can find their way out of is the failure mode here.
+   */
+  preferenceDefaultNoteSalon: {
+    bn: "তোমার পছন্দ অনুযায়ী সেলুন দেখানো হচ্ছে — পার্লার দেখতে “সব” চাপো।",
+    en: "Showing salons, the way you chose — tap “All” for parlours too.",
   },
-  preferenceOrderNoteParlour: {
-    bn: "তোমার পছন্দ অনুযায়ী পার্লারগুলো আগে দেখানো হচ্ছে — সেলুনও নিচে আছে।",
-    en: "Parlours are listed first, the way you chose — salons are below.",
+  preferenceDefaultNoteParlour: {
+    bn: "তোমার পছন্দ অনুযায়ী পার্লার দেখানো হচ্ছে — সেলুন দেখতে “সব” চাপো।",
+    en: "Showing parlours, the way you chose — tap “All” for salons too.",
   },
+  /** The nearby heading, named after whatever the list is actually showing. */
+  nearbySalonHeading: { bn: "আশেপাশের সেলুন", en: "Nearby salons" },
+  nearbyParlourHeading: { bn: "আশেপাশের পার্লার", en: "Nearby parlours" },
 
   // First-run intro (Sprint 32)
   introTitle: { bn: "কীভাবে কাজ করে", en: "How it works" },

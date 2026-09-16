@@ -28,12 +28,14 @@ import { useShopReviewsPublic } from "../hooks/use-shop-reviews-public";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { useMyActiveSerial, useShopQueuePublic } from "../hooks/use-my-serial";
 import { useCreateBooking, useCreateGroupBooking } from "../hooks/use-booking-mutations";
+import { saveSerialStyle } from "../api/booking.api";
 import { AdvancePaymentDialog } from "./AdvancePaymentDialog";
 import { AppointmentBookingSheet } from "./AppointmentBookingSheet";
 import { PartySection, type PartyGuest } from "./PartySection";
 import { ShopHero } from "./ShopHero";
 import { ShopQuickActions } from "./ShopQuickActions";
 import { ServicesTab } from "./ServicesTab";
+import { StylePicker } from "./StylePicker";
 import { StaffTab } from "./StaffTab";
 import { GalleryTab } from "./GalleryTab";
 import { ReviewsTab } from "./ReviewsTab";
@@ -131,6 +133,16 @@ export function ShopDetailView({
   );
 
   const selectedServiceIds = useMemo(() => [...selected], [selected]);
+  // Declared up here, with the other hooks, because the loading and
+  // not-found early returns are below — a hook after one of those runs on some
+  // renders and not others, which is what `rules-of-hooks` is for.
+  const serviceNameById = useMemo(
+    () => new Map((services ?? []).map((s) => [s.id, s.name])),
+    [services],
+  );
+  // The style the customer asked for, if the shop offers any for what they
+  // picked. Null is a normal, permanent answer — never a validation error.
+  const [styleId, setStyleId] = useState<string | null>(null);
   const { blockedByChairId } = useChairCapabilities(selectedServiceIds);
   const eligibleChairs = useMemo(() => {
     if (selectedServiceIds.length === 0) return [];
@@ -258,7 +270,18 @@ export function ShopDetailView({
         chairId: effectivePreferredChairId,
         travelMin,
       },
-      { onSuccess: onSuccess(advanceInfo ? t("advancePaidToast") : t("confirmedToast")) },
+      {
+        onSuccess: (serial) => {
+          // After the serial, never instead of it. A refused preference must
+          // not cost somebody their place in the queue, so this is fired and
+          // forgotten on purpose — the toast and the navigation below happen
+          // either way.
+          if (styleId && serial?.id) {
+            void saveSerialStyle(serial.id, styleId).catch(() => {});
+          }
+          onSuccess(advanceInfo ? t("advancePaidToast") : t("confirmedToast"))();
+        },
+      },
     );
   };
 
@@ -361,6 +384,19 @@ export function ShopDetailView({
             advance={advance}
             onAdvanceChange={setAdvance}
           />
+        )}
+        {/* Queue shops only, and only once something is selected: the styles
+            on offer depend on WHICH service, so there is nothing to ask before
+            then. Renders nothing at all if this shop configured none. */}
+        {tab === "services" && selected.size > 0 && !appointment && (
+          <div className="mt-4">
+            <StylePicker
+              serviceIds={selectedServiceIds}
+              serviceNameById={serviceNameById}
+              value={styleId}
+              onChange={setStyleId}
+            />
+          </div>
         )}
         {/* Parties are a queue idea — five people join one line. An
             appointment is one person in one slot. */}

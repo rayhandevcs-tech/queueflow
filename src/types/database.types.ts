@@ -968,20 +968,94 @@ export type Database = {
       serial_style_preferences: {
         Row: {
           serial_id: string;
-          hairstyle_id: string;
+          /**
+           * Nullable since 20260929, and the delete rule is now SET NULL
+           * rather than CASCADE: if an admin withdraws a style from the
+           * catalogue, the record that a customer once asked for it must not
+           * be deleted along with it.
+           */
+          hairstyle_id: string | null;
           note: string | null;
+          /**
+           * The style's name as it read when the customer chose it, filled by
+           * a trigger so no caller can forget. Read THIS for anything
+           * historical — the catalogue row it came from may since have been
+           * renamed or removed.
+           */
+          style_name_bn: string | null;
+          style_name_en: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           serial_id: string;
-          hairstyle_id: string;
+          hairstyle_id?: string | null;
           note?: string | null;
+          // Omit these: the trigger fills them from the catalogue. Passing
+          // them is allowed but pointless, and passing a name that disagrees
+          // with the id would be a lie the database cannot catch.
+          style_name_bn?: string | null;
+          style_name_en?: string | null;
         };
         Update: {
-          hairstyle_id?: string;
+          hairstyle_id?: string | null;
           note?: string | null;
         };
+        Relationships: [];
+      };
+      /**
+       * Which catalogue styles a shop offers for one of its services
+       * (20260929).
+       *
+       * There is deliberately no `shop_id` column: it would be derivable from
+       * `service_id` and therefore able to disagree with it. Isolation comes
+       * from the service's own shop, checked in the policies.
+       *
+       * The style vocabulary stays admin-owned in `hairstyles` — a shop
+       * chooses WHICH styles it does, not what they are called. See the head
+       * of 20260929 for why.
+       */
+      service_styles: {
+        Row: {
+          service_id: string;
+          hairstyle_id: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          service_id: string;
+          hairstyle_id: string;
+          sort_order?: number;
+        };
+        Update: {
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      /**
+       * One row, forever (20260928). Platform-wide defaults that an admin
+       * owns.
+       *
+       * `Insert` and `Update` are `never` on purpose: the table has a SELECT
+       * policy and no write policy at all, so the only way to change it is
+       * `admin_set_loyalty_default()`, which checks the caller's admin level
+       * itself. Typing them as `never` turns a direct write into a compile
+       * error rather than a silent RLS refusal.
+       */
+      platform_settings: {
+        Row: {
+          id: boolean;
+          /**
+           * The earning rate a NEW shop starts at — NOT an override. A shop
+           * that has configured its own `loyalty_settings.taka_per_point`
+           * keeps it, and nothing here touches a historical ledger row.
+           */
+          loyalty_taka_per_point: number;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       manual_entries: {
@@ -1882,6 +1956,16 @@ export type Database = {
       admin_set_shop_featured: {
         Args: { p_shop_id: string; p_featured: boolean };
         Returns: void;
+      };
+      /**
+       * SUPER_ADMIN only (20260928). Moves the platform DEFAULT earning rate
+       * and returns the value that stuck. Raises `not authorised` for anyone
+       * else — including a MODERATOR — and `taka_per_point out of range`
+       * outside 1..100000.
+       */
+      admin_set_loyalty_default: {
+        Args: { p_taka_per_point: number };
+        Returns: number;
       };
       is_user_blocked: {
         Args: { p_user_id: string };

@@ -114,7 +114,7 @@ export function StyleStudioView({ serialId }: { serialId?: string }) {
           advice={result}
           styleBySlug={byslug}
           onTryOn={setTryingOn}
-          selectedId={pick.data?.hairstyle_id}
+          selectedId={pick.data?.hairstyle_id ?? undefined}
         />
       )}
 

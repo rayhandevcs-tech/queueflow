@@ -46,7 +46,14 @@ const PARLOUR: TermSet = {
   venue: { bn: "পার্লার", en: "parlour" },
   // Not "লাইভ সিরিয়াল": a parlour has no line, so naming its home screen after
   // one would be the first thing to mislead a new owner.
-  board: { bn: "অ্যাপয়েন্টমেন্ট", en: "Appointments" },
+  //
+  // Nor plain "অ্যাপয়েন্টমেন্ট", which is what it used to say and which was a
+  // real bug: `/appointments` is ALSO labelled "অ্যাপয়েন্টমেন্ট", so a parlour
+  // owner saw the word twice, one line under the other, with no way to tell
+  // which was which. They are genuinely two different screens — `/dashboard`
+  // is today, `/appointments` is the whole register — so the fix is to name
+  // this one after the day it shows, matching the heading already on the page.
+  board: { bn: "আজকের সময়সূচি", en: "Today's schedule" },
 };
 
 /** UNISEX shops read as salons — that's the flow they actually run today. */

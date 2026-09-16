@@ -65,9 +65,9 @@ export function NowServingCard({
           setError(null);
           actions.cancel.mutate(serial.id, { onError: surface });
         }}
-        className="absolute top-4.5 right-4.5 text-accent-ink/30 hover:text-accent-ink/70"
+        className="absolute top-3 right-3 grid h-9 w-9 place-items-center rounded-full text-accent-ink/55 transition-colors hover:bg-accent-ink/15 hover:text-accent-ink"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4.5 w-4.5" />
       </button>
 
       <div className="mb-3.5 flex items-center gap-2 text-xs text-accent-ink/60">
@@ -110,31 +110,42 @@ export function NowServingCard({
           <div className="mt-2">
             <StylePickNote serialId={serial.id} tone="onAccent" />
           </div>
-          <p className="mt-4 font-number text-lg font-bold">৳{formatMoney(serial.total_amount)}</p>
+          <div className="mt-3.5 flex items-baseline gap-1.5">
+            <span className="text-[11px] font-semibold tracking-wide text-accent-ink/55 uppercase">
+              {t("billLabel")}
+            </span>
+            <span className="font-number text-[22px] leading-none font-bold">
+              ৳{formatMoney(serial.total_amount)}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 rounded-[16px] bg-accent-ink/10 p-3">
+        <p className="mb-2 text-[11px] font-semibold tracking-wide text-accent-ink/60 uppercase">
+          {t("extendGroupLabel")}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
         {!customExtend ? (
           <>
             <button
               type="button"
               onClick={() => extend(5)}
-              className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
+              className="min-h-9 rounded-full bg-accent-ink/20 px-3.5 text-xs font-bold text-accent-ink transition-colors hover:bg-accent-ink/30"
             >
-              +{toBanglaDigits(5)}
+              {t("extendMinutesSuffix", toBanglaDigits(5))}
             </button>
             <button
               type="button"
               onClick={() => extend(10)}
-              className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
+              className="min-h-9 rounded-full bg-accent-ink/20 px-3.5 text-xs font-bold text-accent-ink transition-colors hover:bg-accent-ink/30"
             >
-              +{toBanglaDigits(10)}
+              {t("extendMinutesSuffix", toBanglaDigits(10))}
             </button>
             <button
               type="button"
               onClick={() => setCustomExtend(true)}
-              className="rounded-full bg-accent-ink/15 px-3 py-1.5 text-xs font-semibold text-accent-ink"
+              className="min-h-9 rounded-full bg-accent-ink/20 px-3.5 text-xs font-bold text-accent-ink transition-colors hover:bg-accent-ink/30"
             >
               {t("extendCustomLabel")}
             </button>
@@ -148,7 +159,7 @@ export function NowServingCard({
               onChange={(e) => setCustomMin(e.target.value)}
               placeholder={t("extendCustomPlaceholder")}
               autoFocus
-              className="w-20 rounded-lg bg-accent-ink/15 px-2 py-1.5 text-xs font-semibold text-accent-ink outline-none placeholder:text-accent-ink/50"
+              className="min-h-9 w-24 rounded-lg bg-accent-ink/20 px-2.5 text-xs font-semibold text-accent-ink outline-none placeholder:text-accent-ink/50"
             />
             <button
               type="button"
@@ -157,7 +168,7 @@ export function NowServingCard({
                 setCustomExtend(false);
                 setCustomMin("");
               }}
-              className="rounded-full bg-accent-ink px-3 py-1.5 text-xs font-semibold text-accent"
+              className="min-h-9 rounded-full bg-accent-ink px-3.5 text-xs font-bold text-accent"
             >
               {t("extendConfirm")}
             </button>
@@ -167,26 +178,33 @@ export function NowServingCard({
                 setCustomExtend(false);
                 setCustomMin("");
               }}
-              className="text-xs font-semibold text-accent-ink/60"
+              className="min-h-9 px-2 text-xs font-semibold text-accent-ink/70 hover:text-accent-ink"
             >
               {t("extendCancel")}
             </button>
           </>
         )}
+        </div>
+        {serial.extended_min > 0 && (
+          <p className="mt-2 text-[11px] text-accent-ink/60">
+            {t("extendedByLabel", serial.extended_min)}
+          </p>
+        )}
       </div>
-      {serial.extended_min > 0 && (
-        <p className="mt-1.5 text-[11px] text-accent-ink/50">{t("extendedByLabel", serial.extended_min)}</p>
-      )}
 
       <button
         type="button"
         onClick={() => setPaymentOpen(true)}
-        className="mt-4.5 w-full rounded-[14px] bg-accent-ink py-3.5 font-display text-[15px] font-bold text-accent disabled:opacity-60"
+        className="mt-4 w-full rounded-[16px] bg-accent-ink py-4 font-display text-[16px] font-bold text-accent shadow-sm transition-opacity hover:opacity-95 disabled:opacity-60"
       >
         {t("jobDoneNext")}
       </button>
 
-      {error && <p className="mt-2 text-xs text-accent-ink">{error}</p>}
+      {error && (
+        <p className="mt-2 rounded-xl bg-accent-ink/15 px-3 py-2 text-xs font-semibold text-accent-ink">
+          {error}
+        </p>
+      )}
 
       {paymentOpen && (
         <PaymentConfirmSheet

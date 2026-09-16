@@ -791,3 +791,28 @@ export async function updateHairstyle(
   const { error } = await supabase.from("hairstyles").update(patch).eq("id", id);
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------------------
+// Platform settings — the default loyalty earning rate (20260928)
+// ---------------------------------------------------------------------------
+// The READ lives in `src/lib/platform-settings.ts`, not here: the provider's
+// own loyalty form needs the same number, and a feature may not import another
+// feature. Only the write is admin business, so only the write is here.
+
+/**
+ * Moves the platform default. SUPER_ADMIN only, enforced in SQL — the RPC
+ * checks the caller's admin level on its first line, so hiding this form from
+ * a moderator is presentation, not protection.
+ *
+ * Returns the value the database actually stored rather than the one that was
+ * asked for, so the UI can confirm what happened instead of what it hoped for.
+ */
+export async function setPlatformLoyaltyDefault(takaPerPoint: number): Promise<number> {
+  const supabase = getBrowserClient();
+  const { data, error } = await supabase.rpc("admin_set_loyalty_default", {
+    p_taka_per_point: takaPerPoint,
+  });
+
+  if (error) throw error;
+  return data;
+}

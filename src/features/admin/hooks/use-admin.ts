@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/lib/query/keys";
+import { usePlatformLoyaltyDefault } from "@/lib/platform-settings";
 import type {
   AdminLevel,
   AdminStatus,
@@ -12,6 +13,7 @@ import type {
 import {
   listRecentShops,
   listAuditFeed,
+  setPlatformLoyaltyDefault,
   amIPlatformAdmin,
   createAdmin,
   setAdminPassword,
@@ -385,5 +387,32 @@ export function useAuditFeed(action: string | null) {
   return useQuery({
     queryKey: keys.admin.auditFeed(action),
     queryFn: () => listAuditFeed(action),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Platform settings — the default loyalty earning rate
+// ---------------------------------------------------------------------------
+
+// Bounds and validation live in `@/lib/loyalty-rate` — shared with the
+// provider's own loyalty form, and unit-tested there.
+
+// Re-exported so the admin screens have one import for their data layer,
+// while the single implementation stays in shared code.
+export { usePlatformLoyaltyDefault };
+
+export function useSetPlatformLoyaltyDefault() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setPlatformLoyaltyDefault,
+    onSuccess: (stored) => {
+      // Seed the cache with what the DATABASE stored rather than what was
+      // typed. The two agree today; if a future constraint ever clamped a
+      // value, the screen should show the truth and not the request.
+      queryClient.setQueryData(keys.admin.platformLoyaltyDefault(), stored);
+      // Not `loyalty` anything: no shop's settings changed, so invalidating a
+      // shop's cache here would be a lie about what just happened.
+      void queryClient.invalidateQueries({ queryKey: keys.admin.auditFeed(null) });
+    },
   });
 }

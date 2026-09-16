@@ -154,7 +154,13 @@ ok(
 
 // ---------- TEST: 320px, every theme ----------
 for (const theme of THEMES) {
-  for (const path of ["/register", "/login", "/"]) {
+  // `/explore` joined this sweep in the polish sprint: it is public, and it is
+  // where the service-card grid, the shop rails and the map all live. Its data
+  // is empty under placeholder Supabase env, so what this proves is the
+  // LAYOUT — that none of the widened cards or the new address lines push the
+  // page sideways at 320px. What the cards look like with real shops in them
+  // still needs a session, and is reported as unverified.
+  for (const path of ["/register", "/login", "/", "/explore"]) {
     const { ctx, p } = await page(320, 700);
     await p.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
     await p.evaluate((t) => localStorage.setItem("smartsailor_theme", t), theme);

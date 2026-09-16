@@ -19,9 +19,25 @@ describe("term", () => {
     expect(term("chair", "PARLOUR", "en")).toBe("Seat");
   });
 
-  it("names the parlour's home screen after appointments, not a queue", () => {
-    expect(term("board", "PARLOUR", "bn")).toBe("অ্যাপয়েন্টমেন্ট");
-    expect(term("board", "PARLOUR", "en")).toBe("Appointments");
+  it("names the parlour's home screen after the day it shows, not a queue", () => {
+    expect(term("board", "PARLOUR", "bn")).toBe("আজকের সময়সূচি");
+    expect(term("board", "PARLOUR", "en")).toBe("Today's schedule");
+  });
+
+  // The bug this guards against was visible and confusing: the parlour
+  // sidebar showed "অ্যাপয়েন্টমেন্ট" twice, one line under the other, because
+  // `board` (which labels /dashboard) and the catalogue's `navAppointments`
+  // (which labels /appointments) had resolved to the same string. Two real
+  // screens, one name. Nothing failed — it just looked broken.
+  //
+  // Asserted as literals rather than by importing providerCatalogDict: this
+  // file is shared code, and shared may not import a feature (eslint
+  // boundaries). The values below are that dictionary's `navAppointments`.
+  it("**does not label the parlour's two nav items with the same word**", () => {
+    const navAppointments = { bn: "অ্যাপয়েন্টমেন্ট", en: "Appointments" };
+    for (const lang of ["bn", "en"] as const) {
+      expect(term("board", "PARLOUR", lang)).not.toBe(navAppointments[lang]);
+    }
   });
 
   // The provider sidebar's first item used to be a fixed `navLiveQueue` string
@@ -69,7 +85,7 @@ describe("useTerms", () => {
   it("returns a resolver bound to one shop's type and language", () => {
     const tt = useTerms("PARLOUR", "bn");
     expect(tt("chair")).toBe("সিট");
-    expect(tt("board")).toBe("অ্যাপয়েন্টমেন্ট");
+    expect(tt("board")).toBe("আজকের সময়সূচি");
   });
 
   it("agrees with term() for every key", () => {

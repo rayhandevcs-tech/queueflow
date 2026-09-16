@@ -119,3 +119,42 @@ export function sortByPreference<T extends { business_type?: string | null }>(
     })
     .map((entry) => entry.shop);
 }
+
+/** The three states of the explore type filter. Mirrors `BusinessTypeFilter`. */
+export type ExploreTypeFilter = "ALL" | CustomerPreference;
+
+/**
+ * What the explore list should be showing.
+ *
+ * Three inputs collapse into one answer, and the order of precedence is the
+ * whole point:
+ *
+ *   1. what the customer TAPPED, if they tapped anything — a person's own
+ *      choice outranks a preference they set months ago at signup
+ *   2. otherwise their preferred ecosystem, which is what makes a parlour
+ *      customer's home a parlour home
+ *   3. otherwise everything, which is what a legacy account with no
+ *      preference and every guest gets
+ *
+ * `choice === null` means "has not touched the chips", which is deliberately
+ * NOT the same as having chosen "ALL": the first is a default the preference
+ * may fill in, the second is an instruction it must not override.
+ *
+ * Pure, so the screen does not have to seed state from an async profile read
+ * inside an effect — it derives this on every render instead.
+ */
+export function effectiveTypeFilter(
+  choice: ExploreTypeFilter | null,
+  preference: StoredPreference,
+): ExploreTypeFilter {
+  if (choice) return choice;
+  return parsePreference(preference) ?? "ALL";
+}
+
+/** Is the view the preference's doing rather than the customer's own? */
+export function showingPreferenceDefault(
+  choice: ExploreTypeFilter | null,
+  preference: StoredPreference,
+): boolean {
+  return choice === null && parsePreference(preference) !== null;
+}

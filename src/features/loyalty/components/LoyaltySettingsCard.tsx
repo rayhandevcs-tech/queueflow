@@ -10,6 +10,7 @@ import { Field, Input } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
 import { toBanglaDigits } from "@/lib/format-wait";
 import { useLanguage, useT } from "@/lib/i18n";
+import { usePlatformLoyaltyDefault } from "@/lib/platform-settings";
 import { loyaltyDict } from "../lib/i18n";
 import { DEFAULT_TAKA_PER_POINT, isLoyaltyLive, previewEarn } from "../lib/loyalty";
 import {
@@ -42,12 +43,21 @@ export function LoyaltySettingsCard({
   const t = useT(loyaltyDict);
   const [editing, setEditing] = useState(false);
 
+  // What a shop that has never configured loyalty should START from. Since
+  // 20260928 that is a platform setting an admin owns, not a constant compiled
+  // into the bundle — so a shop opening this form for the first time sees the
+  // current policy rather than last year's. `DEFAULT_TAKA_PER_POINT` remains
+  // the fallback for a failed read, and remains what the database's own fill
+  // trigger falls back to, so the two can never disagree about the fallback.
+  const { data: platformDefault } = usePlatformLoyaltyDefault();
+  const startingRate = platformDefault ?? DEFAULT_TAKA_PER_POINT;
+
   const schema = useMemo(() => loyaltySettingsSchema(language), [language]);
   const form = useForm<LoyaltySettingsFormValues, unknown, LoyaltySettingsFormOutput>({
     resolver: zodResolver(schema),
     defaultValues: {
       is_enabled: settings?.is_enabled ?? false,
-      taka_per_point: settings?.taka_per_point ?? DEFAULT_TAKA_PER_POINT,
+      taka_per_point: settings?.taka_per_point ?? startingRate,
       min_bill_taka: settings?.min_bill_taka ?? 0,
     },
   });
@@ -85,7 +95,7 @@ export function LoyaltySettingsCard({
             onChange={(next) =>
               onSubmit({
                 is_enabled: next,
-                taka_per_point: settings?.taka_per_point ?? DEFAULT_TAKA_PER_POINT,
+                taka_per_point: settings?.taka_per_point ?? startingRate,
                 min_bill_taka: settings?.min_bill_taka ?? 0,
               })
             }
@@ -95,7 +105,7 @@ export function LoyaltySettingsCard({
         {live ? (
           <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink">
             <span className="rounded-full bg-soft px-3 py-1 font-semibold">
-              {t("currentRule", num(settings?.taka_per_point ?? DEFAULT_TAKA_PER_POINT))}
+              {t("currentRule", num(settings?.taka_per_point ?? startingRate))}
             </span>
             <span className="rounded-full bg-soft px-3 py-1 text-muted">
               {(settings?.min_bill_taka ?? 0) > 0

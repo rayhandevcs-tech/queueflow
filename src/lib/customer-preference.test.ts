@@ -8,6 +8,8 @@ import {
   shopMatchesPreference,
   sortByPreference,
   type CustomerPreference,
+  effectiveTypeFilter,
+  showingPreferenceDefault,
 } from "./customer-preference";
 
 describe("parsePreference", () => {
@@ -175,5 +177,55 @@ describe("sortByPreference — a default, not a filter", () => {
   it("handles an empty list and a shop with no type", () => {
     expect(sortByPreference([], "SALON")).toEqual([]);
     expect(sortByPreference([{ id: "x", business_type: null }], "SALON")).toHaveLength(1);
+  });
+});
+
+describe("the explore list opens on the customer's own ecosystem", () => {
+  it("**a parlour customer's home shows parlours by default**", () => {
+    expect(effectiveTypeFilter(null, "PARLOUR")).toBe("PARLOUR");
+  });
+
+  it("**a salon customer's home shows salons by default**", () => {
+    expect(effectiveTypeFilter(null, "SALON")).toBe("SALON");
+  });
+
+  it("a legacy account with no preference still gets everything", () => {
+    expect(effectiveTypeFilter(null, null)).toBe("ALL");
+    expect(effectiveTypeFilter(null, undefined)).toBe("ALL");
+  });
+
+  it("junk in the column does not change the view", () => {
+    // Cast the way the rest of this file does: these are values the column's
+    // CHECK constraint forbids, so the type is right to reject them — but the
+    // function still has to cope if one ever arrives.
+    const junk = (v: string) => v as unknown as CustomerPreference;
+    expect(effectiveTypeFilter(null, junk("UNISEX"))).toBe("ALL");
+    expect(effectiveTypeFilter(null, junk("salon"))).toBe("ALL");
+    expect(effectiveTypeFilter(null, junk(""))).toBe("ALL");
+  });
+
+  it("**a tap always beats a preference**", () => {
+    // The whole point of keeping "untouched" distinct from "chose ALL".
+    expect(effectiveTypeFilter("ALL", "PARLOUR")).toBe("ALL");
+    expect(effectiveTypeFilter("SALON", "PARLOUR")).toBe("SALON");
+    expect(effectiveTypeFilter("PARLOUR", "SALON")).toBe("PARLOUR");
+  });
+
+  it("**cross-type discovery stays one tap away, never removed**", () => {
+    // A parlour customer who asks for salons gets salons. If this ever fails,
+    // the preference has stopped being a default and become a restriction.
+    expect(effectiveTypeFilter("SALON", "PARLOUR")).toBe("SALON");
+    expect(effectiveTypeFilter("ALL", "SALON")).toBe("ALL");
+  });
+
+  it("says when the preference is the one deciding, so the UI can explain itself", () => {
+    expect(showingPreferenceDefault(null, "PARLOUR")).toBe(true);
+    expect(showingPreferenceDefault(null, "SALON")).toBe(true);
+    // Touched: the customer is driving, so there is nothing to explain.
+    expect(showingPreferenceDefault("ALL", "PARLOUR")).toBe(false);
+    expect(showingPreferenceDefault("PARLOUR", "PARLOUR")).toBe(false);
+    // No preference to attribute it to.
+    expect(showingPreferenceDefault(null, null)).toBe(false);
+    expect(showingPreferenceDefault(null, "UNISEX" as unknown as CustomerPreference)).toBe(false);
   });
 });

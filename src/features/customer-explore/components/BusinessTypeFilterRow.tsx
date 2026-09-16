@@ -11,22 +11,32 @@ export type BusinessTypeFilter = "ALL" | "SALON" | "PARLOUR";
 /**
  * Salon / parlour / everything, as three chips with counts.
  *
- * It opens on **everything**, always — even for a customer who told us at
- * signup that they came for a parlour. That is deliberate and it is the line
- * this sprint was careful about: the preference decides what a customer sees
- * *first* (parlours are sorted to the top of the list below, the bookings page
- * leads with appointments, the nav says "Appointments"), and it must never
- * decide what exists. A tab pre-selected to "Parlour" would have hidden every
- * salon behind a control most people never touch, and "I also want a haircut"
- * would have looked like the wrong account.
+ * ---------------------------------------------------------------------------
+ * It now OPENS on the customer's own preference. This reverses Sprint 11.
+ * ---------------------------------------------------------------------------
+ * Sprint 11 deliberately opened this on "everything", even for a customer who
+ * had said at signup that they came for a parlour, on the grounds that a
+ * pre-selected tab would hide every salon behind a control most people never
+ * touch. The polish sprint that followed reversed it on purpose: a parlour
+ * customer was getting a home page indistinguishable from a salon customer's,
+ * which made answering the question at signup feel pointless.
  *
- * So: ordering follows the preference, filtering follows the tap. The counts
- * are there so the chips are honest about what switching would show — a
- * "Parlour (0)" chip tells you not to bother.
+ * So the preference now decides the opening view, and the original worry is
+ * answered directly rather than by refusing the feature:
  *
- * A row rather than a dropdown, and it wraps rather than scrolls: three short
- * chips fit a 320px screen on one line, and anything hidden behind a scroll
- * edge on a filter bar might as well not exist.
+ *   · "All" is one tap away and always present, with a live count on it, so
+ *     the other ecosystem is visibly there rather than merely reachable.
+ *   · While the preference is what is deciding, the caller prints a line that
+ *     says so and says how to see everything. A default you cannot find your
+ *     way out of is the actual failure mode.
+ *   · The moment the customer taps any chip, their tap wins for the rest of
+ *     the session — the preference never overrides a person's own choice.
+ *
+ * What has NOT changed is the part that was never negotiable: this is a view
+ * filter and nothing else. No query is scoped by it, no RLS policy reads
+ * `preferred_business_type`, and every shop on the platform stays reachable by
+ * search, by the map, by a link and by this row. Preference is a default, not
+ * a permission.
  */
 export function BusinessTypeFilterRow({
   value,

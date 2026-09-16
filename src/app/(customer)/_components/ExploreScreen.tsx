@@ -34,7 +34,11 @@ import {
 } from "@/features/customer-explore/components/FilterSheet";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { usePreferredExperience } from "@/features/account/hooks/use-preferred-experience";
-import { sortByPreference } from "@/lib/customer-preference";
+import {
+  effectiveTypeFilter,
+  showingPreferenceDefault,
+  sortByPreference,
+} from "@/lib/customer-preference";
 import { distanceKm as computeDistanceKm } from "@/lib/geo";
 import type { ServiceCategory } from "@/config/constants";
 import { useT } from "@/lib/i18n";
@@ -61,12 +65,18 @@ export function ExploreScreen() {
   const { byShopId: ratingByShopId } = useShopRatings();
   const { categoriesByShopId, serviceNamesByShopId, presentCategories } = useServiceCategories();
 
-  // The customer's own default, which here changes the ORDER of the list and
-  // nothing else — see BusinessTypeFilterRow for why it is deliberately not a
-  // pre-selected filter.
   const { preference } = usePreferredExperience();
 
-  const [typeFilter, setTypeFilter] = useState<BusinessTypeFilter>("ALL");
+  // `null` means "the customer has not touched the chips", which is different
+  // from them having chosen "All" — and the difference matters, because the
+  // preference should decide the view right up until they say otherwise and
+  // never again after. Deriving the effective filter instead of seeding state
+  // from `preference` also avoids the effect that would otherwise be needed
+  // to wait for the profile to load (and which `react-hooks/set-state-in-effect`
+  // would rightly complain about).
+  const [typeChoice, setTypeChoice] = useState<BusinessTypeFilter | null>(null);
+  const typeFilter: BusinessTypeFilter = effectiveTypeFilter(typeChoice, preference);
+  const preferenceIsDeciding = showingPreferenceDefault(typeChoice, preference);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ServiceCategory | null>(null);
   const [filters, setFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
@@ -166,6 +176,12 @@ export function ExploreScreen() {
     distanceKm,
   ]);
 
+  // Used by the rails below, which are not subject to the type filter.
+  const preferenceOrdered = useMemo(
+    () => sortByPreference(shops ?? [], preference),
+    [shops, preference],
+  );
+
   return (
     <div className="animate-fade-up">
       {/* The welcome panel that used to sit here — greeting, headline,
@@ -216,14 +232,14 @@ export function ExploreScreen() {
       <div className="mb-3">
         <BusinessTypeFilterRow
           value={typeFilter}
-          onChange={setTypeFilter}
+          onChange={setTypeChoice}
           counts={typeCounts}
         />
-        {preference && typeFilter === "ALL" && (
+        {preferenceIsDeciding && (
           <p className="mt-2 text-[11px] leading-snug text-muted">
             {preference === "PARLOUR"
-              ? t("preferenceOrderNoteParlour")
-              : t("preferenceOrderNoteSalon")}
+              ? t("preferenceDefaultNoteParlour")
+              : t("preferenceDefaultNoteSalon")}
           </p>
         )}
       </div>
@@ -246,7 +262,14 @@ export function ExploreScreen() {
       />
 
       <p className="mb-3 text-[13px] font-semibold tracking-wide text-muted uppercase">
-        {t("nearbyShopsHeading")}
+        {/* Named after what the list is actually showing. "Nearby shops" over
+            a list of only parlours is a small lie that makes the filter above
+            look broken. */}
+        {typeFilter === "SALON"
+          ? t("nearbySalonHeading")
+          : typeFilter === "PARLOUR"
+            ? t("nearbyParlourHeading")
+            : t("nearbyShopsHeading")}
       </p>
 
       <ExploreView
@@ -267,10 +290,18 @@ export function ExploreScreen() {
             <StyleStudioBanner />
           </div>
         )}
-        <TopRatedSection shops={shops} ratingByShopId={ratingByShopId} waitMin={waitMin} />
+        {/* The rails stay cross-type — a great parlour is worth seeing even if
+            you came for a haircut — but they LEAD with the customer's own
+            ecosystem. `sortByPreference` reorders and provably drops nothing,
+            so this changes which card is first and not which cards exist. */}
+        <TopRatedSection
+          shops={preferenceOrdered}
+          ratingByShopId={ratingByShopId}
+          waitMin={waitMin}
+        />
         {signedIn && (
           <FavouriteShopsSection
-            shops={shops}
+            shops={preferenceOrdered}
             ratingByShopId={ratingByShopId}
             waitMin={waitMin}
           />

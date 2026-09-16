@@ -97,6 +97,14 @@ export const customerBookingDict = {
   confirmedToast: { bn: "✅ সিরিয়াল কনফার্ম হলো", en: "✅ Serial confirmed" },
 
   // ServicesTab
+  // Style picking during a queue booking (20260929)
+  chooseStyleLabel: { bn: "স্টাইল বেছে নাও", en: "Choose a style" },
+  chooseStyleOptional: { bn: "ইচ্ছা হলে", en: "Optional" },
+  chooseStyleHint: {
+    bn: "দোকান এই সার্ভিসে যেগুলো করে। না বাছলেও সিরিয়াল নেওয়া যাবে।",
+    en: "What this shop does for this service. You can join the queue without choosing.",
+  },
+  styleClear: { bn: "বাছাই মুছে দাও", en: "Clear" },
   chooseServicesLabel: { bn: "সার্ভিস বেছে নাও", en: "Choose services" },
   noServicesAtShop: {
     bn: "এই দোকানে এখনো কোনো সার্ভিস যোগ করা হয়নি।",
