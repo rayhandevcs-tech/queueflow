@@ -351,6 +351,15 @@ function appointmentAction(overrides: Record<string, unknown> = {}): ConfirmedAc
     staffId: STAFF.id,
     startsAt: SLOT_START,
     rewardId: null,
+    // Sprint 5's campaign fields, null for every Sprint 4 action. Spelled out
+    // rather than left off: `ConfirmedAction` requires them, and a cast that
+    // omitted them would stop this fixture from failing if the executor ever
+    // started reading one.
+    campaignSegment: null,
+    campaignSince: null,
+    campaignRecipients: null,
+    campaignTitle: null,
+    campaignBody: null,
     display: null,
     ...overrides,
   } as ConfirmedAction;
@@ -365,6 +374,11 @@ function rewardAction(overrides: Record<string, unknown> = {}): ConfirmedAction 
     staffId: null,
     startsAt: null,
     rewardId: REWARD.id,
+    campaignSegment: null,
+    campaignSince: null,
+    campaignRecipients: null,
+    campaignTitle: null,
+    campaignBody: null,
     display: null,
     ...overrides,
   } as ConfirmedAction;
@@ -448,16 +462,28 @@ describe("the generic loop remains read-only", () => {
     expect(source).toContain("switch (actionType)");
     expect(source).toContain("default:");
     expect(source).toContain("return null");
-    // Three cases, no more. A fourth would mean an action type gained an
+    // Four cases, no more. A fifth would mean an action type gained an
     // executor without anybody deciding it should.
-    expect(source.match(/case AI_ACTION_/g) ?? []).toHaveLength(3);
+    //
+    // Was three until AI Sprint 5 added SEND_CAMPAIGN. The number is the whole
+    // assertion, so it moves when the enum does — what must not move is the
+    // `default:` below it.
+    expect(source.match(/case AI_ACTION_/g) ?? []).toHaveLength(4);
   });
 
   it("**an unknown action type gets no executor at all**", () => {
+    // SEND_CAMPAIGN was in this list until AI Sprint 5, when it became a real
+    // action with a real confirmed path — so the assertion it was making has
+    // become FALSE and is recorded as such rather than quietly dropped. The
+    // ones left are the types this product has deliberately never built:
+    // cancellation, rescheduling, and the three campaign shapes Sprint 5's
+    // brief forbids by name.
     for (const bogus of [
       "CANCEL_APPOINTMENT",
       "RESCHEDULE_APPOINTMENT",
-      "SEND_CAMPAIGN",
+      "AUTO_SEND",
+      "SCHEDULE_CAMPAIGN",
+      "BULK_MESSAGE",
       "DROP TABLE",
       "",
     ]) {
@@ -473,13 +499,31 @@ describe("the generic loop remains read-only", () => {
       "utf8",
     );
     // No body field selects an action, a function or a table.
+    //
+    // Asserted on the FIELD NAMES rather than on the text, and the change is
+    // worth recording: the text scan matched its own explanation. Sprint 5
+    // added a doc comment inside this schema containing the word "writable",
+    // which contains "table", so a scan looking for a forbidden `table` field
+    // failed on prose describing why there is no such field. That is the third
+    // time a prose deny-list in this suite has matched the prose forbidding the
+    // thing — the lesson, now applied for good, is that a deny-list belongs
+    // against names.
     const body = routes.slice(routes.indexOf("const BodySchema"));
-    const schema = body.slice(0, body.indexOf("});"));
-    expect(schema).toContain("actionId");
-    expect(schema).toContain("nonce");
-    for (const field of ["actionType", "action:", "shopId", "serviceIds", "rewardId", "staffId", "startsAt", "fn", "table"]) {
-      expect(schema, `body accepts ${field}`).not.toContain(field);
-    }
+    const schema = body.slice(0, body.indexOf("\n});"));
+    const fields = [...schema.matchAll(/^ {2}([a-zA-Z_][a-zA-Z0-9_]*):/gm)].map(
+      (m) => m[1],
+    );
+
+    // A sanity check first, so a regex that silently matched nothing cannot
+    // make the assertions below vacuous.
+    expect(fields.length).toBeGreaterThan(0);
+
+    // Exactly three, and the third is the owner's edited wording — a title and
+    // a body, which select nothing. There is no field for a shop, a segment,
+    // an audience, a customer, a count, an action type, a function or a table,
+    // and that is what makes the branch come from a column rather than from
+    // the request.
+    expect(fields.sort()).toEqual(["actionId", "campaign", "nonce"]);
   });
 });
 
@@ -1672,7 +1716,9 @@ describe("the proposal row", () => {
     expect(persist).toContain("switch (proposal.action)");
     expect(persist).toContain("default:");
     expect(persist).toContain("return null");
-    expect(persist.match(/case AI_ACTION_/g) ?? []).toHaveLength(3);
+    // Four since Sprint 5's SEND_CAMPAIGN. Same reasoning as the executor
+    // dispatch: the count moves with the enum, the refusing default does not.
+    expect(persist.match(/case AI_ACTION_/g) ?? []).toHaveLength(4);
   });
 
   it("**a redemption proposal carries no services and an appointment no reward**", () => {
@@ -1815,8 +1861,36 @@ describe("the proposal row", () => {
     }
   });
 
-  it("**owners get no ledger, so they cannot propose a customer action**", () => {
-    expect(agentRoute).toContain('role === "customer" ? new DiscoveryLedger() : undefined');
+  it("**an owner still cannot propose a CUSTOMER action — the registry is what stops them**", () => {
+    // This test asserted the opposite until AI Sprint 5, and the thing it
+    // asserted has become FALSE: the route used to build a ledger only for a
+    // customer, and now both roles get one, because an owner's retention
+    // campaign is subject to the same offered-ids rule.
+    //
+    // What was never true is the REASON the old test gave. The ledger was
+    // never what separated the roles — the registry is, and it still is. So
+    // the guarantee is re-asserted here directly instead of through a proxy
+    // that has stopped holding.
+    const ownerTools = toolsForRole("owner").map((tool) => tool.name);
+    const customerTools = toolsForRole("customer").map((tool) => tool.name);
+
+    for (const customerOnly of [
+      "prepare_join_queue",
+      "prepare_book_appointment",
+      "prepare_redeem_reward",
+      "get_my_rewards",
+    ]) {
+      expect(ownerTools, customerOnly).not.toContain(customerOnly);
+    }
+    for (const ownerOnly of [
+      "get_customer_segments",
+      "get_segment_customers",
+      "get_segment_insights",
+      "prepare_campaign",
+      "prepare_campaign_send",
+    ]) {
+      expect(customerTools, ownerOnly).not.toContain(ownerOnly);
+    }
   });
 
   it("**A-11 expiry is checked in the claim, against the server's clock**", () => {

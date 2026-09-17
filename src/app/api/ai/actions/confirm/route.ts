@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { ProposalError, type AiProposalDraft, type ProposalRefusal } from "@/lib/ai/proposals";
+import {
+  AI_ACTION_SEND_CAMPAIGN,
+  ProposalError,
+  type AiProposalDraft,
+  type ProposalRefusal,
+} from "@/lib/ai/proposals";
+import {
+  CAMPAIGN_BODY_MAX,
+  CAMPAIGN_TITLE_MAX,
+  campaignShapeProblem,
+} from "@/lib/campaign-content";
 import { executorFor, type ActionOutcome, type ConfirmedAction } from "@/lib/ai/actions";
 import type { ToolContext } from "@/lib/ai/types";
 
@@ -114,6 +124,43 @@ const BodySchema = z.object({
    * factor, proving the caller read the row rather than guessed its id.
    */
   nonce: z.string().min(16).max(MAX_NONCE),
+  /**
+   * AI Sprint 5. The owner's edited campaign wording, if they changed it.
+   *
+   * ---------------------------------------------------------------------
+   * The only field in this body that is not an identifier, and why that is
+   * still safe
+   * ---------------------------------------------------------------------
+   * §13 requires that the owner be able to rewrite the message before
+   * approving it, and that "the edited text becomes the actual text to be
+   * sent". So one content field had to become writable at confirm time. What
+   * matters is what did NOT become writable, and the list is enforced by
+   * absence rather than by validation — there is no field here for a shop, a
+   * segment, a recipient, a customer, a count or an action type, so §13's
+   * "do not allow editing shop_id / recipient segment ownership / arbitrary
+   * customer IDs / action type" is not a rule this handler follows, it is a
+   * shape the request cannot express.
+   *
+   * It is also not the model's text. The model's draft is frozen in
+   * `display`; this arrives from a textarea a person typed into. That
+   * distinction is why it is not held to the invented-offer check: an owner
+   * may promise a discount they have not yet configured, because they are the
+   * business (§9's "or explicitly owner-provided text").
+   *
+   * And it does not reach the send directly. It is written to the row by
+   * `ai_action_apply_campaign_edit()` — CONFIRMED rows only, own rows only,
+   * SEND_CAMPAIGN only — and the executor then reads the content back OFF the
+   * row. So the text that goes out and the text in the audit trail are the
+   * same string by construction, not by two code paths agreeing.
+   *
+   * Ignored entirely for the other three action types.
+   */
+  campaign: z
+    .object({
+      title: z.string().min(1).max(CAMPAIGN_TITLE_MAX),
+      body: z.string().min(1).max(CAMPAIGN_BODY_MAX),
+    })
+    .optional(),
 });
 
 /** What the UI is told. A closed vocabulary, never a database message. */
@@ -180,6 +227,30 @@ export const REFUSAL_MESSAGES: Record<ProposalRefusal, string> = {
   INSUFFICIENT_POINTS: "এই দোকানে তোমার পয়েন্ট যথেষ্ট নেই।",
   NO_LOYALTY_ACCOUNT: "এই দোকানে তোমার এখনো কোনো পয়েন্ট জমেনি।",
   REDEMPTION_REFUSED: "রিওয়ার্ডটা নেওয়া গেল না।",
+
+  // --- SEND_CAMPAIGN (owner) ------------------------------------------------
+  NOT_SHOP_OWNER: "এটা তোমার দোকান নয়।",
+  SEGMENT_NOT_OFFERED: "গ্রুপটা তালিকায় ছিল না — আবার দেখে নাও।",
+  SEGMENT_UNKNOWN: "এই নামে কোনো কাস্টমার গ্রুপ নেই।",
+  NOT_ENOUGH_HISTORY:
+    "নির্ভরযোগ্য গ্রুপ বানানোর মতো যথেষ্ট সার্ভিসের রেকর্ড এখনো জমেনি।",
+  SEGMENT_EMPTY: "এই গ্রুপে এখন কেউ নেই।",
+  SEGMENT_TOO_SMALL:
+    "এত কম লোককে ব্রডকাস্ট পাঠানো যায় না — তাঁদের সাথে সরাসরি কথা বলো।",
+  SEGMENT_TOO_LARGE: "একবারে এত জনকে পাঠানো যায় না — গ্রুপটা ছোট করো।",
+  WINDOW_INVALID: "সময়ের হিসাবটা ঠিক নেই — আরেকবার জিজ্ঞেস করো।",
+  // The refusal an owner is most likely to actually meet, so it says what
+  // happened AND what to do, rather than only that something was refused.
+  SEGMENT_CHANGED:
+    "কারা পাবে সেই তালিকাটা এর মধ্যে বদলে গেছে — পুরনো তালিকায় পাঠানো হলো না। আরেকবার জিজ্ঞেস করে নতুন তালিকা দেখো।",
+  CAMPAIGN_CONTENT_INVALID: "বার্তাটা ঠিক নেই — লেখাটা দেখে আবার চেষ্টা করো।",
+  CAMPAIGN_INVENTS_OFFER:
+    "বার্তায় এমন ছাড় বা দামের কথা আছে যা দোকানে সেট করা নেই — অফারটা আগে তৈরি করো, নয়তো লেখা থেকে ওই সংখ্যাটা বাদ দাও।",
+  BROADCAST_LIMIT_REACHED:
+    "আজকে একবার প্রোমো পাঠানো হয়ে গেছে — আগামীকাল আবার চেষ্টা করো।",
+  RECIPIENT_NOT_A_CUSTOMER:
+    "তালিকায় এমন কেউ আছে যিনি এই দোকানের কাস্টমার নন — পাঠানো হলো না।",
+  CAMPAIGN_REFUSED: "ক্যাম্পেইনটা পাঠানো গেল না।",
 };
 
 function refuse(code: ProposalRefusal, status = 409, message?: string) {
@@ -221,6 +292,11 @@ type ClaimedRow = {
   staff_id: string | null;
   starts_at: string | null;
   reward_id: string | null;
+  campaign_segment?: string | null;
+  campaign_since?: string | null;
+  campaign_recipients?: string[] | null;
+  campaign_title?: string | null;
+  campaign_body?: string | null;
   display: unknown;
 };
 
@@ -233,6 +309,15 @@ function toConfirmedAction(row: ClaimedRow, shopId: string): ConfirmedAction {
     staffId: row.staff_id,
     startsAt: row.starts_at,
     rewardId: row.reward_id,
+    // The campaign's audience and words, off the row. The snapshot is
+    // server-written state and the content is whatever the row currently
+    // holds — which, if the owner edited it, is their version rather than the
+    // model's, because the edit was applied to the row before this ran.
+    campaignSegment: row.campaign_segment ?? null,
+    campaignSince: row.campaign_since ?? null,
+    campaignRecipients: row.campaign_recipients ?? null,
+    campaignTitle: row.campaign_title ?? null,
+    campaignBody: row.campaign_body ?? null,
     // The stored snapshot, used only for the changed-terms comparison. The
     // shape was written by this server from a verified draft, but it is still
     // treated as data: each executor checks `display.action` matches its own
@@ -246,7 +331,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ ok: false, code: "NOT_FOUND" }, { status: 400 });
   }
-  const { actionId, nonce } = parsed.data;
+  const { actionId, nonce, campaign } = parsed.data;
 
   const supabase = await createServerSupabase();
   const {
@@ -256,6 +341,25 @@ export async function POST(request: Request) {
   // discover whether a proposal id is real.
   if (!user) {
     return NextResponse.json({ ok: false, code: "NOT_FOUND" }, { status: 401 });
+  }
+
+  // The owner's edit is shape-checked here: AFTER authentication, because this
+  // route's first promise is a 401 before anything else happens, and BEFORE
+  // the claim, because a title of eighty spaces should be refused while the
+  // proposal is still confirmable rather than after it has been spent.
+  //
+  // It sat above `auth.getUser()` for one revision, which a runtime probe
+  // caught: an unauthenticated caller got CAMPAIGN_CONTENT_INVALID instead of
+  // a 401. Nothing leaked — the check is about text the caller themselves
+  // submitted — but a route whose documented order is "401 first" should keep
+  // that promise rather than have an exception nobody remembers.
+  //
+  // Shape and length only. NOT an offer check: an owner may promise a discount
+  // they have not yet configured, because they are the business (§9's "or
+  // explicitly owner-provided text"). The invented-offer guard applies to what
+  // the MODEL drafted, and it ran at propose time.
+  if (campaign && campaignShapeProblem(campaign.title, campaign.body)) {
+    return refuse("CAMPAIGN_CONTENT_INVALID", 400);
   }
 
   // Everything downstream runs on this: the cookie-bound client, so RLS is
@@ -326,11 +430,42 @@ export async function POST(request: Request) {
   }
 
   // ---------------------------------------------------------------------
-  // 3) Revalidate against live state, then perform the ONE write
+  // 3) Apply the owner's edit, if this is a campaign and they made one
+  // ---------------------------------------------------------------------
+  // Between the claim and the send, and in that order for two reasons. The
+  // claim first, so a double-tap cannot have two requests each rewriting the
+  // message before either sends. And the edit before the executor, so the
+  // executor reads the final words OFF THE ROW — which is what makes the text
+  // that goes out and the text in the audit the same string rather than two
+  // values that have to agree.
+  //
+  // `ai_action_apply_campaign_edit` has exactly two parameters, so this cannot
+  // change the shop, the segment, the recipients, the status or the action
+  // type. It refuses a row that is not a CONFIRMED SEND_CAMPAIGN belonging to
+  // the caller.
+  let claimed: ClaimedRow = action;
+  if (campaign && action.action_type === AI_ACTION_SEND_CAMPAIGN) {
+    const edited = await supabase.rpc("ai_action_apply_campaign_edit", {
+      p_action_id: actionId,
+      p_title: campaign.title,
+      p_body: campaign.body,
+    });
+    if (edited.error || !edited.data) {
+      // The proposal is spent either way — it is CONFIRMED and cannot be
+      // claimed again — so this settles FAILED rather than leaving a row that
+      // reads as approved but never sent.
+      await settleFailed(supabase, actionId, "CAMPAIGN_CONTENT_INVALID");
+      return refuse("CAMPAIGN_CONTENT_INVALID");
+    }
+    claimed = edited.data as ClaimedRow;
+  }
+
+  // ---------------------------------------------------------------------
+  // 4) Revalidate against live state, then perform the ONE write
   // ---------------------------------------------------------------------
   let outcome: ActionOutcome;
   try {
-    outcome = await executor.execute(ctx, toConfirmedAction(action, action.shop_id));
+    outcome = await executor.execute(ctx, toConfirmedAction(claimed, action.shop_id));
   } catch (err) {
     const code = err instanceof ProposalError ? err.code : "UNAVAILABLE";
     await settleFailed(supabase, actionId, code);
@@ -342,16 +477,19 @@ export async function POST(request: Request) {
   }
 
   // ---------------------------------------------------------------------
-  // 4) Settle the audit row
+  // 5) Settle the audit row
   // ---------------------------------------------------------------------
-  // The only place `EXECUTED` is written, and it needs a result id to do it.
-  // Which COLUMN that id lands in is decided by `ai_action_settle()` from the
+  // The only place `EXECUTED` is written, and it needs PROOF to do it: a
+  // result id for the three actions that create a row, and a count for the
+  // campaign, which creates N notifications and has no single row to name.
+  // Which COLUMN either lands in is decided by `ai_action_settle()` from the
   // row's own action type — not by this caller.
   await supabase.rpc("ai_action_settle", {
     p_action_id: actionId,
     p_status: "EXECUTED",
     p_result_id: outcome.resultId,
     p_failure_code: null,
+    p_result_count: outcome.resultCount ?? null,
   });
 
   return NextResponse.json(
@@ -371,6 +509,7 @@ async function settleFailed(
     p_status: "FAILED",
     p_result_id: null,
     p_failure_code: code,
+    p_result_count: null,
   });
 }
 
@@ -397,7 +536,7 @@ async function reconcile(
   const { data: action } = await ctx.supabase
     .from("ai_actions")
     .select(
-      "id, status, action_type, shop_id, service_ids, nonce, display, staff_id, starts_at, reward_id, serial_id, appointment_id, redemption_id",
+      "id, status, action_type, shop_id, service_ids, nonce, display, staff_id, starts_at, reward_id, campaign_segment, campaign_since, campaign_recipients, campaign_title, campaign_body, campaign_sent_count, serial_id, appointment_id, redemption_id",
     )
     .eq("id", actionId)
     .maybeSingle();
@@ -405,10 +544,11 @@ async function reconcile(
   if (!action) return null;
 
   if (action.status === "EXECUTED") {
-    // Whichever result column the type uses. Reported as the id alone: the
-    // action is finished, the customer's own screens hold the detail, and
-    // re-reading a row to decorate a duplicate confirmation would be work done
-    // for a request that changed nothing.
+    // Whichever result column the type uses. Reported as the id alone — or,
+    // for a campaign, the count, which is its result. The action is finished,
+    // the caller's own screens hold the detail, and re-reading rows to
+    // decorate a duplicate confirmation would be work done for a request that
+    // changed nothing.
     return NextResponse.json(
       {
         ok: true,
@@ -416,6 +556,9 @@ async function reconcile(
         actionType: action.action_type,
         resultId:
           action.serial_id ?? action.appointment_id ?? action.redemption_id ?? null,
+        ...(action.campaign_sent_count !== null
+          ? { campaign: { sentCount: action.campaign_sent_count } }
+          : {}),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -437,6 +580,7 @@ async function reconcile(
     p_status: "EXECUTED",
     p_result_id: healed.resultId,
     p_failure_code: null,
+    p_result_count: healed.resultCount ?? null,
   });
 
   return NextResponse.json(

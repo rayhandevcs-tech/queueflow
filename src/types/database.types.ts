@@ -1427,6 +1427,45 @@ export type Database = {
           /** The reward for REDEEM_REWARD. Always read back with `shop_id`. */
           reward_id: string | null;
 
+          // -----------------------------------------------------------------
+          // AI Sprint 5 — the campaign columns
+          // (20261002_ai_campaigns_sprint5.sql). All nullable, and
+          // `ai_actions_params_match_type` requires all five parameters
+          // together for SEND_CAMPAIGN and none of them for anything else.
+          // -----------------------------------------------------------------
+
+          /**
+           * One of the six segment keys, pinned by
+           * `ai_actions_campaign_segment_known`. An explanation of the
+           * audience, not the audience itself.
+           */
+          campaign_segment: string | null;
+          /** `YYYY-MM-DD`, the Dhaka cutoff the snapshot was computed from. */
+          campaign_since: string | null;
+          /**
+           * The recipient snapshot — exactly who will be messaged, decided
+           * server-side at propose time and re-verified at send time.
+           *
+           * Never fetched by the client. The card shows a count, which comes
+           * from `display`; the ids are server-side state and the browser has
+           * no use for them.
+           */
+          campaign_recipients: string[] | null;
+          /**
+           * The title and body that will be sent. `ai_action_apply_campaign_edit`
+           * overwrites these with the owner's edit, so this pair always
+           * describes what went out — the model's original draft survives in
+           * `display`.
+           */
+          campaign_title: string | null;
+          campaign_body: string | null;
+          /**
+           * How many notifications the approved send inserted. A campaign
+           * creates N rows rather than one, so this is its result where the
+           * other three types have an id.
+           */
+          campaign_sent_count: number | null;
+
           // --- results: at most one, and only on an EXECUTED row ------------
           serial_id: string | null;
           appointment_id: string | null;
@@ -1471,6 +1510,18 @@ export type Database = {
           p_staff_id?: string | null;
           p_starts_at?: string | null;
           p_reward_id?: string | null;
+          // --- Sprint 5 (20261002): all five together, or none of them ------
+          /** One of the six segment keys. */
+          p_campaign_segment?: string | null;
+          /** `YYYY-MM-DD` in Asia/Dhaka. */
+          p_campaign_since?: string | null;
+          /**
+           * The recipient snapshot, from `shop_campaign_recipients()`. Bounded
+           * 3..500 by the function and again by the table.
+           */
+          p_campaign_recipients?: string[] | null;
+          p_campaign_title?: string | null;
+          p_campaign_body?: string | null;
         };
         Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
       };
@@ -1499,7 +1550,27 @@ export type Database = {
           p_status: Database["public"]["Enums"]["ai_action_status"];
           p_result_id: string | null;
           p_failure_code: string | null;
+          /**
+           * Sprint 5 (20261002). A campaign creates N notifications rather
+           * than one row, so EXECUTED proves itself with a count instead of an
+           * id. Required for SEND_CAMPAIGN, ignored for the other three.
+           */
+          p_result_count?: number | null;
         };
+        Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
+      };
+
+      /**
+       * CONFIRMED → CONFIRMED, with the owner's edited campaign text.
+       *
+       * Sprint 5 (20261002). Two parameters, which is the whole of §13's
+       * "owner may not edit the shop, the segment, the recipients or the
+       * action type" — there is nothing to pass. The executor then reads the
+       * content back off the row, so the text that is sent and the text in the
+       * audit are one string.
+       */
+      ai_action_apply_campaign_edit: {
+        Args: { p_action_id: string; p_title: string; p_body: string };
         Returns: Database["public"]["Tables"]["ai_actions"]["Row"];
       };
 
@@ -1517,6 +1588,126 @@ export type Database = {
       ai_action_expire_mine: {
         Args: Record<string, never>;
         /** How many rows were moved. */
+        Returns: number;
+      };
+
+      // -----------------------------------------------------------------
+      // AI Sprint 5 — segmentation and the approved campaign
+      // (20261002_ai_campaigns_sprint5.sql)
+      // -----------------------------------------------------------------
+      // Every one of these opens with `is_shop_owner(p_shop_id)` and raises
+      // `not your shop` otherwise. None of them takes an identity argument:
+      // the scope IS the shop argument, and the shop argument is checked.
+      //
+      // `shop_segment_rows` — the raw form, which returns customer ids — is
+      // deliberately NOT granted to `authenticated` and deliberately not typed
+      // here. The four wrappers are the interface.
+
+      /**
+       * All six segments at once, with counts only.
+       *
+       * `reachable_count` is how many would actually receive a promotional
+       * notification — members minus those who have muted PROMO. The
+       * difference is what makes the count on a campaign card honest.
+       */
+      shop_segment_summary: {
+        Args: { p_shop_id: string; p_since: string };
+        Returns: {
+          segment: string;
+          member_count: number;
+          reachable_count: number;
+          oldest_last_visit: string | null;
+          newest_last_visit: string | null;
+        }[];
+      };
+
+      /**
+       * Who is in one segment, by name, bounded.
+       *
+       * No customer id, no phone, no email, no notification preference. The
+       * display name is the same snapshot the owner's own Regulars and
+       * Appointments screens already show.
+       */
+      shop_segment_members: {
+        Args: {
+          p_shop_id: string;
+          p_segment: string;
+          p_since: string;
+          /** 1..50. Anything else raises `segment_limit_out_of_range`. */
+          p_limit?: number;
+        };
+        Returns: {
+          display_name: string;
+          last_visit_at: string | null;
+          visit_count: number;
+        }[];
+      };
+
+      /** Aggregates for understanding one segment. Counts and dates only. */
+      shop_segment_insights: {
+        Args: { p_shop_id: string; p_segment: string; p_since: string };
+        Returns: {
+          member_count: number;
+          reachable_count: number;
+          muted_count: number;
+          never_visited: number;
+          oldest_last_visit: string | null;
+          newest_last_visit: string | null;
+          visited_last_30: number;
+          visited_31_90: number;
+          visited_91_plus: number;
+          /** Null for an empty segment, never 0. */
+          avg_visits: number | null;
+          active_members: number;
+          with_points: number;
+          referred_someone: number;
+        }[];
+      };
+
+      /**
+       * The recipient snapshot: the promo-reachable members of one segment,
+       * sorted, as customer ids.
+       *
+       * The only function that returns customer ids, and it is called only by
+       * the server — once to build a proposal's snapshot, once at send time to
+       * recompute it for the SEGMENT_CHANGED comparison. Its result never
+       * reaches the model or the browser.
+       */
+      shop_campaign_recipients: {
+        Args: { p_shop_id: string; p_segment: string; p_since: string };
+        Returns: string[];
+      };
+
+      /**
+       * Send an owner-approved campaign to its frozen snapshot.
+       *
+       * Refuses unless `p_action_id` names a CONFIRMED SEND_CAMPAIGN row owned
+       * by the caller for `p_shop_id`, unless the title and body match the
+       * row's own (a mismatch is a bug, not something to resolve silently),
+       * and unless every recipient is genuinely this shop's customer. Shares
+       * the one-PROMO-per-shop-per-day budget with
+       * `broadcast_shop_notification`.
+       */
+      broadcast_campaign: {
+        Args: {
+          p_shop_id: string;
+          p_action_id: string;
+          p_title: string;
+          p_body: string;
+        };
+        /** How many notifications were inserted. */
+        Returns: number;
+      };
+
+      /**
+       * How many notifications a campaign actually produced, counted from the
+       * notifications themselves.
+       *
+       * Exists so the audit can be reconciled after a lost reply rather than
+       * guessed at. Refuses an action that is not the caller's.
+       */
+      campaign_send_count: {
+        Args: { p_action_id: string };
         Returns: number;
       };
 
@@ -2429,14 +2620,19 @@ export type Database = {
       serial_status: "WAITING" | "IN_PROGRESS" | "DONE" | "CANCELLED" | "NO_SHOW";
       assignment_mode: "AUTO" | "CHOSEN" | "MANUAL";
       business_type: "SALON" | "PARLOUR" | "UNISEX";
-      /** AI Sprint 3. One action type; Sprint 4's are an ALTER TYPE away. */
       /**
-       * Three members after 20261001. Not four: CANCEL_APPOINTMENT,
-       * RESCHEDULE_APPOINTMENT and SEND_CAMPAIGN are deliberately absent from
-       * the Postgres enum too, so the confirm endpoint refusing an unknown type
-       * is a guarantee rather than a hope.
+       * Four members after 20261002. Not five: CANCEL_APPOINTMENT,
+       * RESCHEDULE_APPOINTMENT, AUTO_SEND, SCHEDULE_CAMPAIGN, CANCEL_CAMPAIGN,
+       * BULK_MESSAGE and SMART_BLAST are deliberately absent from the Postgres
+       * enum too, so the confirm endpoint refusing an unknown type is a
+       * guarantee rather than a hope — an action type with no confirmed path
+       * cannot be stored in the first place.
        */
-      ai_action_type: "JOIN_QUEUE" | "BOOK_APPOINTMENT" | "REDEEM_REWARD";
+      ai_action_type:
+        | "JOIN_QUEUE"
+        | "BOOK_APPOINTMENT"
+        | "REDEEM_REWARD"
+        | "SEND_CAMPAIGN";
       ai_action_status:
         | "PROPOSED"
         | "CONFIRMED"

@@ -13,6 +13,7 @@ import { toBanglaDigits } from "@/lib/format-wait";
 import {
   AI_ACTION_BOOK_APPOINTMENT,
   AI_ACTION_REDEEM_REWARD,
+  AI_ACTION_SEND_CAMPAIGN,
   type AppointmentDraft,
   type JoinQueueDraft,
   type RewardDraft,
@@ -87,7 +88,22 @@ export function AiProposalCard({ actionId }: { actionId: string }) {
     nowMs,
   );
 
-  const draft = proposal?.display ?? null;
+  // The three CUSTOMER actions, and only those.
+  //
+  // `AiProposalDraft` gained a fourth member in Sprint 5 — an owner's
+  // SEND_CAMPAIGN — and this card is not where that renders: the provider
+  // widget has `AiCampaignProposalCard` for it. Narrowing here rather than
+  // adding a branch is the accurate shape, because a campaign proposal cannot
+  // reach this component in the first place. The owner registry has no
+  // customer prepare tool and the customer registry has no campaign tool, so
+  // a customer session cannot produce a campaign proposal to render.
+  //
+  // Rendering nothing for one is still better than rendering a wrong card: if
+  // it ever did arrive, the customer sees no button, which is the safe
+  // direction.
+  const stored = proposal?.display ?? null;
+  const draft =
+    stored && stored.action !== AI_ACTION_SEND_CAMPAIGN ? stored : null;
   const kind = draft?.action;
   const secondsLeft =
     stage === "PROPOSED" && proposal

@@ -1,6 +1,7 @@
 "use client";
 
 import { FloatingChatWidget } from "@/components/ui/FloatingChatWidget";
+import { AiCampaignProposalCard } from "@/features/provider-ai/components/AiCampaignProposalCard";
 import { providerAiDict } from "@/features/provider-ai/lib/i18n";
 import { useT } from "@/lib/i18n";
 
@@ -28,6 +29,22 @@ export function ProviderAssistantWidget() {
   return (
     <FloatingChatWidget
       endpoint="/api/ai/agent"
+      // AI Sprint 5. When a turn prepares a retention campaign, the approval
+      // card appears under the answer with Edit, Cancel and Approve & Send on
+      // it. The widget passes only the id; the card reads the proposal from
+      // the database under RLS, so the group, the count and the message the
+      // owner approves are the ones the server stored.
+      //
+      // Until this sprint the provider widget deliberately passed nothing
+      // here, and the customer one did — that comment described the role
+      // separation as a UI fact. It never was: the registry is what enforces
+      // it, and it still does. An owner's tool slice has no
+      // `prepare_join_queue` and a customer's has no `prepare_campaign_send`,
+      // so neither session can produce the other's proposal. Each app now
+      // renders the card for the proposals its own role can create.
+      renderProposal={(proposalId) => (
+        <AiCampaignProposalCard actionId={proposalId} />
+      )}
       labels={{
         name: t("botName"),
         subtitle: t("botSubtitle"),

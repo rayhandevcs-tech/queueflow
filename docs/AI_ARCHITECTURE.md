@@ -47,21 +47,26 @@ runAgentLoop()        সর্বোচ্চ ৪ iteration, ৮ tool call
                         ↓
 tool-registry         বন্ধ তালিকা, role-ভিত্তিক
            ↓                              ↓
-owner-analytics            customer-discovery + prepare_join_queue
-১১টা পাতলা adapter          ৫টা পাতলা adapter + ১টা proposal-builder
+owner-analytics + retention   customer-discovery + ৩টা prepare
+১১ + ৫টা টুল                  ৫টা পাতলা adapter + ৩টা proposal-builder
            ↓                              ↓
-analytics RPC (Sprint 10)   shops / services / queue_public /
-                            shop_available_slots() / serials
+analytics RPC (Sprint 10)     shops / services / queue_public /
+shop_segment_*() (Sprint 5)   shop_available_slots() / rewards /
+                              loyalty_accounts / serials
                         ↓
-cookie-bound Supabase client  →  RLS + analytics_scope
+cookie-bound Supabase client  →  RLS + analytics_scope + is_shop_owner
                         ↓
 যাচাই করা সারি  →  fence করা  →  মডেল  →  উত্তর
                         ↓
-        (Sprint 3) draft থাকলে → PROPOSED সারি → X-Ai-Proposal-Id
+        draft থাকলে → PROPOSED সারি → X-Ai-Proposal-Id
                         ↓
-        কাস্টমারের চাপ  →  POST /api/ai/actions/confirm
+        ব্যবহারকারীর চাপ  →  POST /api/ai/actions/confirm
                         ↓            ← এই রিকোয়েস্টে কোনো মডেল নেই
-        serials INSERT  →  RLS + serial_before_insert
+        চারটে পথের একটা, সারির action_type থেকে বাছা:
+          serials INSERT      → RLS + serial_before_insert
+          book_appointment()  → RLS + appointment_before_insert
+          redeem_reward()     → reward lock → account lock
+          broadcast_campaign()→ is_shop_owner + CONFIRMED + snapshot মিল
 ```
 
 **role কোনো দাবি নয়, একটা ডেটাবেস-তথ্য।** request body-তে role পাঠানোর কোনো
@@ -356,21 +361,117 @@ POST /api/ai/actions/confirm
   ↓  ai_action_settle(EXECUTED, redemption_id)
 ```
 
-**generic loop আবারও ছোঁয়া হয়নি।** registry-র **কুড়িটা** টুলের সবগুলোই এখনো
-`readOnly: true`, import-সময়ে যাচাই হয়, আর লুপের `if (!tool.readOnly)` গার্ড
-হুবহু আগের মতো — একটা টেস্ট প্রমাণ করে ওই ফাইলে `BOOK_APPOINTMENT` বা
-`REDEEM_REWARD` শব্দটাও নেই।
+**generic loop আবারও ছোঁয়া হয়নি।** Sprint 4-এ registry-তে ছিল কুড়িটা টুল, আর
+সবগুলোই `readOnly: true` — Sprint 5-এর পাঁচটা যোগ হয়ে এখন **পঁচিশটা**, আর
+এখনো সবগুলোই read-only, import-সময়ে যাচাই হয়। লুপের `if (!tool.readOnly)`
+গার্ড হুবহু আগের মতো — টেস্ট প্রমাণ করে ওই ফাইলে `BOOK_APPOINTMENT`,
+`REDEEM_REWARD` বা `SEND_CAMPAIGN` শব্দটাও নেই।
 
-**dispatch বন্ধ, নাম দিয়ে নয়।** `executorFor()` একটা `switch`, তিনটে `case`,
-`default: return null`। কোনো function-name টেবিল নেই, আর request body-তে
-action বাছার কোনো ঘর নেই — branch আসে **সার্ভার-লেখা সারির একটা কলাম** থেকে।
-body-তে শুধু `actionId` আর `nonce`।
+**dispatch বন্ধ, নাম দিয়ে নয়।** `executorFor()` একটা `switch` —
+Sprint 4-এ তিনটে `case`, Sprint 5-এর পরে **চারটে** — আর `default: return null`।
+কোনো function-name টেবিল নেই, আর request body-তে action বাছার কোনো ঘর নেই;
+branch আসে **সার্ভার-লেখা সারির একটা কলাম** থেকে। body-তে `actionId`,
+`nonce`, আর (শুধু ক্যাম্পেইনে) মালিকের সম্পাদিত `campaign: {title, body}` —
+যেটা কোনো কিছু **বাছে না**।
 
 **কোনো দ্বিতীয় engine নেই।** appointment লেখে `book_appointment()` (INVOKER,
 তাই RLS বহাল), redemption লেখে `redeem_reward()` (DEFINER, `auth.uid()`
 hard-coded)। AI স্তরে কোনো points-এর হিসাব নেই, `loyalty_transactions`-এ
 কোনো লেখা নেই, `reward_redemptions`-এ কোনো লেখা নেই। `20261001`-এর দুটো
 function **শুধু** `ai_actions` ছোঁয় — হার্নেসের H1–H6 সেটা প্রমাণ করে।
+
+### ৯ঘ. Sprint 5 — মালিকের ক্যাম্পেইন, আর যে জিনিসটা AI পারে না
+
+আগের তিনটে অ্যাকশন যে মানুষটা কনফার্ম করে, তার নিজের উপরই ঘটে। ক্যাম্পেইন
+**অন্য মানুষের ফোনে** নোটিফিকেশন পাঠায়, আর সেটা ফেরানো যায় না। তাই এটার
+পথটা সবচেয়ে লম্বা — এবং প্রতিটা ধাপ এই অসমতার জন্যই আছে।
+
+```
+RETENTION + CAMPAIGN (শুধু OWNER)
+মালিক: "যারা অনেকদিন আসেনি তাদের নিয়ে একটা campaign বানাও"
+  ↓
+get_customer_segments                                  (read-only)
+  ↓  আগে §24-এর গার্ড: শপের মোট সম্পন্ন ভিজিট ১০-এর কম হলে
+  ↓  **কোনো segment দেওয়াই হয় না** — "যথেষ্ট রেকর্ড নেই" বলে থামে
+  ↓  shop_segment_summary() → ছটা গ্রুপের count + reachable_count
+  ↓  ছটা segment key → ledger("segment")
+get_segment_insights                                   (read-only)
+  ↓  শুধু aggregate — count, শেষ ভিজিটের bucket, membership/points/referral
+  ↓  খালি segment-এ avg null, শূন্য নয়
+prepare_campaign                                       (read-only — কার্ডও বানায় না)
+  ↓  1. segment কি OFFER করা হয়েছিল?  ← কোনো query-র আগে
+  ↓  2. shops.owner_id == session?  → না হলে NOT_SHOP_OWNER
+  ↓  3. **লেখাটায় এমন ছাড়/দাম/ফ্রি আছে যা দোকানে সেট করা নেই?**
+  ↓     → CAMPAIGN_INVENTS_OFFER (offers + rewards + services.rate-এর বিরুদ্ধে)
+  ↓  4. shop_campaign_recipients() → কারা পাবে, promo-mute বাদ দিয়ে
+  ↓  5. ৩-এর কম বা ৫০০-র বেশি হলে refuse
+  ↓  draft ফেরত, কিন্তু **ledger-এ কিছু রাখে না** → কোনো কার্ড নেই
+prepare_campaign_send                                  (read-only — পাঠায় না)
+  ↓  একই সাতটা যাচাই, তারপর draft + snapshot → ledger
+রুট (লুপের বাইরে): ai_action_propose(SEND_CAMPAIGN, …,
+        segment, since, recipients[], title, body)
+  ↓  is_shop_owner() **আবার**, SQL-এ
+  ↓  মালিক কার্ড দেখেন: গ্রুপ · কেন এঁরা · কতজন · বার্তা · মেয়াদ
+  ↓  মালিক চাইলে **লেখা বদলান** (Edit)
+POST /api/ai/actions/confirm            ← এখানে কোনো মডেল নেই
+  ↓  claim (PROPOSED → CONFIRMED, atomically)
+  ↓  ai_action_apply_campaign_edit(title, body)  ← দুটোই প্যারামিটার, আর কিছু নয়
+  ↓  executorFor("SEND_CAMPAIGN") → switch, default: refuse
+  ↓  আবার: shape · owner · segment · content · **audience বদলেছে কিনা**
+  ↓     → SEGMENT_CHANGED (কঠোর set-সমতা, সহনশীলতা নেই)
+  ↓  broadcast_campaign()  → is_shop_owner + CONFIRMED + snapshot মিল +
+  ↓     প্রতিটা recipient সত্যিই এই দোকানের কাস্টমার + দৈনিক বাজেট +
+  ↓     notification_enabled(PROMO) → notifications insert (on conflict do nothing)
+  ↓  ai_action_settle(EXECUTED, result_count = সত্যিই কতটা গেল)
+```
+
+**AI কোনো অবস্থাতেই পাঠাতে পারে না, আর সেটা prompt-এর কথা নয়।** registry-র
+**পঁচিশটা** টুলের সবগুলোই `readOnly: true`; broadcast করে এমন কোনো টুল নেই;
+আর `broadcast_campaign()` নিজেই একটা `ai_actions` সারির id চায় এবং সেই সারিটা
+এই caller-এর, এই দোকানের, `SEND_CAMPAIGN` আর `CONFIRMED` না হলে refuse করে।
+"segment-এ পাঠাও" বলে কোনো দরজা নেই, আর কোনো scheduler নেই — হার্নেসের F4–F7
+প্রমাণ করে PROPOSED, জাল id, কাস্টমার আর anonymous — চারটেই আটকায়।
+
+**recipient snapshot — §16, অক্ষরে অক্ষরে।** `campaign_recipients uuid[]`
+কলামে **কারা পাবে সেটাই** জমা থাকে, "segment = lapsed" নয়। পাঠানোর সময়
+segment আবার হিসাব হয় এবং **একই stored cutoff date** দিয়ে — তাই পার্থক্য
+মানে সত্যিকারের কাস্টমার-কার্যকলাপ, ঘড়ির টিকটিক নয়। এক জন বেশি বা কম হলেই
+`SEGMENT_CHANGED`, সহনশীলতা ছাড়া: মালিক "৪২ জন যারা দুমাস আসেনি" অনুমোদন
+করেছেন, আর তার মধ্যে একজন এসে চুল কাটিয়ে গেলে পুরনো তালিকায় পাঠানো মানে
+এক ঘণ্টা আগে দোকানে আসা লোককে বলা "অনেকদিন দেখিনি"। ওটাই এই গার্ডের কারণ।
+
+**ids কখনো মডেলের context-এ বা ব্রাউজারে যায় না।** draft-এ (যা `display`
+হয়ে কার্ড পড়ে) শুধু **count**; ids আলাদা `ledger.campaignRecipients`-এ
+থাকে, রুট একবার পড়ে কলামে বসায়, শেষ। `get_segment_customers` নাম-শেষ
+ভিজিট-ভিজিট সংখ্যা ফেরায় — **কোনো customer_id নেই, কোনো ফোন নেই**, আর চাওয়ার
+কোনো আর্গুমেন্টও নেই।
+
+**§9 — বানানো অফার।** মডেলের লেখা টেক্সটের প্রতিটা সংখ্যা (`২০%`, `৩৫০ টাকা`,
+`ফ্রি`) দোকানের **নিজের** সেট করা `offers.discount_pct`, `rewards.value`
+আর `services.rate`-এর সঙ্গে মেলানো হয়; না মিললে `CAMPAIGN_INVENTS_OFFER`।
+বাংলা অঙ্ক আগে normalize হয় — না হলে গার্ডটা ঠিক যে লেখাটার জন্য আছে তার
+বিরুদ্ধে **সম্পূর্ণ অকেজো** হয়ে যেত (mutation টেস্ট: normalize সরালে ৯টা
+টেস্ট ফেল)। **মালিকের নিজের লেখা এই যাচাইয়ের বাইরে** — তিনিই ব্যবসাটা, তিনি
+যা প্রতিশ্রুতি দিতে চান দিতে পারেন (§9-এর "or explicitly owner-provided text")।
+
+**§13 — সম্পাদনা, আর যা সম্পাদনা করা যায় না।**
+`ai_action_apply_campaign_edit()`-এর প্যারামিটার তিনটে: action id, title, body।
+shop, segment, recipients, status, action type বদলানোর কোনো ঘর নেই — নিষেধটা
+validation নয়, **অনুপস্থিতি**। আর executor লেখাটা **সারি থেকে** পড়ে, request
+থেকে নয়, তাই যা গেল আর audit-এ যা আছে সেটা একই স্ট্রিং, দুটো পথের মিল নয়।
+
+**§23 — ভাষা।** LAPSED-কে কখনো "churned" বলা হয় না, কোনো probability নেই,
+কোনো score নেই। মালিককে বলা হয় "গত ৬০ দিনে একবারও সার্ভিস নেননি" — যা
+রেকর্ডের কথা। "এই গ্রুপটা ফিরিয়ে আনার জন্য কাজে দিতে পারে" বলা যায় — সেটা
+পর্যবেক্ষণ। "চলে যাবে" বলা যায় না — সেটা ভবিষ্যদ্বাণী, আর ডেটাবেসে ওটা নেই।
+
+**§18 — বিদ্যমান broadcast।** `broadcast_shop_notification()` **ছোঁয়া হয়নি**;
+ম্যানুয়াল স্ক্রিন আর `notifyRegularsAboutOffer()` আগের মতোই চলে।
+`broadcast_campaign()` তার **ভাই** — একই `notifications` টেবিল, একই `PROMO`
+টাইপ, একই `notification_enabled` ফিল্টার, একই owner চেক, **একই দৈনিক বাজেট**।
+আলাদা function লাগল কারণ পুরনোটা target (`recent`/`regulars`) নেয় আর
+**নিজের ভেতরে audience আবার হিসাব করে** — §16 ঠিক সেটাই নিষেধ করে, আর ছটা
+segment-এর চারটে (LAPSED সহ) ওতে বলাই যায় না।
 
 ## ১০. Sprint-এর সীমানা
 
@@ -501,17 +602,102 @@ appointment-এ `appointments_no_overlap` নিজেই ডুপ্লিক�
 আচরণ বদলানো উচিত নয়, তাই বদলানো হয়নি। এটা একটা অসঙ্গতি — নীতি নয় — আর পরের
 কোনো স্প্রিন্টে একদিকে মিলিয়ে দেওয়া উচিত।
 
-### AI Sprint 5 — পরিকল্পিত ⬜
-**RETENTION + MARKETING**: segmentation → campaign → approval →
-`broadcast_shop_notification`।
+### AI Sprint 5 — এখন সম্পূর্ণ ✅ (রোডম্যাপের শেষ AI স্প্রিন্ট)
 
-**Sprint 5 শুরু হয়নি।** `ai_action_type` enum-এ এখন **তিনটে**:
-`JOIN_QUEUE`, `BOOK_APPOINTMENT`, `REDEEM_REWARD`। `SEND_CAMPAIGN`,
-`CANCEL_APPOINTMENT` আর `RESCHEDULE_APPOINTMENT` ইচ্ছাকৃতভাবে **নেই** — যে
-action_type সংরক্ষণই করা যায় না, confirm endpoint-এর তাকে refuse করা তখন
-প্রতিশ্রুতি নয়, গ্যারান্টি।
+একটা নতুন কনফার্ম করা অ্যাকশন: **`SEND_CAMPAIGN`** — আর এটাই প্রথম যেটা
+**মালিকের**, কাস্টমারের নয়। ছটা deterministic segment (`src/lib/segments.ts`) ·
+বানানো-অফার গার্ড (`src/lib/campaign-content.ts`) · পাঁচটা retention টুল
+(`src/lib/ai/tools/retention.ts`) · `send-campaign-action.ts` ·
+`AiCampaignProposalCard` (Edit / Cancel / Approve & Send) ·
+proposal client shared-এ উঠল (`src/lib/ai/proposal-client.ts`) ·
+`20261002_ai_campaigns_sprint5.sql` ·
+**১২৩টা** নতুন ইউনিট টেস্ট (মোট **১১২৮**) + Postgres হার্নেসে **১৫৭/১৫৭**।
 
-### যা এখনো যাচাই করা হয়নি — Sprint 4 শেষেও
+`ai_action_type` enum-এ এখন **চারটে**: `JOIN_QUEUE`, `BOOK_APPOINTMENT`,
+`REDEEM_REWARD`, `SEND_CAMPAIGN`। `AUTO_SEND`, `SCHEDULE_CAMPAIGN`,
+`CANCEL_CAMPAIGN`, `BULK_MESSAGE`, `SMART_BLAST`, `CANCEL_APPOINTMENT` আর
+`RESCHEDULE_APPOINTMENT` ইচ্ছাকৃতভাবে **নেই** — যে action_type সংরক্ষণই করা
+যায় না, confirm endpoint-এর তাকে refuse করা তখন প্রতিশ্রুতি নয়, গ্যারান্টি।
+
+**বাস্তবায়িত ছটা segment** — প্রতিটাই একটা `WHERE` ক্লজ, কোনো মডেল নয়:
+
+| segment | নিয়ম | কীসে বদলায় |
+|---|---|---|
+| `REGULARS` | উইন্ডোয় ≥ ২টা সম্পন্ন ভিজিট | ভিজিট |
+| `HIGH_FREQUENCY` | উইন্ডোয় ≥ ৫টা | ভিজিট |
+| `RECENT` | উইন্ডোয় ≥ ১টা | ভিজিট |
+| `LAPSED` | কখনো এসেছেন, উইন্ডোয় একবারও নয় | ভিজিট |
+| `MEMBERS` | এখন সক্রিয় membership (`membership_is_active`) | মেয়াদ |
+| `LOYALTY_ENGAGED` | এই দোকানে balance > 0 | earn/redeem |
+
+`REGULARS`-এর থ্রেশহোল্ড **২** — নতুন মত নয়: `compute-regulars.ts`-এর নিজের
+সংখ্যা, আর পুরনো `broadcast_shop_notification('regulars')`-এর
+`having count(*) >= 2`। এই স্প্রিন্টে constant-টা `@/lib/segments`-এ উঠেছে আর
+`compute-regulars.ts` সেখান থেকেই পড়ে — তিনটে জায়গা এখন **একটা** সংখ্যা পড়ে।
+
+| দাবি | কোথায় enforce হয় |
+|---|---|
+| AI নিজে পাঠাতে পারে না | broadcast করে এমন কোনো টুল নেই; `broadcast_campaign()` CONFIRMED `ai_actions` সারি ছাড়া refuse করে — হার্নেস F4–F7 |
+| মডেল segment বানাতে পারে না | zod enum (ছটা) + ledger("segment") — **কোনো query-র আগে** |
+| মডেল কে-কে সেটা বাছে না | `shop_segment_rows()` SQL-এ ঠিক করে, `is_shop_owner()`-এর পিছনে |
+| মডেল recipient count বলে না | কার্ড পড়ে ডেটাবেসের ফেরানো array-র length |
+| মডেল customer id পায় না | কোনো টুল customer id নেয় না, আর listing id ফেরায় না |
+| মডেল shop বাছে না | কোনো `shop_id` আর্গুমেন্ট নেই; `ctx.shopId` session থেকে; `is_shop_owner()` তিনবার |
+| এক মালিক অন্যের কাস্টমার দেখবে না | চারটে segment function-এ `is_shop_owner()` → `not your shop` — হার্নেস E1–E13 |
+| কাস্টমার owner segmentation দেখবে না | registry role-scoping + SQL owner চেক — হার্নেস E8–E10 |
+| audience চুপচাপ বদলাবে না | `sameAudience()` কঠোর set-সমতা → `SEGMENT_CHANGED` |
+| বানানো ছাড় পাঠানো যাবে না | `checkDraftedCampaign()` — offers + rewards + services.rate |
+| মালিকের সম্পাদনাই যা যাবে | `ai_action_apply_campaign_edit()` → সারিতে লেখে, executor সারি থেকে পড়ে |
+| মালিক audience বদলাতে পারবে না | edit function-এ প্যারামিটারই নেই; body-তে ঘর নেই |
+| দুবার approve = একবার পাঠানো | `ai_action_claim()` — হার্নেস J1 (৫টা সমান্তরাল ক্লায়েন্ট) |
+| retry-তে ডুপ্লিকেট নোটিফিকেশন নয় | `notifications_one_per_campaign_recipient_idx` + `on conflict do nothing` — হার্নেস J4 |
+| non-customer-কে পাঠানো যাবে না | `broadcast_campaign()`-এ SQL membership চেক — হার্নেস H9 |
+| দিনে একবারই প্রোমো | ম্যানুয়াল broadcast-এর সঙ্গে **একই** বাজেট — হার্নেস H3 |
+| promo-mute মানা হয় | snapshot বানানোর সময় **আর** পাঠানোর সময় `notification_enabled` — হার্নেস C12, F15 |
+| `EXECUTED` জাল করা যাবে না | কোনো client write policy নেই; settle-এ count লাগে — হার্নেস B1–B3 |
+
+**concurrency-তে এবার একটা জিনিস যোগ করা হয়েছে, আর কেন সেটা আলাদা করে লেখা
+দরকার।** `ai_action_claim()` দুবার-approve আটকায় — সেটা Sprint 3 থেকেই আছে,
+আর J1 পাঁচটা সমান্তরাল ক্লায়েন্ট দিয়ে দেখায়। কিন্তু claim যেটা **পারে না**:
+পাঠানো সফল হলো, অথচ উত্তরটা হারিয়ে গেল (কানেকশন ছিঁড়ল, প্রসেস মরল) — তখন
+অ্যাপ্লিকেশন সত্যিই জানে না নোটিফিকেশনগুলো আছে কি নেই। তাই
+`notifications_one_per_campaign_recipient_idx` — `(data->>'ai_action_id', user_id)`-এ
+partial unique index। এতে retry **গঠনগতভাবে** নিরাপদ, সাবধানতার জন্য নয়:
+J4 দেখায় প্রথমবার ৩, retry-তে ০, আর তিনটে সমান্তরাল retry-তেও মোট ৩।
+
+**দৈনিক বাজেটের চেক race-proof নয়, আর সেটাও লেখা থাকল।** দুটো একসঙ্গে চলা
+ট্রানজেকশন দুটোই ওই `exists` পার করতে পারে — ওটা একটা **নীতি-গেট**, concurrency
+primitive নয়। যেটা দুবার পাঠানো আসলে অসম্ভব করে, সেটা উপরের claim আর নিচের
+unique index।
+
+> **পারমাণবিকতার সীমানা — কিন্তু এবার reconcile সত্যিই কাজ করে।** business
+> write আর audit settle এখনও দুটো আলাদা রাইট। পার্থক্য হলো, ক্যাম্পেইনের ফলাফল
+> **আবার গোনা যায়**: প্রতিটা নোটিফিকেশনের `data`-তে action id বসানো থাকে, আর
+> `campaign_send_count()` (DEFINER, নিজের সারি ছাড়া refuse) সেগুলো গোনে। তাই
+> settle হারালে পরের চেষ্টায় **হুবহু** উত্তর পাওয়া যায় — "এই ক্যাম্পেইনের
+> তিনটে নোটিফিকেশন আছে", অনুমান নয়। কুপনের ঠিক উল্টো, যেখানে কোনো লিংকই নেই।
+>
+> **শূন্য গোনা হলে reconcile করা হয় না।** শূন্য মানে হতে পারে "চলেইনি", আর
+> হতে পারে "চলেছে, সবাই promo বন্ধ রেখেছিল" — audit-এ দুটো আলাদা কথা। তাই
+> সারিটা `CONFIRMED`-এ থাকে: না-জানাটা সৎভাবে স্বীকার করা, আর দৈনিক বাজেট +
+> unique index থাকায় সেই অবস্থায় retry দুবার পাঠাতে পারে না।
+
+**একটা trade-off, সহনশীলতা ছাড়া বেছে নেওয়া।** `SEGMENT_CHANGED` কঠোর — একজন
+বেশি বা কম হলেই refuse। ব্যস্ত দোকানে মালিককে আবার জিজ্ঞেস করতে হতে পারে
+(একটা প্রশ্ন, তারপর নতুন কার্ড)। বিকল্পটা হতো "অল্প পার্থক্য মানি" — আর ঠিক
+সেই অল্প পার্থক্যটাই সেই লোকটা, যে কাল দোকানে এসেছিল আর আজ "অনেকদিন দেখিনি"
+বার্তা পাবে। `MEMBERS` আর `LOYALTY_ENGAGED` সবচেয়ে চঞ্চল, কারণ ওরা
+point-in-time — সেটা `SegmentDefinition.volatility`-তে লেখা আছে, মালিক কেন
+বারবার refuse দেখছেন সেটা আবিষ্কার করার আগেই।
+
+**যা ইচ্ছাকৃতভাবে করা হয়নি, আর কেন:** `REFERRAL_ENGAGED` হিসাব করা **যায়**
+(`referrals.referrer_id`, status CONVERTED) আর ব্রিফের সম্ভাব্য তালিকাতেও আছে।
+করা হয়নি কারণ যাঁরা কাউকে রেফার করেছেন তাঁদের জন্য একটা ক্যাম্পেইনে **বলার
+মতো একটা রেফারেল অফার** দরকার, আর সেটা প্রতি দোকানে ঐচ্ছিক। ওটা ছাড়া লেখার
+মতো থাকে "ধন্যবাদ" — আর ধন্যবাদ বলার সিদ্ধান্তের জন্য মালিকের AI লাগে না।
+ব্যাকলগে, এই কারণসহ।
+
+### যা এখনো যাচাই করা হয়নি — Sprint 5 শেষেও
 - **আসল মডেলের উত্তর:** `ANTHROPIC_API_KEY` সেট নেই, তাই এজেন্ট একটাও আসল
   উত্তর দেয়নি। অর্থাৎ মডেল সত্যিই আগে search করে কিনা, `prepare_join_queue`
   ঠিক সময়ে ডাকে কিনা, আর সবচেয়ে গুরুত্বপূর্ণ — কার্ড দেখানোর পর
@@ -522,15 +708,29 @@ action_type সংরক্ষণই করা যায় না, confirm endp
   render হয় (`CustomerShell`: `if (!signedIn) return <GuestShell>`), আর এই
   পরিবেশে আসল Supabase credential নেই। তাই **কার্ডটা ব্রাউজারে কেউ দেখেনি**,
   আর confirm বাটনে কেউ চাপ দেয়নি।
-- **আসল Supabase instance:** `20260930_ai_actions.sql` **আর**
-  `20261001_ai_actions_sprint4.sql` — দুটোর একটাও ইনস্ট্যান্সে **চালানো
-  হয়নি**। লোকালে PostgreSQL 16-এ আসল migration ফাইল দিয়ে ৮৫/৮৫ আর ১৪২/১৪২ —
-  সেটা "আসল schema-র মতো একটা schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়।
+- **আসল Supabase instance:** `20260930_ai_actions.sql`,
+  `20261001_ai_actions_sprint4.sql` **আর** `20261002_ai_campaigns_sprint5.sql`
+  — তিনটের একটাও ইনস্ট্যান্সে **চালানো হয়নি**। লোকালে PostgreSQL 16-এ আসল
+  migration ফাইল দিয়ে ৮৫/৮৫, ১৪২/১৪২ আর ১৫৭/১৫৭ — সেটা "আসল schema-র মতো
+  একটা schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়। **ক্রম গুরুত্বপূর্ণ:**
+  `20261002` অবশ্যই `20261001`-এর **পরে** চালাতে হবে, কারণ ওটা Sprint 4-এর
+  দুটো CHECK constraint drop করে আবার বানায়।
 - **আসল end-to-end:** কোনো আসল কাস্টমার AI দিয়ে কোনো আসল দোকানের লাইনে
   ঢোকেনি, কোনো আসল appointment বুক হয়নি, কোনো আসল পয়েন্ট খরচ হয়নি। পুরো
   ধারাটা মক-করা মডেল টার্ন + আসল Postgres দিয়ে যাচাই, আলাদা আলাদা স্তরে।
-- **appointment/reward কার্ড ব্রাউজারে:** তিন ধরনের কার্ডের একটাও আসল
-  ব্রাউজারে render হয়নি, একই কারণে — signed-in shell লাগে।
+- **appointment/reward/campaign কার্ড ব্রাউজারে:** চার ধরনের কার্ডের একটাও
+  আসল ব্রাউজারে render হয়নি, একই কারণে — signed-in shell লাগে। Sprint 5-এর
+  `AiCampaignProposalCard`-এর **Edit মোডও** কেউ ব্রাউজারে খোলেনি: textarea,
+  অক্ষর-গণনা, "তোমার লেখা" badge আর Undo বাটন — সবই শুধু কোড-স্তরে যাচাই।
+- **আসল ক্যাম্পেইন:** কোনো আসল কাস্টমারের ফোনে কোনো নোটিফিকেশন যায়নি।
+  `broadcast_campaign()` লোকাল Postgres-এ আসল সারি লিখেছে (হার্নেস F13–F19),
+  কিন্তু আসল ইনস্ট্যান্সে নয়, আর কোনো আসল মালিক কোনো বাটনে চাপ দেননি।
+- **`prepare_campaign` আসল মডেল দিয়ে:** সবচেয়ে গুরুত্বপূর্ণ অযাচাইকৃত জিনিসটা
+  এখানেই — মডেল কি সত্যিই segment আগে দেখে, বানানো ছাড় দিতে গিয়ে refuse খেয়ে
+  **মালিককে ঠিক কথাটা বলে** ("অফারটা আগে সেট করো"), আর কার্ড দেখানোর পর
+  **"পাঠিয়ে দিয়েছি" বলে ফেলে কিনা**। শেষটা কোনো গার্ড ধরতে পারবে না, কারণ
+  ওটা নিরাপত্তার ব্যর্থতা নয় — কার্ড নিজের গলায় "এখনো কিছু পাঠানো হয়নি"
+  বলে সেজন্যই, আর টুলের payload-ও মডেলকে সেটা বলে।
 - **deadlock-এর বার্তা booking sheet-এ:** সমান্তরাল হার্নেস একটা আসল জিনিস
   ধরেছে — দুটো একসঙ্গে একই slot চাইলে Postgres মাঝে মাঝে `deadlock detected`
   (40P01) দেয়, `exclusion_violation` (23P01) নয়, আর `book_appointment()`
@@ -542,5 +742,12 @@ action_type সংরক্ষণই করা যায় না, confirm endp
 
 ### ইচ্ছাকৃতভাবে বাইরে
 Predictive ML (no-show, demand, churn, next-visit) · RAG/vector/embeddings ·
-marketing automation · AI-চালিত mutation confirmation ছাড়া।
+AI memory · **autonomous campaign / auto-send / scheduler** · cancellation ·
+rescheduling · SMS/WhatsApp/email provider · বাইরের marketing platform ·
+AI-চালিত mutation confirmation ছাড়া।
 `shop_peak_slots()` **বর্ণনামূলক** analytics — কখনো prediction বলা যাবে না।
+
+**রোডম্যাপের AI স্প্রিন্ট এখানেই শেষ।** এক লাইনে যা পুরোটা:
+**AI segment করে → খসড়া লেখে → মালিক অনুমোদন করেন → সিস্টেম পাঠায়।**
+AI স্বয়ংক্রিয়ভাবে marketing action পাঠাতে পারে না, আর সেটা prompt-এর কথা নয়
+— ডেটাবেসে সেই দরজা নেই।

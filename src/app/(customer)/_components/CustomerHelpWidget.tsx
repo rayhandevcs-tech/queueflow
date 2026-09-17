@@ -25,15 +25,17 @@ export function CustomerHelpWidget() {
   return (
     <FloatingChatWidget
       endpoint="/api/ai/agent"
-      // AI Sprint 3. When a turn prepares a queue join, the card appears under
-      // the answer with the confirm button on it. The widget passes only the
-      // id; the card reads the proposal from the database under RLS, so the
-      // figures the customer agrees to are the ones the server stored.
+      // AI Sprint 3. When a turn prepares a queue join — or, since Sprint 4, a
+      // booking or a redemption — the card appears under the answer with the
+      // confirm button on it. The widget passes only the id; the card reads the
+      // proposal from the database under RLS, so the figures the customer
+      // agrees to are the ones the server stored.
       //
-      // The provider widget does NOT pass this, and that is the whole of the
-      // role separation on the UI side — though not what enforces it: the
-      // owner registry has no `prepare_join_queue`, so an owner turn cannot
-      // produce a proposal to render in the first place.
+      // The provider widget passes its OWN card from Sprint 5, and what keeps
+      // the two apart is the registry rather than this line: a customer's tool
+      // slice has no `prepare_campaign_send` and an owner's has no
+      // `prepare_join_queue`, so neither session can produce the other's
+      // proposal in the first place.
       renderProposal={(proposalId) => <AiProposalCard actionId={proposalId} />}
       labels={{
         name: t("botName"),
