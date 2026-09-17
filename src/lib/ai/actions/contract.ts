@@ -57,6 +57,24 @@ export interface ConfirmedAction {
   /** Redemption parameter. Null for the other two types. */
   rewardId: string | null;
   /**
+   * Campaign parameters. Null for the other three types.
+   *
+   * `campaignRecipients` is the frozen snapshot — exactly who will be
+   * messaged, decided server-side at propose time. It arrives here off the
+   * claimed row and is compared against a freshly recomputed set before
+   * anything is sent; it is never modified, and no request body can supply it.
+   *
+   * `campaignTitle` and `campaignBody` are what will ACTUALLY be sent. If the
+   * owner edited the message, the route has already written their version to
+   * the row through `ai_action_apply_campaign_edit`, so these carry the edit
+   * rather than the model's draft — which survives in `display`.
+   */
+  campaignSegment: string | null;
+  campaignSince: string | null;
+  campaignRecipients: string[] | null;
+  campaignTitle: string | null;
+  campaignBody: string | null;
+  /**
    * What the customer was SHOWN, frozen at propose time.
    *
    * Used for exactly one thing: comparing against freshly read figures, so a
@@ -73,8 +91,22 @@ export interface ActionOutcome {
    * The id of the row the action created — a serial, an appointment or a
    * redemption. `ai_action_settle()` decides which column it lands in, from the
    * action's own type, so a caller cannot put it in the wrong one.
+   *
+   * `null` for SEND_CAMPAIGN, which creates N notification rows rather than
+   * one row and therefore has nothing to point at. That is the only case, and
+   * `ai_action_settle` enforces the pairing: EXECUTED needs an id for the
+   * other three types and a count for a campaign, so an outcome cannot claim
+   * success while proving nothing.
    */
-  resultId: string;
+  resultId: string | null;
+  /**
+   * How many things the action produced, for SEND_CAMPAIGN only.
+   *
+   * The number of notifications actually inserted — not the recipient count.
+   * They differ when somebody muted promotions between the proposal and the
+   * send, and reporting the smaller, true figure is the point.
+   */
+  resultCount?: number;
   /**
    * What the UI is told. Read back from the created row wherever the value
    * matters (position, total, code, balance), because the point of this field

@@ -21,11 +21,16 @@ import {
   AI_ACTION_BOOK_APPOINTMENT,
   AI_ACTION_JOIN_QUEUE,
   AI_ACTION_REDEEM_REWARD,
+  AI_ACTION_SEND_CAMPAIGN,
   DiscoveryLedger,
   newProposalNonce,
   ttlForAction,
   type AiProposalDraft,
 } from "@/lib/ai/proposals";
+import {
+  MAX_CAMPAIGN_RECIPIENTS,
+  MIN_CAMPAIGN_RECIPIENTS,
+} from "@/lib/segments";
 
 /**
  * The agent endpoint — one endpoint, two roles.
@@ -189,10 +194,19 @@ export async function POST(request: Request) {
    *   · nothing survives to be replayed, because the chat history posted on
    *     each turn carries user and assistant TEXT only — never tool results.
    *
-   * Owners get no ledger. They have nothing to propose, and omitting it means
-   * `prepare_join_queue` would refuse even if role scoping were somehow wrong.
+   * BOTH roles get one from AI Sprint 5. Until Sprint 4 an owner had nothing
+   * to propose, and the comment here said so; the retention tools changed
+   * that, and a campaign is subject to exactly the same rule — a segment key
+   * reaches `prepare_campaign_send` only if `get_customer_segments` returned
+   * it during this request, so the model cannot campaign to a group it never
+   * looked at and cannot invent a group name at all.
+   *
+   * The role separation that mattered is still there, and it is not the
+   * ledger: it is the registry. An owner's slice has no `prepare_join_queue`
+   * and a customer's has no `prepare_campaign_send`, so neither can produce
+   * the other's proposal whatever their ledger holds.
    */
-  const ledger = role === "customer" ? new DiscoveryLedger() : undefined;
+  const ledger = new DiscoveryLedger();
 
   /**
    * The Anthropic-backed model call, adapting the SDK's block shapes to the
@@ -262,7 +276,11 @@ export async function POST(request: Request) {
     // the id: the card fetches the row itself from `ai_actions` under RLS, so
     // what it displays is what the server stored rather than a payload that
     // passed through the client on its way to a confirm button.
-    const proposalId = await persistProposal(supabase, ledger?.draft ?? null);
+    const proposalId = await persistProposal(
+      supabase,
+      ledger.draft,
+      ledger.campaignRecipients,
+    );
 
     return new Response(result.text, {
       headers: {
@@ -318,6 +336,14 @@ export async function POST(request: Request) {
 async function persistProposal(
   supabase: Awaited<ReturnType<typeof createServerSupabase>>,
   draft: unknown,
+  /**
+   * The campaign's recipient snapshot, from the ledger. Passed separately
+   * because it is deliberately NOT part of the draft: the draft becomes
+   * `display`, which the owner's card reads and which carries a count, and
+   * these ids belong in `campaign_recipients` where the browser never sees
+   * them. Null for the other three action types.
+   */
+  campaignRecipients: readonly string[] | null,
 ): Promise<string | null> {
   if (!draft || typeof draft !== "object") return null;
   const proposal = draft as AiProposalDraft;
@@ -335,6 +361,11 @@ async function persistProposal(
     p_staff_id: string | null;
     p_starts_at: string | null;
     p_reward_id: string | null;
+    p_campaign_segment?: string | null;
+    p_campaign_since?: string | null;
+    p_campaign_recipients?: string[] | null;
+    p_campaign_title?: string | null;
+    p_campaign_body?: string | null;
   };
 
   switch (proposal.action) {
@@ -371,6 +402,42 @@ async function persistProposal(
         p_reward_id: proposal.rewardId,
       };
       break;
+
+    case AI_ACTION_SEND_CAMPAIGN: {
+      // The snapshot is required and it must come from the LEDGER, not from
+      // the draft. A campaign draft with no accompanying recipient array is a
+      // bug, and the correct response is to write nothing: the owner then sees
+      // the assistant's text with no approval card, which reads as "it
+      // described something but did not offer a button" — confusing, and much
+      // better than a proposal whose audience nobody recorded.
+      if (!campaignRecipients || campaignRecipients.length === 0) return null;
+      // Belt to the database's brace. `ai_action_propose` raises
+      // `ai_action_segment_too_small` / `_too_large` and
+      // `ai_actions_campaign_bounds` refuses the row besides; checking here
+      // means a draft that could never be stored does not reach the RPC.
+      if (
+        campaignRecipients.length < MIN_CAMPAIGN_RECIPIENTS ||
+        campaignRecipients.length > MAX_CAMPAIGN_RECIPIENTS
+      ) {
+        return null;
+      }
+      args = {
+        // Empty on purpose: a campaign is not a purchase. The table's
+        // `ai_actions_params_match_type` requires it to be empty for this type.
+        p_service_ids: [],
+        p_staff_id: null,
+        p_starts_at: null,
+        p_reward_id: null,
+        p_campaign_segment: proposal.segment,
+        // The stored cutoff, so the send recomputes the SAME set rather than a
+        // set derived from a clock that has moved on.
+        p_campaign_since: proposal.since,
+        p_campaign_recipients: [...campaignRecipients],
+        p_campaign_title: proposal.title,
+        p_campaign_body: proposal.body,
+      };
+      break;
+    }
 
     default:
       return null;

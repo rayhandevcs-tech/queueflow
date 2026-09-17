@@ -6,6 +6,7 @@ import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
 import { JOIN_QUEUE_TOOLS } from "./tools/join-queue-prepare";
 import { APPOINTMENT_TOOLS } from "./tools/appointment-prepare";
 import { REWARD_TOOLS } from "./tools/reward-prepare";
+import { RETENTION_TOOLS } from "./tools/retention";
 
 /**
  * The complete, closed list of things the model may do.
@@ -43,6 +44,18 @@ const ALL_TOOLS: readonly ToolDefinition[] = [
   // has no model in its request at all.
   ...APPOINTMENT_TOOLS,
   ...REWARD_TOOLS,
+  // Sprint 5's five, and the first confirmed action that belongs to an OWNER.
+  // Same terms again: three of them only read, and `prepare_campaign` /
+  // `prepare_campaign_send` write nothing and send nothing — they check the
+  // words against the shop's own configured offers, freeze who the audience
+  // is, and leave a draft. `broadcast_campaign()` is called by the confirm
+  // endpoint after the owner presses Approve & Send, in a request with no
+  // model in it.
+  //
+  // Worth stating plainly because marketing is the action where "the AI did it
+  // on its own" would matter most: there is no tool here that sends anything,
+  // and there is no argument to any of them that could make one send.
+  ...RETENTION_TOOLS,
 ];
 
 /**

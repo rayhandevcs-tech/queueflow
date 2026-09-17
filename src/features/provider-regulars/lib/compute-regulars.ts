@@ -1,4 +1,5 @@
 import { translate } from "@/lib/i18n";
+import { REGULAR_VISIT_THRESHOLD } from "@/lib/segments";
 import { providerRegularsDict } from "./i18n";
 
 export interface VisitRow {
@@ -22,9 +23,15 @@ export interface RegularCustomer {
   visitedThisMonth: boolean;
 }
 
-const REGULAR_VISIT_THRESHOLD = 2;
-
-/** Pure grouping over a shop's DONE serials — no I/O. */
+/**
+ * Pure grouping over a shop's DONE serials — no I/O.
+ *
+ * The threshold moved to `@/lib/segments` in AI Sprint 5. It was a private
+ * constant here, and then the retention segments needed the same number: the
+ * SQL segment rule, this screen and the existing
+ * `broadcast_shop_notification('regulars')` all mean the same "regular", so
+ * they now read one constant instead of three that happened to agree.
+ */
 export function computeRegulars(rows: VisitRow[], now: Date): RegularCustomer[] {
   const byKey = new Map<string, RegularCustomer>();
   const thisMonthKey = `${now.getFullYear()}-${now.getMonth()}`;

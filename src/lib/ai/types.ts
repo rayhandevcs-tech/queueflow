@@ -65,10 +65,11 @@ export interface ToolContext {
  * depended on by every tool, and `proposals.ts` imports `security.ts`, so
  * importing it the other way would make the dependency circular.
  *
- * "slot" and "reward" joined the list in Sprint 4. `IdWhitelist` needed no
- * change to accept them — it has always keyed by an arbitrary string.
+ * "slot" and "reward" joined the list in Sprint 4, "segment" in Sprint 5.
+ * `IdWhitelist` needed no change to accept any of them — it has always keyed by
+ * an arbitrary string, and "segment" is the first entry that is not a uuid.
  */
-export type LedgerKindLike = "shop" | "service" | "slot" | "reward";
+export type LedgerKindLike = "shop" | "service" | "slot" | "reward" | "segment";
 
 /**
  * The ledger's surface as the tools use it — offer ids, require ids, leave a
@@ -79,6 +80,16 @@ export interface DiscoveryLedgerLike {
   has(kind: LedgerKindLike, id: string): boolean;
   requireOffered(kind: LedgerKindLike, ids: readonly string[]): void;
   draft: unknown;
+  /**
+   * AI Sprint 5. The frozen recipient snapshot a campaign draft goes with.
+   *
+   * A second slot rather than a field on the draft, and the separation is the
+   * privacy decision: the draft becomes `ai_actions.display`, which the owner's
+   * card reads, and it carries a COUNT. The ids travel here, are read by the
+   * route, go into `campaign_recipients`, and are never returned to the model
+   * or sent to the browser.
+   */
+  campaignRecipients?: readonly string[] | null;
 }
 
 /**

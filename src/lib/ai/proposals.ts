@@ -66,24 +66,37 @@ export const AI_ACTION_JOIN_QUEUE = "JOIN_QUEUE" as const;
 export const AI_ACTION_BOOK_APPOINTMENT = "BOOK_APPOINTMENT" as const;
 /** Spend loyalty points on a coupon. AI Sprint 4. */
 export const AI_ACTION_REDEEM_REWARD = "REDEEM_REWARD" as const;
+/**
+ * Send an owner-approved retention campaign. AI Sprint 5.
+ *
+ * The only action in this union that belongs to an OWNER rather than a
+ * customer, and the only one whose effect lands on other people. Both facts
+ * are why it has the longest confirmation path: the segment is computed in SQL,
+ * the audience is frozen at propose time, the owner may rewrite the message,
+ * and the send refuses unless the recomputed audience is still the same people.
+ */
+export const AI_ACTION_SEND_CAMPAIGN = "SEND_CAMPAIGN" as const;
 
 export type AiActionType =
   | typeof AI_ACTION_JOIN_QUEUE
   | typeof AI_ACTION_BOOK_APPOINTMENT
-  | typeof AI_ACTION_REDEEM_REWARD;
+  | typeof AI_ACTION_REDEEM_REWARD
+  | typeof AI_ACTION_SEND_CAMPAIGN;
 
 /**
  * The complete list, mirroring `public.ai_action_type`.
  *
- * Three, and the absences are the point: there is no CANCEL_APPOINTMENT,
- * RESCHEDULE_APPOINTMENT or SEND_CAMPAIGN here and none in the enum either, so
- * the confirm endpoint refusing an unknown type is a guarantee rather than a
- * hope — an unknown type cannot be stored in the first place.
+ * Four, and the absences are the point: there is no CANCEL_APPOINTMENT,
+ * RESCHEDULE_APPOINTMENT, AUTO_SEND, SCHEDULE_CAMPAIGN or BULK_MESSAGE here and
+ * none in the enum either, so the confirm endpoint refusing an unknown type is
+ * a guarantee rather than a hope — an unknown type cannot be stored in the
+ * first place.
  */
 export const AI_ACTION_TYPES: readonly AiActionType[] = [
   AI_ACTION_JOIN_QUEUE,
   AI_ACTION_BOOK_APPOINTMENT,
   AI_ACTION_REDEEM_REWARD,
+  AI_ACTION_SEND_CAMPAIGN,
 ];
 
 /** The lifecycle, mirroring `public.ai_action_status`. */
@@ -128,6 +141,24 @@ export const AI_APPOINTMENT_TTL_SECONDS = 180;
  */
 export const AI_REWARD_TTL_SECONDS = 180;
 
+/**
+ * Ten minutes for a campaign, and longer than the others for a reason that
+ * runs the opposite way.
+ *
+ * The other three are short because what they describe is contended or moving,
+ * and a stale card is a card that cannot be used. A campaign is not contended:
+ * nobody else is competing for these forty-three customers. What the window
+ * has to accommodate instead is a person READING a message and deciding whether
+ * to put their shop's name to it — and possibly rewriting it first. Three
+ * minutes for that would mean an owner who stopped to think lost their draft.
+ *
+ * Ten minutes is still an expiry rather than none, because the audience is
+ * recomputed at send time and refused if it moved: a very old proposal is one
+ * whose SEGMENT_CHANGED refusal is nearly certain, so letting it sit for an
+ * hour would only produce a slower failure.
+ */
+export const AI_CAMPAIGN_TTL_SECONDS = 600;
+
 /** The TTL for one action type. One place, so the card and the row agree. */
 export function ttlForAction(action: AiActionType): number {
   switch (action) {
@@ -135,6 +166,8 @@ export function ttlForAction(action: AiActionType): number {
       return AI_APPOINTMENT_TTL_SECONDS;
     case AI_ACTION_REDEEM_REWARD:
       return AI_REWARD_TTL_SECONDS;
+    case AI_ACTION_SEND_CAMPAIGN:
+      return AI_CAMPAIGN_TTL_SECONDS;
     default:
       return AI_PROPOSAL_TTL_SECONDS;
   }
@@ -252,7 +285,49 @@ export type ProposalRefusal =
   /** No points card at this shop at all, so nothing to spend. */
   | "NO_LOYALTY_ACCOUNT"
   /** `redeem_reward` refused it. The audit keeps the reason. */
-  | "REDEMPTION_REFUSED";
+  | "REDEMPTION_REFUSED"
+
+  // --- SEND_CAMPAIGN (owner) ------------------------------------------------
+  /** The caller has no shop, or does not own the one named. */
+  | "NOT_SHOP_OWNER"
+  /** The model named a segment no segment tool returned this request. */
+  | "SEGMENT_NOT_OFFERED"
+  /** Not one of the six. The model invented a segment name. */
+  | "SEGMENT_UNKNOWN"
+  /** The shop has too little completed-visit history to segment honestly. */
+  | "NOT_ENOUGH_HISTORY"
+  /** Nobody is in it, so there is nothing to send. */
+  | "SEGMENT_EMPTY"
+  /** Fewer than three reachable people — see MIN_CAMPAIGN_RECIPIENTS. */
+  | "SEGMENT_TOO_SMALL"
+  /** More than one campaign may reach at once. */
+  | "SEGMENT_TOO_LARGE"
+  /** The lookback window is outside the range the segments cover. */
+  | "WINDOW_INVALID"
+  /**
+   * The audience moved between the proposal and the approval.
+   *
+   * The refusal §15 asks for by name. The owner approved a specific group of
+   * people; if somebody has since completed a visit and left LAPSED, sending to
+   * the old list would mean telling a customer who came in yesterday that they
+   * have not been seen in a while. Refusing and re-asking costs one question.
+   */
+  | "SEGMENT_CHANGED"
+  /** The title or body is empty, or past its length bound. */
+  | "CAMPAIGN_CONTENT_INVALID"
+  /**
+   * The drafted text promises something the shop has not configured.
+   *
+   * §9's rule. Applies to text the MODEL wrote; an owner's own edit is not held
+   * to it, because the owner is the business and may promise what they like.
+   */
+  | "CAMPAIGN_INVENTS_OFFER"
+  /** The shop's one promotional broadcast for today has already gone out. */
+  | "BROADCAST_LIMIT_REACHED"
+  /** A recipient in the snapshot is not this shop's customer. */
+  | "RECIPIENT_NOT_A_CUSTOMER"
+  /** `broadcast_campaign` refused it. The audit keeps the reason. */
+  | "CAMPAIGN_REFUSED";
 
 /**
  * Thrown by the prepare tools and the confirm path.
@@ -401,10 +476,71 @@ export interface RewardDraft {
 }
 
 /**
- * Any of the three. The `action` field is the discriminant, and it is what the
+ * An owner's retention campaign, against one verified segment.
+ *
+ * ---------------------------------------------------------------------------
+ * What the model contributed, and what it did not
+ * ---------------------------------------------------------------------------
+ * The model chose the SEGMENT (from the six it was offered), the WINDOW (within
+ * bounds) and the WORDS. That is all. Specifically it did not choose:
+ *
+ *   · the shop — `ctx.shopId`, from the session, re-checked by
+ *     `is_shop_owner()` inside `ai_action_propose` and again inside
+ *     `broadcast_campaign`;
+ *   · who is in the segment — `shop_segment_rows()` decided, in SQL;
+ *   · how many people that is — `recipientCount` is the length of the array
+ *     the database returned, and the card shows that number;
+ *   · whether it may be sent — the owner presses the button.
+ *
+ * ---------------------------------------------------------------------------
+ * The recipient ids are NOT here, on purpose
+ * ---------------------------------------------------------------------------
+ * This object becomes `ai_actions.display`, which the owner's card reads. The
+ * snapshot itself lives in `campaign_recipients`, a column the card does not
+ * fetch and the model never sees. The reason is §5: a list of customer uuids
+ * is of no use to the model — nothing downstream accepts a customer id from
+ * anybody — so putting one in its context would be risk with no benefit.
+ *
+ * What the model gets instead is a count and a reason, which is what it needs
+ * to write a sentence about, and what the owner gets is the same count plus
+ * the ability to read the message before anybody receives it.
+ */
+export interface CampaignDraft {
+  action: typeof AI_ACTION_SEND_CAMPAIGN;
+  shopId: string;
+  shopName: string;
+  /** One of the six. Never a name the model made up. */
+  segment: string;
+  /** What the owner's card calls it, from `SEGMENTS`. */
+  segmentLabel: string;
+  /** Why these customers, in Bangla. A statement about records, not a forecast. */
+  reason: string;
+  /** The window, so the card and the audit both name the real cutoff. */
+  lookbackDays: number;
+  /** `YYYY-MM-DD` in Asia/Dhaka — the cutoff the snapshot was computed from. */
+  since: string;
+  /**
+   * How many people will be messaged: the length of the snapshot, after the
+   * promotional opt-out filter. Not a segment size that quietly shrinks at send
+   * time, and not a figure the model produced.
+   */
+  recipientCount: number;
+  /** How many are in the segment but have muted promotions. Shown, not hidden. */
+  mutedCount: number;
+  /** The drafted title and body. Editable by the owner before approval. */
+  title: string;
+  body: string;
+}
+
+/**
+ * Any of the four. The `action` field is the discriminant, and it is what the
  * confirm endpoint switches on and what the card renders from.
  */
-export type AiProposalDraft = JoinQueueDraft | AppointmentDraft | RewardDraft;
+export type AiProposalDraft =
+  | JoinQueueDraft
+  | AppointmentDraft
+  | RewardDraft
+  | CampaignDraft;
 
 /** The persisted proposal, as the card and the confirm path see it. */
 export interface StoredProposal {
@@ -422,10 +558,25 @@ export interface StoredProposal {
   startsAt: string | null;
   /** Redemption parameter. Null for the other types. */
   rewardId: string | null;
+  /**
+   * Campaign parameters. Null for the other three types.
+   *
+   * `campaignRecipients` is deliberately absent from this interface. The card
+   * does not fetch that column and has no use for it: it shows a count, which
+   * comes from `display`. Leaving it out means a client that somehow got the
+   * array could not display it through the normal path — the snapshot is
+   * server-side state, and this type says so by omission.
+   */
+  campaignSegment: string | null;
+  campaignSince: string | null;
+  campaignTitle: string | null;
+  campaignBody: string | null;
   /** Results — at most one is set, and only on an EXECUTED row. */
   serialId: string | null;
   appointmentId: string | null;
   redemptionId: string | null;
+  /** How many notifications an executed campaign actually inserted. */
+  campaignSentCount: number | null;
   failureCode: string | null;
 }
 
@@ -503,8 +654,18 @@ export function slotKey(
 // The ledger
 // ---------------------------------------------------------------------------
 
-/** The kinds of thing a discovery tool can offer. */
-export type LedgerKind = "shop" | "service" | "slot" | "reward";
+/**
+ * The kinds of thing a discovery tool can offer.
+ *
+ * "segment" joined in Sprint 5, and it is the one entry that is not a uuid.
+ * That is fine — `IdWhitelist` has always keyed by an arbitrary string — and it
+ * is the right shape for the same reason the others are: a segment key reaches
+ * the campaign path only if `get_customer_segments` returned it in THIS
+ * request, so a model that writes `"WILL_CHURN"` or `"HIGH_VALUE"` is refused
+ * before any query runs, rather than being handed to SQL that would return an
+ * empty set and let the model call that an answer.
+ */
+export type LedgerKind = "shop" | "service" | "slot" | "reward" | "segment";
 
 /**
  * The refusal for each kind, so the model is told WHICH kind of id it invented.
@@ -519,6 +680,7 @@ const REFUSAL_FOR_KIND: Record<LedgerKind, ProposalRefusal> = {
   service: "SERVICE_NOT_OFFERED",
   slot: "SLOT_NOT_OFFERED",
   reward: "REWARD_NOT_OFFERED",
+  segment: "SEGMENT_NOT_OFFERED",
 };
 
 /**
@@ -555,6 +717,20 @@ export class DiscoveryLedger {
    * prepare call wins, which is the one the model just told them about.
    */
   draft: AiProposalDraft | null = null;
+
+  /**
+   * AI Sprint 5. The recipient snapshot that goes with a campaign draft.
+   *
+   * Kept beside the draft rather than inside it, deliberately. The draft is
+   * what becomes `ai_actions.display` and therefore what the owner's card
+   * reads, and it carries a recipient COUNT. The ids live here, are read once
+   * by the route, land in `campaign_recipients`, and never reach the model or
+   * the browser — §5's "do not send unnecessary PII to Anthropic" expressed as
+   * a place the ids cannot accidentally be rendered from.
+   *
+   * Null for the other three action types, which have no audience.
+   */
+  campaignRecipients: readonly string[] | null = null;
 
   /** Record ids a tool result offered. Called by the discovery tools. */
   offer(kind: LedgerKind, offered: readonly string[]): void {

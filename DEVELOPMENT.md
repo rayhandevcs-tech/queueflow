@@ -2175,6 +2175,71 @@ refuse করে, বা উল্টোটা — আর কাস্টমা�
 
 ---
 
+### সিদ্ধান্ত ৮৮ — recipient snapshot সারিতে, segment নাম নয়
+
+ব্রিফের §১৬ এটাকে "extremely important" বলেছে, আর কারণটা কনক্রিট। যদি
+proposal-এ শুধু `segment = 'LAPSED'` জমা থাকে আর পাঠানোর সময় segment আবার
+হিসাব হয়, তাহলে মালিক যে ৪২ জনকে অনুমোদন করেছিলেন আর যাঁরা বার্তা পেলেন —
+এই দুই দল **আলাদা** হতে পারে। মাঝখানে একজন এসে চুল কাটিয়ে গেলে তিনি LAPSED
+থেকে বেরিয়ে যান, অথবা কেউ ঢুকে পড়েন।
+
+তাই `ai_actions.campaign_recipients uuid[]` — **কারা পাবে সেটাই** কলামে।
+
+সাদা `uuid[]`-কে নিরাপদ করে তোলে `broadcast_campaign()`-এর ভেতরের চেক:
+প্রতিটা id **সত্যিই এই দোকানের কাস্টমার** কি না, SQL-এ, দোকানের নিজের
+serials / appointments / memberships / loyalty_accounts-এর বিরুদ্ধে। কলামে
+একটা বাইরের uuid ঢুকে পড়লেও তাকে বার্তা পাঠানো যাবে না (হার্নেস H9)।
+
+আর ids **কখনো মডেলের context-এ বা ব্রাউজারে যায় না**: draft-এ (যা `display`
+হয়ে কার্ড পড়ে) শুধু **count**, ids থাকে আলাদা `ledger.campaignRecipients`-এ,
+রুট একবার পড়ে কলামে বসায়। §৫-এর "do not send unnecessary PII to Anthropic"
+এখানে একটা নিয়ম নয়, একটা **জায়গা** — যেখান থেকে render করা সম্ভব নয়।
+
+### সিদ্ধান্ত ৮৯ — SEGMENT_CHANGED কঠোর, সহনশীলতা ছাড়া
+
+audience আবার হিসাব হয় **একই stored cutoff date** দিয়ে, আর একজন বেশি বা কম
+হলেই refuse। "অল্প পার্থক্য মানি" বলাটা প্রথম নকশা ছিল, আর সেটা ভুল: ওই অল্প
+পার্থক্যটাই সেই লোকটা, যে কাল দোকানে এসেছিল আর আজ "অনেকদিন দেখিনি" বার্তা
+পাবে। ওটাই এই গার্ডের একমাত্র কারণ, তাই সহনশীলতা মানে গার্ডটা না-থাকা।
+
+**cutoff তারিখ, instant নয় — আর এটা load-bearing।** `now() - interval '60 days'`
+অবিরাম সরে, তাই যাঁর শেষ ভিজিট ঠিক ৬০ দিন ৫ মিনিট আগে, তিনি মালিকের খসড়া
+পড়ার মধ্যেই LAPSED-এ ঢুকে যেতেন — আর refuse-টা এমন একটা কারণে হতো যা কেউ
+ব্যাখ্যা করতে পারত না। একটা Dhaka ক্যালেন্ডার-দিন, একবার হিসাব করে proposal-এ
+জমা, মানে **সেটটা কেবল সত্যিকারের কাস্টমার-কার্যকলাপে বদলায়** — যেটা
+`SEGMENT_CHANGED` বললে ঠিক সেটাই বোঝায়।
+
+দাম: ব্যস্ত দোকানে আবার জিজ্ঞেস করতে হতে পারে (একটা প্রশ্ন, নতুন কার্ড)।
+`MEMBERS` আর `LOYALTY_ENGAGED` সবচেয়ে চঞ্চল কারণ ওরা point-in-time — সেটা
+`SegmentDefinition.volatility`-তে লেখা, আবিষ্কার করার জিনিস নয়।
+
+### সিদ্ধান্ত ৯০ — বানানো অফারের গার্ড কোড, prompt নয়
+
+§৯: মালিক "২০% ছাড় দাও" বললেন কিন্তু দোকানে কোনো ২০% অফার সেট নেই — AI
+চুপচাপ একটা বানিয়ে ফেলতে পারবে না। prompt-এ লেখা আছে, কিন্তু prompt একটা
+অনুরোধ; `checkDraftedCampaign()` একটা গেট।
+
+মডেলের লেখা টেক্সটের প্রতিটা সংখ্যা (`২০%`, `৩৫০ টাকা`, `ফ্রি`) দোকানের নিজের
+`offers.discount_pct`, `rewards.value` আর `services.rate`-এর সঙ্গে মেলানো হয়।
+না মিললে `CAMPAIGN_INVENTS_OFFER` — **audience হিসাব করার আগেই**।
+
+**বাংলা অঙ্ক আগে normalize হয়, আর এটা না থাকলে গার্ডটা সম্পূর্ণ অকেজো।**
+পুরো অ্যাপ বাংলা অঙ্কে লেখে, prompt মডেলকেও তাই বলে — আর `\d` "২০% ছাড়"-এ
+**কিছুই** পায় না। mutation টেস্ট: normalize সরালে ৯টা টেস্ট ফেল করে। এই ধরনের
+ফাঁক পাস-করা টেস্ট স্যুটে অদৃশ্য থাকে যদি টেস্টগুলো নিজেরাই বাংলা অঙ্ক ব্যবহার
+না করে — তাই করে।
+
+**মালিকের নিজের লেখা এই যাচাইয়ের বাইরে, ইচ্ছাকৃতভাবে।** §৯ বলে content হতে
+হবে "based only on verified business facts **or explicitly owner-provided
+text**" — মালিকই ব্যবসাটা, তিনি এখনো অ্যাপে না-বসানো একটা ছাড়ের প্রতিশ্রুতি
+দিতে পারেন, আর যে সিস্টেম তাঁকে আটকায় সে **কে দায়িত্বে** সেটা নিয়েই ভুল।
+তাই পার্থক্যটা `authored: "model" | "owner"` — একটাই জায়গায় লেখা।
+
+**যা এই গার্ড ধরতে পারে না, লিখে রাখা:** সংখ্যা ছাড়া প্রতিশ্রুতি ("তোমার
+জন্য বিশেষ ব্যবস্থা"), আর দাবি-করা মেয়াদ ("শুধু এই সপ্তাহে")। ওগুলো ঢাকে
+prompt আর মালিকের নিজের চোখ — আর সীমাটা লেখা থাকা দরকার, কারণ যে গার্ডের সীমা
+অলিখিত, তাকে যা সে করে না তার জন্যও বিশ্বাস করা হয়।
+
 ### AI Sprint 4 — AI Appointment + AI Reward ✅
 
 > **কোড সম্পূর্ণ। আসল মডেলে চালিয়ে দেখা হয়নি — `ANTHROPIC_API_KEY` এখনো নেই,
@@ -2289,6 +2354,144 @@ horizontal overflow নেই।
 
 ---
 
+### AI Sprint 5 — Retention + Marketing ✅ (রোডম্যাপের শেষ AI স্প্রিন্ট)
+
+> **কোড সম্পূর্ণ। আসল মডেলে চালিয়ে দেখা হয়নি — `ANTHROPIC_API_KEY` এখনো নেই,
+> আর ব্রিফেই বলা ছিল লাগবে না।**
+> বিস্তারিত: [`docs/AI_ARCHITECTURE.md`](docs/AI_ARCHITECTURE.md) §৯ঘ ও §১০।
+> **মাইগ্রেশন:** `20261002_ai_campaigns_sprint5.sql` — **ইনস্ট্যান্সে চালানো
+> বাকি**, আর `20261001`-এর **পরে** চালাতে হবে (ওটা Sprint 4-এর দুটো CHECK
+> constraint drop করে আবার বানায়)।
+
+**এক লাইনে:** AI segment করে → খসড়া লেখে → **মালিক অনুমোদন করেন** → সিস্টেম
+পাঠায়। AI নিজে কোনো ক্যাম্পেইন পাঠাতে পারে না, আর সেটা prompt-এর কথা নয় —
+ডেটাবেসে সেই দরজা নেই।
+
+**প্রথমে যা খুঁজে বের করতে হলো: বিদ্যমান broadcast কী পারে, আর কী পারে না।**
+`broadcast_shop_notification(shop, target, title, body)` আগে থেকেই ছিল আর
+নিজের জায়গায় সঠিক — owner চেক, `notification_enabled(PROMO)` ফিল্টার, দিনে
+একটা PROMO-র সীমা। কিন্তু দুটো জিনিস এই স্প্রিন্টে অসম্ভব করে তুলত:
+
+1. এটা **target** নেয় (`'recent'` / `'regulars'`) আর **নিজের ভেতরে audience
+   আবার হিসাব করে** — §১৬ ঠিক সেটাই নিষেধ করে;
+2. ছটা segment-এর **চারটে** (LAPSED সহ, যা পুরো retention ফিচারের কারণ) ওতে
+   বলাই যায় না।
+
+§১৮ বলে "reuse it, and if it has limitations, document them… if the broadcast
+mechanism cannot currently provide a required guarantee, stop at the
+proposal/approval boundary and document the limitation instead of creating an
+unsafe bypass"। এখানে সিদ্ধান্তটা bypass নয়, **ভাই**: `broadcast_campaign()`
+— একই `notifications` টেবিল, একই `PROMO` টাইপ, একই opt-out ফিল্টার, একই owner
+চেক, **একই দৈনিক বাজেট**, কিন্তু target-এর জায়গায় **snapshot**। পুরনো
+function **ছোঁয়া হয়নি**; ম্যানুয়াল স্ক্রিন আর `notifyRegularsAboutOffer()`
+আগের মতোই চলে (টেস্ট সেটাও যাচাই করে)।
+
+**নতুন ফাইল (৮টা):**
+
+| ফাইল | কাজ |
+|---|---|
+| `supabase/migrations/20261002_ai_campaigns_sprint5.sql` | ১টা enum মান, ৬টা কলাম, ৩টা নতুন + ২টা পুনর্নির্মিত CHECK, ১টা unique index, ৫টা segment/campaign function, `broadcast_campaign`, `campaign_send_count`, `ai_action_apply_campaign_edit` |
+| `supabase/tests/run-sprint-ai5-checks.sh` | **১৫৭** চেক, ৫টা সমান্তরাল ক্লায়েন্টের রেস |
+| `src/lib/segments.ts` | ছটা segment, থ্রেশহোল্ড, উইন্ডো, গার্ড — **কোনো membership হিসাব নেই** |
+| `src/lib/campaign-content.ts` | বানানো-অফার গার্ড + বাংলা অঙ্ক normalize |
+| `src/lib/ai/tools/retention.ts` | পাঁচটা owner টুল, সবগুলো read-only |
+| `src/lib/ai/actions/send-campaign-action.ts` | ৫ ধাপ revalidation → `broadcast_campaign()` |
+| `src/lib/ai/proposal-client.ts` | proposal পড়া/confirm/cancel — shared-এ উঠল |
+| `src/features/provider-ai/{components,hooks,lib}` | `AiCampaignProposalCard` + hook + i18n |
+| `src/lib/ai/sprint5-campaigns.test.ts` | **১২৩** টেস্ট (S-1..9, C-1..16, P-1..3, ৭টা E2E) |
+
+**বদলানো ফাইলের মধ্যে দুটো কারণ লিখে রাখার মতো:**
+
+- **`src/features/customer-ai/api/proposals.api.ts` এখন একটা re-export।**
+  মালিকের কার্ডের ঠিক একই তিনটে ফাংশন দরকার, আর boundaries রুল
+  (`feature → same-feature`) `provider-ai`-কে `customer-ai` থেকে import করতে
+  দেয় না। কপি করলে "proposal কীভাবে confirm হয়" — এর দুটো উত্তর হতো, আর
+  একদিন ড্রিফট করলে একটা কার্ডের বাটন চুপচাপ কিছুই করত না। তাই Sprint 4-এর
+  `reward-eligibility`-র মতোই promote, আর পুরনো পথ কাজ করে যাচ্ছে।
+- **`compute-regulars.ts` এখন থ্রেশহোল্ড import করে।** ২ সংখ্যাটা ওর নিজের
+  private constant ছিল; এখন `@/lib/segments`-এ, আর SQL-এর segment রুল,
+  মালিকের Regulars স্ক্রিন আর পুরনো `broadcast_shop_notification('regulars')`
+  — তিনটে **একটা** সংখ্যা পড়ে। একটা টেস্ট SQL আর TypeScript মিলিয়ে দেখে।
+
+**🐛 পথে ধরা পড়া বাগ (৬টা):**
+
+1. **`shop_segment_rows`-এ `authenticated` এখনো EXECUTE ধরে ছিল** (হার্নেস
+   A14)। Supabase-এর default privileges নতুন function-এ `authenticated`-কে
+   **নাম ধরে** grant করে, তাই "grant না করা" যথেষ্ট নয় — **revoke** করতে হয়।
+   ২০২৬০৯২৭-এর শিক্ষাটাই, আরেকবার। এক লাইনে কোড-পাঠে অদৃশ্য।
+2. **`membership_is_active()` সারি নয়, কাস্টমার নিয়ে প্রশ্ন করে।** নবায়ন করা
+   সদস্যের একটা EXPIRED আর একটা ACTIVE সারি থাকে, আর দুটোই predicate পাস করে
+   — সাদা join তাঁকে **দুবার** তালিকায় আনত, count বাড়ত, snapshot-এ ডুপ্লিকেট
+   বসত। `distinct on (m.customer_id)` দিয়ে সারানো, আর হার্নেসের seed ঠিক এই
+   অবস্থাটাই বানায় (C5)।
+3. **seed-এ ১৯টা সিরিয়াল ৩৮টা নোটিফিকেশন বানাচ্ছিল।** ঐতিহাসিক সারি বসাতে
+   গিয়ে আসল `notify_serial_event` চলছিল — মালিকের ১৮টা NEW_BOOKING, আর
+   B4 চেকটা পলিসি-ব্যর্থতার মতো দেখাচ্ছিল যখন আসলে seed কথা বলছিল। তিনটে
+   ট্রিগার seed-এর জন্য disable করা (রেপোতে precedent আছে: `20260806`)।
+4. **আমার নিজের গদ্য আমার নিজের deny-list-এ ধরা পড়ল — তিনবার।** `table`
+   খুঁজতে গিয়ে **`writable`** মিলেছে (যে মন্তব্য বলছিল কেন কোনো `table` ঘর
+   নেই), `phone` খুঁজতে গিয়ে টুলের নিজের note ("there is no phone number
+   here"), আর `probability` খুঁজতে গিয়ে LAPSED-এর নিজের disclaimer
+   ("not a probability")। Sprint 4-এ দুবার হয়েছিল; এবার নিয়মটা পাকা:
+   **deny-list গদ্যের বিরুদ্ধে নয়, নামের বিরুদ্ধে** — schema property,
+   টেবিলের নাম, কলামের তালিকা।
+5. **Sprint 4-এর নকল লাইনটা আবার কপি হয়ে গেছিল** —
+   `for (const forbidden = "", _ of [])`, একটা syntax error, দুবার। পুরো
+   ফাইলটা collect হয়নি।
+6. **shape-চেক `auth.getUser()`-এর উপরে বসে গেছিল**, তাই লগইন-না-করা caller
+   401-এর বদলে `CAMPAIGN_CONTENT_INVALID` পেত। runtime probe ধরেছে। কিছু
+   leak হয়নি (caller-এর নিজের লেখা নিয়েই কথা), কিন্তু রুটের নথিবদ্ধ ক্রম
+   "৪০১ সবার আগে" — তাই ওটা রাখা হলো।
+
+**✅ যা যাচাই হয়েছে:**
+- **ইউনিট: ১১২৮/১১২৮** (৪৬ ফাইল, **১২৩টা নতুন**)।
+- **Postgres হার্নেস: ১৫৭/১৫৭**, টানা তিনবার স্থিতিশীল — আসল ১০টা migration
+  ফাইল, আসল `authenticated` রোল, ৫টা সমান্তরাল psql ক্লায়েন্ট।
+- **Sprint 4 হার্নেস ১৪২/১৪২** — কিছু ভাঙেনি।
+- **mutation-যাচাই:** segment ledger গেট সরালে ৪টা টেস্ট ফেল, SEGMENT_CHANGED
+  সরালে ৩টা, বানানো-অফার গার্ড সরালে ৯টা, বাংলা-অঙ্ক normalize সরালে ৯টা,
+  thin-data গার্ড সরালে ২টা।
+- `npx tsc --noEmit` পরিষ্কার · production build সবুজ (**নতুন কোনো endpoint
+  নেই** — আগের ৯টা AI রুটই) · `npm run lint` **২ error / ১৮ warning, হুবহু
+  baseline** (দুটোই vendored `design/design_handoff_palaa/support.js`-এ)।
+- **runtime probe:** confirm unauth **401** — জাল body দিয়েও
+  (`actionType`, `shopId`, `campaignRecipients`, `campaignSegment`,
+  `campaign_sent_count`, `status` — zod সব ছেঁটে দেয়); খালি/বড় লেখা **400**;
+  নয়টা AI রুটের একটাও **500 নয়**।
+- **ব্রাউজার smoke:** `/`, `/explore`, `/login`, `/about` — ৩২০px আর ডেস্কটপ,
+  সব **২০০**, `pageerrors=0`, কোনো horizontal overflow নেই।
+
+**⚠️ যা যাচাই হয়নি:**
+- **আসল AI উত্তর একবারও দেখা হয়নি** — key নেই। বিশেষ করে: মডেল কি segment
+  আগে দেখে; বানানো ছাড়ে refuse খেয়ে **মালিককে ঠিক কথাটা বলে** ("অফারটা আগে
+  সেট করো"); আর কার্ড দেখানোর পর **"পাঠিয়ে দিয়েছি" বলে ফেলে কিনা**। শেষটা
+  এই স্প্রিন্টের সবচেয়ে বিপজ্জনক ব্যর্থতা, আর কোনো গার্ড ওটা ধরবে না —
+  কার্ড নিজের গলায় "এখনো কিছু পাঠানো হয়নি" বলে সেজন্যই।
+- **ক্যাম্পেইন কার্ড ব্রাউজারে render হয়নি** — signed-in provider shell লাগে।
+  Edit মোড (textarea, অক্ষর-গণনা, "তোমার লেখা" badge, Undo) কেউ খোলেনি।
+- **`20261002` ইনস্ট্যান্সে চালানো হয়নি।** লোকালে ১৫৭/১৫৭ মানে "আসল
+  schema-র মতো schema-র বিরুদ্ধে সঠিক", "প্রোডাকশনে বসবে" নয়।
+- **কোনো আসল কাস্টমারের ফোনে কোনো নোটিফিকেশন যায়নি**, আর কোনো আসল মালিক
+  কোনো বাটনে চাপ দেননি।
+
+**জানা সীমাবদ্ধতা (নতুন, Sprint 5-এর):**
+- **দৈনিক বাজেট AI আর ম্যানুয়াল broadcast-এর মধ্যে ভাগ করা** — ইচ্ছাকৃত
+  (§২৫ "reuse existing rate limiting"), কিন্তু মানে মালিক সকালে অফারের
+  নোটিফিকেশন পাঠালে বিকেলে AI ক্যাম্পেইন `BROADCAST_LIMIT_REACHED` পাবে।
+- **দিনের সীমানা UTC, ঢাকা নয়** — পুরনো `broadcast_shop_notification`-এর
+  বৈশিষ্ট্য, এখানে **মিলিয়ে** রাখা হয়েছে যাতে দুটো function একই বাজেট
+  বোঝে। একতরফা "ঠিক" করলে দুটোর মধ্যে দুটো আলাদা "আজ" তৈরি হতো।
+- **দৈনিক বাজেটের চেক race-proof নয়** — দুটো সমান্তরাল ট্রানজেকশন দুটোই
+  পার করতে পারে। ওটা নীতি-গেট; দুবার পাঠানো আটকায় `ai_action_claim()` আর
+  `notifications_one_per_campaign_recipient_idx`।
+- **`REFERRAL_ENGAGED` করা হয়নি** — কারণ সহ ব্যাকলগে (সিদ্ধান্ত ৮৮-এর পাশে
+  §৯ঘ-তে লেখা)।
+- Sprint 3/4-এর জানা সীমাবদ্ধতাগুলো (booking sheet-এর deadlock বার্তা,
+  JOIN_QUEUE-এর `PRICE_CHANGED` অসঙ্গতি, কুপনের reconcile) **ছোঁয়া হয়নি** —
+  §৩৮ স্পষ্টভাবে scope-creep নিষেধ করেছে। একটা টেস্ট সেটাও যাচাই করে।
+
+---
+
 ### মাইগ্রেশন যাচাইয়ের খতিয়ান (Sprint 6 ক্লোজআউট, ১১ সেপ্টেম্বর ২০২৬)
 
 মাইগ্রেশন হাতে চালানো হয়, তাই "চালানো হয়েছে" আর "যাচাই করা হয়েছে" আলাদা
@@ -2312,6 +2515,7 @@ horizontal overflow নেই।
 | `20260929_service_styles.sql` | ⬜ **বকেয়া** — পলিশ স্প্রিন্টে নতুন; লোকালে যাচাইকৃত, ইনস্ট্যান্সে চালানো হয়নি |
 | `20260930_ai_actions.sql` | ⬜ **বকেয়া** — AI Sprint 3-এ নতুন; লোকালে ৮৫/৮৫ (আসল queue engine migration সহ), ইনস্ট্যান্সে চালানো হয়নি |
 | `20261001_ai_actions_sprint4.sql` | ⬜ **বকেয়া** — AI Sprint 4-এ নতুন; লোকালে **১৪২/১৪২** (আসল appointment, loyalty ও rewards migration সহ, এক ট্রানজেকশনে), ইনস্ট্যান্সে চালানো হয়নি। **`20260930`-এর পরে চালাতে হবে** |
+| `20261002_ai_campaigns_sprint5.sql` | ⬜ **বকেয়া** — AI Sprint 5-এ নতুন; লোকালে **১৫৭/১৫৭** (আসল appointment, membership, loyalty ও rewards migration সহ, এক ট্রানজেকশনে, ৫টা সমান্তরাল ক্লায়েন্ট), ইনস্ট্যান্সে চালানো হয়নি। **`20261001`-এর পরে চালাতে হবে** — ওটা Sprint 4-এর দুটো CHECK constraint drop করে আবার বানায়, তাই অর্ধেক প্রয়োগ হলে টেবিল কোনো ক্যাম্পেইন সারিই নিতে পারবে না |
 
 **উপরের শেষ ছয়টা সারি নিয়ে একটা স্পষ্টতা দরকার।** চূড়ান্ত অডিটের ব্রিফে ইউজার লিখেছেন
 “all migration are implement completed” আর `20260922`–`20260926` নাম ধরে তালিকা করেছেন।
@@ -2386,6 +2590,29 @@ horizontal overflow নেই।
   - (নোট: এডমিন প্যানেলের এই দুটো স্প্রিন্ট আগে "Sprint 27/28" নামে লেখা ছিল; ফেজ ৪ ওই নম্বরগুলো নেওয়ায় নাম বদলে A/B করা হয়েছে — কাজের বিষয়বস্তু অপরিবর্তিত। ফেজ ৪-এর পরে, অথবা প্রয়োজন বুঝে মাঝপথে করা যাবে।)
 - **`middleware.ts` → `proxy.ts` রিনেম** — Next 16-এর ডিপ্রিকেশন, কোডমড আছে (উপরে Sprint 24+25 নোটে বিস্তারিত)।
 - **সাসপেন্ডেড দোকানের চলমান কিউ অটো-ড্রেইন** — এখন ম্যানুয়াল (কনফার্মেশনে সতর্কতা দেওয়া আছে)।
+
+**AI Sprint 5 (retention + marketing) থেকে ব্যাকলগে যোগ হলো:**
+
+- **`REFERRAL_ENGAGED` segment** — হিসাব করা **যায়** (`referrals.referrer_id`,
+  status `CONVERTED`), আর ব্রিফের সম্ভাব্য তালিকাতেও ছিল। করা হয়নি কারণ যাঁরা
+  কাউকে রেফার করেছেন তাঁদের জন্য একটা ক্যাম্পেইনে **বলার মতো একটা রেফারেল
+  অফার** দরকার, আর সেটা প্রতি দোকানে ঐচ্ছিক (`referral_is_live`)। ওটা ছাড়া
+  লেখার মতো থাকে "ধন্যবাদ" — আর ধন্যবাদ বলার সিদ্ধান্তের জন্য মালিকের AI
+  লাগে না। রেফারেল প্রোগ্রাম চালু থাকা দোকানের জন্য এটা সোজা কাজ।
+- **দিনের সীমানা UTC থেকে ঢাকায় সরানো** — দৈনিক PROMO বাজেটের
+  `created_at::date = current_date` সার্ভারের দিন মানে, ঢাকার নয়। এটা পুরনো
+  `broadcast_shop_notification`-এর বৈশিষ্ট্য, আর Sprint 5-এ ইচ্ছাকৃতভাবে
+  **মিলিয়ে** রাখা হয়েছে (নয়তো দুটো function-এর দুটো আলাদা "আজ" হতো)। ঠিক
+  করতে হলে **দুটো একসঙ্গে** বদলাতে হবে — সেটাই কাজটার আসল আকার।
+- **ক্যাম্পেইনের ইতিহাসের পাতা** — `ai_actions`-এ সব তথ্য আছে
+  (`campaign_segment`, `campaign_sent_count`, `settled_at`), কিন্তু মালিকের
+  দেখার কোনো স্ক্রিন নেই। এখন ইতিহাস দেখতে SQL লাগে।
+- **`PRICE_CHANGED`-এর অসঙ্গতি মেলানো** — Sprint 4 থেকে বকেয়া: appointment আর
+  reward-এ আছে, `JOIN_QUEUE`-এ নেই। Sprint 5-এ **ছোঁয়া হয়নি** (§৩৮
+  scope-creep নিষেধ করেছে)।
+- **`book_appointment()`-এ deadlock শাখা** — Sprint 4 থেকে বকেয়া: booking
+  sheet এখনো `deadlock detected`-এর জন্য সাধারণ বার্তা দেখায়। shared core RPC
+  বদলানো, তাই না-বলে করা হয়নি।
 
 ### ✅ Web Push + PWA installable (সম্পন্ন)
 
