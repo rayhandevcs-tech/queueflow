@@ -9,6 +9,7 @@ import { useT } from "@/lib/i18n";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { ProviderAssistantWidget } from "./ProviderAssistantWidget";
 import { ShopStatusBanner } from "@/features/provider-catalog/components/ShopStatusBanner";
+import { ProviderSectionTabs } from "./ProviderSectionTabs";
 import { ProviderSidebar } from "./ProviderSidebar";
 
 export function ProviderShell({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,10 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
 
       <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-5 sm:px-6 md:px-8.5 md:py-7">
         <ShopStatusBanner />
+        {/* The other screens in whichever section this route belongs to.
+            Renders nothing for a section with one screen, so most pages are
+            unaffected. */}
+        <ProviderSectionTabs />
         {children}
       </main>
 

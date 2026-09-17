@@ -55,10 +55,20 @@ export function ShopMap({
 
   if (isPending) return <MapSkeleton />;
 
-  const located = (shops ?? []).filter(
+  const all = shops ?? [];
+  const located = all.filter(
     (s): s is typeof s & { latitude: number; longitude: number } =>
       s.latitude != null && s.longitude != null,
   );
+  /**
+   * Shops the map cannot draw, because their owner never set a location.
+   *
+   * These used to disappear without a word: the list showed eight shops, the
+   * map showed five, and nothing on the screen accounted for the other three.
+   * A map can only be honest about what it leaves out, so it says so and
+   * points at the list, which has all of them.
+   */
+  const unplaced = all.length - located.length;
 
   if (!located.length) {
     return (
@@ -74,6 +84,13 @@ export function ShopMap({
     // rounded-3xl to match Card, plus an inner hairline: tiles run edge to
     // edge under the border, and without it the map's own colours touch the
     // page background directly and the frame stops reading as a surface.
+    <>
+    {unplaced > 0 && (
+      <p className="mb-2.5 flex items-start gap-1.5 rounded-xl bg-soft px-3 py-2 text-[12px] leading-snug text-muted">
+        <MapPinOff className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        {t("unplacedShopsNote", unplaced)}
+      </p>
+    )}
     <div className="relative overflow-hidden rounded-3xl border border-line shadow-sm">
       <span
         aria-hidden
@@ -88,5 +105,6 @@ export function ShopMap({
         userLocation={userLocation}
       />
     </div>
+    </>
   );
 }

@@ -7,7 +7,7 @@ import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
-import { shopAvailability } from "@/lib/shop-availability";
+import { catalogueStatus } from "@/lib/shop-catalogue";
 import { cn } from "@/lib/utils";
 import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
 import { useT } from "@/lib/i18n";
@@ -47,7 +47,8 @@ export function ShopCarouselCard({
 }) {
   const t = useT(customerExploreDict);
   const businessTypeT = useT(BUSINESS_TYPE_LABEL);
-  const availability = shopAvailability(shop);
+  const status = catalogueStatus(shop);
+  const byAppointment = status === "BY_APPOINTMENT";
   const image = shop.cover_image_url ?? shop.logo_url;
 
   const { guard } = useAuthGate();
@@ -93,16 +94,16 @@ export function ShopCarouselCard({
           </span>
         )}
 
-        {availability !== "OPEN" && (
+        {status !== "OPEN" && !byAppointment && (
           <span
             className={cn(
               "absolute right-2 bottom-2 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-xs backdrop-blur-sm",
-              availability === "BREAK"
+              status === "BREAK"
                 ? "bg-brass-soft/95 text-brass"
                 : "bg-live-soft/95 text-live",
             )}
           >
-            {availability === "BREAK" ? t("breakPill") : t("closedBadge")}
+            {status === "BREAK" ? t("breakPill") : t("closedBadge")}
           </span>
         )}
 
@@ -151,11 +152,19 @@ export function ShopCarouselCard({
             <span
               className={cn(
                 "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold",
-                waitMin === 0 ? "bg-good-soft text-good" : "bg-live-soft text-live",
+                byAppointment
+                  ? "bg-accent/10 text-accent"
+                  : waitMin === 0
+                    ? "bg-good-soft text-good"
+                    : "bg-live-soft text-live",
               )}
             >
               <Clock3 className="h-2.5 w-2.5" />
-              {waitMin === 0 ? t("walkInNow") : t("waitMinutes", waitMin)}
+              {byAppointment
+                ? t("byAppointmentPill")
+                : waitMin === 0
+                  ? t("walkInNow")
+                  : t("waitMinutes", waitMin)}
             </span>
           ) : (
             <span />

@@ -189,6 +189,25 @@ export const customerExploreDict = {
   openBadge: { bn: "খোলা", en: "Open" },
   closedBadge: { bn: "নিচ্ছে না", en: "Not taking" },
 
+  /**
+   * What a parlour's card, pin and popup say instead of খোলা/বন্ধ.
+   *
+   * The open switch is the queue's flag and the appointment engine ignores it
+   * on purpose, so a parlour with the switch off still takes tomorrow's
+   * booking. Saying "বন্ধ" about it would be the same mistake as hiding it —
+   * and "এখনই বসতে পারবেন" over a parlour with no queue was worse, because a
+   * parlour never has a queue, so every single one of them said it.
+   */
+  byAppointmentPill: { bn: "অ্যাপয়েন্টমেন্টে", en: "By appointment" },
+
+  /** Shops the map had to leave out — see ShopMap.tsx. */
+  unplacedShopsNote: {
+    bn: (n: number) =>
+      `${n} টি দোকান ম্যাপে নেই — তারা এখনো নিজেদের লোকেশন দেয়নি। লিস্টে সবগুলো আছে।`,
+    en: (n: number) =>
+      `${n} ${n === 1 ? "shop is" : "shops are"} missing from the map — they haven't set a location yet. The list has all of them.`,
+  },
+
   retryLocation: { bn: "আবার চেষ্টা করো", en: "Try again" },
   dismissLocationAria: { bn: "বন্ধ করো", en: "Dismiss" },
 
