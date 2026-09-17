@@ -22,6 +22,18 @@ export const customerHelpDict = {
   sendLabel: { bn: "পাঠাও", en: "Send" },
   stopLabel: { bn: "থামাও", en: "Stop" },
 
+  // Voice. Bangla on a phone keyboard is slow and the person is usually
+  // mid-shift with one hand free, so speaking is the faster input here.
+  micLabel: { bn: "বলে বলো", en: "Speak" },
+  micStopLabel: { bn: "বলা শেষ", en: "Done speaking" },
+  micHint: { bn: "শুনছি… বলো", en: "Listening… go ahead" },
+  micDenied: {
+    bn: "মাইকের অনুমতি দেওয়া হয়নি। ব্রাউজারের সেটিংস থেকে অনুমতি দাও।",
+    en: "Microphone permission was refused. Allow it in your browser settings.",
+  },
+  listenLabel: { bn: "শুনি", en: "Listen" },
+  listenStopLabel: { bn: "থামাও", en: "Stop" },
+
   // The line that keeps this from being mistaken for the shop.
   notTheShopNote: {
     bn: "এটা AI — দোকানের সাথে কথা বলতে মেসেজ পাতায় যাও।",

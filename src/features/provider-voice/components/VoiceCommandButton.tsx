@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/lib/i18n";
-import { useDictation } from "../hooks/use-dictation";
+import { useDictation } from "@/hooks/use-dictation";
 import {
   useRunVoiceIntent,
   useVoiceIntent,

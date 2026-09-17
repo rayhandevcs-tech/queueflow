@@ -782,8 +782,71 @@ describe("a missing API key fails in a controlled way", () => {
 describe("model configuration", () => {
   it("routes each purpose explicitly and invents no model ids", async () => {
     const { AI_MODELS } = await import("@/lib/anthropic/client");
-    const known = new Set(["claude-opus-5", "claude-haiku-4-5-20251001"]);
+    const known = new Set(["claude-opus-5", "claude-haiku-4-5"]);
     for (const id of Object.values(AI_MODELS)) expect(known.has(id)).toBe(true);
+  });
+
+  it("**carries no date suffix on any model id**", async () => {
+    // The fast model was `claude-haiku-4-5-20251001`, which was harmless only
+    // for as long as nothing routed to it. The customer agent does now.
+    const { AI_MODELS, AI_FAST_MODEL, AI_MODEL } = await import("@/lib/anthropic/client");
+    for (const id of [...Object.values(AI_MODELS), AI_FAST_MODEL, AI_MODEL]) {
+      expect(id, id).not.toMatch(/-\d{8}$/);
+    }
+  });
+
+  it("**puts the customer agent on the fast model** — it is a lookup, not analysis", async () => {
+    const { AI_MODELS, AI_FAST_MODEL } = await import("@/lib/anthropic/client");
+    expect(AI_MODELS.customerAgent).toBe(AI_FAST_MODEL);
+    // The owner may be comparing two windows; that one stays on the strong model.
+    expect(AI_MODELS.ownerCopilot).toBe("claude-opus-5");
+  });
+});
+
+describe("speed parameters", () => {
+  it("**sends no effort and no thinking to Haiku** — both are rejected there", async () => {
+    // This is the failure this helper exists to prevent: `output_config.effort`
+    // is a 400 on Haiku 4.5, and `thinking: {type:"adaptive"}` is not a shape
+    // it takes. An operator pointing a route at Haiku to make it faster would
+    // otherwise have broken that route outright.
+    const { speedParamsFor } = await import("@/lib/anthropic/client");
+    expect(speedParamsFor("claude-haiku-4-5", "low")).toEqual({});
+    expect(speedParamsFor("claude-haiku-4-5", "high")).toEqual({});
+  });
+
+  it("asks Opus for adaptive thinking at the effort it was given", async () => {
+    const { speedParamsFor } = await import("@/lib/anthropic/client");
+    expect(speedParamsFor("claude-opus-5", "medium")).toEqual({
+      thinking: { type: "adaptive" },
+      output_config: { effort: "medium" },
+    });
+    expect(speedParamsFor("claude-opus-5", "low")).toEqual({
+      thinking: { type: "adaptive" },
+      output_config: { effort: "low" },
+    });
+  });
+
+  it("**never disables thinking on a tool-using model**", async () => {
+    // With thinking off, Opus 5 sometimes writes a tool call into its visible
+    // text instead of making one: the turn succeeds, the call never runs, and
+    // nothing raises. Lower effort buys the latency back without that.
+    const { speedParamsFor } = await import("@/lib/anthropic/client");
+    for (const model of ["claude-opus-5", "claude-haiku-4-5"]) {
+      const params = speedParamsFor(model, "low") as { thinking?: { type: string } };
+      expect(params.thinking?.type, model).not.toBe("disabled");
+    }
+  });
+
+  it("**the agent route asks for an effort at all** — it never used to", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const route = readFileSync(
+      join(process.cwd(), "src/app/api/ai/agent/route.ts"),
+      "utf8",
+    );
+    expect(route).toContain("speedParamsFor(model,");
+    // A customer is doing a lookup; an owner may be comparing windows.
+    expect(route).toContain('role === "customer" ? "low" : "medium"');
   });
 
   it("**keeps the owner copilot's output ceiling sane** — 64000 was the old value", async () => {

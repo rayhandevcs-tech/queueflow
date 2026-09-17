@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   AI_MAX_TOKENS,
   AI_MODELS,
+  speedParamsFor,
   ANTHROPIC_KEY_MISSING,
   getAnthropicClient,
 } from "@/lib/anthropic/client";
@@ -59,8 +60,9 @@ export async function POST(request: Request) {
   // of the tokens — so it goes in the system block behind a cache breakpoint,
   // ahead of the messages. Later turns then re-read it at a tenth of the cost
   // instead of paying full price for the same JSON again.
+  const model = AI_MODELS.shopAnalyst;
   const stream = client.messages.stream({
-    model: AI_MODELS.shopAnalyst,
+    model,
     // Was 64000. A business answer is a few paragraphs; the old ceiling
     // mostly bought latency and thinking tokens nobody read.
     max_tokens: AI_MAX_TOKENS.copilot,
@@ -68,8 +70,7 @@ export async function POST(request: Request) {
       { type: "text", text: CHAT_SYSTEM },
       { type: "text", text: briefAsPrompt(brief), cache_control: { type: "ephemeral" } },
     ],
-    thinking: { type: "adaptive" },
-    output_config: { effort: "medium" },
+    ...speedParamsFor(model, "medium"),
     messages: parsed.data.messages,
   });
 

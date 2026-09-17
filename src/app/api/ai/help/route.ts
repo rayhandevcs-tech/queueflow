@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   AI_MAX_TOKENS,
   AI_MODELS,
+  speedParamsFor,
   ANTHROPIC_KEY_MISSING,
   getAnthropicClient,
 } from "@/lib/anthropic/client";
@@ -58,8 +59,9 @@ export async function POST(request: Request) {
   // sits first behind its own breakpoint and is read from cache across all of
   // them. The customer's own brief is stable within one conversation and gets
   // the second breakpoint. Only the questions after it are ever new tokens.
+  const model = AI_MODELS.help;
   const stream = client.messages.stream({
-    model: AI_MODELS.help,
+    model,
     // Was 64000. A business answer is a few paragraphs; the old ceiling
     // mostly bought latency and thinking tokens nobody read.
     max_tokens: AI_MAX_TOKENS.help,
@@ -71,10 +73,7 @@ export async function POST(request: Request) {
         cache_control: { type: "ephemeral" },
       },
     ],
-    thinking: { type: "adaptive" },
-    // A help desk answer is two or three sentences about facts already on the
-    // screen; there is nothing here that repays deeper reasoning.
-    output_config: { effort: "low" },
+    ...speedParamsFor(model, "low"),
     messages: parsed.data.messages,
   });
 

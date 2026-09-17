@@ -20,8 +20,14 @@ export const ANTHROPIC_KEY_MISSING = "ANTHROPIC_KEY_MISSING";
  * invented names.
  */
 const DEFAULT_MODEL = "claude-opus-5";
-/** Cheap and quick. Suits extraction and short help-desk answers. */
-const FAST_MODEL = "claude-haiku-4-5-20251001";
+/**
+ * Cheap and quick. Suits extraction and short help-desk answers.
+ *
+ * Was `claude-haiku-4-5-20251001`. The canonical id carries no date suffix,
+ * and while nothing routed here the stale form was harmless; the customer
+ * agent routes here now, so it had to be right.
+ */
+const FAST_MODEL = "claude-haiku-4-5";
 
 export const AI_MODELS = {
   /**
@@ -31,13 +37,23 @@ export const AI_MODELS = {
    */
   ownerCopilot: process.env.AI_MODEL_OWNER_COPILOT || DEFAULT_MODEL,
   /**
-   * The customer discovery agent. Same endpoint as the copilot, separate entry
-   * because the job is different: pick a tool, read back what it returned, and
-   * resist inventing a price. That is closer to the help desk than to revenue
-   * analysis, so this is the first candidate to move to `FAST_MODEL` once a
-   * real deployment shows what the answers look like — hence its own switch.
+   * The customer discovery agent — **now on `FAST_MODEL`**, which is the switch
+   * this entry was created to hold.
+   *
+   * The job was always closer to a help desk than to revenue analysis: pick a
+   * tool, read back what it returned, and resist inventing a price. None of
+   * that repays a frontier model, and the cost of using one was latency a
+   * customer actually waits through — a shopper asking "আজ চুল কাটাতে চাই"
+   * wants a list of shops, not a considered essay.
+   *
+   * What makes this safe to move is that none of the guarantees live in the
+   * model. The ids are checked against the discovery ledger, the prices come
+   * off the shop's own rows, and a mutation still needs a proposal and a human
+   * click. A weaker model produces a worse *sentence*, never a worse *write*.
+   *
+   * Set `AI_MODEL_CUSTOMER_AGENT` to move it back without a release.
    */
-  customerAgent: process.env.AI_MODEL_CUSTOMER_AGENT || DEFAULT_MODEL,
+  customerAgent: process.env.AI_MODEL_CUSTOMER_AGENT || FAST_MODEL,
   /** The pre-tool provider analyst and one-shot insights. */
   shopAnalyst: process.env.AI_MODEL_SHOP_ANALYST || DEFAULT_MODEL,
   /** Customer help desk: short answers from a small brief. */
@@ -80,6 +96,53 @@ export const AI_MAX_TOKENS = {
   /** A small structured object. */
   intent: 2000,
 } as const;
+
+/**
+ * How hard a feature should think, per purpose.
+ *
+ * On Claude Opus 5 the default is `high` with thinking on, and for a question
+ * like "what could explain last week's dip" that is the right default — it is
+ * reasoning across two tool results. For everything else it is latency the
+ * user sits through for no better answer.
+ */
+export type AiEffort = "low" | "medium" | "high";
+
+/**
+ * Speed knobs for one model, as request parameters.
+ *
+ * ---------------------------------------------------------------------------
+ * Why this is a function of the model and not a constant
+ * ---------------------------------------------------------------------------
+ * The two families take different parameters, and sending the wrong ones is a
+ * 400 rather than something degrading quietly:
+ *
+ *   · Opus 5 has adaptive thinking (on by default) and accepts
+ *     `output_config.effort`.
+ *   · Haiku 4.5 has neither. `effort` is rejected, and `thinking` only takes
+ *     the older `{type:"enabled", budget_tokens}` shape.
+ *
+ * Since every model here is overridable by environment variable, a route that
+ * hard-coded `effort` would start failing the moment someone pointed it at
+ * Haiku — which is exactly the move an operator makes when they want it
+ * faster. So the decision lives next to the model table that can change, and
+ * the routes ask rather than assume.
+ *
+ * Thinking is deliberately NOT disabled on Opus for the agent route. With
+ * `thinking: {type:"disabled"}` the model occasionally writes a tool call into
+ * its visible text instead of making one: the turn succeeds, the call never
+ * runs, and nothing raises. Lower effort buys the same latency back without
+ * that failure mode.
+ */
+export function speedParamsFor(model: string, effort: AiEffort) {
+  if (model.startsWith("claude-haiku")) {
+    // No thinking at all, which is the whole reason to be on this model.
+    return {};
+  }
+  return {
+    thinking: { type: "adaptive" as const },
+    output_config: { effort },
+  };
+}
 
 /**
  * Server-only Claude client.

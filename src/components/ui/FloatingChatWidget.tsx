@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Square, X } from "lucide-react";
+import { ArrowUp, Mic, Square, Volume2, VolumeX, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStreamingChat, type ChatErrorCode } from "@/hooks/use-streaming-chat";
+import { useDictation } from "@/hooks/use-dictation";
+import { useSpeech } from "@/hooks/use-speech";
 import { AssistantOrb } from "./AssistantOrb";
 
 export interface FloatingChatLabels {
@@ -21,6 +23,14 @@ export interface FloatingChatLabels {
   errNotSignedIn: string;
   errNoKey: string;
   errGeneric: string;
+  /** Voice. Every one of these is optional: a caller that passes none gets
+   *  the widget exactly as it was, and the buttons stay absent. */
+  micLabel?: string;
+  micStopLabel?: string;
+  micHint?: string;
+  micDenied?: string;
+  listenLabel?: string;
+  listenStopLabel?: string;
 }
 
 /**
@@ -64,6 +74,29 @@ export function FloatingChatWidget({
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Voice, on both sides of the conversation.
+   *
+   * Speaking beats typing here for a reason specific to this product: Bangla on
+   * a phone keyboard is slow, and the people using it are mid-shift with one
+   * hand free. Both directions are the browser's own APIs — no vendor, no key,
+   * no per-use cost — and both are absent rather than broken where the browser
+   * lacks them.
+   *
+   * The mic writes into the draft rather than sending, which is the important
+   * choice: recognition mishears, and a wrong question sent automatically costs
+   * a round trip and reads as the assistant being stupid. The person sees the
+   * text and presses send.
+   */
+  const dictation = useDictation();
+  const speech = useSpeech();
+  const voiceOn = !!labels.micLabel && dictation.supported;
+  const listenOn = !!labels.listenLabel && speech.supported;
+
+  // The live transcript IS the draft while listening: one source of truth, so
+  // stopping mid-sentence leaves exactly what was heard in the box, editable.
+  const shownDraft = dictation.listening ? dictation.transcript : draft;
+
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [turns, open]);
@@ -78,9 +111,29 @@ export function FloatingChatWidget({
   }, [open]);
 
   const submit = (text: string) => {
+    if (!text.trim()) return;
+    // Sending while the mic is open would leave recognition running and append
+    // the next words onto an already-sent question.
+    dictation.reset();
     setDraft("");
+    // Anything still being read aloud is about the previous answer.
+    speech.stop();
     void send(text);
     inputRef.current?.focus();
+  };
+
+  const toggleMic = () => {
+    if (dictation.listening) {
+      // Keep what was heard: stop() ends recognition but the transcript is
+      // what the person just said, and throwing it away would be the one
+      // behaviour that makes the button not worth pressing.
+      setDraft(dictation.transcript);
+      dictation.stop();
+      inputRef.current?.focus();
+      return;
+    }
+    speech.stop(); // don't listen and talk at once
+    dictation.start();
   };
 
   const errorMessage =
@@ -158,19 +211,55 @@ export function FloatingChatWidget({
                 </div>
               )}
 
-              {turns.map((turn, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap",
-                    turn.role === "user"
-                      ? "ml-auto bg-accent text-accent-ink"
-                      : "bg-soft text-ink",
-                  )}
-                >
-                  {turn.content || <TypingDots />}
-                </div>
-              ))}
+              {turns.map((turn, i) => {
+                const speakingThis = speech.speakingId === String(i);
+                // Only a finished answer can be read: a half-written one would
+                // be cut off mid-sentence by the next chunk arriving.
+                const canListen =
+                  listenOn && turn.role === "assistant" && !!turn.content && !streaming;
+
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap",
+                      turn.role === "user"
+                        ? "ml-auto bg-accent text-accent-ink"
+                        : "bg-soft text-ink",
+                    )}
+                  >
+                    {turn.content || <TypingDots />}
+
+                    {canListen && (
+                      <button
+                        type="button"
+                        onClick={() => speech.toggle(String(i), turn.content)}
+                        aria-label={
+                          speakingThis
+                            ? (labels.listenStopLabel ?? labels.listenLabel)
+                            : labels.listenLabel
+                        }
+                        className={cn(
+                          "mt-2 flex items-center gap-1.5 rounded-full px-2 py-1",
+                          "text-[11px] font-semibold transition-colors",
+                          speakingThis
+                            ? "bg-accent/15 text-accent"
+                            : "text-muted hover:bg-card hover:text-ink",
+                        )}
+                      >
+                        {speakingThis ? (
+                          <VolumeX className="h-3.5 w-3.5" />
+                        ) : (
+                          <Volume2 className="h-3.5 w-3.5" />
+                        )}
+                        {speakingThis
+                          ? (labels.listenStopLabel ?? labels.listenLabel)
+                          : labels.listenLabel}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
               {/* After the answer, never instead of it. The assistant's words
                   explain the card, and the card is the thing that acts —
@@ -197,11 +286,38 @@ export function FloatingChatWidget({
               }}
             >
               <div className="flex items-center gap-2">
+                {voiceOn && (
+                  <button
+                    type="button"
+                    onClick={toggleMic}
+                    aria-label={
+                      dictation.listening
+                        ? (labels.micStopLabel ?? labels.micLabel)
+                        : labels.micLabel
+                    }
+                    aria-pressed={dictation.listening}
+                    className={cn(
+                      "grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl border transition-colors",
+                      dictation.listening
+                        ? "border-live bg-live text-white"
+                        : "border-line bg-card text-muted hover:text-ink",
+                    )}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </button>
+                )}
                 <input
                   ref={inputRef}
-                  value={draft}
+                  value={shownDraft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder={labels.placeholder}
+                  // Typing over a live transcript would be overwritten by the
+                  // next recognition result, so the box waits instead.
+                  readOnly={dictation.listening}
+                  placeholder={
+                    dictation.listening
+                      ? (labels.micHint ?? labels.placeholder)
+                      : labels.placeholder
+                  }
                   maxLength={1000}
                   className="min-w-0 flex-1 rounded-xl border border-line bg-soft px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent"
                 />
@@ -217,7 +333,7 @@ export function FloatingChatWidget({
                 ) : (
                   <button
                     type="submit"
-                    disabled={!draft.trim()}
+                    disabled={!shownDraft.trim()}
                     aria-label={labels.sendLabel}
                     className="grid h-9.5 w-9.5 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink transition-opacity disabled:opacity-40"
                   >
@@ -225,6 +341,14 @@ export function FloatingChatWidget({
                   </button>
                 )}
               </div>
+              {/* Only the one error worth surfacing. "no-speech" and a failed
+                  start are things the person can just try again, and a red
+                  line for them would make the button feel unreliable when it
+                  is not. A denied permission is different: nothing will work
+                  until they change a browser setting. */}
+              {voiceOn && dictation.error === "denied" && labels.micDenied && (
+                <p className="mt-1.5 text-center text-[10px] text-live">{labels.micDenied}</p>
+              )}
               <p className="mt-1.5 text-center text-[10px] text-muted">{labels.footnote}</p>
             </form>
           </div>

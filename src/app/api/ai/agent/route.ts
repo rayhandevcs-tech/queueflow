@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   AI_MAX_TOKENS,
   AI_MODELS,
+  speedParamsFor,
   ANTHROPIC_KEY_MISSING,
   getAnthropicClient,
 } from "@/lib/anthropic/client";
@@ -77,9 +78,24 @@ import {
  * This route may call tools between turns, and streaming text from a turn that
  * later turns out to be a tool request means either buffering it anyway or
  * showing the owner a sentence that gets replaced. Rule 22 said prefer
- * correctness, so: tools run, then the answer is returned whole. If the answer
- * ever gets long enough for the wait to hurt, the honest fix is streaming the
- * FINAL turn only, once the tool phase has finished.
+ * correctness, so: tools run, then the answer is returned whole.
+ *
+ * ---------------------------------------------------------------------------
+ * What was actually making it slow, and what is left
+ * ---------------------------------------------------------------------------
+ * Not the buffering. This was the only AI route that set no `effort` and no
+ * `thinking`, so on Opus 5 every question ran at the default `high` with
+ * thinking on — up to four times, since each loop iteration is its own call.
+ * Both apps point here, so that default was every "the assistant is slow"
+ * report. A customer now gets `low` and the fast model; an owner gets
+ * `medium`. See `speedParamsFor` for why the parameters depend on the model.
+ *
+ * Streaming the FINAL turn is still the remaining win, and it is a bigger
+ * change than it looks: `X-Ai-Stop-Reason`, `X-Ai-Tools-Used` and
+ * `X-Ai-Proposal-Id` are all computed after the loop and ride in headers,
+ * which must be sent before a streamed body. Doing it properly means moving
+ * those into the stream and teaching `useStreamingChat` to split them off —
+ * worth doing, but not something to bundle into a latency fix.
  */
 
 const MAX_TURNS = 12;
@@ -217,6 +233,17 @@ export async function POST(request: Request) {
     const response = await client.messages.create({
       model,
       max_tokens: AI_MAX_TOKENS.copilot,
+      // The one AI route that never set these, and the only one both apps
+      // actually use — so every "the assistant is slow" complaint was this
+      // line's absence. On Opus that meant effort `high` with thinking on, up
+      // to four times per question, which is a lot of reasoning to spend on
+      // "কতজন লাইনে আছে".
+      //
+      // A customer is asking a lookup question and gets `low`; an owner may be
+      // comparing two windows and gets `medium`. Neither is the model's
+      // default, and the parameters themselves depend on which model the env
+      // vars resolved to — see `speedParamsFor`.
+      ...speedParamsFor(model, role === "customer" ? "low" : "medium"),
       system: [
         { type: "text", text: system, cache_control: { type: "ephemeral" } },
         { type: "text", text: `Today in Bangladesh is ${dhakaToday(now)}.` },

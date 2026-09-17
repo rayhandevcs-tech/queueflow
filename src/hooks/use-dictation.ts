@@ -50,6 +50,11 @@ export type DictationError = "denied" | "no-speech" | "unsupported" | "failed";
 /**
  * Bangla dictation, using the browser's own speech recognition.
  *
+ * Lives in `src/hooks` rather than inside `provider-voice`, because the AI chat
+ * widget needs it too and the boundary rule forbids one feature importing
+ * another. Promoted rather than copied: a second copy is a second place for
+ * the Safari quirks and the abort-on-unmount to drift.
+ *
  * Chosen over a speech-to-text API for three reasons that all matter here: it
  * costs nothing per use, it needs no second vendor and no second key, and the
  * audio never becomes a file we hold — the browser streams it and hands back
