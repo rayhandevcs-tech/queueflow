@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { bookingModel, isQueueModel } from "@/lib/business-model";
+import { catalogueOrFilter } from "@/lib/shop-catalogue";
 import { chairFreeAtMs, minutesUntil } from "@/lib/queue-wait";
 import { SERVICE_CATEGORIES } from "@/config/constants";
 import type { BusinessType } from "@/types";
@@ -161,11 +162,14 @@ const searchShops: ToolDefinition = {
     };
     const take = clampLimit(limit);
 
-    // `is_open` matches what the explore list shows. RLS narrows it further.
+    // The same rule the explore catalogue uses — an appointment shop is
+    // listed whatever its open switch says, because that switch is the
+    // queue's. Shared through `catalogueOrFilter()` so the assistant can
+    // never deny a parlour the map is drawing a pin for.
     let request = ctx.supabase
       .from("shops")
       .select("id, name, business_type, women_only, address")
-      .eq("is_open", true);
+      .or(catalogueOrFilter());
 
     if (query?.trim()) request = request.ilike("name", `%${query.trim()}%`);
     if (womenOnly === true) request = request.eq("women_only", true);
@@ -275,14 +279,14 @@ const searchServices: ToolDefinition = {
     const take = clampLimit(limit);
 
     // Joined to the shop so a result carries its context, and so the kind
-    // filter and the `is_open` rule can both be applied.
+    // filter and the catalogue-visibility rule can both be applied.
     let request = ctx.supabase
       .from("services")
       .select(
         "id, shop_id, name, category, rate, default_duration_min, shops!inner(id, name, business_type, women_only, address, is_open)",
       )
       .eq("is_active", true)
-      .eq("shops.is_open", true);
+      .or(catalogueOrFilter(), { referencedTable: "shops" });
 
     if (query?.trim()) request = request.ilike("name", `%${query.trim()}%`);
     if (category) request = request.eq("category", category);

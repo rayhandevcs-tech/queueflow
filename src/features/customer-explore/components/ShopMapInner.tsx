@@ -9,7 +9,7 @@ import { ArrowUpRight, Clock3, LocateFixed, MapPin, Minus, Navigation, Plus, Shi
 import { BUSINESS_TYPE_LABEL } from "@/config/constants";
 import type { Shop } from "@/types";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
-import { shopAvailability } from "@/lib/shop-availability";
+import { catalogueStatus, isCatalogueAvailable } from "@/lib/shop-catalogue";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { customerExploreDict } from "../lib/i18n";
@@ -219,8 +219,11 @@ function ShopPopupCard({
 }) {
   const t = useT(customerExploreDict);
   const businessTypeT = useT(BUSINESS_TYPE_LABEL);
-  const availability = shopAvailability(shop);
-  const available = availability === "OPEN" || availability === "BREAK";
+  // The catalogue's rule, not the queue's: a parlour is bookable whatever the
+  // open switch says, so it gets "অ্যাপয়েন্টমেন্টে" rather than খোলা/বন্ধ.
+  const status = catalogueStatus(shop);
+  const byAppointment = status === "BY_APPOINTMENT";
+  const available = isCatalogueAvailable(status);
   const photo = shop.cover_image_url ?? shop.logo_url;
 
   return (
@@ -247,7 +250,7 @@ function ShopPopupCard({
                 available ? "animate-pulse-live bg-good" : "bg-live",
               )}
             />
-            {available ? t("openBadge") : t("closedBadge")}
+            {byAppointment ? t("byAppointmentPill") : available ? t("openBadge") : t("closedBadge")}
           </span>
         </div>
       ) : null}
@@ -305,17 +308,28 @@ function ShopPopupCard({
             whole phrase say it once. The wait leads and carries the colour,
             because it is the fact that decides whether to set off. */}
         <div className="mt-3.5 flex flex-wrap items-center gap-2">
+          {/* A parlour has no queue, so `count` is 0 for every one of them and
+              this chip used to promise "you can sit down right now" on every
+              parlour pin in the country. */}
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold",
-              count === 0 ? "bg-good-soft text-good" : "bg-live-soft text-live",
+              byAppointment
+                ? "bg-accent/10 text-accent"
+                : count === 0
+                  ? "bg-good-soft text-good"
+                  : "bg-live-soft text-live",
             )}
           >
             <Clock3 className="h-3 w-3" />
-            {count === 0 ? t("walkInNow") : t("waitMinutes", wait)}
+            {byAppointment
+              ? t("byAppointmentPill")
+              : count === 0
+                ? t("walkInNow")
+                : t("waitMinutes", wait)}
           </span>
 
-          {count > 0 && (
+          {!byAppointment && count > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted">
               <Users className="h-3 w-3" />
               {t("inQueue", count)}
@@ -344,7 +358,7 @@ function ShopPopupCard({
                 available ? "animate-pulse-live bg-good" : "bg-live",
               )}
             />
-            {available ? t("openBadge") : t("closedBadge")}
+            {byAppointment ? t("byAppointmentPill") : available ? t("openBadge") : t("closedBadge")}
           </span>
         )}
       </div>
@@ -486,7 +500,7 @@ export default function ShopMapInner({
 
       {spreadOverlapping(shops).map((shop) => {
         const count = counts[shop.id] ?? 0;
-        const availability = shopAvailability(shop);
+        const status = catalogueStatus(shop);
         return (
           <Marker
             key={shop.id}
@@ -499,12 +513,11 @@ export default function ShopMapInner({
               initial: shopInitial(shop.name),
               fallbackColor: shopAvatarColor(shop.id),
               count,
-              state:
-                availability === "NOT_ACCEPTING" || availability === "CLOSED"
-                  ? "unavailable"
-                  : count === 0
-                    ? "free"
-                    : "busy",
+              state: !isCatalogueAvailable(status)
+                ? "unavailable"
+                : count === 0
+                  ? "free"
+                  : "busy",
             })}
           >
             <Popup>

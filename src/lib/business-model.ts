@@ -31,6 +31,24 @@ const MODEL_BY_TYPE: Record<BusinessType, BookingModel> = {
 };
 
 /**
+ * The business types that run each model, derived rather than written twice.
+ *
+ * Needed because a database query cannot call `bookingModel()` — PostgREST
+ * filters on column values, so the customer catalogue has to ask for the
+ * business types themselves. Deriving them from the same table keeps a third
+ * vertical a one-line change here instead of a bug in whichever query was
+ * forgotten.
+ */
+export const BUSINESS_TYPES_BY_MODEL: Record<BookingModel, readonly BusinessType[]> = {
+  QUEUE: (Object.keys(MODEL_BY_TYPE) as BusinessType[]).filter(
+    (type) => MODEL_BY_TYPE[type] === "QUEUE",
+  ),
+  APPOINTMENT: (Object.keys(MODEL_BY_TYPE) as BusinessType[]).filter(
+    (type) => MODEL_BY_TYPE[type] === "APPOINTMENT",
+  ),
+};
+
+/**
  * Resolve a shop's booking model.
  *
  * Nothing in the app should compare `business_type` to `"PARLOUR"` directly —

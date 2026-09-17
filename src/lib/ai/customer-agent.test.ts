@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { runAgentLoop } from "./agent-loop";
 import { findTool, toolsForRole, toolSpecsForRole } from "./tool-registry";
 import { CUSTOMER_DISCOVERY_TOOLS } from "./tools/customer-discovery";
+import { catalogueOrFilter } from "@/lib/shop-catalogue";
 import type { AgentMessage, CallModel, ModelTurn, ToolContext } from "./types";
 
 /**
@@ -87,7 +88,7 @@ function fakeQueryClient(options: {
           return Promise.resolve({ data: rows[0] ?? null, error: settled.error });
         },
       };
-      for (const op of ["eq", "neq", "lte", "gte", "lt", "gt", "ilike", "in", "order", "limit"]) {
+      for (const op of ["eq", "neq", "lte", "gte", "lt", "gt", "ilike", "in", "or", "order", "limit"]) {
         builder[op] = (...args: unknown[]) => {
           call.filters.push({ op, args });
           return builder;
@@ -686,17 +687,25 @@ describe("prices come from the shop's own record", () => {
     expect(out.services).toEqual([]);
   });
 
-  it("only reads active services at open shops", async () => {
+  it("**only reads active services at shops the catalogue lists**", async () => {
+    // This used to assert `["shops.is_open", true]`, and that was the bug: the
+    // open switch is the QUEUE's flag, so the assistant was denying that
+    // parlours existed whenever their owner had not flipped it — while the
+    // shop's own page would happily book them. Both now read one rule from
+    // `lib/shop-catalogue.ts`.
     const { client, tableCalls } = fakeQueryClient({ tables: { services: [] } });
     await callTool("search_services", {}, customerCtx(client));
     const filters = tableCalls.find((c) => c.table === "services")!.filters;
+
     const eqs = filters.filter((f) => f.op === "eq").map((f) => f.args);
-    expect(eqs).toEqual(
-      expect.arrayContaining([
-        ["is_active", true],
-        ["shops.is_open", true],
-      ]),
-    );
+    expect(eqs).toEqual(expect.arrayContaining([["is_active", true]]));
+
+    const or = filters.find((f) => f.op === "or");
+    expect(or, "the catalogue rule must reach the joined shops table").toBeTruthy();
+    expect(or!.args[0]).toBe(catalogueOrFilter());
+    expect(or!.args[1]).toEqual({ referencedTable: "shops" });
+    // And the rule itself has to actually let a parlour through.
+    expect(catalogueOrFilter()).toContain("business_type.eq.PARLOUR");
   });
 });
 

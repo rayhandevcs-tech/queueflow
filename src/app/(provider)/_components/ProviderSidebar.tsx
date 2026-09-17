@@ -2,31 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Armchair,
-  Award,
-  BarChart3,
-  CalendarClock,
-  CalendarDays,
-  Crown,
-  Gift,
-  LifeBuoy,
-  LogOut,
-  Megaphone,
-  MessageCircle,
-  NotebookPen,
-  Percent,
-  Radio,
-  Receipt,
-  Scissors,
-  Share2,
-  Settings as SettingsIcon,
-  Star,
-  Users,
-  Wallet,
-  ArrowLeftRight,
-  Sparkles,
-} from "lucide-react";
+import { LifeBuoy, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyShop, useShopMutations } from "@/features/provider-catalog/hooks/use-my-shop";
 import { useLiveQueueCount } from "@/features/provider-queue/hooks/use-sidebar-stats";
@@ -34,7 +10,6 @@ import { useLogout } from "@/features/auth/hooks/use-logout";
 import { useShopUnreadChatCount } from "@/features/chat/hooks/use-chat-threads";
 import { useDueCount } from "@/features/provider-due-ledger/hooks/use-due-ledger";
 import { useMyProfile } from "@/features/account/hooks/use-my-profile";
-import { useToast } from "@/components/ui/Toast";
 import { AvatarChip } from "@/components/ui/AvatarChip";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
@@ -43,21 +18,19 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { Switch } from "@/components/ui/Switch";
 import { useT, useLanguage } from "@/lib/i18n";
 import { useTerms } from "@/lib/business-terms";
-import { isAppointmentModel } from "@/lib/business-model";
+import { bookingModel } from "@/lib/business-model";
 import { providerCatalogDict } from "@/features/provider-catalog/lib/i18n";
 import { supportDict } from "@/features/support/lib/i18n";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: typeof Radio;
-  live?: boolean;
-  soon?: boolean;
-}
+import {
+  matchesRoute,
+  providerNavSections,
+  sectionForPath,
+  type ProviderNavBadge,
+  type ProviderNavLabel,
+} from "./provider-nav-items";
 
 export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const showToast = useToast();
   const { data: shop } = useMyShop();
   const { data: profile } = useMyProfile();
   const { update } = useShopMutations();
@@ -70,51 +43,35 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const tt = useTerms(shop?.business_type, language);
   const supportT = useT(supportDict);
 
-  // A parlour's home screen is its appointments, not a live line — so the nav
-  // neither names one nor counts one. The live badge would sit at 0 forever.
-  const appointmentModel = isAppointmentModel(shop?.business_type);
+  /**
+   * Twenty-one rows became thirteen — see `provider-nav-items.ts` for which
+   * screens were grouped and why. Every route still exists; what changed is
+   * that six of them are now reached through a tab strip rather than a
+   * sidebar line of their own.
+   */
+  const sections = providerNavSections(bookingModel(shop?.business_type));
+  const activeSection = sectionForPath(sections, pathname);
 
-  const NAV: NavItem[] = [
-    {
-      href: "/dashboard",
-      label: tt("board"),
-      icon: appointmentModel ? CalendarClock : Radio,
-      live: !appointmentModel,
-    },
-    // The register of every booking, past and coming. Parlour only: a salon
-    // has no appointments to list, and the page itself says so to anyone who
-    // arrives from a bookmark.
-    ...(appointmentModel
-      ? [{ href: "/appointments", label: t("navAppointments"), icon: CalendarDays }]
-      : []),
-    // Salon says "চেয়ার", parlour says "সিট" — decided once, at registration.
-    { href: "/chairs", label: tt("chair"), icon: Armchair },
-    { href: "/services", label: t("navServices"), icon: Scissors },
-    { href: "/offers", label: t("navOffers"), icon: Percent },
-    // Both business types: membership is a property of the business, not of
-    // how it takes bookings, so unlike /appointments this one is unconditional.
-    { href: "/memberships", label: t("navMemberships"), icon: Crown },
-    // Loyalty sits next to membership: both are retention programmes the shop
-    // opts into, and both are business-scoped rather than model-scoped.
-    { href: "/loyalty", label: t("navLoyalty"), icon: Award },
-    // Referral sits under loyalty because it pays in loyalty points — it is
-    // the same programme reached a different way, not a third balance.
-    { href: "/referrals", label: t("navReferrals"), icon: Share2 },
-    // Rewards sit under referral because both spend or pay loyalty points —
-    // the three together are one programme reached three ways.
-    { href: "/rewards", label: t("navRewards"), icon: Gift },
-    { href: "/chat", label: t("navChat"), icon: MessageCircle },
-    { href: "/income", label: t("navIncome"), icon: Wallet },
-    { href: "/cashbook", label: t("navTransactions"), icon: ArrowLeftRight },
-    { href: "/manual-entries", label: t("navManualEntries"), icon: NotebookPen },
-    { href: "/due-ledger", label: t("navDueLedger"), icon: Receipt },
-    { href: "/ai", label: t("navAi"), icon: Sparkles },
-    { href: "/analytics", label: t("navAnalytics"), icon: BarChart3 },
-    { href: "/regulars", label: t("navRegulars"), icon: Users },
-    { href: "/notifications/send", label: t("navSendNotification"), icon: Megaphone },
-    { href: "/reviews", label: t("navReviews"), icon: Star },
-    { href: "/settings", label: t("navSettings"), icon: SettingsIcon },
-  ];
+  /**
+   * Resolve a label against whichever vocabulary it declares.
+   *
+   * Kept here rather than in the nav module because two of the three
+   * vocabularies are hooks: `useT` re-renders on a language change and
+   * `useTerms` needs the shop row. The module stays pure and testable.
+   */
+  const labelOf = (label: ProviderNavLabel): string => {
+    if (label.kind === "term") return tt(label.key);
+    if (label.kind === "dictWithChair") return t(label.key, tt("chair"));
+    return t(label.key);
+  };
+
+  /** A badge's number, or 0 for "nothing to show". */
+  const badgeCount = (badge: ProviderNavBadge | undefined): number => {
+    if (badge === "queue") return liveCount;
+    if (badge === "chat") return unreadChatCount;
+    if (badge === "due") return dueCount;
+    return 0;
+  };
 
   return (
     <aside
@@ -196,57 +153,68 @@ export function ProviderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       )}
 
       <nav className="flex flex-col gap-0.75">
-        {NAV.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-
-          if (item.soon) {
-            return (
-              <button
-                key={item.href}
-                type="button"
-                onClick={() => {
-                  showToast(t("comingSoon", item.label));
-                  onNavigate?.();
-                }}
-                className="flex items-center gap-2.75 rounded-xl px-3.25 py-3 text-left text-sm font-medium text-muted/50"
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            );
-          }
+        {sections.map((section) => {
+          const Icon = section.icon;
+          // A section is active when ANY of its screens is — otherwise
+          // `/offers` would highlight nothing, since its own row is gone.
+          const active = activeSection?.id === section.id;
+          const count = badgeCount(section.badge);
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className={cn(
-                "flex items-center gap-2.75 rounded-xl px-3.25 py-3 text-sm transition-colors",
-                active
-                  ? "bg-accent font-bold text-accent-ink"
-                  : "font-medium text-muted hover:bg-soft",
+            <div key={section.id}>
+              <Link
+                href={section.href}
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2.75 rounded-xl px-3.25 py-3 text-sm transition-colors",
+                  active
+                    ? "bg-accent font-bold text-accent-ink"
+                    : "font-medium text-muted hover:bg-soft",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {labelOf(section.label)}
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      "ml-auto rounded-full px-2 py-0.5 font-number text-[11px] font-bold",
+                      // Chat is the one that is merely unread; a queue and an
+                      // unpaid bill are both things going wrong right now.
+                      section.badge === "chat"
+                        ? "bg-accent text-accent-ink"
+                        : "bg-live text-white",
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </Link>
+
+              {/* The section's screens, listed under it only while the owner
+                  is inside it. Always-expanded would put the twenty-one rows
+                  straight back; collapsed-with-a-chevron would hide the tabs
+                  behind a second tap for no gain, because the page itself
+                  already shows them. */}
+              {active && section.tabs.length > 1 && (
+                <div className="mt-0.5 mb-1 flex flex-col gap-0.25 border-l border-line pl-3.25 ml-4.5">
+                  {section.tabs.map((tab) => (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        "rounded-lg px-2.5 py-2 text-[13px] transition-colors",
+                        matchesRoute(pathname, tab.href)
+                          ? "font-bold text-accent"
+                          : "font-medium text-muted hover:bg-soft hover:text-ink",
+                      )}
+                    >
+                      {labelOf(tab.label)}
+                    </Link>
+                  ))}
+                </div>
               )}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-              {item.live && liveCount > 0 && (
-                <span className="ml-auto rounded-full bg-live px-2 py-0.5 font-number text-[11px] font-bold text-white">
-                  {liveCount}
-                </span>
-              )}
-              {item.href === "/chat" && unreadChatCount > 0 && (
-                <span className="ml-auto rounded-full bg-accent px-2 py-0.5 font-number text-[11px] font-bold text-accent-ink">
-                  {unreadChatCount}
-                </span>
-              )}
-              {item.href === "/due-ledger" && dueCount > 0 && (
-                <span className="ml-auto rounded-full bg-live px-2 py-0.5 font-number text-[11px] font-bold text-white">
-                  {dueCount}
-                </span>
-              )}
-            </Link>
+            </div>
           );
         })}
       </nav>

@@ -42,6 +42,18 @@ export const PROVIDER_PREFIXES = [
   "/analytics",
   "/regulars",
   "/reviews",
+  // Three the sidebar has always linked and this list never gated, found while
+  // grouping the nav. RLS returned nothing to a non-owner, so none of them
+  // leaked — but a customer who followed a stale link got a shop-management
+  // screen rendered empty, which reads as a broken app rather than as an
+  // answer. The offers manager, the shop's own chat inbox, and the broadcast
+  // composer.
+  "/offers",
+  "/chat",
+  // Deliberately the child, not `/notifications`: that exact path is the
+  // CUSTOMER's inbox (see CUSTOMER_EXACT below) and only `/send` under it
+  // belongs to the shop.
+  "/notifications/send",
 ];
 export const CUSTOMER_PREFIXES = [
   "/my-serial",

@@ -132,7 +132,7 @@ function fakeClient(
           return Promise.resolve({ data: rows[0] ?? null, error: settled.error });
         },
       };
-      for (const op of ["eq", "neq", "lte", "gte", "ilike", "in", "order", "limit"]) {
+      for (const op of ["eq", "neq", "lte", "gte", "ilike", "in", "or", "order", "limit"]) {
         builder[op] = (...args: unknown[]) => {
           call.filters.push({ op, args });
           return builder;

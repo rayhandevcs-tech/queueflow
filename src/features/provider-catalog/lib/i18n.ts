@@ -299,6 +299,25 @@ export const providerCatalogDict = {
   navSendNotification: { bn: "নোটিফিকেশন পাঠান", en: "Send notification" },
   navReviews: { bn: "রিভিউ", en: "Reviews" },
   navSettings: { bn: "সেটিংস", en: "Settings" },
+
+  // ProviderSidebar — the five grouped sections.
+  //
+  // Each one names a subject and its rows sit inside it as tabs. The labels
+  // deliberately name BOTH halves rather than just the first: an owner who
+  // knew where "বাকির খাতা" used to be needs to see the word to know it moved
+  // into ইনকাম, and a row called just "ইনকাম" would read as the ledger having
+  // been taken away.
+  navCatalogueGroup: {
+    // Takes the shop's own word for a chair — চেয়ার for a salon, সিট for a
+    // parlour. The plural `chairs` term is already "চেয়ার ও স্টাফ", which
+    // would have made this "চেয়ার ও স্টাফ ও সার্ভিস".
+    bn: (chair: string) => `${chair} ও সার্ভিস`,
+    en: (chair: string) => `${chair}s & services`,
+  },
+  navMembershipGroup: { bn: "মেম্বারশিপ ও অফার", en: "Membership & offers" },
+  navLoyaltyGroup: { bn: "লয়্যালটি ও রিওয়ার্ড", en: "Loyalty & rewards" },
+  navMoneyGroup: { bn: "ইনকাম ও বাকি", en: "Income & dues" },
+  navCustomersGroup: { bn: "কাস্টমার ও রিভিউ", en: "Customers & reviews" },
   comingSoon: {
     bn: (label: string) => `${label} — শীঘ্রই আসছে`,
     en: (label: string) => `${label} — Coming soon`,

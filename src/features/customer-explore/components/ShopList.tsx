@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { shopAvatarColor, shopInitial } from "@/lib/shop-avatar";
-import { shopAvailability } from "@/lib/shop-availability";
+import { catalogueStatus } from "@/lib/shop-catalogue";
 import { cn } from "@/lib/utils";
 import { useMyFavoriteShopIds, useToggleFavorite } from "../hooks/use-favorites";
 import { useT } from "@/lib/i18n";
@@ -64,7 +64,9 @@ export function ShopList({
         const wait = waitMin[shop.id] ?? 0;
         const waitOk = wait <= WAIT_OK_THRESHOLD_MIN;
         const distance = distanceKm?.[shop.id];
-        const availability = shopAvailability(shop);
+        // Catalogue rule, not queue rule — see lib/shop-catalogue.ts.
+        const status = catalogueStatus(shop);
+        const byAppointment = status === "BY_APPOINTMENT";
         const rating = ratingByShopId?.get(shop.id);
         // First segment only: "Gazipura, Tongi, Gazipur Sadar Upazila, …" is a
         // postal address, not a place you recognise.
@@ -141,13 +143,23 @@ export function ShopList({
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold",
-                        waitOk ? "bg-good-soft text-good" : "bg-live-soft text-live",
+                        byAppointment
+                          ? "bg-accent/10 text-accent"
+                          : waitOk
+                            ? "bg-good-soft text-good"
+                            : "bg-live-soft text-live",
                       )}
                     >
                       <Clock3 className="h-3 w-3" />
-                      {queue === 0 ? t("walkInNow") : t("waitMinutes", wait)}
+                      {/* A parlour has no queue, so "go now" was never true of
+                          one — it books days ahead. */}
+                      {byAppointment
+                        ? t("byAppointmentPill")
+                        : queue === 0
+                          ? t("walkInNow")
+                          : t("waitMinutes", wait)}
                     </span>
-                    {queue > 0 && (
+                    {!byAppointment && queue > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-medium text-muted">
                         <Users className="h-3 w-3" />
                         {t("inQueue", queue)}
@@ -166,12 +178,12 @@ export function ShopList({
 
               {/* A shop that can't take you is still worth showing, but the
                   card has to say so before the tap, not after. */}
-              {availability === "NOT_ACCEPTING" && (
+              {status === "NOT_ACCEPTING" && (
                 <p className="bg-live-soft px-3.5 py-1.5 text-[11px] font-semibold text-live">
                   {t("notAcceptingPill")}
                 </p>
               )}
-              {availability === "BREAK" && (
+              {status === "BREAK" && (
                 <p className="bg-brass-soft px-3.5 py-1.5 text-[11px] font-semibold text-brass">
                   {t("breakPill")}
                 </p>
